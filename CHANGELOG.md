@@ -24,6 +24,9 @@ All notable changes to mklang are documented here. The format follows
 - **Structured-output judge** — the OpenAI-compatible adapter judges via JSON mode
   with a regex fallback.
 - Apache-2.0 `LICENSE`, `CONTRIBUTING.md`, this changelog.
+- Quality: golden-trace and cookbook-conformance tests (the latter caught two
+  invalid-YAML snippets in `SPEC.md §10`); Anthropic adapter unit tests
+  (params/refusal/usage). Live Anthropic run deferred (no key available).
 
 ## [0.2.x] — hardening pass
 

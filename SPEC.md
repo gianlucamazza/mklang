@@ -288,7 +288,7 @@ first-class, observable primitive.
 
 ```yaml
 diagnose:
-  structure: > The output is the most likely root cause, one line.
+  structure: The output is the most likely root cause, one line.
   prompt: "Given the symptoms {{symptoms}}, determine the root cause."
   reason: true # think step by step; the chain is traced, the output stays one line
   output: root_cause
@@ -305,7 +305,7 @@ research notes, or a debate transcript.
 
 ```yaml
 gather:
-  structure: > The output is one new piece of evidence.
+  structure: The output is one new piece of evidence.
   prompt: "Find ONE fact not already in {{notes}} about {{question}}."
   accumulate: true # each visit appends to the {{notes}} list
   output: notes
@@ -337,14 +337,14 @@ Semantics:
 
 ```yaml
 sample_answers: # fan-out
-  structure: > The output is a candidate answer with a one-line justification.
+  structure: The output is a candidate answer with a one-line justification.
   prompt: "Answer the question, reasoning independently: {{question}}"
   sample: 5
   output: candidates
   gates: [{ when: otherwise, then: ok, to: vote }]
 
 vote: # reducer (ordinary state)
-  structure: > The output is the single best answer.
+  structure: The output is the single best answer.
   prompt: "Given the candidate answers {{candidates}}, return the one the majority support."
   output: answer
   gates: [{ when: otherwise, then: ok, to: END }]
@@ -643,7 +643,7 @@ prose + tiers + §4.5–§4.8). This table is the map; skeletons follow.
 
 ```yaml
 solve:
-  structure: > The output is the final answer only.
+  structure: The output is the final answer only.
   prompt: "Solve: {{problem}}"
   reason: true
   output: answer
@@ -658,7 +658,7 @@ budget: 12
 result: answer
 states:
   draft:
-    structure: > A candidate answer with a one-line justification.
+    structure: A candidate answer with a one-line justification.
     prompt: "Answer independently, reasoning step by step: {{question}}"
     reason: true
     sample: 5
@@ -666,7 +666,7 @@ states:
     output: candidates
     gates: [{ when: otherwise, then: ok, to: vote }]
   vote:
-    structure: > The single answer the majority support.
+    structure: The single answer the majority support.
     prompt: "Candidates:\n{{candidates}}\nReturn the majority answer."
     tier: reasoning
     output: answer
@@ -683,7 +683,7 @@ map:
   output: summaries
   gates: [{ when: otherwise, then: ok, to: combine }]
 combine:
-  structure: > One consolidated summary.
+  structure: One consolidated summary.
   prompt: "Merge these summaries into one:\n{{summaries}}"
   tier: reasoning
   output: summary
@@ -694,20 +694,26 @@ combine:
 
 ```yaml
 write:
-  structure: > A polished draft.
+  structure: A polished draft.
   prompt: "Write the section on {{topic}}."
   output: draft
   gates:
-    - { when: the draft is accurate, complete, and well-structured, then: ok, to: END }
-    - { when: the draft has gaps or errors, repair: 2, to: write }
-    - { when: otherwise, escalate: true, to: human_review }
+    - when: the draft is accurate, complete, and well-structured
+      then: ok
+      to: END
+    - when: the draft has gaps or errors
+      repair: 2
+      to: write
+    - when: otherwise
+      escalate: true
+      to: human_review
 ```
 
 **Speculative cascade** — cheap first, strong on demand (tiers do the work):
 
 ```yaml
 draft:
-  structure: > A best-effort answer plus a self-rated confidence.
+  structure: A best-effort answer plus a self-rated confidence.
   prompt: "Answer: {{question}}"
   tier: fast
   output: quick
@@ -715,7 +721,7 @@ draft:
     - { when: the answer is confident and well-supported, then: ok, to: END }
     - { when: otherwise, escalate: true, to: deliberate }
 deliberate:
-  structure: > A careful, verified answer.
+  structure: A careful, verified answer.
   prompt: "Answer rigorously, checking your work: {{question}}"
   tier: reasoning
   reason: true

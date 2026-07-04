@@ -21,12 +21,13 @@ Items are marked **[next]** (clear near-term), **[later]** (valuable, not urgent
   validation in `mklang run`; engine exception-safety (clean `halt`, isolated
   fan-out branches); schema bundled for pip-install; `.env` from cwd; `mklang: "0.2"`
   version field; transient-error retry; dead-state / unproduced-`result` checks.
+- Milestone 6: **`tool` states** (real ReAct — host callables, observations re-enter
+  the context); structured-output judge; error taxonomy (`refusal`/`provider-error`);
+  token/cost accounting + cost budget; Apache-2.0 + CONTRIBUTING + CHANGELOG;
+  golden-trace + cookbook-conformance tests; Anthropic adapter unit-tested.
 
 ## Language
 
-- **[next] Formal tool declarations** — a `tools:` block binding names used in
-  `execution` to host capabilities (name, input/output shape). Unblocks _real_ ReAct
-  (observations re-entering context) instead of prose-simulated tools.
 - **[later] Code-hook gates** — a gate evaluated by a host function returning a bool,
   for exact/critical checks (`total == sum(lines)`), alongside LLM-judged gates.
 - **[later] Formal types for `structure`** — optional typed I/O so composition and
@@ -56,19 +57,13 @@ Items are marked **[next]** (clear near-term), **[later]** (valuable, not urgent
 
 ## Quality
 
-- **[next] Golden-trace tests** — freeze a MockLLM script → expected trace, catch
-  semantic regressions.
-- **[next] Cookbook-conformance test** — extract every YAML skeleton from `SPEC.md
-§10` and assert it validates against the schema.
+- **[next] Live-test the Anthropic adapter** — the adapter is unit-tested (params /
+  refusal / usage), but no `ANTHROPIC_API_KEY` was available for an end-to-end run.
 - **[later] Gated live smoke tests** — opt-in (env-flagged) runs against a real
   provider in CI, low token budget.
 
 ## Organizational
 
-- **[next] CHANGELOG + versioning policy** — semver for the tool; a **separate** spec
-  version (language) from the interpreter version (package).
-- **[next] LICENSE + CONTRIBUTING** — pick a license; document the ADR process and
-  the "spec change → schema → examples → tests" checklist.
 - **[later] Docs site** — mkdocs over `SPEC.md` + `docs/`; publish the cookbook.
 - **[later] Editor tooling** — the `yaml-language-server` schema hint already gives
   completion/validation; add a `mklang lint` beyond `check` (style, dead states).
