@@ -1,65 +1,59 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# react.mk — ReAct loop: reason → act → observe, accumulating a scratchpad (§4.5/§4.6)
+# react.mk — real ReAct: think → act (host tool) → observe → loop (§4.5/§4.6/§4.9)
 #
-# Flow: step → {finalize | observe → step} ; the global budget bounds the loop.
+# The `calc` state invokes a HOST tool (deterministic arithmetic); its result is a
+# real observation that re-enters the context — not a prose simulation.
+# Flow: think → {finalize | calc → think} ; the global budget bounds the loop.
 
 mklang: "0.2"
 machine: react
-entry: step
+entry: think
 budget: 15
 default_tier: balanced
 result: answer
 
+tools:
+  - name: calc
+    description: Evaluate an arithmetic expression, e.g. {"expr":"(17+4)*3"}.
+
 context:
   question:
-    text: "<the question>"
-  scratchpad: "" # accumulates thought / action / observation across the loop
+    text: "<a word problem that needs arithmetic>"
+  results: [] # accumulates tool observations
 
 states:
-  step:
+  think:
     structure: >
-      The output is EITHER "ACTION: <tool>(<args>)" to gather information, OR
-      "ANSWER: <final answer>" when enough is known to conclude.
+      If an arithmetic result is still needed, output ONLY the expression to
+      evaluate (e.g. "(17+4)*3"). Otherwise output "DONE: <final answer>".
     prompt: |
       Question: {{question.text}}
-      Work so far:
-      {{scratchpad}}
-      Decide the single next step.
-    execution: |
-      Available tool: search(query) — returns web snippets. Use it when you lack a
-      fact. Take exactly one action per step; never fabricate observations.
-    reason: true
-    accumulate: true # the thought/decision is appended to the scratchpad list
-    output: scratchpad
+      Results so far: {{results}}
+      Decide the single next step: one arithmetic expression, or DONE.
+    reason: true # the decision's chain-of-thought is traced
+    output: thought
     gates:
-      - when: the output is a final ANSWER
+      - when: the output begins with "DONE"
         then: ok
         to: finalize
-      - when: the output is an ACTION (more information is needed)
-        then: ok
-        to: observe
       - when: otherwise
         then: ok
-        to: observe
+        to: calc
 
-  observe:
-    structure: >
-      The output is the observation returned by the tool for the most recent action.
-    prompt: |
-      Execute the most recent action in {{scratchpad}} and report ONLY the observation.
-    execution: |
-      If no real tool is bound, faithfully simulate the `search` result.
-    accumulate: true # the observation is appended to the scratchpad list
-    output: scratchpad
+  calc: # tool state — runs the host `calc` callable
+    tool: calc
+    input: { expr: "{{thought}}" }
+    accumulate: true # observations accumulate into the results list
+    output: results
     gates:
       - when: otherwise
         then: ok
-        to: step
+        to: think
 
   finalize:
     structure: >
-      The output is the final answer to the question.
-    prompt: "Based on {{scratchpad}}, give the final answer to: {{question.text}}"
+      The output is the final answer to the question, stated plainly.
+    prompt: "Using the computed results {{results}}, answer: {{question.text}}"
     tier: reasoning
     output: answer
     gates:

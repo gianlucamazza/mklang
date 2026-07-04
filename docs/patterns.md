@@ -43,15 +43,15 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 ## Composite flows (which pattern when)
 
-| Situation                                        | Reach for                                      |
-| ------------------------------------------------ | ---------------------------------------------- |
-| One high-stakes answer, want robustness          | **Self-consistency** (`sample` → vote)         |
-| Many similar items (docs, tickets, rows)         | **Map-Reduce** (`over` → reducer)              |
-| Quality-critical prose                           | **Reflexion** (`repair` loop, or a critic)     |
-| Distinct request types → distinct handling       | **Router-of-experts** (classify → `call`)      |
-| Mostly-easy workload, occasional hard case       | **Speculative cascade** (fast → escalate)      |
-| Open-ended tool-using task                       | **ReAct** (`reason` + `accumulate` loop)       |
-| Explore several partial solutions, keep the best | **Tree-of-Thought** (`sample` → select → loop) |
+| Situation                                        | Reach for                                            |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| One high-stakes answer, want robustness          | **Self-consistency** (`sample` → vote)               |
+| Many similar items (docs, tickets, rows)         | **Map-Reduce** (`over` → reducer)                    |
+| Quality-critical prose                           | **Reflexion** (`repair` loop, or a critic)           |
+| Distinct request types → distinct handling       | **Router-of-experts** (classify → `call`)            |
+| Mostly-easy workload, occasional hard case       | **Speculative cascade** (fast → escalate)            |
+| Open-ended tool-using task                       | **ReAct** (think → `tool` state → `accumulate` loop) |
+| Explore several partial solutions, keep the best | **Tree-of-Thought** (`sample` → select → loop)       |
 
 ## Provider notes
 

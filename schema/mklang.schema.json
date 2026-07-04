@@ -30,6 +30,19 @@
       "type": "object",
       "description": "Initial blackboard values (optional)."
     },
+    "tools": {
+      "type": "array",
+      "description": "Optional declarations of the host tools this machine uses (§4.9).",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
     "states": {
       "type": "object",
       "minProperties": 1,
@@ -40,10 +53,11 @@
   "$defs": {
     "tier": { "enum": ["fast", "balanced", "reasoning"] },
     "state": {
-      "description": "A state is EITHER generative (has `prompt`) OR a call (has `call`).",
+      "description": "A state is generative (`prompt`), a call (`call`), or a tool (`tool`).",
       "oneOf": [
         { "$ref": "#/$defs/generative_state" },
-        { "$ref": "#/$defs/call_state" }
+        { "$ref": "#/$defs/call_state" },
+        { "$ref": "#/$defs/tool_state" }
       ]
     },
     "generative_state": {
@@ -119,6 +133,38 @@
         "over": {
           "type": "string",
           "description": "Optional fan-out over the call (one sub-run per item)."
+        },
+        "accumulate": { "type": "boolean" },
+        "output": { "type": "string" },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/gate" }
+        }
+      }
+    },
+    "tool_state": {
+      "type": "object",
+      "required": ["tool", "output", "gates"],
+      "additionalProperties": false,
+      "not": { "required": ["sample", "over"] },
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "Name of a host-registered tool callable to invoke (§4.9)."
+        },
+        "input": {
+          "type": "object",
+          "description": "Maps context values into the tool's input dict."
+        },
+        "sample": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Optional fan-out over the tool."
+        },
+        "over": {
+          "type": "string",
+          "description": "Optional fan-out over the tool (one call per item)."
         },
         "accumulate": { "type": "boolean" },
         "output": { "type": "string" },

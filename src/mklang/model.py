@@ -16,7 +16,7 @@ class Gate:
 @dataclass
 class State:
     id: str
-    kind: str  # "generative" | "call"
+    kind: str  # "generative" | "call" | "tool"
     gates: list[Gate]
     output: str
     tier: str | None = None
@@ -28,8 +28,9 @@ class State:
     accumulate: bool = False
     sample: int | None = None
     over: str | None = None
-    # call
+    # call / tool
     call: str | None = None
+    tool: str | None = None
     input: dict | None = None
 
     @property
@@ -47,6 +48,7 @@ class Machine:
     result: str | None = None
     context: dict = field(default_factory=dict)
     version: str | None = None  # the `mklang:` spec-version field (advisory)
+    tools: list[dict] = field(default_factory=list)  # optional tool declarations
 
 
 def parse_gate(d: dict) -> Gate:
@@ -62,7 +64,7 @@ def parse_gate(d: dict) -> Gate:
 
 
 def parse_state(sid: str, d: dict) -> State:
-    kind = "call" if "call" in d else "generative"
+    kind = "tool" if "tool" in d else "call" if "call" in d else "generative"
     return State(
         id=sid,
         kind=kind,
@@ -77,6 +79,7 @@ def parse_state(sid: str, d: dict) -> State:
         sample=d.get("sample"),
         over=d.get("over"),
         call=d.get("call"),
+        tool=d.get("tool"),
         input=d.get("input"),
     )
 
@@ -92,4 +95,5 @@ def parse_machine(d: dict) -> Machine:
         result=d.get("result"),
         context=d.get("context") or {},
         version=d.get("mklang"),
+        tools=d.get("tools") or [],
     )

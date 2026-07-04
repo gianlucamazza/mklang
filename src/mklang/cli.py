@@ -66,6 +66,15 @@ def cmd_run(args) -> int:
         for e in errors:
             print(f"{args.machine}: error: {e}", file=sys.stderr)
         return 2
+    from .tools import BUILTINS
+
+    for sid, s in machine.states.items():
+        if s.kind == "tool" and s.tool not in BUILTINS:
+            print(
+                f"# warning: state '{sid}' uses tool '{s.tool}' not in the built-in "
+                f"registry {sorted(BUILTINS)} — the run halts if it is reached",
+                file=sys.stderr,
+            )
     ctx = _apply_sets(dict(machine.context), args.set)
     print(f"# {machine.name} · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
     res = run(
@@ -77,6 +86,7 @@ def cmd_run(args) -> int:
         prov.judge_model(),
         tier_params=prov.params,
         cost_budget=args.max_tokens,
+        tools=BUILTINS,
     )
     print(
         json.dumps(

@@ -116,18 +116,18 @@ Every modern reasoning/agentic pattern maps onto the core (states + gates + pros
 tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
 guidance in [`docs/patterns.md`](./docs/patterns.md).
 
-| Architecture            | mklang constructs                                            |
-| ----------------------- | ------------------------------------------------------------ |
-| Chain-of-Thought        | `reason: true`                                               |
-| ReAct                   | loop; tool in `execution`; observation `accumulate`d         |
-| Reflexion / self-refine | produce → self-judge gate → `repair`                         |
-| Self-consistency        | `sample: N` → reducer state (majority)                       |
-| Tree-of-Thought         | `sample: k` → score/select reducer → loop (depth via budget) |
-| Plan-and-Execute        | planner (list) → `over: {{steps}}` → reducer                 |
-| Debate / ensemble       | `over: {{personas}}` → synthesizer                           |
-| Map-Reduce              | `over: {{chunks}}` → reducer                                 |
-| Router-of-experts       | classify → `call` specialists                                |
-| Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`          |
+| Architecture            | mklang constructs                                                |
+| ----------------------- | ---------------------------------------------------------------- |
+| Chain-of-Thought        | `reason: true`                                                   |
+| ReAct                   | think → `tool` state (host callable) → observation `accumulate`d |
+| Reflexion / self-refine | produce → self-judge gate → `repair`                             |
+| Self-consistency        | `sample: N` → reducer state (majority)                           |
+| Tree-of-Thought         | `sample: k` → score/select reducer → loop (depth via budget)     |
+| Plan-and-Execute        | planner (list) → `over: {{steps}}` → reducer                     |
+| Debate / ensemble       | `over: {{personas}}` → synthesizer                               |
+| Map-Reduce              | `over: {{chunks}}` → reducer                                     |
+| Router-of-experts       | classify → `call` specialists                                    |
+| Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`              |
 
 ## Quickstart (reference interpreter)
 

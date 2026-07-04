@@ -135,15 +135,25 @@ states: # map of <state-id> -> state definition
     accumulate?: <bool>
     output: <key>
     gates: <list of gates>
+  # (c) tool state — runs a host-registered callable (§4.9):
+  <state-id>:
+    tool: <tool-name>
+    input?: <map> # context values -> the tool's input dict
+    sample?: <int> # optional fan-out over the tool
+    over?: "{{list}}" # optional fan-out over the tool (one call per item)
+    accumulate?: <bool>
+    output: <key>
+    gates: <list of gates>
 ```
 
-> A state is **either** generative (has `prompt`) **or** a call (has `call`), never
-> both. `sample` and `over` are mutually exclusive.
+> A state is **exactly one** of generative (`prompt`), call (`call`), or tool
+> (`tool`). `sample` and `over` are mutually exclusive. An optional top-level `tools:`
+> block documents the tools a machine expects (§4.9).
 
 Informal (non-normative) pseudo-schema of a **state**:
 
 ```
-State       ::= Generative | Call
+State       ::= Generative | Call | Tool
 
 Generative  ::= {
   structure  : string          # prose: shape of {{output}} + input read
@@ -169,6 +179,16 @@ Call        ::= {
   gates      : Gate[]
 }
 
+Tool        ::= {
+  tool       : ToolName        # a host-registered callable (§4.9)
+  input      : map?            # context values -> the tool's input dict
+  sample     : int?            # optional fan-out over the tool
+  over       : string?         # optional fan-out over the tool
+  accumulate : bool?
+  output     : string          # the tool's observation stored here
+  gates      : Gate[]
+}
+
 Gate ::= {
   when : string                # natural-language condition (LLM-judged)
   # exactly ONE of:
@@ -188,11 +208,12 @@ Conventions:
 Reserved keys:
 
 - Top-level: `machine`, `entry`, `budget`, `default_tier`, `result`, `context`,
-  `states`.
+  `tools`, `states`, `mklang`.
 - Generative state: `structure`, `prompt`, `execution`, `tier`, `reason`,
   `accumulate`, `sample`, `over`, `output`, `gates`.
 - Call state: `call`, `input`, `tier`, `sample`, `over`, `accumulate`, `output`,
   `gates`.
+- Tool state: `tool`, `input`, `sample`, `over`, `accumulate`, `output`, `gates`.
 - Gate: `when`, `then`, `repair`, `escalate`, `fail`, `to`.
 - Tier values: `fast`, `balanced`, `reasoning`.
 - Fan-out vars (inside `over` states): `{{item}}`, `{{index}}`.
@@ -351,6 +372,35 @@ The runtime resolves `call` names against a **registry of machines** (a project 
 hold many `.mk` files). The parent's trace **nests** the child's trace (§8), and
 sub-runs are bounded by their own `budget` plus a runtime **call-depth cap** so
 recursion terminates.
+
+### 4.9 `tool` — host-tool invocation (optional)
+
+A **tool state** has no `prompt`/`structure`; instead `tool: <name>` invokes a
+**host-registered callable** `(dict) -> str`. `input` maps context values into the
+tool's argument dict; the returned string is the **observation**, deposited under
+`output` (supports `accumulate`, `sample`/`over`). This is what makes ReAct _real_:
+the observation is an actual tool result re-entering the context, not prose the model
+imagined.
+
+```yaml
+tools: # optional top-level declarations of what the machine expects
+  - name: calc
+    description: Evaluate an arithmetic expression, e.g. {"expr":"(17+4)*3"}.
+states:
+  calc:
+    tool: calc
+    input: { expr: "{{thought}}" }
+    accumulate: true # observations accumulate into the results list
+    output: results
+    gates: [{ when: otherwise, then: ok, to: think }]
+```
+
+Tools are **host-provided and provider-agnostic**: the runtime is given a
+`name -> callable` registry (`run(..., tools=...)`; the CLI ships deterministic demos
+`calc` and `search`). The optional `tools:` block documents the contract and lets
+`mklang check` warn on a `tool` state that references an undeclared name; the actual
+binding stays host-side. A tool state does not call the LLM, so it consumes no tier
+and no tokens.
 
 ---
 
@@ -561,9 +611,6 @@ Deliberately out of v0.2 (sub-machines, fan-out/parallelism, and reasoning are n
 - **Formal types** in `structure`, for static verification of composition and gates.
 - **Caching / reproducibility** — per-state cache (same input+prompt → same output)
   for deterministic tests and cost reduction.
-- **Tool declarations** — tools referenced in `execution` (e.g. `search_kb`,
-  `web_search`) are provided by the host; v0.1 has no syntax to declare, type, or
-  bind them. They are prose the runtime is expected to resolve to host capabilities.
 - **Explicit provider/model pinning** — a `.mk` routes by capability tier (§2.1),
   never by vendor or model id. Pinning a concrete provider/model in the document
   would break portability, so it is deliberately excluded. If a future version adds
@@ -579,18 +626,18 @@ Each is an additive extension that does not alter the base state-machine model.
 Every modern reasoning/agentic architecture maps onto the core (states + gates +
 prose + tiers + §4.5–§4.8). This table is the map; skeletons follow.
 
-| Architecture          | mklang constructs                                                         |
-| --------------------- | ------------------------------------------------------------------------- |
-| Chain-of-Thought      | `reason: true` (or a `reason` → `answer` state pair)                      |
-| ReAct                 | loop; tool in `execution`; observation `accumulate`d; gate "have answer?" |
-| Reflexion/self-refine | produce → self-judge gate → `repair` (optionally a `critic` state)        |
-| Self-consistency      | `sample: N` → reducer state (majority)                                    |
-| Tree-of-Thought       | `sample: k` → score/select reducer → loop-back gate (depth via `budget`)  |
-| Plan-and-Execute      | planner (list `steps`) → `over: {{steps}}` → reducer                      |
-| Debate / ensemble     | `over: {{personas}}` (or `sample`) → synthesizer state                    |
-| Map-Reduce            | `over: {{chunks}}` → reducer                                              |
-| Router-of-experts     | classify → branch to specialist `call` sub-machines                       |
-| Speculative cascade   | draft `tier: fast` → `escalate` gate → `tier: reasoning` state            |
+| Architecture          | mklang constructs                                                        |
+| --------------------- | ------------------------------------------------------------------------ |
+| Chain-of-Thought      | `reason: true` (or a `reason` → `answer` state pair)                     |
+| ReAct                 | think → `tool` state (host callable) → observation `accumulate`d → loop  |
+| Reflexion/self-refine | produce → self-judge gate → `repair` (optionally a `critic` state)       |
+| Self-consistency      | `sample: N` → reducer state (majority)                                   |
+| Tree-of-Thought       | `sample: k` → score/select reducer → loop-back gate (depth via `budget`) |
+| Plan-and-Execute      | planner (list `steps`) → `over: {{steps}}` → reducer                     |
+| Debate / ensemble     | `over: {{personas}}` (or `sample`) → synthesizer state                   |
+| Map-Reduce            | `over: {{chunks}}` → reducer                                             |
+| Router-of-experts     | classify → branch to specialist `call` sub-machines                      |
+| Speculative cascade   | draft `tier: fast` → `escalate` gate → `tier: reasoning` state           |
 
 **Chain-of-Thought** — reasoning traced, answer clean:
 

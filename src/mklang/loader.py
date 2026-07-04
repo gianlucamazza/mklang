@@ -51,12 +51,15 @@ def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[st
         errors.append(f"entry '{machine.entry}' is not a state")
 
     produced = {s.output for s in machine.states.values()}
+    declared_tools = {t.get("name") for t in machine.tools}
     for sid, s in machine.states.items():
         for g in s.gates:
             if g.kind != "fail" and g.to != "END" and g.to not in ids:
                 errors.append(f"{sid}: gate -> unknown state '{g.to}'")
         if s.kind == "call" and s.call not in registry:
             errors.append(f"{sid}: call -> unknown machine '{s.call}'")
+        if s.kind == "tool" and machine.tools and s.tool not in declared_tools:
+            warnings.append(f"{sid}: tool '{s.tool}' is not declared in the machine's tools:")
         # a multi-gate state without a catch-all can leave no transition firing
         if len(s.gates) > 1 and not any(g.when.strip().lower() == "otherwise" for g in s.gates):
             warnings.append(f"{sid}: no 'otherwise' catch-all gate (a transition may fail to fire)")

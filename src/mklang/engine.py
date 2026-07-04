@@ -47,6 +47,7 @@ class _Ctx:
     judge_model: str
     registry: dict
     tier_params: dict  # tier -> provider-specific params
+    tools: dict  # tool name -> callable(dict) -> str
     max_workers: int = 5
 
 
@@ -67,9 +68,16 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             depth=depth + 1,
             max_workers=deps.max_workers,
             tier_params=deps.tier_params,
+            tools=deps.tools,
         )
         u = sub.usage or {}
         return sub.result, sub.trace, None, (u.get("input_tokens", 0), u.get("output_tokens", 0))
+    if state.kind == "tool":
+        tool_input = {k: render(v, ctx) for k, v in (state.input or {}).items()}
+        fn = deps.tools.get(state.tool)
+        if fn is None:
+            raise KeyError(f"tool: unknown tool {state.tool!r} (register it via run(tools=...))")
+        return str(fn(tool_input)), None, None, (0, 0)
     tier = state.tier or machine.default_tier
     model = deps.tiers[tier]
     params = deps.tier_params.get(tier)
@@ -115,10 +123,11 @@ def run(
     max_workers: int = 5,
     tier_params: dict | None = None,
     cost_budget: int | None = None,
+    tools: dict | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
-    deps = _Ctx(llm, tiers, judge_model, registry, tier_params or {}, max_workers)
+    deps = _Ctx(llm, tiers, judge_model, registry, tier_params or {}, tools or {}, max_workers)
     ctx = dict(context)
     state_id = machine.entry
     trace: list[dict] = []
