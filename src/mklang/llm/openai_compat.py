@@ -6,6 +6,7 @@ import json
 import re
 import time
 
+from ..errors import ProviderError
 from .base import JUDGE_SYSTEM, Produced
 
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
@@ -37,7 +38,7 @@ class OpenAICompatLLM:
                 dropped = _drop_offending_param(kwargs, msg)
                 if dropped:
                     continue  # retry once without the rejected field
-                raise
+                raise ProviderError(str(e)) from e
 
     def produce(
         self,
@@ -57,14 +58,18 @@ class OpenAICompatLLM:
         r = self._create(**kwargs)
         msg = r.choices[0].message
         reasoning = getattr(msg, "reasoning_content", None) if reason else None
-        return Produced(text=(msg.content or "").strip(), reasoning=reasoning)
+        it, ot = _usage(r)
+        return Produced(
+            text=(msg.content or "").strip(), reasoning=reasoning, input_tokens=it, output_tokens=ot
+        )
 
     def judge(self, model: str, conditions: list[str], output: str, context: dict) -> int:
         lines = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(conditions))
         user = (
             f"OUTPUT:\n{output}\n\n"
             f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:4000]}\n\n"
-            f"CONDITIONS (priority order):\n{lines}"
+            f"CONDITIONS (priority order):\n{lines}\n\n"
+            'Reply with ONLY a JSON object: {"choice": <number>}.'
         )
         r = self._create(
             model=model,
@@ -72,11 +77,30 @@ class OpenAICompatLLM:
                 {"role": "system", "content": JUDGE_SYSTEM},
                 {"role": "user", "content": user},
             ],
+            response_format={"type": "json_object"},  # dropped-and-retried if unsupported
             temperature=0,
         )
-        m = re.search(r"\d+", r.choices[0].message.content or "")
-        idx = int(m.group()) - 1 if m else len(conditions) - 1
+        idx = _parse_choice(r.choices[0].message.content or "", len(conditions))
         return max(0, min(idx, len(conditions) - 1))
+
+
+def _parse_choice(text: str, n: int) -> int:
+    """Read the judge's choice: JSON {"choice": k} first, then a bare number."""
+    try:
+        obj = json.loads(text)
+        if isinstance(obj, dict) and "choice" in obj:
+            return int(obj["choice"]) - 1
+    except (ValueError, TypeError):
+        pass
+    m = re.search(r"\d+", text)
+    return int(m.group()) - 1 if m else n - 1
+
+
+def _usage(response) -> tuple[int, int]:
+    u = getattr(response, "usage", None)
+    if not u:
+        return 0, 0
+    return getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0
 
 
 def _apply_params(kwargs: dict, params: dict | None) -> None:
@@ -98,7 +122,7 @@ def _apply_params(kwargs: dict, params: dict | None) -> None:
 def _drop_offending_param(kwargs: dict, err_msg: str) -> bool:
     """Remove the first param the error names (top-level or extra_body). Return True if
     something was dropped so the caller can retry."""
-    for name in ("temperature", *_TOP_LEVEL_PARAMS):
+    for name in ("temperature", "response_format", *_TOP_LEVEL_PARAMS):
         if name in kwargs and name in err_msg:
             kwargs.pop(name, None)
             return True

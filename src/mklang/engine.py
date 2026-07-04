@@ -6,6 +6,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
+from .errors import ProviderError, RefusalError
 from .interpolate import fmt, lookup, render
 from .model import Machine, State
 
@@ -21,6 +22,7 @@ class RunResult:
     result: object = None
     error: str | None = None
     at: str | None = None
+    usage: dict | None = None  # {"input_tokens": int, "output_tokens": int}
 
 
 def _model_for(state: State, machine: Machine, tiers: dict) -> str:
@@ -49,7 +51,7 @@ class _Ctx:
 
 
 def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machine, depth: int):
-    """Execute a state once → (output, sub_trace|None, reasoning|None)."""
+    """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out) tokens)."""
     if state.kind == "call":
         sub_input = {k: render(v, ctx) for k, v in (state.input or {}).items()}
         sub_machine = deps.registry.get(state.call)
@@ -66,7 +68,8 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             max_workers=deps.max_workers,
             tier_params=deps.tier_params,
         )
-        return sub.result, sub.trace, None
+        u = sub.usage or {}
+        return sub.result, sub.trace, None, (u.get("input_tokens", 0), u.get("output_tokens", 0))
     tier = state.tier or machine.default_tier
     model = deps.tiers[tier]
     params = deps.tier_params.get(tier)
@@ -75,7 +78,7 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
     p = deps.llm.produce(
         model, _system(state), user, reason=state.reason, temperature=temperature, params=params
     )
-    return p.text, None, p.reasoning
+    return p.text, None, p.reasoning, (p.input_tokens, p.output_tokens)
 
 
 def _safe_exec(state, ctx, deps, machine, depth):
@@ -83,7 +86,7 @@ def _safe_exec(state, ctx, deps, machine, depth):
     try:
         return _exec_one(state, ctx, "", deps, machine, depth)
     except Exception as e:  # noqa: BLE001 — isolate the branch
-        return (f"[branch-error: {e}]", None, None)
+        return (f"[branch-error: {e}]", None, None, (0, 0))
 
 
 def _branch_contexts(state: State, ctx: dict) -> list[dict]:
@@ -111,6 +114,7 @@ def run(
     depth: int = 0,
     max_workers: int = 5,
     tier_params: dict | None = None,
+    cost_budget: int | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -119,12 +123,18 @@ def run(
     state_id = machine.entry
     trace: list[dict] = []
     steps = 0
+    total_in = total_out = 0
     feedback = ""
     repair_left: dict[tuple[str, int], int] = {}
 
+    def usage() -> dict:
+        return {"input_tokens": total_in, "output_tokens": total_out}
+
     while True:
         if steps >= machine.budget:
-            return RunResult("halt", trace, ctx, error="budget-exhausted")
+            return RunResult("halt", trace, ctx, error="budget-exhausted", usage=usage())
+        if cost_budget is not None and total_in + total_out >= cost_budget:
+            return RunResult("halt", trace, ctx, error="cost-exhausted", usage=usage())
         S = machine.states[state_id]
         step: dict = {"state": state_id, "tier": S.tier or machine.default_tier}
 
@@ -144,12 +154,24 @@ def run(
                 step["sub_trace"] = subs
             if S.reason:
                 step["reasonings"] = [o[2] for o in outs]
+            step_in = sum(o[3][0] for o in outs)
+            step_out = sum(o[3][1] for o in outs)
         else:
             steps += 1
             try:
-                out, sub, reasoning = _exec_one(S, ctx, feedback, deps, machine, depth)
+                out, sub, reasoning, (step_in, step_out) = _exec_one(
+                    S, ctx, feedback, deps, machine, depth
+                )
+            except RefusalError:
+                return RunResult("halt", trace, ctx, error="refusal", at=state_id, usage=usage())
+            except ProviderError as e:
+                return RunResult(
+                    "halt", trace, ctx, error=f"provider-error: {e}", at=state_id, usage=usage()
+                )
             except Exception as e:  # noqa: BLE001 — surface as a clean halt, not a traceback
-                return RunResult("halt", trace, ctx, error=f"state-error: {e}", at=state_id)
+                return RunResult(
+                    "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
+                )
             result = out
             step["output"] = out if isinstance(out, str) else fmt(out)
             if reasoning:
@@ -157,6 +179,10 @@ def run(
             if sub is not None:
                 step["sub_trace"] = sub
         feedback = ""
+        total_in += step_in
+        total_out += step_out
+        if step_in or step_out:
+            step["cost"] = {"input_tokens": step_in, "output_tokens": step_out}
 
         # 2) DEPOSIT
         if S.accumulate:
@@ -176,7 +202,9 @@ def run(
         if not eligible:  # every gate was a repair with an exhausted budget
             step.update(step=steps, gate=None, policy="no-gate-matched", to=None)
             trace.append(step)
-            return RunResult("halt", trace, ctx, error="no-gate-matched", at=state_id)
+            return RunResult(
+                "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
+            )
         gi_local = deps.llm.judge(deps.judge_model, [g.when for _, g in eligible], fmt(result), ctx)
         gi_local = max(0, min(gi_local, len(eligible) - 1))  # trust nothing from the judge
         i, gate = eligible[gi_local]
@@ -185,11 +213,11 @@ def run(
 
         # 4) TRANSITION
         if gate.kind == "fail":
-            return RunResult("halt", trace, ctx, error="gate-fail", at=state_id)
+            return RunResult("halt", trace, ctx, error="gate-fail", at=state_id, usage=usage())
         if gate.kind == "repair":
             repair_left[(state_id, i)] = repair_left.get((state_id, i), gate.repair) - 1
             feedback = f"The previous attempt did not satisfy: '{gate.when}'. Fix it."
         if gate.to == "END":
             rv = ctx.get(machine.result) if machine.result else result
-            return RunResult("done", trace, ctx, result=rv)
+            return RunResult("done", trace, ctx, result=rv, usage=usage())
         state_id = gate.to

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 
+from ..errors import RefusalError
 from .base import JUDGE_SYSTEM, Produced
 
 
@@ -43,13 +44,18 @@ class AnthropicLLM:
         if "effort" in params:  # low | medium | high | xhigh | max
             kwargs["output_config"] = {"effort": params["effort"]}
         msg = self.client.messages.create(**kwargs)
+        if getattr(msg, "stop_reason", None) == "refusal":
+            raise RefusalError("the model declined this request")
         text, reasoning = "", None
         for block in msg.content:
             if block.type == "text":
                 text += block.text
             elif block.type == "thinking":
                 reasoning = getattr(block, "thinking", None) or reasoning
-        return Produced(text=text.strip(), reasoning=reasoning)
+        u = getattr(msg, "usage", None)
+        it = getattr(u, "input_tokens", 0) if u else 0
+        ot = getattr(u, "output_tokens", 0) if u else 0
+        return Produced(text=text.strip(), reasoning=reasoning, input_tokens=it, output_tokens=ot)
 
     def judge(self, model: str, conditions: list[str], output: str, context: dict) -> int:
         lines = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(conditions))

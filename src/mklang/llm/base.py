@@ -10,6 +10,8 @@ from typing import Protocol, runtime_checkable
 class Produced:
     text: str
     reasoning: str | None = None
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 @runtime_checkable

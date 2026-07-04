@@ -68,10 +68,25 @@ def cmd_run(args) -> int:
         return 2
     ctx = _apply_sets(dict(machine.context), args.set)
     print(f"# {machine.name} · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
-    res = run(machine, ctx, registry, llm, prov.tiers, prov.judge_model(), tier_params=prov.params)
+    res = run(
+        machine,
+        ctx,
+        registry,
+        llm,
+        prov.tiers,
+        prov.judge_model(),
+        tier_params=prov.params,
+        cost_budget=args.max_tokens,
+    )
     print(
         json.dumps(
-            {"status": res.status, "error": res.error, "result": res.result, "trace": res.trace},
+            {
+                "status": res.status,
+                "error": res.error,
+                "result": res.result,
+                "usage": res.usage,
+                "trace": res.trace,
+            },
             ensure_ascii=False,
             indent=2,
         )
@@ -111,6 +126,12 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--config", default="config/runtime.example.yaml")
     r.add_argument("--provider", default=None, help="override the config's `active` provider")
     r.add_argument("--set", action="append", default=[], metavar="k.path=value")
+    r.add_argument(
+        "--max-tokens",
+        type=int,
+        default=None,
+        help="cost budget: halt once total tokens reach this",
+    )
     r.set_defaults(fn=cmd_run)
 
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
