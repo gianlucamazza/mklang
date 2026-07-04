@@ -1,0 +1,206 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mklang.dev/schema/mklang.schema.json",
+  "title": "mklang machine",
+  "description": "Structural schema for a .mk file (an mklang state machine, core v0.2). Validates shape only, not the natural-language prose. See SPEC.md.",
+  "type": "object",
+  "required": ["machine", "entry", "budget", "states"],
+  "additionalProperties": false,
+  "properties": {
+    "mklang": {
+      "type": "string",
+      "description": "Spec version this machine targets, e.g. \"0.2\" (advisory)."
+    },
+    "machine": { "type": "string", "description": "Machine identifier." },
+    "entry": { "type": "string", "description": "Id of the entry state." },
+    "budget": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Max steps per run (anti-loop guard). Fan-out consumes N steps."
+    },
+    "default_tier": {
+      "enum": ["fast", "balanced", "reasoning"],
+      "description": "Default capability tier for all states (provider-neutral). Defaults to 'balanced'."
+    },
+    "result": {
+      "type": "string",
+      "description": "Context key returned to a caller (§4.8). Default = the last state's output."
+    },
+    "context": {
+      "type": "object",
+      "description": "Initial blackboard values (optional)."
+    },
+    "states": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Map of state-id -> state definition.",
+      "additionalProperties": { "$ref": "#/$defs/state" }
+    }
+  },
+  "$defs": {
+    "tier": { "enum": ["fast", "balanced", "reasoning"] },
+    "state": {
+      "description": "A state is EITHER generative (has `prompt`) OR a call (has `call`).",
+      "oneOf": [
+        { "$ref": "#/$defs/generative_state" },
+        { "$ref": "#/$defs/call_state" }
+      ]
+    },
+    "generative_state": {
+      "type": "object",
+      "required": ["structure", "prompt", "output", "gates"],
+      "additionalProperties": false,
+      "not": { "required": ["sample", "over"] },
+      "properties": {
+        "structure": {
+          "type": "string",
+          "description": "Prose: output shape + what the state reads."
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Prose task, with {{context.key}} interpolation."
+        },
+        "execution": {
+          "type": "string",
+          "description": "Prose operational policy (optional)."
+        },
+        "tier": {
+          "$ref": "#/$defs/tier",
+          "description": "Per-state tier override (optional)."
+        },
+        "reason": {
+          "type": "boolean",
+          "description": "Elicit + trace a private chain-of-thought (§4.5)."
+        },
+        "accumulate": {
+          "type": "boolean",
+          "description": "Append to `output` list instead of overwriting (§4.6)."
+        },
+        "sample": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Fan-out: run N times; output is a list (§4.7)."
+        },
+        "over": {
+          "type": "string",
+          "description": "Fan-out: '{{list}}'; run once per item; output is a list (§4.7)."
+        },
+        "output": {
+          "type": "string",
+          "description": "Context key under which this state's output is stored."
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/gate" }
+        }
+      }
+    },
+    "call_state": {
+      "type": "object",
+      "required": ["call", "output", "gates"],
+      "additionalProperties": false,
+      "not": { "required": ["sample", "over"] },
+      "properties": {
+        "call": {
+          "type": "string",
+          "description": "Name of another machine to run as a subroutine (§4.8)."
+        },
+        "input": {
+          "type": "object",
+          "description": "Maps parent context -> sub-machine initial context."
+        },
+        "tier": { "$ref": "#/$defs/tier" },
+        "sample": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Optional fan-out over the call."
+        },
+        "over": {
+          "type": "string",
+          "description": "Optional fan-out over the call (one sub-run per item)."
+        },
+        "accumulate": { "type": "boolean" },
+        "output": { "type": "string" },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/gate" }
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "required": ["when"],
+      "additionalProperties": false,
+      "description": "A condition plus exactly one policy (then/repair/escalate/fail).",
+      "properties": {
+        "when": {
+          "type": "string",
+          "description": "NL condition, LLM-judged. 'otherwise' is the reserved catch-all."
+        },
+        "then": {
+          "const": "ok",
+          "description": "Advance policy; requires `to`."
+        },
+        "repair": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Self-correct budget; requires `to`."
+        },
+        "escalate": {
+          "const": true,
+          "description": "Route to a handler state; requires `to`."
+        },
+        "fail": { "const": true, "description": "Abort the run; no `to`." },
+        "to": {
+          "type": "string",
+          "description": "Destination state id, or the sentinel END."
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["then", "to"],
+          "not": {
+            "anyOf": [
+              { "required": ["repair"] },
+              { "required": ["escalate"] },
+              { "required": ["fail"] }
+            ]
+          }
+        },
+        {
+          "required": ["repair", "to"],
+          "not": {
+            "anyOf": [
+              { "required": ["then"] },
+              { "required": ["escalate"] },
+              { "required": ["fail"] }
+            ]
+          }
+        },
+        {
+          "required": ["escalate", "to"],
+          "not": {
+            "anyOf": [
+              { "required": ["then"] },
+              { "required": ["repair"] },
+              { "required": ["fail"] }
+            ]
+          }
+        },
+        {
+          "required": ["fail"],
+          "not": {
+            "anyOf": [
+              { "required": ["then"] },
+              { "required": ["repair"] },
+              { "required": ["escalate"] },
+              { "required": ["to"] }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

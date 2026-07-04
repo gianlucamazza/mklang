@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Lint
+        run: uv run --extra dev ruff check src tests
+      - name: Unit tests (MockLLM — no network)
+        run: uv run --extra dev pytest -q
+      - name: Validate example machines against the schema
+        run: >
+          uv run --with check-jsonschema
+          check-jsonschema --default-filetype yaml
+          --schemafile schema/mklang.schema.json examples/*.mk
+      - name: Validate the runtime config against its schema
+        run: >
+          uv run --with check-jsonschema
+          check-jsonschema --default-filetype yaml
+          --schemafile config/runtime.schema.json config/runtime.example.yaml

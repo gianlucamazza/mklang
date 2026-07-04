@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mklang.dev/schema/runtime.schema.json",
+  "title": "mklang runtime config",
+  "description": "Host-side runtime configuration for mklang: selects a provider and maps capability tiers (fast/balanced/reasoning) to concrete models. NOT part of any .mk file. See SPEC.md §2.1.",
+  "type": "object",
+  "required": ["active", "providers"],
+  "additionalProperties": false,
+  "properties": {
+    "active": {
+      "type": "string",
+      "description": "Key of the provider block the runtime uses (must exist in `providers`)."
+    },
+    "providers": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Map of provider-name -> provider config.",
+      "additionalProperties": { "$ref": "#/$defs/provider" }
+    },
+    "run": {
+      "type": "object",
+      "description": "Global run defaults (not model selection).",
+      "additionalProperties": false,
+      "properties": {
+        "max_repair_per_gate": { "type": "integer", "minimum": 0 },
+        "trace": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "tier_map": {
+      "type": "object",
+      "description": "Maps each capability tier to a concrete model id.",
+      "required": ["fast", "balanced", "reasoning"],
+      "additionalProperties": false,
+      "properties": {
+        "fast": { "type": "string" },
+        "balanced": { "type": "string" },
+        "reasoning": { "type": "string" }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "required": ["tiers"],
+      "additionalProperties": false,
+      "properties": {
+        "api_key_env": {
+          "type": "string",
+          "description": "Name of the env var holding this provider's API key."
+        },
+        "base_url": {
+          "type": "string",
+          "description": "Override endpoint (OpenAI-compatible local servers, proxies)."
+        },
+        "tiers": { "$ref": "#/$defs/tier_map" },
+        "judge": {
+          "type": "string",
+          "description": "Optional model id used only for gate judging (cost optimization)."
+        },
+        "params": {
+          "type": "object",
+          "description": "Per-tier, provider-specific generation params (effort, thinking, reasoning_effort, …). Free-form; validated by the runtime, not here.",
+          "additionalProperties": false,
+          "properties": {
+            "fast": { "type": "object" },
+            "balanced": { "type": "object" },
+            "reasoning": { "type": "object" }
+          }
+        }
+      }
+    }
+  }
+}

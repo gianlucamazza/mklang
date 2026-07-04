@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../schema/mklang.schema.json
+# summarize_doc.mk — a small worker machine, called by map_reduce.mk (§4.8)
+
+mklang: "0.2"
+machine: summarize_doc
+entry: summarize
+budget: 4
+default_tier: fast
+result: summary
+
+context:
+  text: ""
+
+states:
+  summarize:
+    structure: >
+      The output is a faithful 2-sentence summary of the input text.
+    prompt: "Summarize in exactly two sentences: {{text}}"
+    output: summary
+    gates:
+      - when: otherwise
+        then: ok
+        to: END

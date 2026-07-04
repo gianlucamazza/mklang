@@ -1,0 +1,677 @@
+# mklang — Language Specification
+
+> Version 0.1 (draft). Surface syntax: **YAML**. Runtime:
+> **language-agnostic** (a conformant runtime is any host with access to an LLM).
+
+---
+
+## 1. Philosophy & positioning
+
+**mklang is a declarative language for describing LLM-driven state machines.** A
+`.mk` file (mk = _machine_) does not compile to code: it is _executed_ by feeding
+it to an LLM that interprets its states. The document _is_ the program.
+
+Principles:
+
+- **Document-first.** A `.mk` is readable — and largely writable — even by
+  non-programmers. Logic lives in prose, not in host code.
+- **LLM-as-runtime.** There is no deterministic engine executing the graph: the LLM
+  itself, state by state, produces the output and decides the transitions.
+  Execution is therefore **non-deterministic** by construction.
+- **Gates as the safety net.** Because the runtime is unreliable, reliability comes
+  not from types but from **gates**: conditions each state must pass before
+  transitioning. Gates are what make the unreliable usable.
+- **Provider-agnostic.** A `.mk` file never names an LLM provider or a concrete
+  model. The same machine runs unchanged on Anthropic, OpenAI, Google, or a local
+  model (Ollama/vLLM/…). A state may express a provider-neutral **capability tier**
+  (§2.1); the runtime maps each tier to a concrete model in its own config.
+
+### Comparison
+
+|             | mklang             | LangGraph         | BAML            | DSPy                   |
+| ----------- | ------------------ | ----------------- | --------------- | ---------------------- |
+| Artifact    | YAML doc           | Python code       | schema→code     | Python code            |
+| Runtime     | LLM interprets doc | Python runs graph | host calls fns  | Python + optimizer     |
+| Composition | state machine      | graph/FSM         | typed functions | modules/signatures     |
+| Determinism | none (by design)   | of control-flow   | of typed output | of control-flow        |
+| Audience    | non-devs too       | developers        | developers      | developers/researchers |
+
+_mklang is to LangGraph what a declarative spec is to Python code._
+
+### What mklang is **not** (v0.1)
+
+- It does not compile to a formal artifact (GBNF, JSON Schema, code).
+- It guarantees neither determinism nor statically typed output.
+- It has, in this version, no code-hooks, formal types, sub-machines, or
+  parallelism (→ §9).
+
+---
+
+## 2. Conceptual model
+
+Four entities.
+
+- **machine** — the unit of distribution: one `.mk` file. It has an entry state, a
+  global budget, and a map of states.
+- **state** — a node of the machine. It is where the LLM _does something_. It has
+  four faces (§4).
+- **context** (blackboard) — a dictionary of values that **accumulates across the
+  run** and is passed between states. A state's output is deposited under a key;
+  prompts read it via `{{...}}` interpolation (§4.2). It is the only memory channel
+  between states.
+- **trace** — the ordered sequence of a single run's transitions: which states were
+  visited, what they produced, which gate fired and toward where. It is a
+  **first-class** object (§8): without the trace, a non-deterministic FSM is
+  impossible to debug.
+
+A run is: starting from `entry`, execute the current state, evaluate its gates,
+follow the transition, repeat — until a gate leads to `END` or `fail`, or the
+budget is exhausted.
+
+### 2.1 Provider-agnostic runtime & capability tiers
+
+The runtime is **multi-provider by design**. A conformant runtime holds a
+**tier → (provider, model)** mapping in its own configuration; the `.mk` file only
+references tiers, never providers or models. This keeps machines portable and lets
+the same document run against different backends by swapping config.
+
+Three provider-neutral tiers:
+
+| Tier        | Intent                             | Typical use                         |
+| ----------- | ---------------------------------- | ----------------------------------- |
+| `fast`      | Cheap, low-latency, "good enough". | classification, routing, extraction |
+| `balanced`  | Default quality/cost trade-off.    | most states                         |
+| `reasoning` | Strongest available model.         | hard generation, critical gates     |
+
+- A machine sets a default with top-level `default_tier` (defaults to `balanced`
+  if omitted); a state overrides it with `tier` (§4).
+- A state's tier applies to both its **generation** (`LLM.produce`) and its **gate
+  judging** (`LLM.judge`) — though a runtime MAY use a cheaper model for judging as
+  an optimization.
+- Example config (illustrative, host-side — **not** part of the `.mk`):
+  `reasoning → anthropic:claude-opus-4-8` on one deployment,
+  `reasoning → openai:<model>` or `reasoning → ollama:<local-model>` on another.
+
+The concrete shape of this host-side config is non-normative; a worked example
+covering all providers and current models lives at
+`config/runtime.example.yaml` (validated by `config/runtime.schema.json`).
+
+Explicit provider/model pinning inside a `.mk` is a deliberate non-goal (§9): it
+would break portability. Route by capability, not by vendor.
+
+---
+
+## 3. Anatomy of a `.mk` file
+
+A `.mk` is a YAML document with these top-level keys:
+
+```yaml
+machine: <name> # the machine's identifier
+entry: <state-id> # entry state
+budget: <int> # max steps per run (anti-loop guard, §7)
+default_tier?: fast|balanced|reasoning # default capability tier (§2.1); default balanced
+result?: <key> # context key returned to a caller (§4.8); default = last output
+context?: <map> # initial blackboard values (optional)
+states: # map of <state-id> -> state definition
+  # (a) generative state — the LLM produces this state's output:
+  <state-id>:
+    structure: <prose>
+    prompt: <prose>
+    execution?: <prose> # optional (§4.3)
+    tier?: fast|balanced|reasoning # per-state tier override (§2.1)
+    reason?: <bool> # elicit a private chain-of-thought, traced (§4.5)
+    accumulate?: <bool> # append to a list under `output` instead of overwriting (§4.6)
+    sample?: <int> # fan-out: run N times → output is a list (§4.7)
+    over?: "{{list}}" # fan-out: run once per item → output is a list (§4.7)
+    output: <key> # context key under which this state's output is stored
+    gates: <list of gates>
+  # (b) call state — runs another machine as a subroutine (§4.8):
+  <state-id>:
+    call: <machine-name>
+    input?: <map> # parent context -> sub-machine's initial context
+    tier?: fast|balanced|reasoning
+    sample?: <int> # optional fan-out over the call
+    over?: "{{list}}" # optional fan-out over the call (one sub-run per item)
+    accumulate?: <bool>
+    output: <key>
+    gates: <list of gates>
+```
+
+> A state is **either** generative (has `prompt`) **or** a call (has `call`), never
+> both. `sample` and `over` are mutually exclusive.
+
+Informal (non-normative) pseudo-schema of a **state**:
+
+```
+State       ::= Generative | Call
+
+Generative  ::= {
+  structure  : string          # prose: shape of {{output}} + input read
+  prompt     : string          # prose: task, with {{context.key}}
+  execution  : string?         # prose: operational policy (opt.)
+  tier       : Tier?           # "fast" | "balanced" | "reasoning" (§2.1)
+  reason     : bool?           # elicit + trace a private chain-of-thought (§4.5)
+  accumulate : bool?           # append to `output` list instead of set (§4.6)
+  sample     : int?            # fan-out: run N times (>= 2); output is a list (§4.7)
+  over       : string?         # fan-out: "{{list}}"; run once per item (§4.7)
+  output     : string          # context key where this state's output is stored
+  gates      : Gate[]          # >= 1, the last one should be a catch-all
+}                              # sample XOR over
+
+Call        ::= {
+  call       : MachineName     # another machine, run as a subroutine (§4.8)
+  input      : map?            # parent context -> sub-machine initial context
+  tier       : Tier?
+  sample     : int?            # optional fan-out over the call
+  over       : string?         # optional fan-out over the call
+  accumulate : bool?
+  output     : string          # sub-run result stored here
+  gates      : Gate[]
+}
+
+Gate ::= {
+  when : string                # natural-language condition (LLM-judged)
+  # exactly ONE of:
+  then    : "ok"   , to: StateId|"END"     # advance
+  repair  : int    , to: StateId           # reprompt with feedback, budget int
+  escalate: true   , to: StateId           # route to a handler state
+  fail    : true                           # abort the run
+}
+```
+
+Conventions:
+
+- State ids are `snake_case`.
+- `END` is the implicit terminal state: `to: END` ends the run successfully.
+- Long prose uses YAML block scalars: `|` (keep newlines) or `>` (folded).
+
+Reserved keys:
+
+- Top-level: `machine`, `entry`, `budget`, `default_tier`, `result`, `context`,
+  `states`.
+- Generative state: `structure`, `prompt`, `execution`, `tier`, `reason`,
+  `accumulate`, `sample`, `over`, `output`, `gates`.
+- Call state: `call`, `input`, `tier`, `sample`, `over`, `accumulate`, `output`,
+  `gates`.
+- Gate: `when`, `then`, `repair`, `escalate`, `fail`, `to`.
+- Tier values: `fast`, `balanced`, `reasoning`.
+- Fan-out vars (inside `over` states): `{{item}}`, `{{index}}`.
+- Sentinels: `END` (terminal destination), `otherwise` (always-true catch-all
+  condition, §5).
+
+---
+
+## 4. The faces of a state
+
+Precise, non-overlapping separation. The four **core** faces — mnemonic:
+**structure = what shape**, **prompt = what to think**, **execution = how to act**,
+**gates = when (and where) to exit** — plus four **optional** faces that unlock
+richer reasoning: `reason` (§4.5), `accumulate` (§4.6), fan-out (§4.7), `call`
+(§4.8). Every construct still resolves to states + gates + prose.
+
+### 4.1 `structure` — the I/O contract (prose)
+
+Describes **what the state reads** from context and **what shape** the output takes.
+No type system: it is prose, the LLM interprets it. The output is stored in the
+context under the key named by the state's `output` field, not by the prose.
+
+```yaml
+structure: >
+  Reads {{ticket.body}}. The output is an email reply to the customer, courteous
+  tone, max 150 words, that resolves or forwards the request.
+output: draft # stored in context as {{draft}}
+```
+
+### 4.2 `prompt` — the task (prose, interpolatable)
+
+The instruction given to the LLM to _produce_ the output. Supports `{{key}}` /
+`{{key.subfield}}` interpolation resolved against the current context.
+
+```yaml
+prompt: |
+  Write a reply to {{ticket.body}} using the facts in {{kb_answer}}.
+  Do not invent policies that are not in the KB.
+```
+
+### 4.3 `execution` — the operational policy (prose, optional)
+
+Constraints on _how_ the state acts, distinct from the task content: allowed tools
+and their limits, behavioral guardrails, permitted side-effects. Tools are
+described in prose; it is the host that makes them available at runtime (the spec
+stays agnostic on how).
+
+```yaml
+execution: |
+  You may consult the `search_kb` tool at most 2 times.
+  Do not contact the customer in this state: here you only draft.
+```
+
+### 4.4 `gates` — post-conditions + transitions
+
+See §5.
+
+### 4.5 `reason` — private chain-of-thought (optional)
+
+`reason: true` tells the runtime to elicit a **private chain-of-thought** before the
+answer. The reasoning is:
+
+- **recorded in the trace** for that step (as `reasoning`), so the run is inspectable;
+- **visible to that state's gates** (the judge sees reasoning + output);
+- **not** deposited into the context — only the `output` is.
+
+To pass reasoning downstream, use a dedicated state whose `output` _is_ the
+reasoning. On providers with native thinking (Anthropic adaptive thinking, DeepSeek
+reasoner, o1-style), the runtime maps `reason: true` to that native capability;
+otherwise it prompts for an explicit scratchpad. This is Chain-of-Thought as a
+first-class, observable primitive.
+
+```yaml
+diagnose:
+  structure: > The output is the most likely root cause, one line.
+  prompt: "Given the symptoms {{symptoms}}, determine the root cause."
+  reason: true # think step by step; the chain is traced, the output stays one line
+  output: root_cause
+  gates: [{ when: otherwise, then: ok, to: END }]
+```
+
+### 4.6 `accumulate` — append instead of set (optional)
+
+By default a state **overwrites** its `output` key (set). `accumulate: true` makes it
+**append** the output to a list under that key (created if absent). This is what makes
+loops robust: a state re-entered by a `repair` or a loop-back gate grows a list
+instead of clobbering it — the natural home for a ReAct scratchpad, accumulating
+research notes, or a debate transcript.
+
+```yaml
+gather:
+  structure: > The output is one new piece of evidence.
+  prompt: "Find ONE fact not already in {{notes}} about {{question}}."
+  accumulate: true # each visit appends to the {{notes}} list
+  output: notes
+  gates: [{ when: otherwise, then: ok, to: check }]
+```
+
+### 4.7 Fan-out — `sample` / `over` (optional)
+
+A generative or call state becomes a **fan-out** with exactly one of:
+
+- `sample: N` — run the (rendered) prompt **N independent times** (N ≥ 2). `output`
+  becomes a **list of N results**. Basis for self-consistency and sampled ensembles.
+- `over: "{{list}}"` — run **once per item** of a context list. Each run additionally
+  sees `{{item}}` (the element) and `{{index}}` (0-based). `output` becomes a list
+  aligned to the input. Basis for map / map-reduce / plan-execute.
+
+Semantics:
+
+- The branches are **independent** — a runtime MAY execute them concurrently.
+  Parallelism is an execution detail, never surfaced in the syntax.
+- The state's **gates judge the whole list** (e.g. _"at least half the candidates
+  agree"_); typically a fan-out state simply advances to a **reducer** state.
+- **Reduction is an ordinary downstream state** (no built-in aggregators): it reads
+  the list via `{{...}}` and its prompt votes / selects / merges. This keeps
+  everything "state + prose".
+- **Budget** (§7): a fan-out consumes `sample` (or `len(list)`) steps.
+- `over` on an **empty** list produces an empty list and fires the gates normally
+  (author-handled, e.g. an `otherwise` gate).
+
+```yaml
+sample_answers: # fan-out
+  structure: > The output is a candidate answer with a one-line justification.
+  prompt: "Answer the question, reasoning independently: {{question}}"
+  sample: 5
+  output: candidates
+  gates: [{ when: otherwise, then: ok, to: vote }]
+
+vote: # reducer (ordinary state)
+  structure: > The output is the single best answer.
+  prompt: "Given the candidate answers {{candidates}}, return the one the majority support."
+  output: answer
+  gates: [{ when: otherwise, then: ok, to: END }]
+```
+
+### 4.8 `call` — sub-machine invocation (optional)
+
+A **call state** has no `prompt`/`structure`; instead `call: <machine-name>` runs
+another machine as a subroutine. `input` maps parent-context values into the
+sub-machine's initial context; the sub-run's result is deposited under this state's
+`output`. Sub-machines make machines **composable** — orchestrator-worker,
+router-of-experts, recursion, and heterogeneous plan-execute all fall out of it.
+Combined with fan-out (`over` + `call`) it becomes one agent per item.
+
+```yaml
+map_summarize: # one sub-machine run per chunk (orchestrator-worker)
+  over: "{{chunks}}"
+  call: summarize_doc
+  input: { text: "{{item}}" }
+  output: summaries
+  gates: [{ when: otherwise, then: ok, to: combine }]
+```
+
+The runtime resolves `call` names against a **registry of machines** (a project may
+hold many `.mk` files). The parent's trace **nests** the child's trace (§8), and
+sub-runs are bounded by their own `budget` plus a runtime **call-depth cap** so
+recursion terminates.
+
+---
+
+## 5. Gates = transitions
+
+A state's `gates` list **is its transition table**. Each gate pairs a condition
+with a policy and (except for `fail`) a destination.
+
+### Evaluation
+
+- Gates are evaluated **top to bottom**: **order is priority**.
+- For each, the LLM judges whether `when` (a natural-language condition) is **true**
+  given the output just produced and the context.
+- The **first** gate whose `when` is true fires; the rest are ignored.
+- `when: otherwise` is a **reserved catch-all**: the judge always treats it as true,
+  so it fires whenever evaluation reaches it. Every non-terminal state **should**
+  end with an `otherwise` gate to guarantee a transition always fires. If no gate
+  matches, the run halts with error `no-gate-matched`.
+
+### The four policies
+
+| Policy      | Effect                                                                                                                     | Fields             |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `then: ok`  | Condition satisfied: transition to `to`.                                                                                   | `to: StateId\|END` |
+| `repair: N` | Stay (usually) on the same state and **re-run**, injecting the failed `when` as feedback into the prompt. Budget `N` (§7). | `to: StateId`      |
+| `escalate`  | Route to a handler state (e.g. human review, fallback).                                                                    | `to: StateId`      |
+| `fail`      | Abort the run, propagating the error.                                                                                      | —                  |
+
+### `repair(N)` semantics
+
+`repair` is the self-correction mechanism. When it fires:
+
+1. The runtime re-enters state `to` (typically the same state).
+2. The `prompt` gets a feedback line **appended** citing the failed condition,
+   e.g.: _"The previous attempt does not satisfy: '{{when}}'. Fix it."_
+3. The **per-gate repair budget** decrements by 1.
+4. Once the budget is exhausted, the `repair` gate **no longer fires**: evaluation
+   proceeds to the following gates (which must include an exit, e.g. `escalate` or
+   `fail`).
+
+Example transition table:
+
+```yaml
+gates:
+  - when: the reply resolves the request and is in the required tone
+    then: ok
+    to: send
+  - when: information that should have come from the KB is missing
+    repair: 2
+    to: gather
+  - when: the request implies a refund over threshold or a legal matter
+    escalate: true
+    to: human_review
+  - when: otherwise
+    then: ok
+    to: human_review
+```
+
+---
+
+## 6. Execution semantics
+
+Abstract interpreter (independent of the implementation language). `run` is
+recursive — a `call` state re-enters it for the sub-machine.
+
+```
+run(machine, context, registry, depth=0):
+  if depth > MAX_CALL_DEPTH: return halt(error="call-depth-exceeded")
+  state_id = machine.entry
+  trace = []; steps = 0; repair_budget = {}; feedback = ""
+
+  while True:
+    if steps >= machine.budget: return halt(trace, error="budget-exhausted")
+    S = machine.states[state_id]
+
+    # 1) EXECUTE the state → `result` (a value, or a list for fan-out)
+    if fan_out(S):                              # S.sample or S.over
+      branches = branch_contexts(S, context)    # N copies, or one per item
+      steps += len(branches)                    # fan-out costs N steps (§7)
+      result = [ execute_one(S, bctx, registry, depth) for bctx in branches ]
+      # branches are independent → MAY run concurrently
+    else:
+      steps += 1
+      result = execute_one(S, context, feedback, registry, depth)
+    feedback = ""
+
+    # 2) DEPOSIT into context (set, or append if accumulate)
+    if S.accumulate: context[S.output] = (context.get(S.output, []) + [result])
+    else:            context[S.output] = result
+
+    # 3) JUDGE gates in order (LLM-judge; `otherwise` always true)
+    (i, gate) = judge_first(S.gates, result, context, repair_budget, state_id)
+    if gate is None: return halt(trace, error="no-gate-matched")
+    trace.append(step(state_id, S, result, gate))   # incl. reasoning / branches / sub_trace
+
+    # 4) TRANSITION
+    match gate.kind:
+      case ok:       state_id = gate.to
+                     if state_id == "END": return done(trace, context, machine.result)
+      case repair:   repair_budget[(state_id,i)] -= 1
+                     feedback = feedback_from(gate.when); state_id = gate.to
+      case escalate: state_id = gate.to
+      case fail:     return halt(trace, error="gate-fail", at=state_id)
+
+execute_one(S, ctx, feedback, registry, depth):
+  if S.call:                                    # sub-machine invocation (§4.8)
+    sub_ctx = map_input(S.input, ctx)
+    sub = run(registry[S.call], sub_ctx, registry, depth+1)
+    return sub.result                           # nested trace attached to the step
+  else:                                         # generative state
+    prompt = render(S.prompt, ctx) + feedback
+    (reasoning, text) = LLM.produce(prompt, guidance=S.structure,
+                                    policy=S.execution, reason=S.reason)
+    return text                                 # `reasoning` recorded in the step
+```
+
+Notes:
+
+- **produce vs judge** are distinct calls: generate, then judge against each `when`.
+  A host MAY fuse the judgments into a single call, as long as it respects
+  order/priority (skipping `repair` gates whose budget is 0).
+- **`reason: true`** makes `produce` return a `reasoning` scratchpad alongside the
+  text; it is written into the trace step and passed to the judge, never into
+  `context`. On native-thinking models it maps to that capability (§4.5).
+- **Fan-out** (`sample`/`over`) deposits a **list**; the gates judge the whole list;
+  a downstream reducer state collapses it (§4.7). Branches are independent, so a
+  runtime MAY execute them concurrently — the result list order is preserved.
+- **`call`** runs a sub-machine to completion and returns its `result` (§4.8); the
+  parent step embeds the child's trace.
+- `guidance=S.structure` / `policy=S.execution` are surrounding instructions to
+  generation, not formal constraints.
+
+---
+
+## 7. Budget, termination, errors
+
+Non-determinism + loops (`repair`, loop-back gates, recursion) make **divergence**
+possible. Guards:
+
+- **Global budget** (`budget:` on the machine): max steps per run. A fan-out state
+  consumes `sample` (or `len(list)`) steps. Exceeded → `halt(error="budget-exhausted")`.
+  Mandatory. Each sub-machine `call` runs under **its own** budget.
+- **Per-gate repair budget** (`repair: N`): how many times that gate may
+  self-correct. Exhausted → the gate is skipped and evaluation proceeds.
+- **Call-depth cap** (`MAX_CALL_DEPTH`, runtime): bounds recursion so a machine that
+  calls itself terminates.
+- **Empty `over`**: an `over` on an empty list produces an empty list and fires the
+  gates normally (author handles it, e.g. via an `otherwise` gate).
+
+**Termination.** A run ends as: `done` (a gate reaches `to: END`; the machine's
+`result` key, if set, is returned — else the last state's output); or `halt` with an
+error (`fail`, `no-gate-matched`, `budget-exhausted`, `call-depth-exceeded`).
+`escalate` is not itself terminal — it routes to a handler state that must reach
+`END`. **Every machine must have at least one reachable path to `END`** (author's
+responsibility in v0.2; a validator SHOULD check it).
+
+---
+
+## 8. Trace / observability
+
+A run produces a **trace**: an ordered list of steps. A plain step:
+
+```yaml
+- step: 3
+  state: draft_reply
+  output: "<the output produced by the state>"
+  reasoning: "<the chain-of-thought, if reason: true>" # optional (§4.5)
+  gate_fired: "the reply resolves the request and is in the required tone"
+  policy: ok # ok | repair | escalate | fail
+  to: send
+  cost?: { input_tokens: …, output_tokens: … } # if the host tracks it
+```
+
+Two shapes carry nested detail:
+
+```yaml
+# fan-out state (§4.7): one entry per branch
+- step: 1
+  state: sample_answers
+  branches: ["<candidate 1>", "<candidate 2>", "…"] # the produced list
+  gate_fired: otherwise
+  policy: ok
+  to: vote
+
+# call state (§4.8): the sub-run's trace is embedded
+- step: 2
+  state: map_summarize
+  output: ["<summary 1>", "…"]
+  sub_trace: [{ step: 1, state: … }, …] # (one per branch when over+call)
+  gate_fired: otherwise
+  policy: ok
+  to: combine
+```
+
+The trace is the primary debugging artifact: it makes inspectable _why_ the machine
+took a given path — indispensable when the runtime is an LLM, and doubly so once
+fan-out and sub-machines nest.
+
+---
+
+## 9. Non-goals & open questions
+
+Deliberately out of v0.2 (sub-machines, fan-out/parallelism, and reasoning are now
+**in** the core — §4.5–§4.8):
+
+- **Code-hook gates** — gates evaluated by a host function (bool) instead of the
+  LLM, for exact/critical checks (e.g. `total == sum(lines)`).
+- **Formal types** in `structure`, for static verification of composition and gates.
+- **Caching / reproducibility** — per-state cache (same input+prompt → same output)
+  for deterministic tests and cost reduction.
+- **Tool declarations** — tools referenced in `execution` (e.g. `search_kb`,
+  `web_search`) are provided by the host; v0.1 has no syntax to declare, type, or
+  bind them. They are prose the runtime is expected to resolve to host capabilities.
+- **Explicit provider/model pinning** — a `.mk` routes by capability tier (§2.1),
+  never by vendor or model id. Pinning a concrete provider/model in the document
+  would break portability, so it is deliberately excluded. If a future version adds
+  it, it will be an optional, clearly-marked escape hatch — the tier remains the
+  portable default.
+
+Each is an additive extension that does not alter the base state-machine model.
+
+---
+
+## 10. Patterns cookbook
+
+Every modern reasoning/agentic architecture maps onto the core (states + gates +
+prose + tiers + §4.5–§4.8). This table is the map; skeletons follow.
+
+| Architecture          | mklang constructs                                                         |
+| --------------------- | ------------------------------------------------------------------------- |
+| Chain-of-Thought      | `reason: true` (or a `reason` → `answer` state pair)                      |
+| ReAct                 | loop; tool in `execution`; observation `accumulate`d; gate "have answer?" |
+| Reflexion/self-refine | produce → self-judge gate → `repair` (optionally a `critic` state)        |
+| Self-consistency      | `sample: N` → reducer state (majority)                                    |
+| Tree-of-Thought       | `sample: k` → score/select reducer → loop-back gate (depth via `budget`)  |
+| Plan-and-Execute      | planner (list `steps`) → `over: {{steps}}` → reducer                      |
+| Debate / ensemble     | `over: {{personas}}` (or `sample`) → synthesizer state                    |
+| Map-Reduce            | `over: {{chunks}}` → reducer                                              |
+| Router-of-experts     | classify → branch to specialist `call` sub-machines                       |
+| Speculative cascade   | draft `tier: fast` → `escalate` gate → `tier: reasoning` state            |
+
+**Chain-of-Thought** — reasoning traced, answer clean:
+
+```yaml
+solve:
+  structure: > The output is the final answer only.
+  prompt: "Solve: {{problem}}"
+  reason: true
+  output: answer
+  gates: [{ when: otherwise, then: ok, to: END }]
+```
+
+**Self-consistency** — sample, then a reducer votes:
+
+```yaml
+entry: draft
+budget: 12
+result: answer
+states:
+  draft:
+    structure: > A candidate answer with a one-line justification.
+    prompt: "Answer independently, reasoning step by step: {{question}}"
+    reason: true
+    sample: 5
+    tier: fast
+    output: candidates
+    gates: [{ when: otherwise, then: ok, to: vote }]
+  vote:
+    structure: > The single answer the majority support.
+    prompt: "Candidates:\n{{candidates}}\nReturn the majority answer."
+    tier: reasoning
+    output: answer
+    gates: [{ when: otherwise, then: ok, to: END }]
+```
+
+**Map-Reduce / orchestrator-worker** — a sub-machine per chunk, then combine:
+
+```yaml
+map:
+  over: "{{chunks}}"
+  call: summarize_doc
+  input: { text: "{{item}}" }
+  output: summaries
+  gates: [{ when: otherwise, then: ok, to: combine }]
+combine:
+  structure: > One consolidated summary.
+  prompt: "Merge these summaries into one:\n{{summaries}}"
+  tier: reasoning
+  output: summary
+  gates: [{ when: otherwise, then: ok, to: END }]
+```
+
+**Reflexion** — the `repair` loop is exactly generate → critique → revise:
+
+```yaml
+write:
+  structure: > A polished draft.
+  prompt: "Write the section on {{topic}}."
+  output: draft
+  gates:
+    - { when: the draft is accurate, complete, and well-structured, then: ok, to: END }
+    - { when: the draft has gaps or errors, repair: 2, to: write }
+    - { when: otherwise, escalate: true, to: human_review }
+```
+
+**Speculative cascade** — cheap first, strong on demand (tiers do the work):
+
+```yaml
+draft:
+  structure: > A best-effort answer plus a self-rated confidence.
+  prompt: "Answer: {{question}}"
+  tier: fast
+  output: quick
+  gates:
+    - { when: the answer is confident and well-supported, then: ok, to: END }
+    - { when: otherwise, escalate: true, to: deliberate }
+deliberate:
+  structure: > A careful, verified answer.
+  prompt: "Answer rigorously, checking your work: {{question}}"
+  tier: reasoning
+  reason: true
+  output: quick
+  gates: [{ when: otherwise, then: ok, to: END }]
+```

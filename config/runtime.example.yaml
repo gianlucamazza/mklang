@@ -1,0 +1,127 @@
+# yaml-language-server: $schema=./runtime.schema.json
+#
+# mklang runtime configuration — HOST-SIDE, and deliberately NOT part of any .mk.
+# It maps the language's provider-neutral capability tiers (fast / balanced /
+# reasoning, see SPEC.md §2.1) to concrete provider models. Swap `active` (or the
+# tier maps) and the SAME .mk runs on a different backend with zero edits.
+#
+# Model IDs below are current as of 2026-07-03. Anthropic IDs are authoritative;
+# the others are the current best-in-class per provider and are host-updatable —
+# verify against each provider's catalog before production.
+
+active: anthropic # provider block the runtime uses: anthropic | openai | google | deepseek | openrouter | xai | mistral | local
+
+# NOTE: every non-Anthropic provider below speaks the OpenAI-compatible protocol,
+# so one adapter (base_url + api_key_env + tiers) serves them all. OpenRouter is a
+# meta-provider — its `vendor/model` ids let each tier target a different vendor.
+
+providers:
+  # --- Anthropic -----------------------------------------------------------
+  anthropic:
+    api_key_env: ANTHROPIC_API_KEY
+    tiers:
+      fast: claude-haiku-4-5 # cheapest/fastest ($1/$5 per Mtok)
+      balanced: claude-sonnet-5 # near-Opus quality at Sonnet cost ($3/$15)
+      reasoning: claude-opus-4-8 # strongest Opus-tier ($5/$25); swap to claude-fable-5 for the max tier
+    judge: claude-haiku-4-5 # optional: cheaper model used only for gate judging
+    params:
+      # Latest-model features. Opus 4.8 / Sonnet 5: adaptive thinking + effort
+      # (budget_tokens is removed on these models — do NOT use it).
+      reasoning:
+        thinking: adaptive
+        effort: high # low | medium | high | xhigh | max (xhigh best for agentic)
+        # task_budget: 64000   # optional (beta): self-pacing token budget for agentic states
+      balanced:
+        thinking: adaptive
+        effort: medium
+      fast:
+        thinking: disabled # Haiku 4.5 does not support `effort` — omit it here
+
+  # --- OpenAI --------------------------------------------------------------
+  openai:
+    api_key_env: OPENAI_API_KEY
+    tiers:
+      fast: gpt-5-mini
+      balanced: gpt-5
+      reasoning: gpt-5.4
+    judge: gpt-5-mini
+    params:
+      reasoning:
+        reasoning_effort: high # minimal | low | medium | high
+      balanced:
+        reasoning_effort: medium
+
+  # --- Google --------------------------------------------------------------
+  google:
+    api_key_env: GEMINI_API_KEY
+    tiers:
+      fast: gemini-3-flash
+      balanced: gemini-3-pro
+      reasoning: gemini-3-pro
+    judge: gemini-3-flash
+    params:
+      reasoning:
+        thinking_level: high # Gemini 3 dynamic thinking control
+
+  # --- DeepSeek ------------------------------------------------------------
+  # OpenAI-compatible API. Two stable aliases that track the latest weights:
+  # `deepseek-chat` (V3-line, general) and `deepseek-reasoner` (R1-line, thinking).
+  deepseek:
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    tiers:
+      fast: deepseek-chat
+      balanced: deepseek-chat
+      reasoning: deepseek-reasoner
+    judge: deepseek-chat
+
+  # --- OpenRouter (meta-provider / aggregator) -----------------------------
+  # One endpoint, hundreds of models across every vendor. Model ids are
+  # namespaced `vendor/model`, so each tier can point at a DIFFERENT underlying
+  # provider — pick the best model per tier regardless of who makes it.
+  openrouter:
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    tiers:
+      fast: google/gemini-3-flash
+      balanced: anthropic/claude-sonnet-5
+      reasoning: openai/gpt-5.4
+    judge: openai/gpt-5-mini
+
+  # --- xAI (Grok) ----------------------------------------------------------
+  xai:
+    base_url: https://api.x.ai/v1
+    api_key_env: XAI_API_KEY
+    tiers:
+      fast: grok-4-fast
+      balanced: grok-4
+      reasoning: grok-4-heavy
+    judge: grok-4-fast
+    params:
+      reasoning:
+        reasoning_effort: high
+
+  # --- Mistral -------------------------------------------------------------
+  mistral:
+    base_url: https://api.mistral.ai/v1
+    api_key_env: MISTRAL_API_KEY
+    tiers:
+      fast: mistral-small-latest
+      balanced: mistral-large-latest
+      reasoning: magistral-medium-latest # Mistral's reasoning model
+    judge: mistral-small-latest
+
+  # --- Local (OpenAI-compatible endpoint: Ollama / vLLM / LM Studio) --------
+  local:
+    base_url: http://localhost:11434/v1
+    api_key_env: LOCAL_API_KEY # often unused for local servers; keep for compatibility
+    tiers:
+      fast: qwen3:8b
+      balanced: qwen3:32b
+      reasoning: deepseek-r1:70b # a reasoning-tuned local model
+    judge: qwen3:8b
+
+# Global run defaults applied by the runtime (not model selection).
+run:
+  max_repair_per_gate: 2 # cap when a gate's repair budget is unspecified
+  trace: true # emit the run trace (SPEC.md §8)

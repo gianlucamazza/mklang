@@ -1,0 +1,46 @@
+[project]
+name = "mklang"
+version = "0.2.0"
+description = "A declarative language for LLM-driven state machines (reference interpreter)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Gianluca", email = "homen3@gmail.com" }]
+keywords = ["llm", "state-machine", "agents", "dsl", "reasoning"]
+dependencies = [
+  "pyyaml>=6",
+  "jsonschema>=4",
+  "python-dotenv>=1",
+  "openai>=1.40",
+]
+
+[project.urls]
+Homepage = "https://github.com/gianluca/mklang"
+Specification = "https://github.com/gianluca/mklang/blob/main/SPEC.md"
+Changelog = "https://github.com/gianluca/mklang/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+mklang = "mklang.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mklang"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/mklang/data/mklang.schema.json" = "mklang/data/mklang.schema.json"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

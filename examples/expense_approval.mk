@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=../schema/mklang.schema.json
+# expense_approval.mk — divergent-terminals FSM (expense reports)
+#
+# Flow:
+#   extract → validate → {auto_approve | manager_review | reject(fail)}
+# Shows: genuinely divergent terminal outcomes, a repair loop on a missing
+# receipt, escalate over threshold, and `fail` as a legitimate final outcome.
+
+mklang: "0.2"
+machine: expense_approval
+entry: extract
+budget: 15
+
+context:
+  report:
+    text: "<the raw expense report submitted by the employee>"
+
+states:
+  # --- Extract the structured expense from the raw report ----------------
+  extract:
+    structure: >
+      Reads {{report.text}}. The output records the amount, the category, and
+      whether a valid receipt is attached.
+    prompt: |
+      Extract from the expense report the amount, the spending category, and
+      whether a valid receipt is attached: {{report.text}}
+    tier: fast # structured extraction
+    output: expense
+    gates:
+      - when: the amount, category and receipt status could all be determined
+        then: ok
+        to: validate
+      - when: otherwise
+        then: ok
+        to: validate
+
+  # --- Validate against expense policy -----------------------------------
+  validate:
+    structure: >
+      Reads {{expense}}. The output is a policy verdict: compliant and within
+      which approval tier, or the specific violation found.
+    prompt: |
+      Check {{expense}} against policy: receipts are required for any amount;
+      up to 100 EUR auto-approves; 100–1000 EUR needs a manager; alcohol and
+      cash-advance categories are never reimbursable.
+    tier: reasoning # policy judgement drives a fail/escalate decision — be careful
+    output: verdict
+    gates:
+      - when: compliant, receipt attached, and amount is 100 EUR or less
+        then: ok
+        to: auto_approve
+      - when: the receipt is missing but the expense is otherwise plausible
+        repair: 1
+        to: extract
+      - when: the category is never reimbursable (alcohol or cash-advance)
+        fail: true
+      - when: compliant and the amount requires manager sign-off
+        escalate: true
+        to: manager_review
+      - when: otherwise
+        escalate: true
+        to: manager_review
+
+  # --- Auto-approve (terminal: approved) ---------------------------------
+  auto_approve:
+    structure: >
+      Reads {{expense}}. The output is an approval record with the reimbursed
+      amount.
+    prompt: |
+      Approve {{expense}} for automatic reimbursement and record the amount.
+    output: approval
+    gates:
+      - when: otherwise # the approval is recorded, then finish
+        then: ok
+        to: END
+
+  # --- Manager review (terminal: handoff) --------------------------------
+  manager_review:
+    structure: >
+      Reads {{expense}} and {{verdict}}. The output is a summary prepared for a
+      manager to make the final call.
+    prompt: |
+      Summarize {{expense}} and the policy verdict {{verdict}} for a manager's
+      sign-off decision.
+    output: handoff
+    gates:
+      - when: otherwise # the manager summary is ready, then finish
+        then: ok
+        to: END
