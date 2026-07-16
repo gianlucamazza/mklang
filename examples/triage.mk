@@ -1,15 +1,28 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# triage.mk — branching FSM (customer support)
+# triage.mk — branching FSM (customer support) with real host effectors
 #
 # Flow:
-#   classify → {bug | billing | other} → gather → draft_reply → {send | human_review}
-# Shows: branching on gates, a repair loop, escalate to human review.
+#   classify → plan_query → search_kb (tool) → draft_reply → {send_reply (tool) | human_review}
+#
+# Effectors are `tool:` states (host callables), not generative prose. Generative
+# states never claim to search or send — that would fabricate facts and actions.
+# Shows: branching on gates, repair loop, escalate, tool I/O.
 
 mklang: "0.2"
 machine: triage
 entry: classify
 budget: 25
 default_tier: balanced # provider-neutral; the runtime maps tiers to concrete models
+
+tools:
+  - name: search_kb
+    description: >
+      Look up support KB facts for a query string.
+      Input: {"query": "…"}. Host-bound (CLI ships a deterministic stub).
+  - name: send_reply
+    description: >
+      Deliver the customer reply. Input: {"body": "…"}.
+      Host-bound side effect — not an LLM confirmation.
 
 # Initial blackboard values. In a real run the host supplies these.
 context:
@@ -30,31 +43,41 @@ states:
     gates:
       - when: the category is "bug"
         then: ok
-        to: gather
+        to: plan_query
       - when: the category is "billing"
         then: ok
-        to: gather
+        to: plan_query
       - when: otherwise
         then: ok
-        to: gather
+        to: plan_query
 
-  # --- Gather facts from the knowledge base ------------------------------
-  gather:
+  # --- Plan a KB query (generative: output is a query string only) -------
+  plan_query:
     structure: >
-      Reads {{ticket.body}} and {{category}}. The output is the relevant facts
-      found in the KB, or a note that nothing was found.
+      Reads {{ticket.body}} and {{category}}. The output is a single concise
+      search query for the knowledge base — not the answer itself.
     prompt: |
-      Search the KB for information to answer a ticket of category
-      {{category}}: {{ticket.body}}. Report only facts present in the KB.
-    execution: |
-      You may use the `search_kb` tool at most 3 times.
-      Do not invent information that is not in the KB.
+      Category: {{category}}
+      Ticket: {{ticket.body}}
+      Write one short KB search query that would retrieve policies or facts
+      needed to reply. Output ONLY the query text.
+    tier: fast
+    output: kb_query
+    gates:
+      - when: otherwise
+        then: ok
+        to: search_kb
+
+  # --- Search KB (tool state — host callable, no LLM) --------------------
+  search_kb:
+    tool: search_kb
+    input: { query: "{{kb_query}}" }
     output: kb_answer
     gates:
-      - when: enough facts were found to answer the ticket
+      - when: the KB observation contains usable facts for this ticket
         then: ok
         to: draft_reply
-      - when: the KB contains nothing useful for this ticket
+      - when: the KB observation is empty or explicitly has no facts
         escalate: true
         to: human_review
       - when: otherwise
@@ -67,19 +90,20 @@ states:
       Reads {{ticket.body}} and {{kb_answer}}. The output is an email reply to
       the customer, courteous tone, max 150 words.
     prompt: |
-      Write a reply to {{ticket.body}} using the facts in {{kb_answer}}.
-      Do not invent policies that are not in the KB.
+      Write a reply to {{ticket.body}} using ONLY the facts in {{kb_answer}}.
+      Do not invent policies that are not in the KB observation.
     execution: |
       Do not contact the customer here: in this state you only draft.
+      Do not claim you searched or sent anything.
     tier: reasoning # customer-facing prose + policy care — use the strongest model
     output: draft
     gates:
       - when: the draft resolves the request and is in the required courteous tone
         then: ok
-        to: send
+        to: send_reply
       - when: the draft is missing information that should have come from the KB
         repair: 2
-        to: gather
+        to: plan_query
       - when: the draft is not in the required tone or is incomplete
         repair: 2
         to: draft_reply
@@ -90,19 +114,15 @@ states:
         escalate: true
         to: human_review
 
-  # --- Send (terminal success state) -------------------------------------
-  send:
-    structure: >
-      Reads {{draft}}. The output is a confirmation the reply was sent.
-    prompt: |
-      Send the reply {{draft}} to the customer and confirm it was sent.
+  # --- Send (tool state — real host side effect, not LLM confirmation) ---
+  send_reply:
+    tool: send_reply
+    input: { body: "{{draft}}" }
     output: sent
     gates:
-      - when: the send is confirmed
+      - when: otherwise
         then: ok
         to: END
-      - when: otherwise
-        fail: true
 
   # --- Human review (escalation handler) ---------------------------------
   human_review:

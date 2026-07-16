@@ -119,6 +119,66 @@ def test_parse_choice_json_then_regex_then_none():
     assert parse_choice("unparseable", 3) is None  # caller decides fallback/halt
 
 
+def test_parse_choice_out_of_range_is_none_not_clamped():
+    """0-based model replies and oversized indices must not silently pick gate 0/last."""
+    assert parse_choice('{"choice": 0}', 3) is None  # 0-based misread → -1 after convert
+    assert parse_choice('{"choice": 4}', 3) is None  # 1-based past end
+    assert parse_choice('{"choice": 1}', 3) == 0
+    assert parse_choice("99", 2) is None
+
+
+def test_judge_out_of_range_soft_falls_to_otherwise():
+    """Engine must not clamp OOR judge indices; use the traced otherwise path."""
+    m = M(
+        {
+            "machine": "x",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        {"when": "quality is high", "then": "ok", "to": "END"},
+                        {"when": "otherwise", "then": "ok", "to": "END"},
+                    ],
+                },
+            },
+        }
+    )
+    r = _run(m, MockLLM(judge_fn=lambda *a: -1))
+    assert r.status == "done"
+    assert r.trace[0]["judge_fallback"] is True
+    assert r.trace[0]["gate"] == "otherwise"
+    assert r.trace[0]["gate_via"] == "otherwise"
+    assert "out-of-range" in r.trace[0].get("judge_raw", "")
+
+
+def test_judge_out_of_range_hard_halts_without_otherwise():
+    m = M(
+        {
+            "machine": "x",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        {"when": "quality is high", "then": "ok", "to": "END"},
+                        {"when": "needs work", "repair": 1, "to": "a"},
+                    ],
+                },
+            },
+        }
+    )
+    r = _run(m, MockLLM(judge_fn=lambda *a: 99))
+    assert r.status == "halt" and r.error == "judge-unparseable"
+    assert r.trace[0]["judge_fallback"] is True
+
+
 def test_judge_unparseable_soft_falls_to_otherwise():
     # Prose gate first forces LLM judge; otherwise is the soft-fallback sink.
     m = M(

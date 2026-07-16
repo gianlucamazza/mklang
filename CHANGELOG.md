@@ -8,7 +8,39 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.5.0`).
+  `pyproject.toml` (currently `0.5.1`).
+
+## [0.5.1] — 2026-07-16
+
+### Fixed
+
+- **Judge silent clamp** — out-of-range or 0-based `{"choice": k}` replies are
+  no longer clamped to a valid gate. `parse_choice` returns `None` for OOR;
+  adapters raise `JudgeUnparseable`; the engine does not re-clamp. Soft-fallback
+  to `otherwise` (or hard-halt `judge-unparseable`) is traced via
+  `judge_fallback` / `judge_raw` — never a mute misroute with only `gate_via: llm`.
+- **Showcase honesty (`triage.mk`)** — `search_kb` and `send_reply` are real
+  `tool:` states (host stubs); generative states no longer claim tool use or
+  “confirm the send.” Same honesty pass on `research.mk` (no fake `web_search`).
+- **README** — dropped “no host code required”; documented that tools/hooks are
+  host-supplied; centered conformance + portable spec as the differentiator.
+
+### Added
+
+- Builtins / entry points: `search_kb`, `send_reply` (deterministic stubs).
+- **SPEC §5** — normative 1-based judge protocol; OOR = anomaly; documented
+  `JUDGE_CONTEXT_CHARS` (4000) truncation.
+- **SPEC §11 Threat model (v0.2)** — injection surface, partial mitigations,
+  explicit non-goals (declare rather than deny).
+- Reference produce temperature defaults documented (non-normative).
+- **Gate-divergence experiment** — `scripts/gate_divergence.py` +
+  `docs/experiments/gate-divergence.md` (cross-provider agreement scaffold).
+- ADR 0004 honesty note: prose-gate reliability is empirical.
+
+### Changed
+
+- Positioning: “writable by non-programmers” softened to prose-first / readable;
+  production needs developer judgment for tools, hooks, and untrusted inputs.
 
 ## [0.5.0] — 2026-07-16
 

@@ -161,15 +161,21 @@ def test_repair_round_trip():
             }
         )
 
-    always_repair = 1  # judge always picks "fix" until the repair budget runs out
+    def pick_fix_if_present(model, conditions, *a):
+        # Prefer the repair condition while eligible; once exhausted only "done" remains.
+        for i, c in enumerate(conditions):
+            if c == "fix":
+                return i
+        return 0
+
     full = run1(
-        repair_machine(), MockLLM(produce_fn=costly()._produce, judge_fn=lambda *a: always_repair)
+        repair_machine(), MockLLM(produce_fn=costly()._produce, judge_fn=pick_fix_if_present)
     )
     assert [s["policy"] for s in full.trace] == ["repair", "repair", "ok"]
 
     r = run1(
         repair_machine(),
-        MockLLM(produce_fn=costly()._produce, judge_fn=lambda *a: always_repair),
+        MockLLM(produce_fn=costly()._produce, judge_fn=pick_fix_if_present),
         cost_budget=10,
         suspendable=True,
     )
@@ -182,7 +188,7 @@ def test_repair_round_trip():
     frames = json.loads(json.dumps(r.frames))
     done = run1(
         repair_machine(),
-        MockLLM(produce_fn=costly()._produce, judge_fn=lambda *a: always_repair),
+        MockLLM(produce_fn=costly()._produce, judge_fn=pick_fix_if_present),
         resume=frames,
         suspendable=True,
     )

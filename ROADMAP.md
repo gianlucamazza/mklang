@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.5.0**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.5.1**, language **0.2**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2 / package 0.5.0)
+## Where we are (v0.2 / package 0.5.1)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -49,6 +49,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   `MKLANG_LIVE=1` (`MKLANG_LIVE_PROVIDER=<name>` to override the config's
   `active`); skips cleanly when the key is missing. Anthropic goes through the
   same path as every other provider.
+- **Shipped (scaffold):** cross-provider **gate-divergence** harness —
+  [`scripts/gate_divergence.py`](./scripts/gate_divergence.py) +
+  [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
+  Document portability is syntactic until agreement rates are measured live.
+- **[next] Fill gate-divergence results** — run the harness with ≥2 provider keys;
+  record agreement rate and dated table in the experiment note.
 - **[next] Anthropic live pass** — blocked only on a key: set `ANTHROPIC_API_KEY`
   and run `MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=anthropic pytest tests/test_live.py`.
 
@@ -61,6 +67,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   token (`uv publish`).
 - **[later] Editor tooling** — LSP / syntax highlighting beyond the YAML
   schema; `mklang lint` is the first brick.
+- **[maybe] Rename `.mk` extension** — collides with Makefile includes /
+  GitHub Linguist; cost of rename is low today, high after adoption (SPEC §9).
 
 ## Integrations & extensions
 

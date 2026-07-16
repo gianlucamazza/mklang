@@ -139,3 +139,20 @@ def test_judge_unparseable_raises():
     llm = _adapter(text="no number here")
     with pytest.raises(JudgeUnparseable):
         llm.judge("m", ["a", "b"], "out", {})
+
+
+def test_judge_out_of_range_raises_not_clamped():
+    """{"choice": 0} (0-based) must not silently fire condition 1."""
+    from mklang.errors import JudgeUnparseable
+
+    llm = _adapter(text='{"choice": 0}')
+    with pytest.raises(JudgeUnparseable):
+        llm.judge("m", ["a", "b", "c"], "out", {})
+
+
+def test_judge_oversized_choice_raises_not_clamped():
+    from mklang.errors import JudgeUnparseable
+
+    llm = _adapter(text='{"choice": 9}')
+    with pytest.raises(JudgeUnparseable):
+        llm.judge("m", ["a", "b"], "out", {})

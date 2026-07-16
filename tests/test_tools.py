@@ -3,7 +3,7 @@
 from mklang.engine import run
 from mklang.llm.mock import MockLLM
 from mklang.model import parse_machine
-from mklang.tools import BUILTINS, calc, load_tool_registry
+from mklang.tools import BUILTINS, calc, load_tool_registry, search_kb, send_reply
 
 TIERS = {"fast": "m", "balanced": "m", "reasoning": "m"}
 
@@ -16,6 +16,15 @@ def test_calc_builtin_safe():
     assert calc({"expr": "(17+4)*3"}) == "63"
     assert calc({"expr": "2**10"}) == "1024"
     assert "error" in calc({"expr": "__import__('os').system('x')"})  # not arithmetic
+
+
+def test_search_kb_and_send_reply_stubs():
+    kb = search_kb({"query": "billing refund"})
+    assert "[kb stub]" in kb and "billing refund" in kb
+    assert search_kb({}) == "[kb] empty query — no facts"
+    sent = send_reply({"body": "Hello customer, your refund is approved."})
+    assert sent.startswith("[sent]") and "chars=" in sent
+    assert "search_kb" in BUILTINS and "send_reply" in BUILTINS
 
 
 def test_tool_state_runs_and_deposits_observation():

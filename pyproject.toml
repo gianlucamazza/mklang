@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "0.5.0"
+version = "0.5.1"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -45,6 +45,8 @@ mklang = "mklang.cli:main"
 [project.entry-points."mklang.tools"]
 calc = "mklang.tools:calc"
 search = "mklang.tools:search"
+search_kb = "mklang.tools:search_kb"
+send_reply = "mklang.tools:send_reply"
 
 [project.entry-points."mklang.providers"]
 anthropic = "mklang.providers:anthropic"

@@ -4,6 +4,10 @@
 # Flow:
 #   gather → check_sufficiency → {loop back to gather | finalize} → END
 # Shows: a loop, a sufficiency gate, and the global budget forcing termination.
+#
+# gather is generative only: it does not call host tools. For real search I/O
+# use a `tool:` state (see react.mk / triage.mk) — do not put tool names in
+# `execution` on generative states (the model cannot invoke them).
 
 mklang: "0.2"
 machine: research
@@ -24,11 +28,11 @@ states:
     prompt: |
       Research question: {{question.text}}
       Notes so far: {{notes}}
-      Find NEW evidence not already in the notes and append it. If you find
-      nothing new, say so explicitly.
+      From your training knowledge only, add NEW candidate facts not already in
+      the notes. Label each as uncertain if not sure. If nothing new, say so.
     execution: |
-      You may use the `web_search` tool at most 2 times per round.
-      Cite each fact with its source. Do not repeat facts already in notes.
+      No host tools are available in this state. Do not claim you searched the web.
+      Do not invent URLs or citations you cannot support. Prefer "unknown" over fiction.
     output: notes
     gates:
       - when: new evidence was added this round
