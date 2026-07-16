@@ -526,7 +526,11 @@ def test_judge_sees_reasoning():
                     "prompt": "p",
                     "reason": True,
                     "output": "o",
-                    "gates": [gate("otherwise", then="ok", to="END")],
+                    # prose gate (not otherwise) so the LLM judge runs
+                    "gates": [
+                        gate("quality is fine", then="ok", to="END"),
+                        gate("otherwise", then="ok", to="END"),
+                    ],
                 },
             },
         }

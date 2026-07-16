@@ -43,6 +43,19 @@
         }
       }
     },
+    "hooks": {
+      "type": "array",
+      "description": "Optional declarations of host gate hooks this machine uses (§5).",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
     "states": {
       "type": "object",
       "minProperties": 1,
@@ -179,11 +192,15 @@
       "type": "object",
       "required": ["when"],
       "additionalProperties": false,
-      "description": "A condition plus exactly one policy (then/repair/escalate/fail).",
+      "description": "A condition plus exactly one policy (then/repair/escalate/fail). Optional hook: host bool predicate (§5).",
       "properties": {
         "when": {
           "type": "string",
-          "description": "NL condition, LLM-judged. 'otherwise' is the reserved catch-all."
+          "description": "Condition label (trace + docs). LLM-judged unless hook/otherwise. 'otherwise' is the catch-all."
+        },
+        "hook": {
+          "type": "string",
+          "description": "Host-registered predicate name (ctx, output) -> bool. If set, evaluated without the LLM."
         },
         "then": {
           "const": "ok",

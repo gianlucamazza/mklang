@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render
-from .model import Machine, State
+from .model import Gate, Machine, State
 
 MAX_CALL_DEPTH = 8
 _OVER_VAR = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
@@ -54,9 +54,86 @@ class _Ctx:
     registry: dict
     tier_params: dict  # tier -> provider-specific params
     tools: dict  # tool name -> callable(dict) -> str
+    hooks: dict  # hook name -> callable(ctx, output) -> bool
     max_workers: int = 5
     # Remaining token budget for this run and its descendants (None = unlimited).
     cost_budget: int | None = None
+
+
+def _is_otherwise(gate: Gate) -> bool:
+    return gate.when.strip().lower() == "otherwise"
+
+
+def _call_hook(gate: Gate, ctx: dict, result, hooks: dict) -> bool:
+    fn = hooks.get(gate.hook)
+    if fn is None:
+        raise KeyError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
+    return bool(fn(ctx, result))
+
+
+def _select_gate(
+    eligible: list[tuple[int, Gate]],
+    result,
+    ctx: dict,
+    deps: _Ctx,
+    judge_reasoning: str | None,
+) -> tuple[int, Gate, dict]:
+    """Pick the first true gate (hooks / otherwise / fused LLM prose batch).
+
+    Returns (gate_index_in_state, gate, step_annotations).
+    """
+    ann: dict = {}
+    i = 0
+    while i < len(eligible):
+        gi, gate = eligible[i]
+        if gate.hook and not _is_otherwise(gate):
+            if _call_hook(gate, ctx, result, deps.hooks):
+                ann["gate_via"] = "hook"
+                ann["hook"] = gate.hook
+                return gi, gate, ann
+            i += 1
+            continue
+        if _is_otherwise(gate):
+            ann["gate_via"] = "otherwise"
+            return gi, gate, ann
+        # Consecutive prose-only gates → one fused LLM judge call
+        batch: list[tuple[int, Gate]] = []
+        j = i
+        while j < len(eligible):
+            bj, bg = eligible[j]
+            if bg.hook and not _is_otherwise(bg):
+                break
+            if _is_otherwise(bg):
+                break
+            batch.append((bj, bg))
+            j += 1
+        if not batch:
+            i += 1
+            continue
+        try:
+            local = deps.llm.judge(
+                deps.judge_model,
+                [g.when for _, g in batch],
+                fmt(result),
+                ctx,
+                reasoning=judge_reasoning,
+            )
+            local = max(0, min(local, len(batch) - 1))
+            gi, gate = batch[local]
+            ann["gate_via"] = "llm"
+            return gi, gate, ann
+        except JudgeUnparseable as e:
+            ann["judge_fallback"] = True
+            ann["judge_raw"] = str(e)[:200]
+            # Prefer otherwise among the *full* remaining eligible list
+            rest = eligible[i:]
+            catch = _pick_otherwise(rest)
+            if catch is None:
+                raise
+            gi, gate = catch
+            ann["gate_via"] = "otherwise"
+            return gi, gate, ann
+    raise RuntimeError("no-gate-matched")
 
 
 def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machine, depth: int):
@@ -78,6 +155,7 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             tier_params=deps.tier_params,
             cost_budget=deps.cost_budget,
             tools=deps.tools,
+            hooks=deps.hooks,
         )
         u = sub.usage or {}
         tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -152,6 +230,7 @@ def run(
     tier_params: dict | None = None,
     cost_budget: int | None = None,
     tools: dict | None = None,
+    hooks: dict | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -162,6 +241,7 @@ def run(
         registry,
         tier_params or {},
         tools or {},
+        hooks or {},
         max_workers,
         cost_budget,
     )
@@ -282,7 +362,7 @@ def run(
         else:
             ctx[S.output] = result
 
-        # 3) JUDGE (skip repair gates whose budget is exhausted)
+        # 3) JUDGE — hooks (host bool) then otherwise then fused LLM prose (SPEC §5)
         eligible = [
             (i, g)
             for i, g in enumerate(S.gates)
@@ -295,32 +375,35 @@ def run(
                 "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
             )
         try:
-            gi_local = deps.llm.judge(
-                deps.judge_model,
-                [g.when for _, g in eligible],
-                fmt(result),
+            i, gate, gann = _select_gate(eligible, result, ctx, deps, judge_reasoning)
+            step.update(gann)
+        except JudgeUnparseable:
+            step.update(step=steps, gate=None, policy="judge-unparseable", to=None)
+            if "judge_fallback" not in step:
+                step["judge_fallback"] = True
+            trace.append(step)
+            return RunResult(
+                "halt",
+                trace,
                 ctx,
-                reasoning=judge_reasoning,
+                error="judge-unparseable",
+                at=state_id,
+                usage=usage(),
             )
-            gi_local = max(0, min(gi_local, len(eligible) - 1))  # trust nothing from the judge
-            i, gate = eligible[gi_local]
-        except JudgeUnparseable as e:
-            # Soft-fallback only when an `otherwise` catch-all is eligible; else fail loud.
-            step["judge_fallback"] = True
-            step["judge_raw"] = str(e)[:200]
-            catch = _pick_otherwise(eligible)
-            if catch is None:
-                step.update(step=steps, gate=None, policy="judge-unparseable", to=None)
+        except RuntimeError as e:
+            if str(e) == "no-gate-matched":
+                step.update(step=steps, gate=None, policy="no-gate-matched", to=None)
                 trace.append(step)
                 return RunResult(
-                    "halt",
-                    trace,
-                    ctx,
-                    error="judge-unparseable",
-                    at=state_id,
-                    usage=usage(),
+                    "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
                 )
-            i, gate = catch
+            return RunResult(
+                "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
+            )
+        except Exception as e:  # noqa: BLE001 — missing hook / host error
+            return RunResult(
+                "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
+            )
         step.update(step=steps, gate=gate.when, policy=gate.kind, to=gate.to)
         trace.append(step)
 

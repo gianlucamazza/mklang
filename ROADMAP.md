@@ -24,9 +24,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Language
 
-- **[next] Code-hook gates** — a gate evaluated by a host function returning a bool,
-  for exact/critical checks (`total == sum(lines)`), alongside LLM-judged gates.
-  Highest-ROI language feature for production reliability.
+- **Shipped: Code-hook gates** (`hook: name`, host `(ctx, output) -> bool`, optional
+  top-level `hooks:`, ADR 0006, `examples/hook_gates.mk`). Exact checks without the LLM.
 - **[later] Formal types for `structure`** — optional typed I/O so composition and
   gates can be checked before spending tokens; stays opt-in over prose.
 - **[maybe] Determinism knobs** — per-state seed / temperature surfaced in a

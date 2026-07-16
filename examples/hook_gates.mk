@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=../schema/mklang.schema.json
+# hook_gates.mk — code-hook gates for exact policy (ADR 0006)
+#
+# Context carries structured fields; host hooks decide auto-approve vs escalate
+# without asking the LLM to parse numbers. The generative state still produces a
+# short note (and can use the LLM); transitions that matter are deterministic.
+
+mklang: "0.2"
+machine: hook_gates
+entry: decide
+budget: 5
+result: note
+
+hooks:
+  - name: auto_approve_ok
+    description: amount <= 100 and has_receipt is true (CLI builtin).
+
+context:
+  amount: 45
+  has_receipt: true
+
+states:
+  decide:
+    structure: >
+      A one-line note confirming the expense amount and receipt status from
+      context.
+    prompt: |
+      Write one short line confirming amount={{amount}} and
+      has_receipt={{has_receipt}} for the audit trail.
+    tier: fast
+    output: note
+    gates:
+      - when: amount within auto-approve and receipt present
+        hook: auto_approve_ok
+        then: ok
+        to: END
+      - when: otherwise
+        escalate: true
+        to: manager_review
+
+  manager_review:
+    structure: A handoff line for a manager.
+    prompt: "Escalate amount={{amount}} receipt={{has_receipt}} for sign-off."
+    tier: fast
+    output: note
+    gates:
+      - when: otherwise
+        then: ok
+        to: END

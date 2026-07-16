@@ -42,8 +42,8 @@ _mklang is to LangGraph what a declarative spec is to Python code._
 
 - It does not compile to a formal artifact (GBNF, JSON Schema of *outputs*, code).
 - It guarantees neither determinism nor statically typed output.
-- It has no code-hook gates or formal types for `structure` (→ §9). Sub-machines,
-  fan-out, reasoning, and host `tool` states **are** in the core (§4.5–§4.9).
+- It has no formal types for `structure` (→ §9). Sub-machines, fan-out, reasoning,
+  host `tool` states, and **code-hook gates** **are** in the core (§4.5–§4.9, §5).
 
 ---
 
@@ -208,13 +208,13 @@ Conventions:
 Reserved keys:
 
 - Top-level: `machine`, `entry`, `budget`, `default_tier`, `result`, `context`,
-  `tools`, `states`, `mklang`.
+  `tools`, `hooks`, `states`, `mklang`.
 - Generative state: `structure`, `prompt`, `execution`, `tier`, `reason`,
   `accumulate`, `sample`, `over`, `output`, `gates`.
 - Call state: `call`, `input`, `tier`, `sample`, `over`, `accumulate`, `output`,
   `gates`.
 - Tool state: `tool`, `input`, `sample`, `over`, `accumulate`, `output`, `gates`.
-- Gate: `when`, `then`, `repair`, `escalate`, `fail`, `to`.
+- Gate: `when`, `hook`, `then`, `repair`, `escalate`, `fail`, `to`.
 - Tier values: `fast`, `balanced`, `reasoning`.
 - Fan-out vars (inside `over` states): `{{item}}`, `{{index}}`.
 - Sentinels: `END` (terminal destination), `otherwise` (always-true catch-all
@@ -412,14 +412,21 @@ with a policy and (except for `fail`) a destination.
 
 ### Evaluation
 
-- Gates are evaluated **top to bottom**: **order is priority**.
-- For each, the LLM judges whether `when` (a natural-language condition) is **true**
-  given the output just produced and the context.
-- The **first** gate whose `when` is true fires; the rest are ignored.
-- `when: otherwise` is a **reserved catch-all**: the judge always treats it as true,
-  so it fires whenever evaluation reaches it. Every non-terminal state **should**
-  end with an `otherwise` gate to guarantee a transition always fires. If no gate
-  matches, the run halts with error `no-gate-matched`.
+- Gates are evaluated **top to bottom**: **order is priority**. The **first** gate
+  that is true fires; the rest are ignored.
+- A gate MAY set **`hook: <name>`** — a **host-registered** predicate
+  `(context, output) -> bool` (ADR 0006). The host supplies the binding
+  (`run(..., hooks=...)`; the CLI ships demos). When `hook` is set, the runtime
+  evaluates the callable **without the LLM**. `when` is still required: it is the
+  human-readable label recorded in the trace.
+- Optional top-level **`hooks:`** declarations document expected names (like
+  `tools:`); `mklang check` warns if a gate references an undeclared hook.
+- **`when: otherwise`** is a **reserved catch-all**: always true when evaluation
+  reaches it (no LLM, hook ignored). Every non-terminal state **should** end with
+  an `otherwise` gate. If no gate matches, the run halts with `no-gate-matched`.
+- **Prose gates** (no `hook`, not `otherwise`): the runtime judges whether `when`
+  is true given the output and context. Consecutive prose gates may be **fused**
+  into a single `LLM.judge` call; the first true among that batch wins.
 
 ### The four policies
 
@@ -429,6 +436,27 @@ with a policy and (except for `fail`) a destination.
 | `repair: N` | Stay (usually) on the same state and **re-run**, injecting the failed `when` as feedback into the prompt. Budget `N` (§7). | `to: StateId`      |
 | `escalate`  | Route to a handler state (e.g. human review, fallback).                                                                    | `to: StateId`      |
 | `fail`      | Abort the run, propagating the error.                                                                                      | —                  |
+
+Example with a **code-hook** gate (exact check) before prose / otherwise:
+
+```yaml
+hooks:
+  - name: auto_approve_ok
+    description: True when context amount <= 100 and has_receipt is true.
+states:
+  decide:
+    structure: A one-line policy note.
+    prompt: "Note the decision for amount={{amount}} receipt={{has_receipt}}."
+    output: note
+    gates:
+      - when: amount within auto-approve and receipt present
+        hook: auto_approve_ok # host bool — no LLM
+        then: ok
+        to: END
+      - when: otherwise
+        escalate: true
+        to: manager_review
+```
 
 ### `repair(N)` semantics
 
@@ -614,11 +642,9 @@ fan-out and sub-machines nest.
 
 ## 9. Non-goals & open questions
 
-Deliberately out of v0.2 (sub-machines, fan-out/parallelism, and reasoning are now
-**in** the core — §4.5–§4.8):
+Deliberately out of core (sub-machines, fan-out, reasoning, tools, and **code-hook
+gates** are now **in** — §4.5–§4.9, §5):
 
-- **Code-hook gates** — gates evaluated by a host function (bool) instead of the
-  LLM, for exact/critical checks (e.g. `total == sum(lines)`).
 - **Formal types** in `structure`, for static verification of composition and gates.
 - **Caching / reproducibility** — per-state cache (same input+prompt → same output)
   for deterministic tests and cost reduction.

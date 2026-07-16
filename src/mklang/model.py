@@ -11,6 +11,7 @@ class Gate:
     kind: str  # "ok" | "repair" | "escalate" | "fail"
     to: str | None = None
     repair: int | None = None
+    hook: str | None = None  # host-evaluated predicate (§5); None → LLM / otherwise
 
 
 @dataclass
@@ -49,17 +50,19 @@ class Machine:
     context: dict = field(default_factory=dict)
     version: str | None = None  # the `mklang:` spec-version field (advisory)
     tools: list[dict] = field(default_factory=list)  # optional tool declarations
+    hooks: list[dict] = field(default_factory=list)  # optional gate-hook declarations
 
 
 def parse_gate(d: dict) -> Gate:
+    hook = d.get("hook")
     if "then" in d:
-        return Gate(d["when"], "ok", d.get("to"))
+        return Gate(d["when"], "ok", d.get("to"), hook=hook)
     if "repair" in d:
-        return Gate(d["when"], "repair", d.get("to"), repair=d["repair"])
+        return Gate(d["when"], "repair", d.get("to"), repair=d["repair"], hook=hook)
     if "escalate" in d:
-        return Gate(d["when"], "escalate", d.get("to"))
+        return Gate(d["when"], "escalate", d.get("to"), hook=hook)
     if "fail" in d:
-        return Gate(d["when"], "fail", None)
+        return Gate(d["when"], "fail", None, hook=hook)
     raise ValueError(f"gate has no policy (then/repair/escalate/fail): {d!r}")
 
 
@@ -96,4 +99,5 @@ def parse_machine(d: dict) -> Machine:
         context=d.get("context") or {},
         version=d.get("mklang"),
         tools=d.get("tools") or [],
+        hooks=d.get("hooks") or [],
     )

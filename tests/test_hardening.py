@@ -120,10 +120,30 @@ def test_parse_choice_json_then_regex_then_none():
 
 
 def test_judge_unparseable_soft_falls_to_otherwise():
-    r = _run(_one_state(), UnparseableJudgeLLM())
+    # Prose gate first forces LLM judge; otherwise is the soft-fallback sink.
+    m = M(
+        {
+            "machine": "x",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        {"when": "quality is high", "then": "ok", "to": "END"},
+                        {"when": "otherwise", "then": "ok", "to": "END"},
+                    ],
+                },
+            },
+        }
+    )
+    r = _run(m, UnparseableJudgeLLM())
     assert r.status == "done"
     assert r.trace[0]["judge_fallback"] is True
     assert r.trace[0]["gate"] == "otherwise"
+    assert r.trace[0]["gate_via"] == "otherwise"
 
 
 def test_judge_unparseable_hard_halts_without_otherwise():

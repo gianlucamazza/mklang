@@ -52,10 +52,15 @@ def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[st
 
     produced = {s.output for s in machine.states.values()}
     declared_tools = {t.get("name") for t in machine.tools}
+    declared_hooks = {h.get("name") for h in machine.hooks}
     for sid, s in machine.states.items():
         for g in s.gates:
             if g.kind != "fail" and g.to != "END" and g.to not in ids:
                 errors.append(f"{sid}: gate -> unknown state '{g.to}'")
+            if g.hook and machine.hooks and g.hook not in declared_hooks:
+                warnings.append(
+                    f"{sid}: gate hook '{g.hook}' is not declared in the machine's hooks:"
+                )
         if s.kind == "call" and s.call not in registry:
             errors.append(f"{sid}: call -> unknown machine '{s.call}'")
         if s.kind == "tool" and machine.tools and s.tool not in declared_tools:
@@ -63,7 +68,6 @@ def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[st
         # a multi-gate state without a catch-all can leave no transition firing
         if len(s.gates) > 1 and not any(g.when.strip().lower() == "otherwise" for g in s.gates):
             warnings.append(f"{sid}: no 'otherwise' catch-all gate (a transition may fail to fire)")
-
     if machine.result and machine.result not in produced:
         warnings.append(f"result key '{machine.result}' is not produced by any state's output")
 

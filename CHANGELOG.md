@@ -12,6 +12,13 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Code-hook gates** — optional `hook: <name>` on a gate evaluates a host predicate
+  `(context, output) -> bool` without the LLM (ADR 0006). Top-level `hooks:`
+  declarations; CLI builtins (`auto_approve_ok`, …); example `hook_gates.mk`. Trace
+  records `gate_via: hook|llm|otherwise`.
+
 ### Changed
 
 - Default runtime provider is **DeepSeek** (`active: deepseek` in

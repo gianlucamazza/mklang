@@ -50,7 +50,7 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
 - **LLM-as-runtime** — non-deterministic by design; **gates** are the safety net
   that makes it reliable.
 - **Prose, not types** — `structure` and gate conditions are natural language,
-  judged by the LLM at runtime. No code hooks (v0.2).
+  judged by the LLM at runtime; optional `hook:` gates add host bool checks.
 - **Provider-agnostic** — a `.mk` never names a provider or model. States route by
   capability **tier** (`fast` / `balanced` / `reasoning`); the runtime maps each
   tier to a concrete model, so the same machine runs on Anthropic, OpenAI, Google,
@@ -77,6 +77,7 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
   - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.
   - [`react.mk`](./examples/react.mk) — reason/act/observe loop with `accumulate`.
+  - [`hook_gates.mk`](./examples/hook_gates.mk) — deterministic code-hook gates (exact policy).
 
 ## Runtime configuration
 
@@ -134,6 +135,7 @@ guidance in [`docs/patterns.md`](./docs/patterns.md).
 | Map-Reduce              | `over: {{chunks}}` → reducer                                     |
 | Router-of-experts       | classify → `call` specialists                                    |
 | Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`              |
+| Exact policy checks     | gate `hook:` host `(ctx, output) -> bool` (no LLM)               |
 
 ## Quickstart (reference interpreter)
 

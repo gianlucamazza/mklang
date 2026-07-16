@@ -67,6 +67,7 @@ def cmd_run(args) -> int:
         for e in errors:
             print(f"{args.machine}: error: {e}", file=sys.stderr)
         return 2
+    from .hooks import BUILTINS as HOOK_BUILTINS
     from .tools import BUILTINS
 
     for sid, s in machine.states.items():
@@ -76,6 +77,13 @@ def cmd_run(args) -> int:
                 f"registry {sorted(BUILTINS)} — the run halts if it is reached",
                 file=sys.stderr,
             )
+        for g in s.gates:
+            if g.hook and g.hook not in HOOK_BUILTINS:
+                print(
+                    f"# warning: state '{sid}' uses hook '{g.hook}' not in the built-in "
+                    f"registry {sorted(HOOK_BUILTINS)} — the run halts if it is reached",
+                    file=sys.stderr,
+                )
     ctx = _apply_sets(dict(machine.context), args.set)
     print(f"# {machine.name} · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
     res = run(
@@ -88,6 +96,7 @@ def cmd_run(args) -> int:
         tier_params=prov.params,
         cost_budget=args.max_tokens,
         tools=BUILTINS,
+        hooks=HOOK_BUILTINS,
     )
     out = {
         "status": res.status,

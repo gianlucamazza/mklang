@@ -24,5 +24,5 @@ natural-language post-conditions the model judges, each carrying a policy
 - Correctness rides on prompt/condition quality (live testing surfaced this: e.g. a
   policy category the model labels differently changes the terminal). Mitigations are
   authoring practices (docs/patterns.md), not language rigidity.
-- Determinism, when required, is opt-in later (code-hook gates, caching — roadmap),
-  layered on top without changing the base model.
+- Determinism for critical checks is opt-in via **code-hook gates** (ADR 0006);
+  caching remains a separate later item.
