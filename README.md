@@ -215,12 +215,14 @@ implementation-neutral **[conformance suite](./conformance/README.md)** (ADR 000
 Gate judging follows the state tier by default; see CHANGELOG 0.5.2 for the
 observable change and 0.5.3 for authoring tooling.
 
-- **Live:** DeepSeek (default) and **OpenAI** smoke green (2026-07-16). Anthropic
-  is unit-tested; live blocked by provider billing, not missing adapter support.
-  Gate-divergence (deepseek×openai, 3× each): **agreement 1.0** on the synthetic
-  task — see [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
-- **Open:** PyPI publish (API token), Anthropic live once the account has credit,
-  accept/implement ADR 0010 (LLM lint) and ADR 0011 (MCP) when ready.
+- **Live:** DeepSeek (default) and **OpenAI** green (2026-07-16), including
+  examples on the current OpenAI tier map (`fast: gpt-5.4-mini`,
+  `balanced`/`reasoning: gpt-5.5` — latest chat-completions models on this account;
+  `gpt-5.5-pro` is Responses-API only and not mapped). Anthropic unit-tested;
+  live blocked by provider billing. Gate-divergence (deepseek×openai): **agreement 1.0**
+  — see [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
+- **Open:** Anthropic live once the account has credit; accept/implement ADR 0010
+  (LLM lint) and ADR 0011 (MCP) when ready. PyPI deferred.
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 
