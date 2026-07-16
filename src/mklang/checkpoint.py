@@ -55,6 +55,7 @@ def save_checkpoint(
     reason: str,
     frames: list[dict],
     cost_budget: int | None,
+    hitl: bool = False,
 ) -> None:
     from . import __version__  # runtime import: __init__ imports engine imports this module
 
@@ -67,6 +68,7 @@ def save_checkpoint(
         "machine_sha256": file_sha256(machine_path),
         "reason": reason,
         "cost_budget": cost_budget,
+        "hitl": hitl,
         "frames": frames,
     }
     Path(path).write_text(json.dumps(envelope, ensure_ascii=False, indent=2), encoding="utf-8")

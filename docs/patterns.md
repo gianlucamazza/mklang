@@ -34,7 +34,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Cap `repair`.** A `repair: N` with a modest `N` (1–2) plus a following
   `escalate`/`fail` gate prevents an endless self-correction loop.
 - **Give escalation a safe sink.** Route hard cases to a terminal `human_review`
-  state rather than failing — it's a graceful degrade, not a crash.
+  state rather than failing — it's a graceful degrade, not a crash. With
+  `--checkpoint --hitl` the run actually **pauses** on a fired escalate and
+  `mklang resume --set human.reply="…"` feeds the decision to the handler
+  (ADR 0008).
 - **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
   the width of any fan-out (a `sample: N` costs N steps). Leave headroom; hitting the
   budget is a `halt`.

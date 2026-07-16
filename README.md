@@ -149,6 +149,10 @@ uv run mklang run examples/self_consistency.mk \
 # pause on budget, resume later (exit code 3 = suspended):
 uv run mklang run examples/self_consistency.mk --max-tokens 300 --checkpoint ck.json
 uv run mklang resume ck.json --max-tokens 5000
+
+# human-in-the-loop: escalate gates suspend; resume with the human decision:
+uv run mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
+uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
 The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
@@ -156,10 +160,11 @@ deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
 ## Status
 
-**Language v0.2 / package 0.3.0** — core complete (fan-out, sub-machines, reasoning,
+**Language v0.2 / package 0.4.0** — core complete (fan-out, sub-machines, reasoning,
 tools, code-hook gates, context-append) with a hardened multi-provider reference
-interpreter, entry-point plugins for tools/hooks, and resumable runs (checkpoint on
-budget exhaustion + `mklang resume`, ADR 0007).
+interpreter, entry-point plugins for tools/hooks, resumable runs (checkpoint on
+budget exhaustion + `mklang resume`, ADR 0007) and human-in-the-loop escalation
+(`--hitl` suspend + `resume --set`, ADR 0008).
 
 - **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
   `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an

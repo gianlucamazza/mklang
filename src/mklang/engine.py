@@ -69,6 +69,8 @@ class _Ctx:
     cost_budget: int | None = None
     # Budget exhaustion suspends (checkpoint frames) instead of halting.
     suspendable: bool = False
+    # A fired escalate gate suspends for human input instead of just routing.
+    escalate_suspend: bool = False
 
 
 def _is_otherwise(gate: Gate) -> bool:
@@ -176,6 +178,7 @@ def _exec_one(
             tools=deps.tools,
             hooks=deps.hooks,
             suspendable=deps.suspendable,
+            escalate_suspend=deps.escalate_suspend,
             resume=resume,
         )
         u = sub.usage or {}
@@ -204,8 +207,11 @@ def _exec_one(
 def _safe_exec(state, ctx, deps, machine, depth):
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
-        # Branches never suspend: a budget-exhausted sub halts into a marker as usual.
-        return _exec_one(state, ctx, "", replace(deps, suspendable=False), machine, depth)
+        # Branches never suspend: a budget-exhausted sub halts into a marker as
+        # usual, and an escalate inside a branch just routes.
+        return _exec_one(
+            state, ctx, "", replace(deps, suspendable=False, escalate_suspend=False), machine, depth
+        )
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
         return (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
@@ -254,6 +260,7 @@ def run(
     tools: dict | None = None,
     hooks: dict | None = None,
     suspendable: bool = False,
+    escalate_suspend: bool = False,
     resume: list[dict] | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
@@ -269,6 +276,7 @@ def run(
         max_workers,
         cost_budget,
         suspendable,
+        escalate_suspend,
     )
     ctx = dict(context)
     state_id = machine.entry
@@ -322,20 +330,24 @@ def run(
             trace,
         )
 
+    def suspended(reason: str) -> RunResult:
+        """Checkpoint this level; nested levels unwind via _Suspend, depth 0 returns."""
+        if depth:
+            raise _Suspend(reason, [snapshot()])
+        return RunResult(
+            "suspended",
+            trace,
+            ctx,
+            error=reason,
+            at=state_id,
+            usage=usage(),
+            frames=[snapshot()],
+        )
+
     def suspend_or_halt(reason: str) -> RunResult:
         """Loop-top budget exhaustion: checkpoint frames when suspendable, else halt."""
         if deps.suspendable:
-            if depth:
-                raise _Suspend(reason, [snapshot()])
-            return RunResult(
-                "suspended",
-                trace,
-                ctx,
-                error=reason,
-                at=state_id,
-                usage=usage(),
-                frames=[snapshot()],
-            )
+            return suspended(reason)
         return RunResult("halt", trace, ctx, error=reason, usage=usage())
 
     while True:
@@ -511,6 +523,11 @@ def run(
         if gate.kind == "repair":
             repair_left[(state_id, i)] = repair_left.get((state_id, i), gate.repair) - 1
             feedback = f"The previous attempt did not satisfy: '{gate.when}'. Fix it."
+        if gate.kind == "escalate" and deps.escalate_suspend and gate.to != "END":
+            # HITL: pause before the handler runs; a resume can drop the human
+            # reply into ctx so the handler state sees it (ADR 0008).
+            state_id = gate.to
+            return suspended("escalated")
         if gate.to == "END":
             rv = ctx.get(machine.result) if machine.result else result
             return RunResult("done", trace, ctx, result=rv, usage=usage())

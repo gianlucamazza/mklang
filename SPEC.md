@@ -598,10 +598,12 @@ that must reach `END`. **Every machine must have at least one reachable path to
 `END`** (author's responsibility in v0.2; a validator SHOULD check it).
 
 A host runtime MAY offer a third, non-normative outcome: **`suspended`** — on
-budget exhaustion an opt-in run checkpoints its position and blackboard (frames)
-instead of halting, and can later be resumed as if uninterrupted (reference
-interpreter: `--checkpoint` / `mklang resume`, ADR 0007). This is host behavior,
-not part of the language: a `.mk` file needs no changes and stays portable.
+budget exhaustion, or (opt-in) when an `escalate` gate fires, the run checkpoints
+its position and blackboard (frames) instead of halting, and can later be resumed
+as if uninterrupted — optionally with a human reply injected into the context
+(reference interpreter: `--checkpoint` / `--hitl` / `mklang resume --set`,
+ADR 0007/0008). This is host behavior, not part of the language: a `.mk` file
+needs no changes and stays portable.
 
 ---
 

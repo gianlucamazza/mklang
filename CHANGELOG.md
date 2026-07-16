@@ -8,7 +8,20 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.3.0`).
+  `pyproject.toml` (currently `0.4.0`).
+
+## [0.4.0] — 2026-07-16
+
+### Added
+
+- **Human-in-the-loop** (ADR 0008) — with `--hitl` (requires `--checkpoint`), a
+  fired `escalate` gate **suspends** at the handler state instead of just routing:
+  the envelope records `reason: "escalated"` and `hitl: true`. Reply via
+  **`mklang resume ck.json --set human.reply="…"`** — values land in the innermost
+  frame's context so the handler can interpolate `{{human.reply}}`. Library API:
+  `run(..., escalate_suspend=True)`; mutate `frames[-1]["ctx"]` before resuming.
+  Default off — escalate-as-routing (tier cascades) is unaffected; escalate to
+  `END` and fan-out branches never suspend. Language unchanged (spec stays 0.2).
 
 ## [0.3.0] — 2026-07-16
 

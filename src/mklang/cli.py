@@ -90,7 +90,7 @@ def _prepare(args, machine_path: str):
     return prov, llm, registry, machine, tools, hooks
 
 
-def _emit(res, checkpoint_path, machine, machine_path, cost_budget) -> int:
+def _emit(res, checkpoint_path, machine, machine_path, cost_budget, hitl=False) -> int:
     """Print the result JSON; write a checkpoint on suspension. Exit: 0 done, 3 suspended, 1 halt."""
     out = {
         "status": res.status,
@@ -103,7 +103,7 @@ def _emit(res, checkpoint_path, machine, machine_path, cost_budget) -> int:
         out["at"] = res.at
     if res.status == "suspended":
         save_checkpoint(
-            checkpoint_path, machine.name, machine_path, res.error, res.frames, cost_budget
+            checkpoint_path, machine.name, machine_path, res.error, res.frames, cost_budget, hitl
         )
         out["checkpoint"] = str(checkpoint_path)
         print(
@@ -116,6 +116,9 @@ def _emit(res, checkpoint_path, machine, machine_path, cost_budget) -> int:
 
 
 def cmd_run(args) -> int:
+    if args.hitl and not args.checkpoint:
+        print("--hitl requires --checkpoint (the suspension must land somewhere)", file=sys.stderr)
+        return 2
     prep = _prepare(args, args.machine)
     if isinstance(prep, int):
         return prep
@@ -134,8 +137,9 @@ def cmd_run(args) -> int:
         tools=tools,
         hooks=hooks,
         suspendable=args.checkpoint is not None,
+        escalate_suspend=args.hitl,
     )
-    return _emit(res, args.checkpoint, machine, args.machine, args.max_tokens)
+    return _emit(res, args.checkpoint, machine, args.machine, args.max_tokens, hitl=args.hitl)
 
 
 def cmd_resume(args) -> int:
@@ -175,6 +179,9 @@ def cmd_resume(args) -> int:
                 file=sys.stderr,
             )
     out_path = args.checkpoint_out or args.checkpoint
+    hitl = ck.get("hitl", False) or args.hitl
+    # A human reply lands in the innermost frame's context (the suspended run).
+    _apply_sets(ck["frames"][-1]["ctx"], args.set)
     print(f"# {machine.name} · resume · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
     res = run(
         machine,
@@ -188,9 +195,10 @@ def cmd_resume(args) -> int:
         tools=tools,
         hooks=hooks,
         suspendable=True,
+        escalate_suspend=hitl,
         resume=ck["frames"],
     )
-    return _emit(res, out_path, machine, machine_path, cost_budget)
+    return _emit(res, out_path, machine, machine_path, cost_budget, hitl=hitl)
 
 
 def cmd_check(args) -> int:
@@ -237,12 +245,30 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH",
         help="on budget exhaustion suspend and write a resumable checkpoint here",
     )
+    r.add_argument(
+        "--hitl",
+        action="store_true",
+        help="a fired escalate gate suspends for human review (requires --checkpoint); "
+        "reply via `mklang resume --set`",
+    )
     r.set_defaults(fn=cmd_run)
 
     s = sub.add_parser("resume", help="resume a suspended run from a checkpoint")
     s.add_argument("checkpoint")
     s.add_argument("--config", default="config/runtime.example.yaml")
     s.add_argument("--provider", default=None, help="override the config's `active` provider")
+    s.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="k.path=value",
+        help="inject values (e.g. the human reply) into the suspended run's context",
+    )
+    s.add_argument(
+        "--hitl",
+        action="store_true",
+        help="keep suspending on escalate gates even if the checkpoint didn't record it",
+    )
     s.add_argument(
         "--max-tokens",
         type=int,
