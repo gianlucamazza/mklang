@@ -1,4 +1,4 @@
-# ADR 0010 — An MCP server surface: machines as commissioned sub-tasks
+# ADR 0011 — An MCP server surface: machines as commissioned sub-tasks
 
 Status: Proposed
 
@@ -23,8 +23,9 @@ inversion this project already commits to for reasoning (ADR 0005, reasoning fir
 the host does not *execute* the machine, it *requests* it and gets back a `RunResult`
 carrying `trace` + `usage`. MCP is the missing transport for that request.
 
-Neither the ROADMAP nor SPEC reserves an MCP surface today — this is a new direction, so
-it opens as a decision, not as code.
+Neither the ROADMAP nor SPEC reserved an MCP surface before this decision — a new
+direction that opens as design, not as code. (Numbered **0011** because **0010** is
+already taken by LLM-assisted lint.)
 
 ## Decision
 
@@ -55,7 +56,8 @@ implementation change, not this ADR.
   injected values (the HITL reply, e.g. `human.reply`, written into the innermost frame's
   context per ADR 0008), and an optional new budget. Returns the same `_emit` shape.
   - *Deliberate divergence from the CLI's checkpoint model.* The CLI writes a `0600`
-    plaintext checkpoint file holding the full blackboard (SPEC §11.5). A remote MCP host
+    plaintext checkpoint file holding the full blackboard (SPEC §11, checkpoint at rest).
+  A remote MCP host
     should not touch the server's filesystem, so on suspension the `run` tool returns
     `status: "suspended"` plus an **opaque handle** and holds the `frames` in a
     process-scoped **in-memory session store** — never written to disk unless explicitly
@@ -65,7 +67,9 @@ implementation change, not this ADR.
 - **Above the interpreter, not a new semantics.** The MCP server is just another host
   sitting *above* `engine.run`. It introduces no new authority and no logic the CLI and
   library do not already have — it is transport. Provider API keys resolve **server-side
-  from the environment** (as in `_prepare`), never over the wire.
+  from the environment** (as in `_prepare`), never over the wire. Implementation may
+  promote `_prepare`/`_emit` (or thin public wrappers) so the MCP module does not
+  import private CLI symbols — that is a packaging detail, not a design fork.
 
 - **Minimal surface, on purpose.** The initial surface is exactly `run` + `resume` — the
   commissioning core. `check`/`lint` (validation as structured output) and
@@ -84,6 +88,7 @@ implementation change, not this ADR.
   leaving validation/discovery to later, separately-decided tools.
 - The opaque in-memory checkpoint handle intentionally diverges from the CLI's on-disk
   file model — a host-appropriate choice that keeps the full plaintext context off the
-  server's disk by default (SPEC §11.5). Durable, cross-process resume is deferred.
+  server's disk by default (SPEC §11, checkpoint at rest). Durable, cross-process resume
+  is deferred.
 - A new optional dependency only; the core install is unaffected and remains fully offline
   with no MCP present.

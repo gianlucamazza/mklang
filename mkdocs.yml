@@ -40,6 +40,7 @@ nav:
       - HITL escalate suspend: adr/0008-hitl-escalate-suspend.md
       - Conformance suite: adr/0009-conformance-suite.md
       - LLM-assisted lint: adr/0010-llm-assisted-lint.md
+      - MCP server surface: adr/0011-mcp-server-surface.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md

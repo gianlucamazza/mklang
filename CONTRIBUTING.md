@@ -71,7 +71,7 @@ unless the host tooling surface needs a new conformance-facing scripted binding.
 
 Non-trivial or contentious decisions get a short ADR in `docs/adr/NNNN-title.md`
 (Context / Decision / Consequences). See the existing ADRs in `docs/adr/`
-(0001–0010) for the format. Reference the ADR in your PR.
+(0001–0011) for the format. Reference the ADR in your PR.
 
 ## Versioning
 
