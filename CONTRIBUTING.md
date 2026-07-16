@@ -8,6 +8,7 @@ plus a reference interpreter. Keep changes coherent with the design in
 
 ```bash
 uv run --extra dev pytest -q          # tests (no network — MockLLM)
+MKLANG_LIVE=1 uv run --extra dev pytest -q tests/test_live.py  # opt-in live smoke (active provider; MKLANG_LIVE_PROVIDER=… to override)
 uv run --extra dev ruff check src tests
 uv run mklang check examples/*.mk     # validate the example machines
 ```

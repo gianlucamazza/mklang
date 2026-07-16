@@ -10,6 +10,15 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.4.0`).
 
+## [Unreleased]
+
+### Added
+
+- **Gated live smoke tests** (`tests/test_live.py`) — opt-in via `MKLANG_LIVE=1`,
+  provider-agnostic: they run the config's `active` provider (override with
+  `MKLANG_LIVE_PROVIDER`) and skip when its key is missing. All providers,
+  Anthropic included, share the same path — no provider-specific test code.
+
 ## [0.4.0] — 2026-07-16
 
 ### Added

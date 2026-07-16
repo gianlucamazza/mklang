@@ -43,8 +43,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Quality
 
-- **[next] Live-test the Anthropic adapter** — needs `ANTHROPIC_API_KEY`.
-- **[later] Gated live smoke tests** — env-flagged CI, low token budget.
+- **Shipped:** gated live smoke tests — provider-agnostic, opt-in via
+  `MKLANG_LIVE=1` (`MKLANG_LIVE_PROVIDER=<name>` to override the config's
+  `active`); skips cleanly when the key is missing. Anthropic goes through the
+  same path as every other provider.
+- **[next] Anthropic live pass** — blocked only on a key: set `ANTHROPIC_API_KEY`
+  and run `MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=anthropic pytest tests/test_live.py`.
 
 ## Organizational
 
