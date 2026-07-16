@@ -26,12 +26,9 @@ delivered without declaring. The language stays **0.2**; no `.mk` needs changes.
   in `src/mklang/scripttest.py`, shared with the conformance runner (all 21 cases
   green through it, unchanged). Ships `examples/triage.test.yaml` (happy path +
   KB-empty escalation). Docs: README "Test your machine without API keys",
-  `docs/patterns.md`, `conformance/README.md` cross-reference.
-  **Deferred:** the CI wiring step (a `.github/workflows/ci.yml` edit running
-  `uv run mklang test examples/triage.mk --script examples/triage.test.yaml`) is
-  not in this branch — the delivery environment's GitHub App lacks the `workflows`
-  permission to push workflow changes. A maintainer must add that step manually;
-  the command runs identically today and the scenarios are covered by
+  `docs/patterns.md`, `conformance/README.md` cross-reference. CI runs
+  `uv run mklang test examples/triage.mk --script examples/triage.test.yaml`
+  in the unit-test job (no API keys); the same scenarios are also covered by
   `tests/test_scripttest.py` in the normal pytest run.
 - **Static budget-feasibility check (R3-2).** `mklang check`/`lint` now BFS the
   shortest path (in states) from `entry` to a gate `to: END`. `budget` below it is

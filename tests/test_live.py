@@ -61,7 +61,7 @@ def test_live_smoke_produce_and_judge():
         {m.name: m},
         _build_llm(prov),
         prov.tiers,
-        prov.judge_model(),
+        prov.judge_override(),
         tier_params=prov.params,
         cost_budget=30_000,
     )

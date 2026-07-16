@@ -28,6 +28,8 @@ jobs:
         run: |
           uv run mklang check examples/*.mk
           uv run mklang lint --strict examples/*.mk
+      - name: Deterministic scenario tests (scripted LLM — no API keys)
+        run: uv run mklang test examples/triage.mk --script examples/triage.test.yaml
       - name: Build sdist + wheel
         run: uv build
 
