@@ -67,6 +67,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   Document portability is syntactic until agreement rates are measured live.
 - **[next] Fill gate-divergence results** — run the harness with ≥2 provider keys;
   record agreement rate and dated table in the experiment note.
+- **[later] LLM-assisted lint** (`mklang lint --llm`, design in
+  [ADR 0010](./docs/adr/0010-llm-assisted-lint.md), Proposed) — opt-in, reuses the
+  gate-divergence reducer to flag ambiguous / overlapping prose `when` conditions,
+  the authoring failure invisible to every static layer. Out of 0.5.x (breaks the
+  offline-CI, no-key property); waits on live gate-divergence numbers.
 - **[next] Anthropic live pass** — blocked only on a key: set `ANTHROPIC_API_KEY`
   and run `MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=anthropic pytest tests/test_live.py`.
 
