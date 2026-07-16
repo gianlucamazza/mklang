@@ -84,3 +84,28 @@ def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[st
         warnings.append(f"{dead}: unreachable state (never entered from '{machine.entry}')")
 
     return errors, warnings
+
+
+def used_tiers(machine: Machine) -> set[str]:
+    """Capability tiers a run will resolve against the provider map.
+
+    Generative and call states use `state.tier or default_tier`. Tool states never
+    call the LLM, so they contribute nothing unless they override tier (schema forbids
+    tier on tools today)."""
+    tiers: set[str] = {machine.default_tier}
+    for s in machine.states.values():
+        if s.kind == "tool":
+            continue
+        tiers.add(s.tier or machine.default_tier)
+    return tiers
+
+
+def check_tiers(machine: Machine, provider_tiers: dict) -> list[str]:
+    """Return errors if the machine needs a tier missing from the provider map."""
+    available = set(provider_tiers)
+    missing = sorted(used_tiers(machine) - available)
+    if not missing:
+        return []
+    return [
+        f"tier(s) {missing} not in provider map (available: {sorted(available)})"
+    ]

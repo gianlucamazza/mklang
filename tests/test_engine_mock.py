@@ -451,3 +451,87 @@ def test_reason_recorded_in_trace():
     )
     r = run1(m, llm)
     assert r.trace[0]["reasoning"] == "because"
+
+
+def test_call_propagates_sub_halt():
+    """A child halt must not surface as a successful parent run with result=None."""
+    child = M(
+        {
+            "machine": "child",
+            "entry": "c",
+            "budget": 1,
+            "states": {
+                "c": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "o",
+                    # self-loop: one step then budget-exhausted
+                    "gates": [gate("otherwise", then="ok", to="c")],
+                },
+            },
+        }
+    )
+    parent = M(
+        {
+            "machine": "parent",
+            "entry": "a",
+            "budget": 5,
+            "result": "r",
+            "states": {
+                "a": {
+                    "call": "child",
+                    "output": "r",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+    r = run(
+        parent,
+        {},
+        {"parent": parent, "child": child},
+        MockLLM(judge_fn=lambda *a: 0),
+        TIERS,
+        "m",
+    )
+    assert r.status == "halt"
+    assert r.error == "call-failed: budget-exhausted"
+    assert r.at == "a"
+    assert r.result is None
+    assert r.trace[0]["policy"] == "call-failed"
+    assert "sub_trace" in r.trace[0]
+
+
+def test_judge_sees_reasoning():
+    """With reason: true, the private CoT is passed to the judge (SPEC §4.5 / §6)."""
+    seen: dict = {}
+
+    def judge(model, conds, out, ctx, reasoning=None):
+        seen["reasoning"] = reasoning
+        seen["out"] = out
+        return 0
+
+    llm = MockLLM(
+        produce_fn=lambda *a: Produced("ans", reasoning="step-by-step why"),
+        judge_fn=judge,
+    )
+    m = M(
+        {
+            "machine": "cot",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "reason": True,
+                    "output": "o",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+    r = run1(m, llm)
+    assert r.status == "done"
+    assert seen["reasoning"] == "step-by-step why"
+    assert seen["out"] == "ans"

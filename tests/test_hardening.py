@@ -70,3 +70,26 @@ def test_parse_choice_json_then_regex_then_fallback():
     assert _parse_choice('{"choice": 2}', 3) == 1  # JSON, 1-based -> 0-based
     assert _parse_choice("the first condition holds: 3", 3) == 2  # bare number
     assert _parse_choice("unparseable", 3) == 2  # fallback to last (catch-all)
+
+
+def test_missing_tier_halts_with_clear_message():
+    m = M(
+        {
+            "machine": "x",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "tier": "reasoning",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    # provider map missing `reasoning`
+    r = run(m, {}, {m.name: m}, MockLLM(), {"fast": "m", "balanced": "m"}, "m")
+    assert r.status == "halt"
+    assert "tier 'reasoning' not configured" in (r.error or "")

@@ -13,3 +13,20 @@ class ProviderError(MklangError):
 
 class RefusalError(MklangError):
     """The model declined to answer (e.g. Anthropic stop_reason == 'refusal')."""
+
+
+class CallFailed(MklangError):
+    """A sub-machine `call` halted; the parent run must halt too (not continue as done)."""
+
+    def __init__(
+        self,
+        error: str,
+        sub_trace: list | None = None,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+    ):
+        super().__init__(error)
+        self.error = error
+        self.sub_trace = sub_trace or []
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens

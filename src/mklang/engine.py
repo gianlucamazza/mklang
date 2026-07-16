@@ -6,7 +6,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from .errors import ProviderError, RefusalError
+from .errors import CallFailed, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render
 from .model import Machine, State
 
@@ -26,7 +26,13 @@ class RunResult:
 
 
 def _model_for(state: State, machine: Machine, tiers: dict) -> str:
-    return tiers[state.tier or machine.default_tier]
+    tier = state.tier or machine.default_tier
+    try:
+        return tiers[tier]
+    except KeyError:
+        raise KeyError(
+            f"tier {tier!r} not configured (available: {sorted(tiers)})"
+        ) from None
 
 
 def _system(state: State) -> str:
@@ -71,7 +77,11 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             tools=deps.tools,
         )
         u = sub.usage or {}
-        return sub.result, sub.trace, None, (u.get("input_tokens", 0), u.get("output_tokens", 0))
+        tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
+        if sub.status != "done":
+            # Parent must not continue as success with a missing/partial sub-result.
+            raise CallFailed(sub.error or "sub-halted", sub.trace, tin, tout)
+        return sub.result, sub.trace, None, (tin, tout)
     if state.kind == "tool":
         tool_input = {k: render(v, ctx) for k, v in (state.input or {}).items()}
         fn = deps.tools.get(state.tool)
@@ -79,7 +89,7 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             raise KeyError(f"tool: unknown tool {state.tool!r} (register it via run(tools=...))")
         return str(fn(tool_input)), None, None, (0, 0)
     tier = state.tier or machine.default_tier
-    model = deps.tiers[tier]
+    model = _model_for(state, machine, deps.tiers)
     params = deps.tier_params.get(tier)
     user = render(state.prompt, ctx) + (f"\n\n[Repair feedback] {feedback}" if feedback else "")
     temperature = 0.8 if state.sample else 0.4
@@ -148,6 +158,7 @@ def run(
         step: dict = {"state": state_id, "tier": S.tier or machine.default_tier}
 
         # 1) EXECUTE (isolate failures: single → halt cleanly, branch → marker)
+        judge_reasoning: str | None = None
         if S.is_fanout:
             branches = _branch_contexts(S, ctx)
             steps += max(1, len(branches))
@@ -163,6 +174,8 @@ def run(
                 step["sub_trace"] = subs
             if S.reason:
                 step["reasonings"] = [o[2] for o in outs]
+                rs = [o[2] for o in outs if o[2]]
+                judge_reasoning = "\n---\n".join(rs) if rs else None
             step_in = sum(o[3][0] for o in outs)
             step_out = sum(o[3][1] for o in outs)
         else:
@@ -170,6 +183,25 @@ def run(
             try:
                 out, sub, reasoning, (step_in, step_out) = _exec_one(
                     S, ctx, feedback, deps, machine, depth
+                )
+            except CallFailed as e:
+                total_in += e.input_tokens
+                total_out += e.output_tokens
+                step["sub_trace"] = e.sub_trace
+                if e.input_tokens or e.output_tokens:
+                    step["cost"] = {
+                        "input_tokens": e.input_tokens,
+                        "output_tokens": e.output_tokens,
+                    }
+                step.update(step=steps, gate=None, policy="call-failed", to=None)
+                trace.append(step)
+                return RunResult(
+                    "halt",
+                    trace,
+                    ctx,
+                    error=f"call-failed: {e.error}",
+                    at=state_id,
+                    usage=usage(),
                 )
             except RefusalError:
                 return RunResult("halt", trace, ctx, error="refusal", at=state_id, usage=usage())
@@ -182,6 +214,7 @@ def run(
                     "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
                 )
             result = out
+            judge_reasoning = reasoning
             step["output"] = out if isinstance(out, str) else fmt(out)
             if reasoning:
                 step["reasoning"] = reasoning
@@ -214,7 +247,13 @@ def run(
             return RunResult(
                 "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
             )
-        gi_local = deps.llm.judge(deps.judge_model, [g.when for _, g in eligible], fmt(result), ctx)
+        gi_local = deps.llm.judge(
+            deps.judge_model,
+            [g.when for _, g in eligible],
+            fmt(result),
+            ctx,
+            reasoning=judge_reasoning,
+        )
         gi_local = max(0, min(gi_local, len(eligible) - 1))  # trust nothing from the judge
         i, gate = eligible[gi_local]
         step.update(step=steps, gate=gate.when, policy=gate.kind, to=gate.to)

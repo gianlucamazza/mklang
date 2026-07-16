@@ -27,7 +27,11 @@ class MockLLM:
             return self._produce(model, system, user, reason)
         return Produced(text="ok", reasoning=("thought" if reason else None))
 
-    def judge(self, model, conditions, output, context) -> int:
+    def judge(self, model, conditions, output, context, reasoning=None) -> int:
         if self._judge:
-            return self._judge(model, conditions, output, context)
+            # Pass reasoning only when the callback accepts it (existing tests use *a / 4 args).
+            try:
+                return self._judge(model, conditions, output, context, reasoning)
+            except TypeError:
+                return self._judge(model, conditions, output, context)
         return len(conditions) - 1

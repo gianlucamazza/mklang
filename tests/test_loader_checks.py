@@ -74,3 +74,28 @@ def test_load_registry_skips_malformed_siblings(tmp_path):
 def test_bundled_schema_matches_repo_root():
     root = json.loads(Path("schema/mklang.schema.json").read_text(encoding="utf-8"))
     assert _schema() == root
+
+
+def test_check_tiers_flags_missing():
+    from mklang.loader import check_tiers, used_tiers
+
+    m = mk(
+        {
+            "machine": "t",
+            "entry": "a",
+            "budget": 3,
+            "default_tier": "balanced",
+            "states": {
+                "a": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "tier": "reasoning",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    assert used_tiers(m) == {"balanced", "reasoning"}
+    assert check_tiers(m, {"fast": "m", "balanced": "m"})  # missing reasoning
+    assert not check_tiers(m, {"fast": "m", "balanced": "m", "reasoning": "m"})

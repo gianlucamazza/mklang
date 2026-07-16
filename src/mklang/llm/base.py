@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
@@ -31,13 +33,41 @@ class LLM(Protocol):
         reasoning_effort, …) from the runtime config; adapters apply what they can."""
         ...
 
-    def judge(self, model: str, conditions: list[str], output: str, context: dict) -> int:
-        """Return the 0-based index of the FIRST condition that holds (fused judge)."""
+    def judge(
+        self,
+        model: str,
+        conditions: list[str],
+        output: str,
+        context: dict,
+        reasoning: str | None = None,
+    ) -> int:
+        """Return the 0-based index of the FIRST condition that holds (fused judge).
+
+        When the state used `reason: true`, `reasoning` is the private chain-of-thought
+        (SPEC §4.5 / §6) — visible to the judge, never deposited into context."""
         ...
 
 
 JUDGE_SYSTEM = (
     "You are the transition judge of a state machine. Given the state's OUTPUT and "
-    "CONTEXT, return the NUMBER of the FIRST condition that is TRUE. The condition "
-    "'otherwise' is always true. Reply with ONLY the number."
+    "CONTEXT (and REASONING when present), return the NUMBER of the FIRST condition "
+    "that is TRUE. The condition 'otherwise' is always true. "
+    'Reply with ONLY a JSON object: {"choice": <number>}.'
 )
+
+# Transient HTTP statuses worth retrying (rate limits, gateway, overload).
+TRANSIENT_STATUS = (408, 409, 429, 500, 502, 503, 504)
+
+
+def parse_choice(text: str, n: int) -> int:
+    """Read the judge's choice: JSON {"choice": k} first, then a bare number.
+
+    Returns a 0-based index. Unparseable → last condition (typically `otherwise`)."""
+    try:
+        obj = json.loads(text)
+        if isinstance(obj, dict) and "choice" in obj:
+            return int(obj["choice"]) - 1
+    except (ValueError, TypeError):
+        pass
+    m = re.search(r"\d+", text or "")
+    return int(m.group()) - 1 if m else n - 1

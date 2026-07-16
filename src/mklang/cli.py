@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .config import load_provider
 from .engine import run
-from .loader import load_machine, semantic_check
+from .loader import check_tiers, load_machine, semantic_check
 from .registry import load_registry
 
 
@@ -60,6 +60,7 @@ def cmd_run(args) -> int:
         return 2
     registry[machine.name] = machine
     errors, warnings = semantic_check(machine, registry)
+    errors.extend(check_tiers(machine, prov.tiers))
     for w in warnings:
         print(f"# warning: {w}", file=sys.stderr)
     if errors:

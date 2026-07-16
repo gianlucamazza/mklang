@@ -1,6 +1,6 @@
 # mklang — Language Specification
 
-> Version 0.1 (draft). Surface syntax: **YAML**. Runtime:
+> Version **0.2**. Surface syntax: **YAML**. Runtime:
 > **language-agnostic** (a conformant runtime is any host with access to an LLM).
 
 ---
@@ -38,12 +38,12 @@ Principles:
 
 _mklang is to LangGraph what a declarative spec is to Python code._
 
-### What mklang is **not** (v0.1)
+### What mklang is **not** (v0.2)
 
-- It does not compile to a formal artifact (GBNF, JSON Schema, code).
+- It does not compile to a formal artifact (GBNF, JSON Schema of *outputs*, code).
 - It guarantees neither determinism nor statically typed output.
-- It has, in this version, no code-hooks, formal types, sub-machines, or
-  parallelism (→ §9).
+- It has no code-hook gates or formal types for `structure` (→ §9). Sub-machines,
+  fan-out, reasoning, and host `tool` states **are** in the core (§4.5–§4.9).
 
 ---
 
@@ -371,7 +371,8 @@ map_summarize: # one sub-machine run per chunk (orchestrator-worker)
 The runtime resolves `call` names against a **registry of machines** (a project may
 hold many `.mk` files). The parent's trace **nests** the child's trace (§8), and
 sub-runs are bounded by their own `budget` plus a runtime **call-depth cap** so
-recursion terminates.
+recursion terminates. If the sub-machine **halts**, the parent halts with
+`call-failed: <child-error>` (it must not continue as `done` with an empty result).
 
 ### 4.9 `tool` — host-tool invocation (optional)
 
@@ -509,6 +510,8 @@ execute_one(S, ctx, feedback, registry, depth):
   if S.call:                                    # sub-machine invocation (§4.8)
     sub_ctx = map_input(S.input, ctx)
     sub = run(registry[S.call], sub_ctx, registry, depth+1)
+    if sub.status != done:                      # propagate child halt to parent
+      return halt(error="call-failed: " + sub.error, sub_trace=sub.trace)
     return sub.result                           # nested trace attached to the step
   else:                                         # generative state
     prompt = render(S.prompt, ctx) + feedback
@@ -552,10 +555,13 @@ possible. Guards:
 
 **Termination.** A run ends as: `done` (a gate reaches `to: END`; the machine's
 `result` key, if set, is returned — else the last state's output); or `halt` with an
-error (`fail`, `no-gate-matched`, `budget-exhausted`, `call-depth-exceeded`).
-`escalate` is not itself terminal — it routes to a handler state that must reach
-`END`. **Every machine must have at least one reachable path to `END`** (author's
-responsibility in v0.2; a validator SHOULD check it).
+error (`fail`, `no-gate-matched`, `budget-exhausted`, `call-depth-exceeded`,
+`call-failed`, `refusal`, `provider-error`, `cost-exhausted`). A `call` whose
+sub-machine **halts** propagates as `call-failed: <child-error>` (the parent does
+not continue as `done` with an empty result). `escalate` is not itself terminal —
+it routes to a handler state that must reach `END`. **Every machine must have at
+least one reachable path to `END`** (author's responsibility in v0.2; a validator
+SHOULD check it).
 
 ---
 

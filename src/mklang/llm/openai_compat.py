@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import json
-import re
 import time
 
 from ..errors import ProviderError
-from .base import JUDGE_SYSTEM, Produced
+from .base import JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
 
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
 _TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "top_p", "seed"}
-_TRANSIENT_STATUS = (408, 409, 429, 500, 502, 503, 504)
 
 
 class OpenAICompatLLM:
@@ -31,7 +29,7 @@ class OpenAICompatLLM:
             except Exception as e:  # noqa: BLE001 — classify, then retry or re-raise
                 status = getattr(e, "status_code", None)
                 msg = str(e).lower()
-                if status in _TRANSIENT_STATUS and attempt < self.max_retries:
+                if status in TRANSIENT_STATUS and attempt < self.max_retries:
                     time.sleep(0.5 * 2**attempt)
                     attempt += 1
                     continue
@@ -63,14 +61,22 @@ class OpenAICompatLLM:
             text=(msg.content or "").strip(), reasoning=reasoning, input_tokens=it, output_tokens=ot
         )
 
-    def judge(self, model: str, conditions: list[str], output: str, context: dict) -> int:
+    def judge(
+        self,
+        model: str,
+        conditions: list[str],
+        output: str,
+        context: dict,
+        reasoning: str | None = None,
+    ) -> int:
         lines = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(conditions))
-        user = (
-            f"OUTPUT:\n{output}\n\n"
-            f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:4000]}\n\n"
-            f"CONDITIONS (priority order):\n{lines}\n\n"
-            'Reply with ONLY a JSON object: {"choice": <number>}.'
-        )
+        parts = [f"OUTPUT:\n{output}"]
+        if reasoning:
+            parts.append(f"REASONING:\n{reasoning}")
+        parts.append(f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:4000]}")
+        parts.append(f"CONDITIONS (priority order):\n{lines}")
+        parts.append('Reply with ONLY a JSON object: {"choice": <number>}.')
+        user = "\n\n".join(parts)
         r = self._create(
             model=model,
             messages=[
@@ -80,20 +86,12 @@ class OpenAICompatLLM:
             response_format={"type": "json_object"},  # dropped-and-retried if unsupported
             temperature=0,
         )
-        idx = _parse_choice(r.choices[0].message.content or "", len(conditions))
+        idx = parse_choice(r.choices[0].message.content or "", len(conditions))
         return max(0, min(idx, len(conditions) - 1))
 
 
-def _parse_choice(text: str, n: int) -> int:
-    """Read the judge's choice: JSON {"choice": k} first, then a bare number."""
-    try:
-        obj = json.loads(text)
-        if isinstance(obj, dict) and "choice" in obj:
-            return int(obj["choice"]) - 1
-    except (ValueError, TypeError):
-        pass
-    m = re.search(r"\d+", text)
-    return int(m.group()) - 1 if m else n - 1
+# Back-compat alias for tests that imported the private helper.
+_parse_choice = parse_choice
 
 
 def _usage(response) -> tuple[int, int]:
