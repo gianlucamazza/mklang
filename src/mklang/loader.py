@@ -41,8 +41,15 @@ def load_machine(path: str | Path, validate: bool = True) -> Machine:
     return parse_machine(d)
 
 
-def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[str]]:
-    """Return (errors, warnings). Errors block a run; warnings are advisory."""
+def semantic_check(
+    machine: Machine, registry: dict, strict: bool = False
+) -> tuple[list[str], list[str]]:
+    """Return (errors, warnings). Errors block a run; warnings are advisory.
+
+    `strict` promotes an unsupported `mklang:` version from a warning to an error
+    (`version-unsupported`): running a future-versioned document under a v0.2
+    interpreter behind a mere warning is incoherent for a conformance-pinned
+    language — semantics may have diverged (F6)."""
     errors: list[str] = []
     warnings: list[str] = []
     ids = set(machine.states)
@@ -72,9 +79,11 @@ def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[st
         warnings.append(f"result key '{machine.result}' is not produced by any state's output")
 
     if machine.version and machine.version not in ("0.2", "0.2.0"):
-        warnings.append(
-            f"mklang version field is {machine.version!r}; this interpreter targets \"0.2\""
-        )
+        msg = f'mklang version field is {machine.version!r}; this interpreter targets "0.2"'
+        if strict:
+            errors.append(f"version-unsupported: {msg}")
+        else:
+            warnings.append(msg)
 
     # reachability of END from entry
     seen: set[str] = set()
@@ -115,6 +124,4 @@ def check_tiers(machine: Machine, provider_tiers: dict) -> list[str]:
     missing = sorted(used_tiers(machine) - available)
     if not missing:
         return []
-    return [
-        f"tier(s) {missing} not in provider map (available: {sorted(available)})"
-    ]
+    return [f"tier(s) {missing} not in provider map (available: {sorted(available)})"]

@@ -113,18 +113,24 @@ def test_provider_error_halts_with_reason():
     assert r.status == "halt" and r.error.startswith("provider-error")
 
 
-def test_parse_choice_json_then_regex_then_none():
-    assert parse_choice('{"choice": 2}', 3) == 1  # JSON, 1-based -> 0-based
-    assert parse_choice("the first condition holds: 3", 3) == 2  # bare number
-    assert parse_choice("unparseable", 3) is None  # caller decides fallback/halt
+def test_parse_choice_json_bare_last_number():
+    """Fallback order: strict JSON, then whole-reply bare number, then last number."""
+    assert parse_choice('{"choice": 2}', 3) == (1, "json")  # JSON, 1-based -> 0-based
+    assert parse_choice("2", 3) == (1, "bare")  # entire reply is one integer
+    # A verbose/reasoning judge concludes with the answer: take the LAST number, not
+    # the first (an earlier "Condition 1 fails" must not be misread as choice 1).
+    assert parse_choice("Condition 1 fails. Condition 2 holds. 2", 3) == (1, "last-number")
+    assert parse_choice("none apply", 3) == (None, None)  # no digits at all
+    # Truncated JSON with no trailing digits is unparseable, not a stray-digit misread.
+    assert parse_choice('{"choi', 3) == (None, None)
 
 
 def test_parse_choice_out_of_range_is_none_not_clamped():
     """0-based model replies and oversized indices must not silently pick gate 0/last."""
-    assert parse_choice('{"choice": 0}', 3) is None  # 0-based misread → -1 after convert
-    assert parse_choice('{"choice": 4}', 3) is None  # 1-based past end
-    assert parse_choice('{"choice": 1}', 3) == 0
-    assert parse_choice("99", 2) is None
+    assert parse_choice('{"choice": 0}', 3) == (None, None)  # 0-based misread → -1
+    assert parse_choice('{"choice": 4}', 3) == (None, None)  # 1-based past end
+    assert parse_choice('{"choice": 1}', 3) == (0, "json")
+    assert parse_choice("99", 2) == (None, None)
 
 
 def test_judge_out_of_range_soft_falls_to_otherwise():

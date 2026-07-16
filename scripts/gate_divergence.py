@@ -93,18 +93,21 @@ def _output_hash(trace: list[dict]) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()[:12]
 
 
-def _run_once(provider_name: str, config: str) -> dict:
+def _run_once(provider_name: str, config: str, judge_tier: str | None = None) -> dict:
     prov = load_provider(config, provider_name)
     if not prov.api_key and prov.name != "local":
         return {"provider": provider_name, "skipped": True, "reason": "no API key"}
     m = parse_machine(MACHINE)
+    # Default: judging follows each state's tier (SPEC §2.1). `--judge-tier` forces a
+    # single tier's model for all gates, so pre/post-F1 divergence runs are comparable.
+    judge_override = prov.tiers[judge_tier] if judge_tier else prov.judge_override()
     r = run(
         m,
         dict(m.context),
         {m.name: m},
         _build_llm(prov),
         prov.tiers,
-        prov.judge_model(),
+        judge_override,
         tier_params=prov.params,
         cost_budget=20_000,
     )
@@ -113,6 +116,8 @@ def _run_once(provider_name: str, config: str) -> dict:
         "skipped": False,
         "status": r.status,
         "error": r.error,
+        "judge_tier": judge_tier,
+        "judge_override": judge_override,
         "signature": _trace_signature(r.trace) if r.trace else "",
         "output_hash": _output_hash(r.trace) if r.trace else "",
         "gates": [
@@ -120,6 +125,7 @@ def _run_once(provider_name: str, config: str) -> dict:
                 "state": s.get("state"),
                 "gate": s.get("gate"),
                 "gate_via": s.get("gate_via"),
+                "judge_model": s.get("judge_model"),
                 "to": s.get("to"),
                 "judge_fallback": s.get("judge_fallback"),
             }
@@ -158,6 +164,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--repeats", type=int, default=1, help="runs per provider")
     p.add_argument("--jsonl", type=Path, default=None, help="append raw rows here")
+    p.add_argument(
+        "--judge-tier",
+        choices=("fast", "balanced", "reasoning"),
+        default=None,
+        help="force all gate judging onto this tier's model (default: follow each "
+        "state's tier, SPEC §2.1). The demo machine is fast-tier throughout.",
+    )
     args = p.parse_args(argv)
 
     names = [x.strip() for x in args.providers.split(",") if x.strip()]
@@ -165,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
     for name in names:
         for i in range(args.repeats):
             try:
-                row = _run_once(name, args.config)
+                row = _run_once(name, args.config, judge_tier=args.judge_tier)
             except Exception as e:  # noqa: BLE001
                 row = {"provider": name, "skipped": True, "reason": str(e)}
             row["repeat"] = i

@@ -19,8 +19,14 @@ class ProviderConfig:
     judge: str | None = None
     params: dict = field(default_factory=dict)
 
-    def judge_model(self) -> str:
-        return self.judge or self.tiers.get("fast") or self.tiers["balanced"]
+    def judge_override(self) -> str | None:
+        """The optional global judge-model override (config `judge:`).
+
+        ``None`` means gate judging follows each state's own capability tier
+        (SPEC §2.1) — a `reasoning` state's gates are judged by the reasoning
+        model, not silently downgraded. Set `judge:` only to force one cheaper
+        model for *all* gates as a cost optimization."""
+        return self.judge
 
 
 def load_provider(config_path: str, provider: str | None = None) -> ProviderConfig:

@@ -1,0 +1,48 @@
+case: hook-before-prose
+description: >
+  SPEC §5: gates fire in document order and the FIRST true gate wins. A hook gate
+  placed AFTER a prose gate must not preempt it — the earlier prose gate fires
+  (gate_via: llm, to: via_prose) even though the later hook would also be true.
+  (Mutation check: making the engine evaluate hooks before earlier prose gates
+  reroutes this case to via_hook and fails it.)
+machine:
+  machine: hook_order
+  entry: s
+  budget: 3
+  states:
+    s:
+      structure: x
+      prompt: route
+      output: o
+      gates:
+        - { when: the earlier prose condition holds, then: ok, to: via_prose }
+        - { when: hook would also fire, hook: always_yes, then: ok, to: via_hook }
+        - { when: otherwise, then: ok, to: via_other }
+    via_prose:
+      structure: x
+      prompt: prose-branch
+      output: o2
+      gates:
+        - { when: otherwise, then: ok, to: END }
+    via_hook:
+      structure: x
+      prompt: hook-branch
+      output: o3
+      gates:
+        - { when: otherwise, then: ok, to: END }
+    via_other:
+      structure: x
+      prompt: other-branch
+      output: o4
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["s-out", "prose-out"]
+  judge: [0] # the batched earlier prose gate is TRUE (index 0 in its batch)
+hooks:
+  always_yes: [true]
+expect:
+  status: done
+  trace:
+    - { state: s, gate_via: llm, policy: ok, to: via_prose }
+    - { state: via_prose, policy: ok, to: END }

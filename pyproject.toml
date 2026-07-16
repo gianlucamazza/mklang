@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "0.5.1"
+version = "0.5.2"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -12,8 +12,12 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 - **Default `default_tier: balanced`.** Override per state; don't reach for
   `reasoning` reflexively — it's the expensive tier.
-- **Set `judge` to a cheap/fast model** in the runtime config. Gate judging is a
-  small classification; paying reasoning-tier prices for it is waste.
+- **Gate judging follows the state's tier by default** (SPEC §2.1): a `reasoning`
+  state's high-stakes gates (refund thresholds, legal matters, human escalation) are
+  judged by the reasoning model, not silently downgraded. The `judge:` config key is
+  an **opt-in global override** that forces one model for *all* gate judging — a
+  cost/latency optimization that also downgrades your most critical gates, so reach
+  for it only when your gates really are uniform, cheap classifications.
 - **Speculative cascade** beats a flat `reasoning` machine on cost: draft at `fast`,
   and let an `escalate` gate promote only the low-confidence cases to a `reasoning`
   state. Same answers, a fraction of the tokens.
@@ -38,6 +42,14 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   fallback is recorded as `judge_fallback` in the trace). `mklang check` warns when
   the catch-all is missing.
 - **Guarantee a reachable `END`.** `mklang check` errors if none exists.
+- **Fix `unresolved-interpolation` lint before shipping.** `mklang lint` flags any
+  `{{path}}` whose first segment no `context:` key, state `output:`, or (inside a
+  fan-out) `item`/`index` provides — a typo (`{{kb_answr}}`) otherwise renders to an
+  empty string and silently degrades the prompt. Under `--strict` it fails the run.
+  If a host injects extra context keys at run time, declare them in `context:` with
+  placeholder values so the reference to them resolves and the lint stays quiet.
+  (The rule checks the first path segment only; dotted tails like `ticket.body`
+  can't be verified statically against prose `structure`.)
 - **Cap `repair`.** A `repair: N` with a modest `N` (1–2) plus a following
   `escalate`/`fail` gate prevents an endless self-correction loop.
 - **Give escalation a safe sink.** Route hard cases to a terminal `human_review`
@@ -48,6 +60,11 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
   the width of any fan-out (a `sample: N` costs N steps). Leave headroom; hitting the
   budget is a `halt`.
+- **Map-reduce: size `budget` against data cardinality.** A fan-out charges
+  `max(1, len(branches))` steps (SPEC §7), so `budget` is also a volume cap — an
+  `over` on 30 items with `budget: 25` halts `budget-exhausted` before the reducer.
+  Set `budget ≥ expected branches + machine overhead`, or bound the list before the
+  fan-out. If the item count is unknown at authoring time, size for the worst case.
 - **Use `--max-tokens` (cost budget) on long `call` trees.** The remaining budget is
   shared with sub-machines so a runaway child cannot burn tokens unbounded.
 - **Fan-out concurrency** is a `ThreadPoolExecutor` with `max_workers=5` today —
@@ -83,7 +100,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   `active: deepseek`); keys come from `.env` (`DEEPSEEK_API_KEY`, …). Switching
   provider is a one-line `active:` change or `mklang run --provider …`.
 - **Diversity for `sample`** comes from temperature; keep the sampling state on a
-  model that honors it (most chat models do — some reasoner models ignore it).
+  model that honors it (most chat models do — some reasoner models ignore it). Each
+  sample branch also sees its own `{{index}}` (0-based), so you can drive diversity
+  explicitly — "you are branch {{index}}, take a different approach" (Tree-of-Thought,
+  debate), not temperature alone.
 - **`reason: true`** yields a captured chain only on models that expose thinking
   (Anthropic adaptive, DeepSeek `deepseek-reasoner`, o-series). On plain models the
   model still reasons internally; the trace just won't hold the scratchpad.

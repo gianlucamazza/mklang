@@ -56,7 +56,7 @@ def _prepare(args, machine_path: str):
         print(f"{machine_path}: ERROR: {getattr(e, 'message', str(e))}", file=sys.stderr)
         return 2
     registry[machine.name] = machine
-    errors, warnings = semantic_check(machine, registry)
+    errors, warnings = semantic_check(machine, registry, strict=getattr(args, "strict", False))
     errors.extend(check_tiers(machine, prov.tiers))
     for w in warnings:
         print(f"# warning: {w}", file=sys.stderr)
@@ -127,7 +127,7 @@ def cmd_run(args) -> int:
         registry,
         llm,
         prov.tiers,
-        prov.judge_model(),
+        prov.judge_override(),
         tier_params=prov.params,
         cost_budget=args.max_tokens,
         tools=tools,
@@ -185,7 +185,7 @@ def cmd_resume(args) -> int:
         registry,
         llm,
         prov.tiers,
-        prov.judge_model(),
+        prov.judge_override(),
         tier_params=prov.params,
         cost_budget=cost_budget,
         tools=tools,
@@ -210,7 +210,7 @@ def cmd_lint(args) -> int:
             print(f"{path}: SCHEMA ERROR: {getattr(e, 'message', str(e))}")
             ok = False
             continue
-        errors, warnings = semantic_check(machine, registry)
+        errors, warnings = semantic_check(machine, registry, strict=args.strict)
         findings = lint_machine(machine)
         findings_total += len(findings)
         for w in warnings:
@@ -239,7 +239,7 @@ def cmd_check(args) -> int:
             print(f"{path}: SCHEMA ERROR: {msg}")
             ok = False
             continue
-        errors, warnings = semantic_check(machine, registry)
+        errors, warnings = semantic_check(machine, registry, strict=args.strict)
         for w in warnings:
             print(f"{path}: warning: {w}")
         for e in errors:
@@ -270,13 +270,20 @@ def main(argv: list[str] | None = None) -> int:
         "--checkpoint",
         default=None,
         metavar="PATH",
-        help="on budget exhaustion suspend and write a resumable checkpoint here",
+        help="on budget exhaustion suspend and write a resumable checkpoint here "
+        "(contains the full context in plaintext; written 0600, see SPEC §11)",
     )
     r.add_argument(
         "--hitl",
         action="store_true",
         help="a fired escalate gate suspends for human review (requires --checkpoint); "
         "reply via `mklang resume --set`",
+    )
+    r.add_argument(
+        "--strict",
+        action="store_true",
+        help="refuse to run a document whose mklang: version is unsupported "
+        "(version-unsupported); default is a warning",
     )
     r.set_defaults(fn=cmd_run)
 
@@ -315,6 +322,11 @@ def main(argv: list[str] | None = None) -> int:
 
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
     c.add_argument("machines", nargs="+")
+    c.add_argument(
+        "--strict",
+        action="store_true",
+        help="treat an unsupported mklang: version as an error (version-unsupported)",
+    )
     c.set_defaults(fn=cmd_check)
 
     li = sub.add_parser("lint", help="check + static analysis (dead gates, unread outputs, typos)")

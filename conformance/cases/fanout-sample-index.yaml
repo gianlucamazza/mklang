@@ -1,0 +1,27 @@
+case: fanout-sample-index
+description: >
+  sample fans out N times; each branch sees its own 0-based {{index}} rendered into
+  the prompt (item is NOT set under sample). Branches deposit as an aligned list.
+machine:
+  machine: fanout_sample_index
+  entry: gen
+  budget: 5
+  states:
+    gen:
+      structure: one candidate
+      prompt: "candidate for index=={{index}}"
+      sample: 3
+      output: candidates
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "index==0": "a0"
+    "index==1": "a1"
+    "index==2": "a2"
+expect:
+  status: done
+  context:
+    candidates: ["a0", "a1", "a2"]
+  trace:
+    - { state: gen, policy: ok, to: END }

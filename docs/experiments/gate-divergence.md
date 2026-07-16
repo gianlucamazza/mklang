@@ -37,7 +37,16 @@ Script: [`scripts/gate_divergence.py`](../../scripts/gate_divergence.py).
 uv run python scripts/gate_divergence.py
 uv run python scripts/gate_divergence.py --providers deepseek,openai --repeats 3 \
   --jsonl /tmp/gate-div.jsonl
+# force one judge tier across providers (comparable to pre-0.5.2 fast-judge runs):
+uv run python scripts/gate_divergence.py --judge-tier fast
 ```
+
+> **Judge model since 0.5.2.** Gate judging now follows each state's tier by
+> default (SPEC §2.1); the demo machine is `fast`-tier throughout, so the default
+> judge here is the `fast` model — but any results collected before 0.5.2 used the
+> old `judge:`-forced model and are **not comparable** with tier-following runs.
+> Each row now records `judge_model` per gate and the run's `judge_tier`; use
+> `--judge-tier` to pin a single tier when comparing across the change.
 
 ## Metrics
 

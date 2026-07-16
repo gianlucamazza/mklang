@@ -302,6 +302,25 @@ def test_envelope_save_load_and_hash(tmp_path):
     assert encode_repair(decode_repair([["a", 1, 2]])) == [["a", 1, 2]]
 
 
+def test_checkpoint_written_owner_only(tmp_path):
+    """A checkpoint holds the full blackboard in plaintext — it must be 0600 (F5)."""
+    import os
+    import stat
+
+    import pytest
+
+    if os.name == "nt":  # POSIX permission bits are not meaningful on Windows
+        pytest.skip("POSIX permissions only")
+    mk = tmp_path / "demo.mk"
+    mk.write_text(MK, encoding="utf-8")
+    ck_path = tmp_path / "ck.json"
+    # Pre-create with wide permissions to prove save_checkpoint tightens them.
+    ck_path.write_text("{}", encoding="utf-8")
+    os.chmod(ck_path, 0o644)
+    save_checkpoint(ck_path, "demo", mk, "escalated", [], 100)
+    assert stat.S_IMODE(os.stat(ck_path).st_mode) == 0o600
+
+
 def test_cli_resume_guards(tmp_path, capsys, monkeypatch):
     mk = tmp_path / "demo.mk"
     mk.write_text(MK, encoding="utf-8")

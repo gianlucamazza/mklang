@@ -1,0 +1,38 @@
+case: hook-false-falls-through
+description: >
+  SPEC §5: a hook gate whose predicate is false does not fire; evaluation falls
+  through to the following gates. Here the hook is false, so the otherwise catch-all
+  fires (gate_via: otherwise, to: closed).
+machine:
+  machine: hook_falls
+  entry: s
+  budget: 3
+  states:
+    s:
+      structure: x
+      prompt: gate-check
+      output: o
+      gates:
+        - { when: the hook opens the gate, hook: gate_open, then: ok, to: opened }
+        - { when: otherwise, then: ok, to: closed }
+    opened:
+      structure: x
+      prompt: opened-branch
+      output: o2
+      gates:
+        - { when: otherwise, then: ok, to: END }
+    closed:
+      structure: x
+      prompt: closed-branch
+      output: o3
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["s-out", "closed-out"]
+hooks:
+  gate_open: [false]
+expect:
+  status: done
+  trace:
+    - { state: s, gate_via: otherwise, policy: ok, to: closed }
+    - { state: closed, policy: ok, to: END }

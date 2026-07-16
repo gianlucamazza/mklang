@@ -40,8 +40,14 @@ class LLM(Protocol):
         output: str,
         context: dict,
         reasoning: str | None = None,
-    ) -> int:
+    ) -> int | tuple[int, str | None]:
         """Return the 0-based index of the FIRST condition that holds (fused judge).
+
+        The reference adapters return ``(index, method)`` where ``method`` is how the
+        reply was parsed (``"json"`` / ``"bare"`` / ``"last-number"``, see
+        ``parse_choice``); the engine traces a non-``json`` method as ``judge_parse``.
+        Returning a bare ``int`` is also accepted (the engine treats the method as
+        unknown) — mock/scripted judges use that simpler form.
 
         When the state used `reason: true`, `reasoning` is the private chain-of-thought
         (SPEC §4.5 / §6) — visible to the judge, never deposited into context."""
@@ -53,7 +59,8 @@ JUDGE_SYSTEM = (
     "CONTEXT (and REASONING when present), return the NUMBER of the FIRST condition "
     "that is TRUE. Conditions are numbered 1..N (1-based). The condition 'otherwise' "
     "is always true. "
-    'Reply with ONLY a JSON object: {"choice": <number>}.'
+    'Reply with ONLY a JSON object: {"choice": <number>}. '
+    "Do not include any other numbers in your reply."
 )
 
 # Host MAY truncate judge CONTEXT; reference adapters use this cap (SPEC §5).
@@ -63,26 +70,41 @@ JUDGE_CONTEXT_CHARS = 4000
 TRANSIENT_STATUS = (408, 409, 429, 500, 502, 503, 504)
 
 
-def parse_choice(text: str, n: int) -> int | None:
-    """Read the judge's choice: JSON {"choice": k} first, then a bare number.
+def parse_choice(text: str, n: int) -> tuple[int | None, str | None]:
+    """Read the judge's choice, returning ``(index, method)``.
 
-    Conditions are **1-based** in the prompt. Returns a **0-based** index in
-    ``[0, n)``, or **None** if the text is unparseable **or** the converted index
-    is out of range. Callers must not clamp: out-of-range is an anomaly (soft-fall
-    to ``otherwise`` or hard-halt ``judge-unparseable``), never a silent correction.
+    Conditions are **1-based** in the prompt; the returned ``index`` is **0-based**
+    in ``[0, n)``. Fallback order (a verbose or reasoning judge may not emit clean
+    JSON, and ``max_tokens`` can truncate a trailing object):
+
+    1. strict JSON ``{"choice": k}`` → method ``"json"``;
+    2. a bare number, only if the **entire stripped reply** is digits → ``"bare"``;
+    3. otherwise the **last** run of digits in the reply (models conclude with the
+       answer) → ``"last-number"``.
+
+    Returns ``(None, None)`` if nothing parses **or** the converted index is out of
+    range. Callers must not clamp: out-of-range is an anomaly (soft-fall to
+    ``otherwise`` or hard-halt ``judge-unparseable``), never a silent correction.
+    The ``"last-number"`` method is anomaly-adjacent — the engine traces it as
+    ``judge_parse`` without treating it as a fallback or a halt.
     """
-    raw: int | None = None
+
+    def _bounded(raw: int, method: str) -> tuple[int | None, str | None]:
+        return (raw, method) if 0 <= raw < n else (None, None)
+
+    s = (text or "").strip()
+    # (a) strict JSON {"choice": k}
     try:
-        obj = json.loads(text)
+        obj = json.loads(s)
         if isinstance(obj, dict) and "choice" in obj:
-            raw = int(obj["choice"]) - 1
+            return _bounded(int(obj["choice"]) - 1, "json")
     except (ValueError, TypeError):
         pass
-    if raw is None:
-        m = re.search(r"\d+", text or "")
-        if not m:
-            return None
-        raw = int(m.group()) - 1
-    if raw < 0 or raw >= n:
-        return None
-    return raw
+    # (b) bare number: the entire stripped reply is a single integer
+    if re.fullmatch(r"\d+", s):
+        return _bounded(int(s) - 1, "bare")
+    # (c) last number anywhere — the judge concluded with the answer
+    nums = re.findall(r"\d+", s)
+    if nums:
+        return _bounded(int(nums[-1]) - 1, "last-number")
+    return (None, None)

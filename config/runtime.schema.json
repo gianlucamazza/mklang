@@ -55,7 +55,7 @@
         "tiers": { "$ref": "#/$defs/tier_map" },
         "judge": {
           "type": "string",
-          "description": "Optional model id used only for gate judging (cost optimization)."
+          "description": "Optional GLOBAL judge-model override: forces one model for ALL gate judging. When omitted (the default), each state's gates are judged by that state's own capability tier (SPEC §2.1) — set this only as a cost/latency optimization that trades judging quality on high-tier gates."
         },
         "params": {
           "type": "object",

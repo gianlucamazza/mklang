@@ -68,14 +68,12 @@ class OpenAICompatLLM:
         output: str,
         context: dict,
         reasoning: str | None = None,
-    ) -> int:
+    ) -> tuple[int, str | None]:
         lines = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(conditions))
         parts = [f"OUTPUT:\n{output}"]
         if reasoning:
             parts.append(f"REASONING:\n{reasoning}")
-        parts.append(
-            f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:JUDGE_CONTEXT_CHARS]}"
-        )
+        parts.append(f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:JUDGE_CONTEXT_CHARS]}")
         parts.append(f"CONDITIONS (priority order, 1-based):\n{lines}")
         parts.append('Reply with ONLY a JSON object: {"choice": <number>}.')
         user = "\n\n".join(parts)
@@ -89,10 +87,10 @@ class OpenAICompatLLM:
             temperature=0,
         )
         text = r.choices[0].message.content or ""
-        idx = parse_choice(text, len(conditions))
+        idx, method = parse_choice(text, len(conditions))
         if idx is None:
             raise JudgeUnparseable(text[:200] or "(empty)")
-        return idx
+        return idx, method
 
 
 # Back-compat alias for tests that imported the private helper.
