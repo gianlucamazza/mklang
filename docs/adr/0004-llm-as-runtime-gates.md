@@ -20,9 +20,8 @@ natural-language post-conditions the model judges, each carrying a policy
 
 ## Consequences
 
-- The language is prose-first and writable by non-programmers; no host code required.
-- Correctness rides on prompt/condition quality (live testing surfaced this: e.g. a
-  policy category the model labels differently changes the terminal). Mitigations are
-  authoring practices (docs/patterns.md), not language rigidity.
-- Determinism for critical checks is opt-in via **code-hook gates** (ADR 0006);
-  caching remains a separate later item.
+- The language is prose-first and writable by non-programmers for the common path;
+  host code is optional (tools + code-hook gates) for exact checks and real I/O.
+- Soft correctness rides on prompt/condition quality; critical checks should use
+  code-hook gates (ADR 0006) plus authoring practices (docs/patterns.md).
+- Determinism for critical gates is opt-in via **hooks**; caching remains later.

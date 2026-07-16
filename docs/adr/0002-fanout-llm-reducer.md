@@ -22,5 +22,5 @@ state deposits a list; a normal generative state reads `{{list}}` and votes / se
   non-LLM evaluation semantics to specify, validate, or teach.
 - The schema stays simpler (no aggregator grammar).
 - Reduction is non-deterministic (it's an LLM call) — acceptable, and consistent
-  with the LLM-as-runtime premise (ADR 0004). A future code-hook gate (roadmap) can
-  add deterministic reduction where needed without changing this default.
+  with the LLM-as-runtime premise (ADR 0004). Deterministic reduction, when needed,
+  can use a **code-hook gate** on the reducer (ADR 0006) without built-in aggregators.

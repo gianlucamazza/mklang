@@ -15,12 +15,12 @@ Principles:
 
 - **Document-first.** A `.mk` is readable — and largely writable — even by
   non-programmers. Logic lives in prose, not in host code.
-- **LLM-as-runtime.** There is no deterministic engine executing the graph: the LLM
-  itself, state by state, produces the output and decides the transitions.
-  Execution is therefore **non-deterministic** by construction.
-- **Gates as the safety net.** Because the runtime is unreliable, reliability comes
-  not from types but from **gates**: conditions each state must pass before
-  transitioning. Gates are what make the unreliable usable.
+- **LLM-as-runtime.** Generative states are produced by an LLM, so execution is
+  **non-deterministic** by construction for that path. Host **tool** and **hook**
+  callables may still run deterministically where the author opts in.
+- **Gates as the safety net.** Reliability comes from **gates** (prose judged by the
+  LLM, optional host hooks, budgets, trace) — not from static types. Gates make the
+  unreliable usable.
 - **Provider-agnostic.** A `.mk` file never names an LLM provider or a concrete
   model. The same machine runs unchanged on Anthropic, OpenAI, Google, or a local
   model (Ollama/vLLM/…). A state may express a provider-neutral **capability tier**
@@ -33,7 +33,7 @@ Principles:
 | Artifact    | YAML doc           | Python code       | schema→code     | Python code            |
 | Runtime     | LLM interprets doc | Python runs graph | host calls fns  | Python + optimizer     |
 | Composition | state machine      | graph/FSM         | typed functions | modules/signatures     |
-| Determinism | none (by design)   | of control-flow   | of typed output | of control-flow        |
+| Determinism | control none; optional host hooks | of control-flow | of typed output | of control-flow |
 | Audience    | non-devs too       | developers        | developers      | developers/researchers |
 
 _mklang is to LangGraph what a declarative spec is to Python code._
@@ -147,8 +147,8 @@ states: # map of <state-id> -> state definition
 ```
 
 > A state is **exactly one** of generative (`prompt`), call (`call`), or tool
-> (`tool`). `sample` and `over` are mutually exclusive. An optional top-level `tools:`
-> block documents the tools a machine expects (§4.9).
+> (`tool`). `sample` and `over` are mutually exclusive. Optional top-level `tools:`
+> / `hooks:` blocks document host tools and gate hooks the machine expects (§4.9, §5).
 
 Informal (non-normative) pseudo-schema of a **state**:
 
@@ -190,7 +190,8 @@ Tool        ::= {
 }
 
 Gate ::= {
-  when : string                # natural-language condition (LLM-judged)
+  when : string                # label / NL condition (LLM-judged if no hook)
+  hook : HookName?             # optional host predicate (ctx, output) -> bool (§5)
   # exactly ONE of:
   then    : "ok"   , to: StateId|"END"     # advance
   repair  : int    , to: StateId           # reprompt with feedback, budget int

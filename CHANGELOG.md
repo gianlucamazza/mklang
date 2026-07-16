@@ -12,6 +12,12 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Docs drift pass: SPEC pseudo-schema includes `hook` / `hooks:`; comparison table and
+  philosophy updated for host hooks; ADR 0002/0004 no longer refer to code-hooks as
+  future-only; ROADMAP test count aligned (~70).
+
 ## [0.2.2] — 2026-07-16
 
 ### Added
