@@ -67,6 +67,11 @@ def semantic_check(machine: Machine, registry: dict) -> tuple[list[str], list[st
     if machine.result and machine.result not in produced:
         warnings.append(f"result key '{machine.result}' is not produced by any state's output")
 
+    if machine.version and machine.version not in ("0.2", "0.2.0"):
+        warnings.append(
+            f"mklang version field is {machine.version!r}; this interpreter targets \"0.2\""
+        )
+
     # reachability of END from entry
     seen: set[str] = set()
     stack = [machine.entry]

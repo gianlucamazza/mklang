@@ -21,10 +21,10 @@ Items are marked **[next]** (clear near-term), **[later]** (valuable, not urgent
   validation in `mklang run`; engine exception-safety (clean `halt`, isolated
   fan-out branches); schema bundled for pip-install; `.env` from cwd; `mklang: "0.2"`
   version field; transient-error retry; dead-state / unproduced-`result` checks.
-- Milestone 6: **`tool` states** (real ReAct — host callables, observations re-enter
-  the context); structured-output judge; error taxonomy (`refusal`/`provider-error`);
-  token/cost accounting + cost budget; Apache-2.0 + CONTRIBUTING + CHANGELOG;
-  golden-trace + cookbook-conformance tests; Anthropic adapter unit-tested.
+- Milestone 6+: **`tool` states**; structured judge; error taxonomy; cost accounting;
+  call-halt propagation; shared cost budget under `call`; judge unparseable policy;
+  Anthropic parity; tier pre-check; Apache-2.0 + CONTRIBUTING + CHANGELOG; golden +
+  cookbook tests (54→60 unit tests on MockLLM).
 
 ## Language
 
@@ -38,13 +38,14 @@ Items are marked **[next]** (clear near-term), **[later]** (valuable, not urgent
 ## Runtime
 
 - **Shipped (see CHANGELOG):** structured-output judge (OpenAI-compat + Anthropic JSON
-  / regex fallback via shared `parse_choice`), error taxonomy (`refusal` /
-  `provider-error` / `call-failed` / `cost-exhausted`), token/cost accounting +
-  `cost_budget`, `reason` passed to the judge (SPEC §4.5), sub-machine halt
-  propagation (`call-failed`), Anthropic parity (retry, `ProviderError`, temperature
-  without thinking), pre-run tier validation in `mklang run`.
-- **[later] Judge confidence / hard-fail on unparseable** — optional halt instead of
-  soft-fallback to the last (`otherwise`) gate when the judge returns garbage.
+  via shared `parse_choice`), error taxonomy (`refusal` / `provider-error` /
+  `call-failed` / `cost-exhausted` / `judge-unparseable`), token/cost accounting +
+  shared `cost_budget` (incl. nested `call`), `reason` passed to the judge
+  (SPEC §4.5), sub-machine halt propagation, Anthropic parity, pre-run tier
+  validation, judge unparseable → `otherwise` only (else hard halt), strict `over`
+  path lookup.
+- **[later] Judge confidence score** — optional numeric confidence alongside choice
+  (today: parse-ok vs unparseable is the only confidence signal).
 - **[later] Async concurrency** — swap the fan-out `ThreadPoolExecutor` for asyncio
   with a bounded semaphore; matters at large `sample`/`over` widths. Document the
   current `max_workers=5` limit until then.

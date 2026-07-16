@@ -30,3 +30,7 @@ class CallFailed(MklangError):
         self.sub_trace = sub_trace or []
         self.input_tokens = input_tokens
         self.output_tokens = output_tokens
+
+
+class JudgeUnparseable(MklangError):
+    """The gate judge returned text that could not be parsed as a choice."""

@@ -6,7 +6,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from .errors import CallFailed, ProviderError, RefusalError
+from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render
 from .model import Machine, State
 
@@ -55,6 +55,8 @@ class _Ctx:
     tier_params: dict  # tier -> provider-specific params
     tools: dict  # tool name -> callable(dict) -> str
     max_workers: int = 5
+    # Remaining token budget for this run and its descendants (None = unlimited).
+    cost_budget: int | None = None
 
 
 def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machine, depth: int):
@@ -74,6 +76,7 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             depth=depth + 1,
             max_workers=deps.max_workers,
             tier_params=deps.tier_params,
+            cost_budget=deps.cost_budget,
             tools=deps.tools,
         )
         u = sub.usage or {}
@@ -103,6 +106,9 @@ def _safe_exec(state, ctx, deps, machine, depth):
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
         return _exec_one(state, ctx, "", deps, machine, depth)
+    except CallFailed as e:
+        # Preserve nested trace + token usage from a sub-machine halt.
+        return (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
     except Exception as e:  # noqa: BLE001 — isolate the branch
         return (f"[branch-error: {e}]", None, None, (0, 0))
 
@@ -111,15 +117,27 @@ def _branch_contexts(state: State, ctx: dict) -> list[dict]:
     if state.sample:
         return [dict(ctx) for _ in range(state.sample)]
     m = _OVER_VAR.search(state.over or "")  # extract the path from "{{chunks}}"
-    items = lookup(ctx, m.group(1)) if m else None
+    if not m:
+        raise ValueError(f"over: invalid expression {state.over!r} (expected {{{{path}}}})")
+    path = m.group(1)
+    items = lookup(ctx, path)
+    if items is None:
+        raise KeyError(f"over: path {path!r} not found in context")
     if not isinstance(items, list):
-        items = []
+        raise TypeError(f"over: path {path!r} is not a list (got {type(items).__name__})")
     out = []
     for i, item in enumerate(items):
         b = dict(ctx)
         b["item"], b["index"] = item, i
         out.append(b)
     return out
+
+
+def _pick_otherwise(eligible: list[tuple[int, object]]) -> tuple[int, object] | None:
+    for i, g in eligible:
+        if g.when.strip().lower() == "otherwise":
+            return i, g
+    return None
 
 
 def run(
@@ -137,7 +155,16 @@ def run(
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
-    deps = _Ctx(llm, tiers, judge_model, registry, tier_params or {}, tools or {}, max_workers)
+    deps = _Ctx(
+        llm,
+        tiers,
+        judge_model,
+        registry,
+        tier_params or {},
+        tools or {},
+        max_workers,
+        cost_budget,
+    )
     ctx = dict(context)
     state_id = machine.entry
     trace: list[dict] = []
@@ -149,18 +176,38 @@ def run(
     def usage() -> dict:
         return {"input_tokens": total_in, "output_tokens": total_out}
 
+    def spent() -> int:
+        return total_in + total_out
+
+    def remaining_budget() -> int | None:
+        if cost_budget is None:
+            return None
+        return max(0, cost_budget - spent())
+
     while True:
         if steps >= machine.budget:
             return RunResult("halt", trace, ctx, error="budget-exhausted", usage=usage())
-        if cost_budget is not None and total_in + total_out >= cost_budget:
+        if cost_budget is not None and spent() >= cost_budget:
             return RunResult("halt", trace, ctx, error="cost-exhausted", usage=usage())
+        # Sub-runs inherit the *remaining* budget so parent+children share one pool.
+        deps.cost_budget = remaining_budget()
         S = machine.states[state_id]
         step: dict = {"state": state_id, "tier": S.tier or machine.default_tier}
 
         # 1) EXECUTE (isolate failures: single → halt cleanly, branch → marker)
         judge_reasoning: str | None = None
         if S.is_fanout:
-            branches = _branch_contexts(S, ctx)
+            try:
+                branches = _branch_contexts(S, ctx)
+            except Exception as e:  # noqa: BLE001 — bad over path / type
+                return RunResult(
+                    "halt",
+                    trace,
+                    ctx,
+                    error=f"state-error: {e}",
+                    at=state_id,
+                    usage=usage(),
+                )
             steps += max(1, len(branches))
             if branches:
                 with ThreadPoolExecutor(max_workers=deps.max_workers) as ex:
@@ -247,15 +294,33 @@ def run(
             return RunResult(
                 "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
             )
-        gi_local = deps.llm.judge(
-            deps.judge_model,
-            [g.when for _, g in eligible],
-            fmt(result),
-            ctx,
-            reasoning=judge_reasoning,
-        )
-        gi_local = max(0, min(gi_local, len(eligible) - 1))  # trust nothing from the judge
-        i, gate = eligible[gi_local]
+        try:
+            gi_local = deps.llm.judge(
+                deps.judge_model,
+                [g.when for _, g in eligible],
+                fmt(result),
+                ctx,
+                reasoning=judge_reasoning,
+            )
+            gi_local = max(0, min(gi_local, len(eligible) - 1))  # trust nothing from the judge
+            i, gate = eligible[gi_local]
+        except JudgeUnparseable as e:
+            # Soft-fallback only when an `otherwise` catch-all is eligible; else fail loud.
+            step["judge_fallback"] = True
+            step["judge_raw"] = str(e)[:200]
+            catch = _pick_otherwise(eligible)
+            if catch is None:
+                step.update(step=steps, gate=None, policy="judge-unparseable", to=None)
+                trace.append(step)
+                return RunResult(
+                    "halt",
+                    trace,
+                    ctx,
+                    error="judge-unparseable",
+                    at=state_id,
+                    usage=usage(),
+                )
+            i, gate = catch
         step.update(step=steps, gate=gate.when, policy=gate.kind, to=gate.to)
         trace.append(step)
 

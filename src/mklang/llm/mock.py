@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from ..errors import JudgeUnparseable
 from .base import Produced
 
 
@@ -15,7 +16,7 @@ class MockLLM:
     def __init__(
         self,
         produce_fn: Callable[..., Produced] | None = None,
-        judge_fn: Callable[[str, list[str], str, dict], int] | None = None,
+        judge_fn: Callable[..., int] | None = None,
     ):
         self._produce = produce_fn
         self._judge = judge_fn
@@ -35,3 +36,10 @@ class MockLLM:
             except TypeError:
                 return self._judge(model, conditions, output, context)
         return len(conditions) - 1
+
+
+class UnparseableJudgeLLM(MockLLM):
+    """Judge always raises JudgeUnparseable (for engine fallback tests)."""
+
+    def judge(self, model, conditions, output, context, reasoning=None) -> int:
+        raise JudgeUnparseable("not a choice")

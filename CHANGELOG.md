@@ -24,6 +24,13 @@ All notable changes to mklang are documented here. The format follows
   (shared `parse_choice` with OpenAI-compat).
 - **Pre-run tier validation** — `mklang run` rejects machines that need a tier missing
   from the provider map; engine KeyError messages name the missing tier.
+- **Shared `cost_budget` across `call`** — sub-machines inherit the remaining token
+  budget (no unbounded child spend while the parent still looks under budget).
+- **Judge unparseable is no longer silent** — adapters raise `JudgeUnparseable`; the
+  engine soft-falls back only to an eligible `otherwise` (trace: `judge_fallback`),
+  else halts with `judge-unparseable`.
+- **`over` missing path / wrong type** — hard error (empty list still OK per SPEC).
+- **Fan-out branch `call` halt** — preserves `sub_trace` and child token usage.
 
 ### Added
 

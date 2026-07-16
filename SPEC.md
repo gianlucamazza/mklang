@@ -556,12 +556,17 @@ possible. Guards:
 **Termination.** A run ends as: `done` (a gate reaches `to: END`; the machine's
 `result` key, if set, is returned — else the last state's output); or `halt` with an
 error (`fail`, `no-gate-matched`, `budget-exhausted`, `call-depth-exceeded`,
-`call-failed`, `refusal`, `provider-error`, `cost-exhausted`). A `call` whose
-sub-machine **halts** propagates as `call-failed: <child-error>` (the parent does
-not continue as `done` with an empty result). `escalate` is not itself terminal —
-it routes to a handler state that must reach `END`. **Every machine must have at
-least one reachable path to `END`** (author's responsibility in v0.2; a validator
-SHOULD check it).
+`call-failed`, `refusal`, `provider-error`, `cost-exhausted`, `judge-unparseable`).
+A `call` whose sub-machine **halts** propagates as `call-failed: <child-error>`
+(the parent does not continue as `done` with an empty result). A host **cost
+budget** (token cap) is shared with nested `call` runs — children see the
+*remaining* budget. If the gate judge returns unparseable text, the runtime
+soft-falls back only when an eligible `when: otherwise` exists (trace flag
+`judge_fallback`); otherwise it halts with `judge-unparseable`. `over` on a
+**missing** or non-list path is a hard error; an empty list still produces `[]`
+and fires gates. `escalate` is not itself terminal — it routes to a handler state
+that must reach `END`. **Every machine must have at least one reachable path to
+`END`** (author's responsibility in v0.2; a validator SHOULD check it).
 
 ---
 

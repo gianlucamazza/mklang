@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 
-from ..errors import ProviderError
+from ..errors import JudgeUnparseable, ProviderError
 from .base import JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
 
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
@@ -86,7 +86,10 @@ class OpenAICompatLLM:
             response_format={"type": "json_object"},  # dropped-and-retried if unsupported
             temperature=0,
         )
-        idx = parse_choice(r.choices[0].message.content or "", len(conditions))
+        text = r.choices[0].message.content or ""
+        idx = parse_choice(text, len(conditions))
+        if idx is None:
+            raise JudgeUnparseable(text[:200] or "(empty)")
         return max(0, min(idx, len(conditions) - 1))
 
 

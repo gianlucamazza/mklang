@@ -21,7 +21,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 ## Reliability — gates are the safety net
 
 - **End every non-terminal state with an `otherwise` gate.** Without it, a run can
-  `halt` with `no-gate-matched`. `mklang check` warns when it's missing.
+  `halt` with `no-gate-matched` — and if the judge returns garbage, the runtime
+  **hard-halts** with `judge-unparseable` unless `otherwise` is eligible (soft
+  fallback is recorded as `judge_fallback` in the trace). `mklang check` warns when
+  the catch-all is missing.
 - **Guarantee a reachable `END`.** `mklang check` errors if none exists.
 - **Cap `repair`.** A `repair: N` with a modest `N` (1–2) plus a following
   `escalate`/`fail` gate prevents an endless self-correction loop.
@@ -30,6 +33,11 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
   the width of any fan-out (a `sample: N` costs N steps). Leave headroom; hitting the
   budget is a `halt`.
+- **Use `--max-tokens` (cost budget) on long `call` trees.** The remaining budget is
+  shared with sub-machines so a runaway child cannot burn tokens unbounded.
+- **Fan-out concurrency** is a `ThreadPoolExecutor` with `max_workers=5` today —
+  fine for modest `sample`/`over` widths; very wide maps should stay small or wait
+  for the async roadmap item.
 
 ## Reasoning & observability
 

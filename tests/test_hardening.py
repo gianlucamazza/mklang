@@ -2,9 +2,8 @@
 
 from mklang.engine import run
 from mklang.errors import ProviderError, RefusalError
-from mklang.llm.base import Produced
-from mklang.llm.mock import MockLLM
-from mklang.llm.openai_compat import _parse_choice
+from mklang.llm.base import Produced, parse_choice
+from mklang.llm.mock import MockLLM, UnparseableJudgeLLM
 from mklang.model import parse_machine
 
 TIERS = {"fast": "m", "balanced": "m", "reasoning": "m"}
@@ -50,6 +49,54 @@ def test_cost_budget_halts():
     assert r.usage["input_tokens"] == 200  # two steps ran before the budget tripped
 
 
+def test_cost_budget_shared_with_submachine():
+    """Parent cost_budget must cap tokens spent inside call children."""
+    child = M(
+        {
+            "machine": "child",
+            "entry": "c",
+            "budget": 20,
+            "result": "r",
+            "states": {
+                "c": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "r",
+                    # loop so it would keep spending without a shared budget
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "c"}],
+                },
+            },
+        }
+    )
+    parent = M(
+        {
+            "machine": "parent",
+            "entry": "a",
+            "budget": 20,
+            "states": {
+                "a": {
+                    "call": "child",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    llm = MockLLM(produce_fn=lambda *a: Produced("x", input_tokens=40, output_tokens=0))
+    r = run(
+        parent,
+        {},
+        {"parent": parent, "child": child},
+        llm,
+        TIERS,
+        "m",
+        cost_budget=100,
+    )
+    assert r.status == "halt"
+    assert "call-failed: cost-exhausted" in (r.error or "")
+    assert r.usage["input_tokens"] <= 120  # a few child steps, not unbounded
+
+
 def test_refusal_halts_with_reason():
     def boom(*a):
         raise RefusalError("declined")
@@ -66,10 +113,41 @@ def test_provider_error_halts_with_reason():
     assert r.status == "halt" and r.error.startswith("provider-error")
 
 
-def test_parse_choice_json_then_regex_then_fallback():
-    assert _parse_choice('{"choice": 2}', 3) == 1  # JSON, 1-based -> 0-based
-    assert _parse_choice("the first condition holds: 3", 3) == 2  # bare number
-    assert _parse_choice("unparseable", 3) == 2  # fallback to last (catch-all)
+def test_parse_choice_json_then_regex_then_none():
+    assert parse_choice('{"choice": 2}', 3) == 1  # JSON, 1-based -> 0-based
+    assert parse_choice("the first condition holds: 3", 3) == 2  # bare number
+    assert parse_choice("unparseable", 3) is None  # caller decides fallback/halt
+
+
+def test_judge_unparseable_soft_falls_to_otherwise():
+    r = _run(_one_state(), UnparseableJudgeLLM())
+    assert r.status == "done"
+    assert r.trace[0]["judge_fallback"] is True
+    assert r.trace[0]["gate"] == "otherwise"
+
+
+def test_judge_unparseable_hard_halts_without_otherwise():
+    m = M(
+        {
+            "machine": "x",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        {"when": "quality is high", "then": "ok", "to": "END"},
+                        {"when": "needs work", "repair": 1, "to": "a"},
+                    ],
+                },
+            },
+        }
+    )
+    r = _run(m, UnparseableJudgeLLM())
+    assert r.status == "halt" and r.error == "judge-unparseable"
+    assert r.trace[0]["judge_fallback"] is True
 
 
 def test_missing_tier_halts_with_clear_message():
@@ -93,3 +171,47 @@ def test_missing_tier_halts_with_clear_message():
     r = run(m, {}, {m.name: m}, MockLLM(), {"fast": "m", "balanced": "m"}, "m")
     assert r.status == "halt"
     assert "tier 'reasoning' not configured" in (r.error or "")
+
+
+def test_over_missing_path_halts():
+    m = M(
+        {
+            "machine": "mr",
+            "entry": "m",
+            "budget": 5,
+            "states": {
+                "m": {
+                    "over": "{{missing}}",
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "outs",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    r = _run(m, MockLLM())
+    assert r.status == "halt"
+    assert "not found in context" in (r.error or "")
+
+
+def test_over_empty_list_ok():
+    m = M(
+        {
+            "machine": "mr",
+            "entry": "m",
+            "budget": 5,
+            "states": {
+                "m": {
+                    "over": "{{items}}",
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "outs",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    r = run(m, {"items": []}, {m.name: m}, MockLLM(), TIERS, "m")
+    assert r.status == "done"
+    assert r.trace[0]["branches"] == []

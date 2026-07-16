@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import time
 
-from ..errors import ProviderError, RefusalError
+from ..errors import JudgeUnparseable, ProviderError, RefusalError
 from .base import JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
 
 
@@ -115,6 +115,8 @@ class AnthropicLLM:
         )
         text = "".join(b.text for b in msg.content if b.type == "text")
         idx = parse_choice(text, len(conditions))
+        if idx is None:
+            raise JudgeUnparseable(text[:200] or "(empty)")
         return max(0, min(idx, len(conditions) - 1))
 
 

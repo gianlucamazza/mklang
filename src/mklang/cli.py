@@ -89,19 +89,16 @@ def cmd_run(args) -> int:
         cost_budget=args.max_tokens,
         tools=BUILTINS,
     )
-    print(
-        json.dumps(
-            {
-                "status": res.status,
-                "error": res.error,
-                "result": res.result,
-                "usage": res.usage,
-                "trace": res.trace,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-    )
+    out = {
+        "status": res.status,
+        "error": res.error,
+        "result": res.result,
+        "usage": res.usage,
+        "trace": res.trace,
+    }
+    if res.at is not None:
+        out["at"] = res.at
+    print(json.dumps(out, ensure_ascii=False, indent=2))
     return 0 if res.status == "done" else 1
 
 

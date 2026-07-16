@@ -59,10 +59,14 @@ JUDGE_SYSTEM = (
 TRANSIENT_STATUS = (408, 409, 429, 500, 502, 503, 504)
 
 
-def parse_choice(text: str, n: int) -> int:
+def parse_choice(text: str, n: int) -> int | None:
     """Read the judge's choice: JSON {"choice": k} first, then a bare number.
 
-    Returns a 0-based index. Unparseable → last condition (typically `otherwise`)."""
+    Returns a 0-based index, or **None** if the text is unparseable. Callers clamp
+    to ``[0, n)`` and decide soft-fallback vs hard-fail (never silently invent a
+    choice without recording it). ``n`` is accepted for API stability; out-of-range
+    indices are returned as-is for the caller to clamp."""
+    del n  # reserved for future bounded parsing; clamp stays at the call site
     try:
         obj = json.loads(text)
         if isinstance(obj, dict) and "choice" in obj:
@@ -70,4 +74,4 @@ def parse_choice(text: str, n: int) -> int:
     except (ValueError, TypeError):
         pass
     m = re.search(r"\d+", text or "")
-    return int(m.group()) - 1 if m else n - 1
+    return int(m.group()) - 1 if m else None

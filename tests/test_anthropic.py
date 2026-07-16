@@ -131,3 +131,11 @@ def test_judge_includes_reasoning():
     llm.judge("m", ["ok"], "out", {}, reasoning="because X")
     body = llm.client.messages.captured["messages"][0]["content"]
     assert "REASONING:\nbecause X" in body
+
+
+def test_judge_unparseable_raises():
+    from mklang.errors import JudgeUnparseable
+
+    llm = _adapter(text="no number here")
+    with pytest.raises(JudgeUnparseable):
+        llm.judge("m", ["a", "b"], "out", {})
