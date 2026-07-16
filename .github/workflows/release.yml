@@ -1,0 +1,108 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  quality-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: astral-sh/setup-uv@v5
+      - name: Verify tag matches package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          package_version="$(uv run python -c 'import mklang; print(mklang.__version__)')"
+          test "$RELEASE_TAG" = "v$package_version"
+      - name: Lint and unit tests
+        run: |
+          uv run --extra dev ruff check src tests scripts
+          uv run --extra dev pytest -q
+      - name: Validate examples and runtime config
+        run: |
+          uv run --with check-jsonschema check-jsonschema --default-filetype yaml --schemafile schema/mklang.schema.json examples/*.mk
+          uv run --with check-jsonschema check-jsonschema --default-filetype yaml --schemafile config/runtime.schema.json config/runtime.example.yaml
+          uv run mklang check examples/*.mk
+          uv run mklang lint --strict examples/*.mk
+          uv run mklang test examples/triage.mk --script examples/triage.test.yaml
+      - name: Build docs strictly
+        run: |
+          bash scripts/build-docs.sh
+          uvx --with mkdocs-material mkdocs build --strict
+      - name: Build and validate distributions
+        run: |
+          uv build
+          uvx twine check dist/*
+      - name: Smoke-test the wheel in a clean environment
+        run: |
+          uv venv /tmp/mklang-release-smoke
+          uv pip install --python /tmp/mklang-release-smoke/bin/python dist/*.whl
+          /tmp/mklang-release-smoke/bin/python -c 'import importlib.resources, mklang; assert importlib.resources.files("mklang").joinpath("data/mklang.schema.json").is_file(); print(mklang.__version__)'
+          /tmp/mklang-release-smoke/bin/mklang --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/*
+          if-no-files-found: error
+
+  live-matrix:
+    runs-on: ubuntu-latest
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: astral-sh/setup-uv@v5
+      - name: Required DeepSeek smoke
+        run: MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=deepseek uv run --all-extras pytest -q tests/test_live.py
+      - name: Required OpenAI smoke
+        run: MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=openai uv run --all-extras pytest -q tests/test_live.py
+      - name: Cross-provider gate agreement
+        run: |
+          mkdir -p live-results
+          uv run --all-extras python scripts/gate_divergence.py \
+            --providers deepseek,openai,anthropic,google,openrouter,xai,mistral \
+            --repeats 3 \
+            --require-providers deepseek,openai \
+            --min-agreement 1.0 \
+            --jsonl live-results/runs.jsonl \
+            --summary-json live-results/summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-provider-report
+          path: live-results/
+          if-no-files-found: warn
+
+  publish:
+    needs: [quality-and-build, live-matrix]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

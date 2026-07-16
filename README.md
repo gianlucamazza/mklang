@@ -155,8 +155,7 @@ guidance in [`docs/patterns.md`](./docs/patterns.md).
 ## Install
 
 ```bash
-pip install git+https://github.com/gianlucamazza/mklang   # PyPI: token pending (0.5.3 wheel ready)
-# after publish: pip install mklang
+pip install mklang
 ```
 
 Editor validation for `.mk` files works out of the box via the JSON Schema —
@@ -206,7 +205,7 @@ minimal diff (the first differing key, expected vs actual) and exits 1. See
 
 ## Status
 
-**Language v0.2 / package 0.5.3** — core complete: states + gates + prose, tiers,
+**Language v0.2 / package 0.5.4** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` states / code-hook gates;
 multi-provider interpreter with entry-point plugins (tools, hooks, providers);
 resumable checkpoints (`mklang resume`, ADR 0007); human-in-the-loop (`--hitl`,
@@ -221,8 +220,11 @@ observable change and 0.5.3 for authoring tooling.
   `gpt-5.5-pro` is Responses-API only and not mapped). Anthropic unit-tested;
   live blocked by provider billing. Gate-divergence (deepseek×openai): **agreement 1.0**
   — see [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
-- **Open:** Anthropic live once the account has credit; accept/implement ADR 0010
-  (LLM lint) and ADR 0011 (MCP) when ready. PyPI deferred.
+- **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
+  blocking; other configured providers are reported without blocking. PyPI
+  publication uses GitHub OIDC Trusted Publishing from the release workflow.
+- **Open:** Anthropic live once the account has credit; accept/implement ADR 0011
+  (MCP) and then ADR 0010 (LLM lint) when ready.
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 

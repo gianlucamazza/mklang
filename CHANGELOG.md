@@ -8,7 +8,30 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.5.3`).
+  `pyproject.toml` (currently `0.5.4`).
+
+## [0.5.4] — 2026-07-16
+
+Release-readiness pass. The language stays **0.2** and runtime semantics are
+unchanged; this release makes the existing interpreter reproducibly distributable.
+
+### Added
+
+- **Trusted Publishing release workflow.** A published GitHub Release now gates
+  publication on the full offline suite, strict docs, artifact validation, a
+  clean-wheel installation smoke, and the live provider matrix. The publish job
+  consumes the already-tested artifacts and uses short-lived PyPI OIDC credentials.
+- **Enforceable live-matrix reporting.** `scripts/gate_divergence.py` can require
+  named providers, enforce a minimum agreement rate, write a summary artifact,
+  and distinguishes a missing-key skip from a provider/runtime failure.
+- **Release provenance tests.** CI pins package metadata and `mklang.__version__`
+  to the same value and tests the required-provider gate offline.
+
+### Changed
+
+- DeepSeek and OpenAI are the blocking release providers (three divergence runs,
+  agreement `1.0`). Anthropic, Google, OpenRouter, xAI, and Mistral are attempted
+  when credentials are configured and remain informational.
 
 ## [0.5.3] — 2026-07-16
 

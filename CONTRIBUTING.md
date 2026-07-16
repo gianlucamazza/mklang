@@ -79,6 +79,16 @@ Non-trivial or contentious decisions get a short ADR in `docs/adr/NNNN-title.md`
 - **Package version** (`pyproject.toml`, SemVer) changes when the _interpreter/tooling_
   changes. Record both in `CHANGELOG.md`.
 
+## Releases
+
+Releases are provenance-bound: update `pyproject.toml` and `mklang.__version__`
+together, record the package release in `CHANGELOG.md`, and publish a GitHub
+Release whose tag is exactly `v<package-version>`. The release workflow runs the
+offline suite, strict docs/package checks, and the required live-provider gate;
+only its previously tested artifacts reach PyPI through the protected `pypi`
+environment and Trusted Publishing. Do not upload a locally rebuilt artifact for
+an existing tag.
+
 ## Non-goals (don't propose these)
 
 Pinning a concrete provider/model inside a `.mk` — machines route by capability tier

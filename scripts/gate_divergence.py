@@ -10,6 +10,9 @@ Usage:
   uv run python scripts/gate_divergence.py
   uv run python scripts/gate_divergence.py --providers deepseek,openai --repeats 3
   uv run python scripts/gate_divergence.py --jsonl results.jsonl
+  uv run python scripts/gate_divergence.py --repeats 3 \
+    --require-providers deepseek,openai --min-agreement 1.0 \
+    --summary-json summary.json
 
 Requires keys in .env (same as `mklang run`). Skips providers without a key.
 See docs/experiments/gate-divergence.md.
@@ -150,6 +153,50 @@ def _pairwise_agreement(rows: list[dict]) -> list[dict]:
     return out
 
 
+def _summary(rows: list[dict], names: list[str]) -> dict:
+    pairs = _pairwise_agreement(rows)
+    done = [r for r in rows if not r.get("skipped") and r.get("status") == "done"]
+    agree = sum(1 for pair in pairs if pair["same_signature"])
+    return {
+        "providers_attempted": names,
+        "runs_done": len(done),
+        "runs_skipped": sum(1 for r in rows if r.get("skipped")),
+        "runs_failed": sum(1 for r in rows if not r.get("skipped") and r.get("status") != "done"),
+        "pairwise": pairs,
+        "signature_agreement_rate": (agree / len(pairs)) if pairs else None,
+        "distinct_signatures": sorted({r["signature"] for r in done}),
+    }
+
+
+def _ci_errors(
+    rows: list[dict], required: list[str], repeats: int, min_agreement: float | None
+) -> list[str]:
+    """Return release-gate failures without hiding unavailable or failed providers."""
+    errors: list[str] = []
+    for name in required:
+        provider_rows = [r for r in rows if r.get("provider") == name]
+        if len(provider_rows) != repeats:
+            errors.append(
+                f"required provider {name!r}: expected {repeats} runs, got {len(provider_rows)}"
+            )
+            continue
+        skipped = [r for r in provider_rows if r.get("skipped")]
+        failed = [r for r in provider_rows if not r.get("skipped") and r.get("status") != "done"]
+        if skipped:
+            errors.append(f"required provider {name!r}: {len(skipped)} run(s) skipped")
+        if failed:
+            errors.append(f"required provider {name!r}: {len(failed)} run(s) failed")
+
+    agreement_rows = [r for r in rows if not required or r.get("provider") in required]
+    summary = _summary(
+        agreement_rows, required or sorted({r.get("provider", "") for r in agreement_rows})
+    )
+    agreement = summary["signature_agreement_rate"]
+    if min_agreement is not None and (agreement is None or agreement < min_agreement):
+        errors.append(f"signature agreement {agreement!r} is below required {min_agreement:.3f}")
+    return errors
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument(
@@ -164,6 +211,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--repeats", type=int, default=1, help="runs per provider")
     p.add_argument("--jsonl", type=Path, default=None, help="append raw rows here")
+    p.add_argument("--summary-json", type=Path, default=None, help="write the summary JSON here")
+    p.add_argument(
+        "--require-providers",
+        default="",
+        help="comma-separated providers whose every repeat must finish successfully",
+    )
+    p.add_argument(
+        "--min-agreement",
+        type=float,
+        default=None,
+        help="minimum pairwise signature agreement in [0, 1] (release gate)",
+    )
     p.add_argument(
         "--judge-tier",
         choices=("fast", "balanced", "reasoning"),
@@ -173,18 +232,34 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = p.parse_args(argv)
 
+    if args.repeats < 1:
+        p.error("--repeats must be at least 1")
+    if args.min_agreement is not None and not 0 <= args.min_agreement <= 1:
+        p.error("--min-agreement must be between 0 and 1")
+
     names = [x.strip() for x in args.providers.split(",") if x.strip()]
+    required = [x.strip() for x in args.require_providers.split(",") if x.strip()]
+    unknown_required = sorted(set(required) - set(names))
+    if unknown_required:
+        p.error(f"required providers not present in --providers: {', '.join(unknown_required)}")
     rows: list[dict] = []
     for name in names:
         for i in range(args.repeats):
             try:
                 row = _run_once(name, args.config, judge_tier=args.judge_tier)
             except Exception as e:  # noqa: BLE001
-                row = {"provider": name, "skipped": True, "reason": str(e)}
+                row = {
+                    "provider": name,
+                    "skipped": False,
+                    "status": "error",
+                    "error": f"{type(e).__name__}: {e}",
+                }
             row["repeat"] = i
             rows.append(row)
             if row.get("skipped"):
                 print(f"# skip {name}: {row.get('reason')}", file=sys.stderr)
+            elif row.get("status") != "done":
+                print(f"# error {name}: {row.get('error')}", file=sys.stderr)
             else:
                 print(
                     f"{name}[{i}]: status={row['status']} sig={row['signature']!r}",
@@ -194,17 +269,18 @@ def main(argv: list[str] | None = None) -> int:
                 with args.jsonl.open("a", encoding="utf-8") as f:
                     f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    pairs = _pairwise_agreement(rows)
+    summary = _summary(rows, names)
+    errors = _ci_errors(rows, required, args.repeats, args.min_agreement)
+    summary["gate_errors"] = errors
+    rendered = json.dumps(summary, indent=2, ensure_ascii=False)
+    print(rendered)
+    if args.summary_json:
+        args.summary_json.write_text(rendered + "\n", encoding="utf-8")
+    for error in errors:
+        print(f"# release gate: {error}", file=sys.stderr)
+    if errors:
+        return 1
     done = [r for r in rows if not r.get("skipped") and r.get("status") == "done"]
-    agree = sum(1 for pr in pairs if pr["same_signature"])
-    summary = {
-        "providers_attempted": names,
-        "runs_done": len(done),
-        "pairwise": pairs,
-        "signature_agreement_rate": (agree / len(pairs)) if pairs else None,
-        "distinct_signatures": sorted({r["signature"] for r in done}),
-    }
-    print(json.dumps(summary, indent=2, ensure_ascii=False))
     if len(done) < 2:
         print(
             "# need at least two successful providers to measure agreement",

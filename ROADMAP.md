@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.5.3**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.5.4**, language **0.2**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2 / package 0.5.3)
+## Where we are (v0.2 / package 0.5.4)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -36,6 +36,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   (`scripttest.py`) with the conformance runner; static budget-feasibility check
   (`budget-infeasible`); dotted-segment lint on inline context maps (completes F7);
   schema-copy identity test; ADR 0010 (LLM-assisted lint, Proposed).
+- **0.5.4 (release readiness):** reproducible GitHub Release → PyPI Trusted
+  Publishing; clean-wheel smoke; DeepSeek + OpenAI blocking live matrix; optional
+  provider report; enforceable gate-divergence thresholds.
 - **Live (2026-07-16):** DeepSeek + OpenAI smoke green. Anthropic unit-tested;
   live blocked by account billing (key exists). Gate-divergence deepseek×openai
   agreement **1.0** (3× each) on the synthetic harness.
@@ -94,10 +97,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped (0.5.0):** docs site (mkdocs-material on GitHub Pages, assembled
   from the repo's canonical markdown) and `mklang lint` (static analysis
   beyond `check`); conformance suite as the language contract (ADR 0009).
-- **[next] Publish to PyPI** — metadata + `uv build` wheel/sdist for **0.5.3**
-  ready; needs a **PyPI API token** (`pypi-…`) in 1Password / `UV_PUBLISH_TOKEN`
-  (`uv publish`). Account password alone is not enough. GitHub homepage set to
-  the docs site.
+- **0.5.4 release path:** a published GitHub Release builds and tests one artifact
+  set, requires DeepSeek + OpenAI live agreement, then publishes through PyPI
+  Trusted Publishing (OIDC, no long-lived package token). The one-time external
+  setup is the `mklang` pending publisher plus the protected GitHub `pypi`
+  environment and provider secrets.
 - **[later] Editor tooling** — LSP / syntax highlighting beyond the YAML
   schema; `mklang lint` is the first brick.
 - **[maybe] Rename `.mk` extension** — collides with Makefile includes /
