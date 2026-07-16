@@ -20,8 +20,16 @@ natural-language post-conditions the model judges, each carrying a policy
 
 ## Consequences
 
-- The language is prose-first and writable by non-programmers for the common path;
-  host code is optional (tools + code-hook gates) for exact checks and real I/O.
+- The language is prose-first for the common path; the host still supplies the
+  interpreter, and production machines need tools + code-hook gates for exact
+  checks and real I/O.
 - Soft correctness rides on prompt/condition quality; critical checks should use
   code-hook gates (ADR 0006) plus authoring practices (docs/patterns.md).
 - Determinism for critical gates is opt-in via **hooks**; caching remains later.
+- **"Reliability comes from gates" is an empirical claim.** Prose gates are judged
+  by the same class of model whose unreliability they contain. Repair budgets,
+  hooks, and escalate mitigate this; they do not erase it. There is no published
+  judge-accuracy or cross-provider gate-agreement measurement in-tree yet — the
+  conformance suite pins _interpreter_ rules with a scripted LLM, not judge
+  reliability. Treat semantic portability across providers as measured, not free
+  (see `scripts/gate_divergence.py` / docs/experiments).

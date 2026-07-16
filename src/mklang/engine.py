@@ -131,7 +131,10 @@ def _select_gate(
                 ctx,
                 reasoning=judge_reasoning,
             )
-            local = max(0, min(local, len(batch) - 1))
+            # Adapters must return an index in [0, len(batch)); do not clamp here —
+            # silent clamp would misroute with gate_via: llm and no anomaly flag.
+            if not isinstance(local, int) or local < 0 or local >= len(batch):
+                raise JudgeUnparseable(f"out-of-range choice {local!r} for n={len(batch)}")
             gi, gate = batch[local]
             ann["gate_via"] = "llm"
             return gi, gate, ann

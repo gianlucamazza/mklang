@@ -54,7 +54,44 @@ def search(inp: dict) -> str:
     return f"[no external search bound] query was: {query!r}"
 
 
-BUILTINS: dict[str, ToolFn] = {"calc": calc, "search": search}
+def search_kb(inp: dict) -> str:
+    """Stub knowledge-base lookup for showcase machines (triage).
+
+    Returns deterministic placeholder facts tagged with the query. A production
+    host replaces this via entry points or ``run(..., tools=...)``. Never invents
+    policies beyond the stub payload.
+    """
+    query = str(inp.get("query") or inp.get("q") or "").strip()
+    if not query:
+        return "[kb] empty query — no facts"
+    return (
+        f"[kb stub] facts for query={query!r}:\n"
+        "- Warranty: 30-day return on unopened items with receipt.\n"
+        "- Billing: refunds over €50 require manager review.\n"
+        "- Bugs: known issue tracker acknowledges intermittent login 5xx; "
+        "workaround is retry after 60s.\n"
+        "(Host should bind a real RAG/KB tool for production.)"
+    )
+
+
+def send_reply(inp: dict) -> str:
+    """Stub customer-reply sender — records the side effect without an LLM.
+
+    Real hosts bind email/ticket APIs here. The return value is the observation
+    deposited into context; gates must not ask a model to 'confirm' a send.
+    """
+    body = str(inp.get("body") or inp.get("draft") or "").strip()
+    to = str(inp.get("to") or "customer").strip()
+    preview = body if len(body) <= 120 else body[:117] + "..."
+    return f"[sent] to={to!r} chars={len(body)} preview={preview!r}"
+
+
+BUILTINS: dict[str, ToolFn] = {
+    "calc": calc,
+    "search": search,
+    "search_kb": search_kb,
+    "send_reply": send_reply,
+}
 
 ENTRY_POINT_GROUP = "mklang.tools"
 

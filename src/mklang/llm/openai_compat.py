@@ -6,7 +6,7 @@ import json
 import time
 
 from ..errors import JudgeUnparseable, ProviderError
-from .base import JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
+from .base import JUDGE_CONTEXT_CHARS, JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
 
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
 _TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "top_p", "seed"}
@@ -73,8 +73,10 @@ class OpenAICompatLLM:
         parts = [f"OUTPUT:\n{output}"]
         if reasoning:
             parts.append(f"REASONING:\n{reasoning}")
-        parts.append(f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:4000]}")
-        parts.append(f"CONDITIONS (priority order):\n{lines}")
+        parts.append(
+            f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:JUDGE_CONTEXT_CHARS]}"
+        )
+        parts.append(f"CONDITIONS (priority order, 1-based):\n{lines}")
         parts.append('Reply with ONLY a JSON object: {"choice": <number>}.')
         user = "\n\n".join(parts)
         r = self._create(
@@ -90,7 +92,7 @@ class OpenAICompatLLM:
         idx = parse_choice(text, len(conditions))
         if idx is None:
             raise JudgeUnparseable(text[:200] or "(empty)")
-        return max(0, min(idx, len(conditions) - 1))
+        return idx
 
 
 # Back-compat alias for tests that imported the private helper.

@@ -25,6 +25,13 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   gates; keep `when` as the trace label. See `examples/hook_gates.mk` and ADR 0006.
   Custom tools/hooks: package entry points `mklang.tools` / `mklang.hooks` (see
   CONTRIBUTING).
+- **Never put real I/O in generative states.** Searching, sending mail, charging a
+  card: use `tool:` states (host callables). Do not write `execution: use tool X`
+  on a generative state — the model cannot call tools there and will invent
+  observations. Do not ask the model to "confirm the message was sent."
+- **Treat `{{context}}` as untrusted** when it may contain customer or web text.
+  Prose gates and prompts interpolate raw values; injection can steer transitions
+  (SPEC §11). Prefer hooks + HITL before irreversible tools.
 - **End every non-terminal state with an `otherwise` gate.** Without it, a run can
   `halt` with `no-gate-matched` — and if the judge returns garbage, the runtime
   **hard-halts** with `judge-unparseable` unless `otherwise` is eligible (soft

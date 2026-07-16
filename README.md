@@ -6,7 +6,8 @@
 
 **A declarative language for LLM-driven state machines.** A `.mk` file (mk =
 _machine_) describes an agent as a set of states; an LLM _is_ the runtime that
-executes it. The document is the program — no host code required.
+executes generative steps. The document is the program; the host supplies the
+interpreter, optional tools, and optional code-hook gates.
 
 ```
 mklang : LangGraph  ::  a declarative spec : Python code
@@ -20,8 +21,12 @@ Each **state** has four faces:
 | ----------- | -------------- | --------------------------------------------- |
 | `structure` | what shape?    | "The output is an email reply, max 150 words" |
 | `prompt`    | what to think? | "Write a reply to {{ticket.body}}…"           |
-| `execution` | how to act?    | "Use `search_kb` at most 2 times"             |
+| `execution` | how to act?    | "Do not invent policies not in the KB facts"  |
 | `gates`     | when to exit?  | see below                                     |
+
+Real side effects (search, send, calc) are **`tool:` states** — host callables,
+not prose in `execution`. See [`examples/react.mk`](./examples/react.mk) and
+[`examples/triage.mk`](./examples/triage.mk).
 
 The output of a state is stored in the shared context under its `output:` key, so
 later states read it via `{{key}}`. Four **optional** faces unlock richer reasoning:
@@ -50,15 +55,21 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
 
 ## Design commitments
 
-- **Document-first** — readable, and largely writable, by non-programmers.
-- **LLM-as-runtime** — non-deterministic by design; **gates** are the safety net
-  that makes it reliable.
+- **Document-first** — readable without the interpreter; prose-first for the
+  common path. Production machines still need developer judgment for tools,
+  hooks, and untrusted inputs (see SPEC threat model).
+- **LLM-as-runtime** — non-deterministic by design; **gates** (prose + optional
+  code hooks + budgets + trace) are the reliability mechanism. Prose-gate accuracy
+  is an empirical claim, not a free lunch.
 - **Prose, not types** — `structure` and gate conditions are natural language,
   judged by the LLM at runtime; optional `hook:` gates add host bool checks.
 - **Provider-agnostic** — a `.mk` never names a provider or model. States route by
   capability **tier** (`fast` / `balanced` / `reasoning`); the runtime maps each
-  tier to a concrete model, so the same machine runs on Anthropic, OpenAI, Google,
-  or a local model unchanged.
+  tier to a concrete model. Portability of the document is syntactic; whether
+  different providers fire the same gates on the same run is measurable (see
+  `scripts/gate_divergence.py`).
+- **Spec + conformance** — an implementation-neutral [conformance suite](./conformance/README.md)
+  pins interpreter semantics so a second runtime can match the language contract.
 - **Language-agnostic runtime** — the spec assumes only "some host with an LLM".
 
 ## Files
@@ -75,7 +86,7 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
 - [`docs/`](./docs) — [`patterns.md`](./docs/patterns.md) (recommended configs &
   flows) and [`adr/`](./docs/adr) (design decisions); [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
-  - [`triage.mk`](./examples/triage.mk) — branching FSM (support triage).
+  - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
   - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A).
   - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
   - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
@@ -175,13 +186,14 @@ deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
 ## Status
 
-**Language v0.2 / package 0.5.0** — core complete (fan-out, sub-machines, reasoning,
+**Language v0.2 / package 0.5.1** — core complete (fan-out, sub-machines, reasoning,
 tools, code-hook gates, context-append) with a hardened multi-provider reference
 interpreter, entry-point plugins for tools/hooks/providers, resumable runs
 (checkpoint on budget exhaustion + `mklang resume`, ADR 0007), human-in-the-loop
 escalation (`--hitl` suspend + `resume --set`, ADR 0008), `mklang lint`, and an
 implementation-neutral **[conformance suite](./conformance/README.md)** that pins
-the language semantics (ADR 0009).
+the language semantics (ADR 0009). 0.5.1: honest showcase tools, judge OOR
+no longer silent-clamped, SPEC threat model, gate-divergence experiment scaffold.
 
 - **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
   `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an
