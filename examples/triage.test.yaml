@@ -1,0 +1,54 @@
+# Scenario tests for triage.mk — run with:
+#   mklang test examples/triage.mk --script examples/triage.test.yaml
+#
+# No provider or API key required: the LLM, the KB/send tools, and the gate
+# judges are all scripted, so the flow is fully deterministic. Each scenario
+# pins one path an author would be embarrassed to see misfire (docs/patterns.md).
+#
+# `judge:` picks are indices into each state's fused prose-gate batch, in the
+# order the states are visited. `produce:` texts are returned to generative
+# states in visit order (classify → plan_query → draft_reply / human_review).
+
+scenarios:
+  # Happy path: a bug ticket with usable KB facts is drafted and sent.
+  # classify(judge 0 → "bug") → plan_query → search_kb(judge 0 → usable facts)
+  #   → draft_reply(judge 0 → resolved & courteous) → send_reply → END.
+  - name: happy-path
+    llm:
+      produce:
+        - "bug"
+        - "login 5xx workaround"
+        - "Dear customer, please retry after 60s. Kind regards, Support."
+      judge: [0, 0, 0]
+    tools:
+      search_kb: ["[kb] known login 5xx issue; workaround retry after 60s"]
+      send_reply: ["[sent] to='customer' ok"]
+    expect:
+      status: done
+      trace:
+        - { state: classify, policy: ok, to: plan_query }
+        - { state: plan_query, policy: ok, to: search_kb }
+        - { state: search_kb, policy: ok, to: draft_reply }
+        - { state: draft_reply, policy: ok, to: send_reply }
+        - { state: send_reply, policy: ok, to: END }
+
+  # KB-empty escalation: the KB has no facts, so search_kb's second gate fires
+  # (escalate → human_review) instead of drafting a reply. The generative send
+  # path is never entered; the case ends at the human-review handoff.
+  # classify(judge 0) → plan_query → search_kb(judge 1 → empty) → human_review → END.
+  - name: kb-empty-escalates
+    llm:
+      produce:
+        - "billing"
+        - "refund policy over threshold"
+        - "Handoff: billing ticket, no KB facts found, needs human review."
+      judge: [0, 1]
+    tools:
+      search_kb: ["[kb] empty query — no facts"]
+    expect:
+      status: done
+      trace:
+        - { state: classify, policy: ok, to: plan_query }
+        - { state: plan_query, policy: ok, to: search_kb }
+        - { state: search_kb, policy: escalate, to: human_review }
+        - { state: human_review, policy: ok, to: END }

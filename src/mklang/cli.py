@@ -228,6 +228,57 @@ def cmd_lint(args) -> int:
     return 1 if (args.strict and findings_total) else 0
 
 
+def cmd_test(args) -> int:
+    """Run scenario tests against a machine with a scripted LLM (no API keys)."""
+    import yaml
+
+    from .scripttest import match_expectation, run_scenario
+
+    registry = load_registry(Path(args.machine).parent, validate=False)
+    try:
+        machine = load_machine(args.machine)
+    except Exception as e:  # noqa: BLE001 — surface any load/validation failure
+        print(f"{args.machine}: SCHEMA ERROR: {getattr(e, 'message', str(e))}", file=sys.stderr)
+        return 2
+    registry[machine.name] = machine
+
+    try:
+        doc = yaml.safe_load(Path(args.script).read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as e:
+        print(f"{args.script}: ERROR: {e}", file=sys.stderr)
+        return 2
+    scenarios = (doc or {}).get("scenarios")
+    if not scenarios:
+        print(f"{args.script}: ERROR: no `scenarios:` list", file=sys.stderr)
+        return 2
+
+    all_pass = True
+    for i, sc in enumerate(scenarios):
+        name = sc.get("name", f"scenario[{i}]")
+        expect = sc.get("expect")
+        if expect is None:
+            print(f"FAIL {name}: scenario has no `expect:` block")
+            all_pass = False
+            continue
+        try:
+            result = run_scenario(machine, registry, sc)
+        except Exception as e:  # noqa: BLE001 — a scenario error is a failure, not a crash
+            print(f"FAIL {name}: scenario raised {type(e).__name__}: {e}")
+            all_pass = False
+            continue
+        mismatches = match_expectation(result, expect)
+        if not mismatches:
+            print(f"PASS {name}")
+            continue
+        all_pass = False
+        first = mismatches[0]
+        print(f"FAIL {name}")
+        print(f"       {first.key}: expected {first.expected!r}, got {first.actual!r}")
+        if len(mismatches) > 1:
+            print(f"       (+{len(mismatches) - 1} more mismatch(es))")
+    return 0 if all_pass else 1
+
+
 def cmd_check(args) -> int:
     ok = True
     for path in args.machines:
@@ -333,6 +384,19 @@ def main(argv: list[str] | None = None) -> int:
     li.add_argument("machines", nargs="+")
     li.add_argument("--strict", action="store_true", help="exit 1 when lint findings exist")
     li.set_defaults(fn=cmd_lint)
+
+    t = sub.add_parser(
+        "test",
+        help="run scenario tests against a machine with a scripted LLM (no API keys)",
+    )
+    t.add_argument("machine")
+    t.add_argument(
+        "--script",
+        required=True,
+        metavar="FILE",
+        help="a .test.yaml of named scenarios (scripted llm/tools/hooks + expect)",
+    )
+    t.set_defaults(fn=cmd_test)
 
     args = ap.parse_args(argv)
     return args.fn(args)

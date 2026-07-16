@@ -184,6 +184,25 @@ uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
 deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
+## Test your machine without API keys
+
+`mklang test` runs your machine against a script of named scenarios with a
+**scripted LLM** (produce texts, judge picks) and scripted tools/hooks — fully
+deterministic, no provider or key. It pins the paths you care about *before* you
+spend a token on a live run.
+
+```bash
+uv run mklang test examples/triage.mk --script examples/triage.test.yaml
+# PASS happy-path
+# PASS kb-empty-escalates
+```
+
+Each scenario declares a scripted `llm:`/`tools:`/`hooks:` and an `expect:`
+(status, error, result, `at`, `trace` skeleton, context keys) — the same case
+format the [conformance suite](./conformance/README.md) uses. A mismatch prints a
+minimal diff (the first differing key, expected vs actual) and exits 1. See
+[`examples/triage.test.yaml`](./examples/triage.test.yaml).
+
 ## Status
 
 **Language v0.2 / package 0.5.2** — core complete (fan-out, sub-machines, reasoning,
