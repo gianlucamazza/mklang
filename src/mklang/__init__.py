@@ -4,7 +4,7 @@ from .checkpoint import load_checkpoint, save_checkpoint
 from .model import Gate, Machine, State, parse_machine
 from .engine import RunResult, run
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __all__ = [
     "Gate",
     "Machine",

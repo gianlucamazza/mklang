@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.5.2**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.5.3**, language **0.2**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2 / package 0.5.1)
+## Where we are (v0.2 / package 0.5.3)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -30,6 +30,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   `{{index}}` in `sample` branches; `unresolved-interpolation` lint; `--strict`
   rejects unsupported `mklang:` versions; `0600` checkpoints + §11 at-rest note;
   conformance now covers hook precedence and `tool` states.
+- **0.5.3 (third remediation pass):** **`mklang test`** — deterministic scenario
+  testing with a scripted LLM, no API keys, sharing one matcher module
+  (`scripttest.py`) with the conformance runner; static budget-feasibility check
+  (`budget-infeasible`); dotted-segment lint on inline context maps (completes F7);
+  schema-copy identity test; ADR 0010 (LLM-assisted lint, Proposed).
 - **Live:** DeepSeek e2e green. Anthropic unit-tested; live e2e deferred without key.
 
 ## Language

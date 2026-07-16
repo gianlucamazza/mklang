@@ -205,7 +205,7 @@ minimal diff (the first differing key, expected vs actual) and exits 1. See
 
 ## Status
 
-**Language v0.2 / package 0.5.2** — core complete (fan-out, sub-machines, reasoning,
+**Language v0.2 / package 0.5.3** — core complete (fan-out, sub-machines, reasoning,
 tools, code-hook gates, context-append) with a hardened multi-provider reference
 interpreter, entry-point plugins for tools/hooks/providers, resumable runs
 (checkpoint on budget exhaustion + `mklang resume`, ADR 0007), human-in-the-loop
@@ -216,7 +216,11 @@ no longer silent-clamped, SPEC threat model, gate-divergence experiment scaffold
 0.5.2: gate judging follows the state tier by default (§2.1; `judge:` is now an
 opt-in override — an observable-behavior change), strict judge-reply parsing,
 `unresolved-interpolation` lint, `--strict` version gating, `0600` checkpoints, and
-conformance coverage for hook precedence and `tool` states.
+conformance coverage for hook precedence and `tool` states. 0.5.3: **`mklang test`**
+(deterministic scenario testing, no API keys, sharing one matcher with the
+conformance runner), static budget-feasibility check (`budget-infeasible`),
+dotted-segment lint on inline context maps, a schema-copy identity test, and
+ADR 0010 (LLM-assisted lint, Proposed).
 
 - **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
   `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an
