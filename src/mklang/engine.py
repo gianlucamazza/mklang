@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import re
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from .checkpoint import decode_repair, make_frame
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render
 from .model import Gate, Machine, State
@@ -16,13 +17,23 @@ _OVER_VAR = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
 
 @dataclass
 class RunResult:
-    status: str  # "done" | "halt"
+    status: str  # "done" | "halt" | "suspended"
     trace: list[dict]
     context: dict
     result: object = None
     error: str | None = None
     at: str | None = None
     usage: dict | None = None  # {"input_tokens": int, "output_tokens": int}
+    frames: list[dict] | None = None  # checkpoint frames when status == "suspended"
+
+
+class _Suspend(Exception):
+    """Unwinds a suspendable run; each call level prepends its own frame."""
+
+    def __init__(self, reason: str, frames: list[dict]):
+        super().__init__(reason)
+        self.reason = reason
+        self.frames = frames
 
 
 def _model_for(state: State, machine: Machine, tiers: dict) -> str:
@@ -30,9 +41,7 @@ def _model_for(state: State, machine: Machine, tiers: dict) -> str:
     try:
         return tiers[tier]
     except KeyError:
-        raise KeyError(
-            f"tier {tier!r} not configured (available: {sorted(tiers)})"
-        ) from None
+        raise KeyError(f"tier {tier!r} not configured (available: {sorted(tiers)})") from None
 
 
 def _system(state: State) -> str:
@@ -58,6 +67,8 @@ class _Ctx:
     max_workers: int = 5
     # Remaining token budget for this run and its descendants (None = unlimited).
     cost_budget: int | None = None
+    # Budget exhaustion suspends (checkpoint frames) instead of halting.
+    suspendable: bool = False
 
 
 def _is_otherwise(gate: Gate) -> bool:
@@ -136,7 +147,15 @@ def _select_gate(
     raise RuntimeError("no-gate-matched")
 
 
-def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machine, depth: int):
+def _exec_one(
+    state: State,
+    ctx: dict,
+    feedback: str,
+    deps: _Ctx,
+    machine: Machine,
+    depth: int,
+    resume: list[dict] | None = None,
+):
     """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out) tokens)."""
     if state.kind == "call":
         sub_input = {k: render(v, ctx) for k, v in (state.input or {}).items()}
@@ -156,6 +175,8 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
             cost_budget=deps.cost_budget,
             tools=deps.tools,
             hooks=deps.hooks,
+            suspendable=deps.suspendable,
+            resume=resume,
         )
         u = sub.usage or {}
         tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -183,7 +204,8 @@ def _exec_one(state: State, ctx: dict, feedback: str, deps: _Ctx, machine: Machi
 def _safe_exec(state, ctx, deps, machine, depth):
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
-        return _exec_one(state, ctx, "", deps, machine, depth)
+        # Branches never suspend: a budget-exhausted sub halts into a marker as usual.
+        return _exec_one(state, ctx, "", replace(deps, suspendable=False), machine, depth)
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
         return (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
@@ -231,6 +253,8 @@ def run(
     cost_budget: int | None = None,
     tools: dict | None = None,
     hooks: dict | None = None,
+    suspendable: bool = False,
+    resume: list[dict] | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -244,6 +268,7 @@ def run(
         hooks or {},
         max_workers,
         cost_budget,
+        suspendable,
     )
     ctx = dict(context)
     state_id = machine.entry
@@ -252,6 +277,26 @@ def run(
     total_in = total_out = 0
     feedback = ""
     repair_left: dict[tuple[str, int], int] = {}
+    deeper: list[dict] | None = None  # frames to hand down into a call on the first iteration
+    if resume:
+        frame = resume[0]
+        if frame.get("machine") != machine.name or frame.get("state") not in machine.states:
+            return RunResult(
+                "halt",
+                [],
+                dict(context),
+                error=f"resume-mismatch: frame for {frame.get('machine')!r}"
+                f"/{frame.get('state')!r} does not fit machine {machine.name!r}",
+            )
+        ctx = dict(frame["ctx"])
+        state_id = frame["state"]
+        trace = list(frame["trace"])
+        steps = frame["steps"]
+        total_in = frame["total_in"]
+        total_out = frame["total_out"]
+        feedback = frame["feedback"]
+        repair_left = decode_repair(frame["repair_left"])
+        deeper = list(resume[1:]) or None
 
     def usage() -> dict:
         return {"input_tokens": total_in, "output_tokens": total_out}
@@ -264,14 +309,53 @@ def run(
             return None
         return max(0, cost_budget - spent())
 
+    def snapshot(at_steps: int | None = None) -> dict:
+        return make_frame(
+            machine.name,
+            state_id,
+            ctx,
+            steps if at_steps is None else at_steps,
+            total_in,
+            total_out,
+            feedback,
+            repair_left,
+            trace,
+        )
+
+    def suspend_or_halt(reason: str) -> RunResult:
+        """Loop-top budget exhaustion: checkpoint frames when suspendable, else halt."""
+        if deps.suspendable:
+            if depth:
+                raise _Suspend(reason, [snapshot()])
+            return RunResult(
+                "suspended",
+                trace,
+                ctx,
+                error=reason,
+                at=state_id,
+                usage=usage(),
+                frames=[snapshot()],
+            )
+        return RunResult("halt", trace, ctx, error=reason, usage=usage())
+
     while True:
         if steps >= machine.budget:
-            return RunResult("halt", trace, ctx, error="budget-exhausted", usage=usage())
+            return suspend_or_halt("budget-exhausted")
         if cost_budget is not None and spent() >= cost_budget:
-            return RunResult("halt", trace, ctx, error="cost-exhausted", usage=usage())
+            return suspend_or_halt("cost-exhausted")
         # Sub-runs inherit the *remaining* budget so parent+children share one pool.
         deps.cost_budget = remaining_budget()
         S = machine.states[state_id]
+        sub_resume, deeper = deeper, None  # descend into the suspended call once, then clear
+        if sub_resume is not None and S.kind != "call":
+            return RunResult(
+                "halt",
+                trace,
+                ctx,
+                error=f"resume-mismatch: state {state_id!r} is not a call",
+                at=state_id,
+                usage=usage(),
+            )
         step: dict = {"state": state_id, "tier": S.tier or machine.default_tier}
 
         # 1) EXECUTE (isolate failures: single → halt cleanly, branch → marker)
@@ -309,7 +393,21 @@ def run(
             steps += 1
             try:
                 out, sub, reasoning, (step_in, step_out) = _exec_one(
-                    S, ctx, feedback, deps, machine, depth
+                    S, ctx, feedback, deps, machine, depth, resume=sub_resume
+                )
+            except _Suspend as s:
+                # A sub-call suspended: prepend this level's loop-top frame and keep unwinding.
+                s.frames.insert(0, snapshot(at_steps=steps - 1))
+                if depth:
+                    raise
+                return RunResult(
+                    "suspended",
+                    trace,
+                    ctx,
+                    error=s.reason,
+                    at=s.frames[-1]["state"],
+                    usage=usage(),
+                    frames=s.frames,
                 )
             except CallFailed as e:
                 total_in += e.input_tokens

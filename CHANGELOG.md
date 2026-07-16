@@ -8,15 +8,27 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.2.2`).
+  `pyproject.toml` (currently `0.3.0`).
 
-## [Unreleased]
+## [0.3.0] — 2026-07-16
+
+### Added
+
+- **Resumable runs / checkpoints** (ADR 0007) — opt-in: with `--checkpoint PATH`,
+  budget exhaustion (`budget-exhausted` / `cost-exhausted`) **suspends** instead of
+  halting and writes a JSON checkpoint (frames = blackboard + position + spend per
+  `call` level, machine sha256). New subcommand **`mklang resume <checkpoint>`**
+  (`--max-tokens`, `--machine`, `--force`) continues as if uninterrupted — golden
+  round-trip tested, nested `call` included. New `RunResult` status `"suspended"`
+  with `frames`; library API `run(..., suspendable=, resume=)`; CLI exit code 3.
+  Fan-out branches never suspend. Language unchanged (spec stays 0.2).
 
 ### Fixed
 
 - Docs drift pass: SPEC pseudo-schema includes `hook` / `hooks:`; comparison table and
   philosophy updated for host hooks; ADR 0002/0004 no longer refer to code-hooks as
   future-only; ROADMAP test count aligned (~70).
+- Stale `__version__` in `mklang/__init__.py` (was pinned at 0.2.0).
 
 ## [0.2.2] — 2026-07-16
 

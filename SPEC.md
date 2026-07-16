@@ -28,19 +28,19 @@ Principles:
 
 ### Comparison
 
-|             | mklang             | LangGraph         | BAML            | DSPy                   |
-| ----------- | ------------------ | ----------------- | --------------- | ---------------------- |
-| Artifact    | YAML doc           | Python code       | schema→code     | Python code            |
-| Runtime     | LLM interprets doc | Python runs graph | host calls fns  | Python + optimizer     |
-| Composition | state machine      | graph/FSM         | typed functions | modules/signatures     |
-| Determinism | control none; optional host hooks | of control-flow | of typed output | of control-flow |
-| Audience    | non-devs too       | developers        | developers      | developers/researchers |
+|             | mklang                            | LangGraph         | BAML            | DSPy                   |
+| ----------- | --------------------------------- | ----------------- | --------------- | ---------------------- |
+| Artifact    | YAML doc                          | Python code       | schema→code     | Python code            |
+| Runtime     | LLM interprets doc                | Python runs graph | host calls fns  | Python + optimizer     |
+| Composition | state machine                     | graph/FSM         | typed functions | modules/signatures     |
+| Determinism | control none; optional host hooks | of control-flow   | of typed output | of control-flow        |
+| Audience    | non-devs too                      | developers        | developers      | developers/researchers |
 
 _mklang is to LangGraph what a declarative spec is to Python code._
 
 ### What mklang is **not** (v0.2)
 
-- It does not compile to a formal artifact (GBNF, JSON Schema of *outputs*, code).
+- It does not compile to a formal artifact (GBNF, JSON Schema of _outputs_, code).
 - It guarantees neither determinism nor statically typed output.
 - It has no formal types for `structure` (→ §9). Sub-machines, fan-out, reasoning,
   host `tool` states, and **code-hook gates** **are** in the core (§4.5–§4.9, §5).
@@ -589,13 +589,19 @@ error (`fail`, `no-gate-matched`, `budget-exhausted`, `call-depth-exceeded`,
 A `call` whose sub-machine **halts** propagates as `call-failed: <child-error>`
 (the parent does not continue as `done` with an empty result). A host **cost
 budget** (token cap) is shared with nested `call` runs — children see the
-*remaining* budget. If the gate judge returns unparseable text, the runtime
+_remaining_ budget. If the gate judge returns unparseable text, the runtime
 soft-falls back only when an eligible `when: otherwise` exists (trace flag
 `judge_fallback`); otherwise it halts with `judge-unparseable`. `over` on a
 **missing** or non-list path is a hard error; an empty list still produces `[]`
 and fires gates. `escalate` is not itself terminal — it routes to a handler state
 that must reach `END`. **Every machine must have at least one reachable path to
 `END`** (author's responsibility in v0.2; a validator SHOULD check it).
+
+A host runtime MAY offer a third, non-normative outcome: **`suspended`** — on
+budget exhaustion an opt-in run checkpoints its position and blackboard (frames)
+instead of halting, and can later be resumed as if uninterrupted (reference
+interpreter: `--checkpoint` / `mklang resume`, ADR 0007). This is host behavior,
+not part of the language: a `.mk` file needs no changes and stays portable.
 
 ---
 

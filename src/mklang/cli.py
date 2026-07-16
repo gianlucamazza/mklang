@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
 from .config import load_provider
 from .engine import run
 from .loader import check_tiers, load_machine, semantic_check
@@ -46,17 +47,17 @@ def _apply_sets(ctx: dict, sets: list[str]) -> dict:
     return ctx
 
 
-def cmd_run(args) -> int:
+def _prepare(args, machine_path: str):
+    """Shared run/resume setup. Returns (prov, llm, registry, machine, tools, hooks) or exit code."""
     prov = load_provider(args.config, args.provider)
     if not prov.api_key and prov.name != "local":
         print(f"# warning: no API key for provider '{prov.name}' — set it in .env", file=sys.stderr)
     llm = _build_llm(prov)
-    directory = Path(args.machine).parent
-    registry = load_registry(directory, validate=False)
+    registry = load_registry(Path(machine_path).parent, validate=False)
     try:
-        machine = load_machine(args.machine)
+        machine = load_machine(machine_path)
     except Exception as e:  # noqa: BLE001 — surface load/validation failure cleanly
-        print(f"{args.machine}: ERROR: {getattr(e, 'message', str(e))}", file=sys.stderr)
+        print(f"{machine_path}: ERROR: {getattr(e, 'message', str(e))}", file=sys.stderr)
         return 2
     registry[machine.name] = machine
     errors, warnings = semantic_check(machine, registry)
@@ -65,7 +66,7 @@ def cmd_run(args) -> int:
         print(f"# warning: {w}", file=sys.stderr)
     if errors:
         for e in errors:
-            print(f"{args.machine}: error: {e}", file=sys.stderr)
+            print(f"{machine_path}: error: {e}", file=sys.stderr)
         return 2
     from .hooks import load_hook_registry
     from .tools import load_tool_registry
@@ -86,6 +87,39 @@ def cmd_run(args) -> int:
                     f"{sorted(hooks)} — the run halts if it is reached",
                     file=sys.stderr,
                 )
+    return prov, llm, registry, machine, tools, hooks
+
+
+def _emit(res, checkpoint_path, machine, machine_path, cost_budget) -> int:
+    """Print the result JSON; write a checkpoint on suspension. Exit: 0 done, 3 suspended, 1 halt."""
+    out = {
+        "status": res.status,
+        "error": res.error,
+        "result": res.result,
+        "usage": res.usage,
+        "trace": res.trace,
+    }
+    if res.at is not None:
+        out["at"] = res.at
+    if res.status == "suspended":
+        save_checkpoint(
+            checkpoint_path, machine.name, machine_path, res.error, res.frames, cost_budget
+        )
+        out["checkpoint"] = str(checkpoint_path)
+        print(
+            f"# suspended ({res.error}) — checkpoint written to {checkpoint_path}", file=sys.stderr
+        )
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    if res.status == "done":
+        return 0
+    return 3 if res.status == "suspended" else 1
+
+
+def cmd_run(args) -> int:
+    prep = _prepare(args, args.machine)
+    if isinstance(prep, int):
+        return prep
+    prov, llm, registry, machine, tools, hooks = prep
     ctx = _apply_sets(dict(machine.context), args.set)
     print(f"# {machine.name} · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
     res = run(
@@ -99,18 +133,64 @@ def cmd_run(args) -> int:
         cost_budget=args.max_tokens,
         tools=tools,
         hooks=hooks,
+        suspendable=args.checkpoint is not None,
     )
-    out = {
-        "status": res.status,
-        "error": res.error,
-        "result": res.result,
-        "usage": res.usage,
-        "trace": res.trace,
-    }
-    if res.at is not None:
-        out["at"] = res.at
-    print(json.dumps(out, ensure_ascii=False, indent=2))
-    return 0 if res.status == "done" else 1
+    return _emit(res, args.checkpoint, machine, args.machine, args.max_tokens)
+
+
+def cmd_resume(args) -> int:
+    try:
+        ck = load_checkpoint(args.checkpoint)
+    except (OSError, ValueError) as e:
+        print(f"{args.checkpoint}: ERROR: {e}", file=sys.stderr)
+        return 2
+    machine_path = args.machine or ck["machine_path"]
+    try:
+        hash_ok = verify_hash(ck, machine_path)
+    except OSError as e:
+        print(f"{machine_path}: ERROR: {e}", file=sys.stderr)
+        return 2
+    if not hash_ok:
+        if not args.force:
+            print(
+                f"{machine_path}: ERROR: machine changed since checkpoint "
+                f"(sha256 mismatch); use --force to resume anyway",
+                file=sys.stderr,
+            )
+            return 2
+        print(
+            f"# warning: {machine_path} changed since checkpoint — resuming anyway", file=sys.stderr
+        )
+    prep = _prepare(args, machine_path)
+    if isinstance(prep, int):
+        return prep
+    prov, llm, registry, machine, tools, hooks = prep
+    cost_budget = args.max_tokens if args.max_tokens is not None else ck.get("cost_budget")
+    if ck.get("reason") == "cost-exhausted" and cost_budget is not None:
+        old = ck.get("cost_budget")
+        if old is not None and cost_budget <= old:
+            print(
+                f"# warning: cost budget {cost_budget} is not above the exhausted "
+                f"{old} — the run will suspend again immediately",
+                file=sys.stderr,
+            )
+    out_path = args.checkpoint_out or args.checkpoint
+    print(f"# {machine.name} · resume · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
+    res = run(
+        machine,
+        dict(machine.context),
+        registry,
+        llm,
+        prov.tiers,
+        prov.judge_model(),
+        tier_params=prov.params,
+        cost_budget=cost_budget,
+        tools=tools,
+        hooks=hooks,
+        suspendable=True,
+        resume=ck["frames"],
+    )
+    return _emit(res, out_path, machine, machine_path, cost_budget)
 
 
 def cmd_check(args) -> int:
@@ -151,7 +231,34 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="cost budget: halt once total tokens reach this",
     )
+    r.add_argument(
+        "--checkpoint",
+        default=None,
+        metavar="PATH",
+        help="on budget exhaustion suspend and write a resumable checkpoint here",
+    )
     r.set_defaults(fn=cmd_run)
+
+    s = sub.add_parser("resume", help="resume a suspended run from a checkpoint")
+    s.add_argument("checkpoint")
+    s.add_argument("--config", default="config/runtime.example.yaml")
+    s.add_argument("--provider", default=None, help="override the config's `active` provider")
+    s.add_argument(
+        "--max-tokens",
+        type=int,
+        default=None,
+        help="new cost budget (total, including tokens spent before the suspend)",
+    )
+    s.add_argument("--machine", default=None, help="machine path override (if the .mk moved)")
+    s.add_argument(
+        "--checkpoint",
+        dest="checkpoint_out",
+        default=None,
+        metavar="PATH",
+        help="where to write the checkpoint on re-suspension (default: overwrite the input)",
+    )
+    s.add_argument("--force", action="store_true", help="resume even if the machine file changed")
+    s.set_defaults(fn=cmd_resume)
 
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
     c.add_argument("machines", nargs="+")

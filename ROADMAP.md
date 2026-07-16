@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.2.2**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.3.0**, language **0.2**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2 / package 0.2.2)
+## Where we are (v0.2 / package 0.3.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -15,6 +15,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   Anthropic parity, tier validation, strict `over`, error taxonomy (~70 MockLLM tests).
 - **0.2.2:** code-hook gates (ADR 0006); tool/hook **entry-point plugins**; default
   `active: deepseek` with live smoke re-verified.
+- **0.3.0:** **resumable runs / checkpoints** (ADR 0007) — budget exhaustion suspends
+  into a JSON checkpoint (`--checkpoint`), `mklang resume` continues as if
+  uninterrupted; foundation for HITL.
 - **Live:** DeepSeek e2e green. Anthropic unit-tested; live e2e deferred without key.
 
 ## Language
@@ -33,8 +36,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   (tools/hooks already use entry points).
 - **[later] Caching / reproducibility** — per-state memoization.
 - **[later] Sub-machine project manifest** — `mklang.toml`.
-- **[next] Resumable runs / checkpoints** — blackboard + position for pause/resume
-  (foundation for real HITL).
+- **Shipped (0.3.0):** resumable runs / checkpoints — blackboard + position
+  pause/resume on budget exhaustion (ADR 0007), foundation for real HITL.
 
 ## Quality
 
@@ -51,6 +54,6 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped:** tool plugin registry (`mklang.tools` entry points) and hook plugins
   (`mklang.hooks`); builtins remain available offline.
 - **[next] Human-in-the-loop hook** — `escalate` that suspends and resumes on reply
-  (pairs with checkpoints).
+  (checkpoints shipped in 0.3.0; wire `escalate` to `reason: "escalated"`).
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.
