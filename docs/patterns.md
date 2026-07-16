@@ -48,8 +48,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   empty string and silently degrades the prompt. Under `--strict` it fails the run.
   If a host injects extra context keys at run time, declare them in `context:` with
   placeholder values so the reference to them resolves and the lint stays quiet.
-  (The rule checks the first path segment only; dotted tails like `ticket.body`
-  can't be verified statically against prose `structure`.)
+  (When the root is an **inline `context:` map** — `ticket: {body: …}` — the second
+  segment is checked too, so `{{ticket.bod}}` is caught. Deeper tails, and roots
+  whose shape isn't statically known (state outputs, runtime `human`/`item`/`index`),
+  are not verified against prose `structure`.)
 - **Cap `repair`.** A `repair: N` with a modest `N` (1–2) plus a following
   `escalate`/`fail` gate prevents an endless self-correction loop.
 - **Give escalation a safe sink.** Route hard cases to a terminal `human_review`
