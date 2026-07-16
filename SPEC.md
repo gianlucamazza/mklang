@@ -397,11 +397,11 @@ states:
 ```
 
 Tools are **host-provided and provider-agnostic**: the runtime is given a
-`name -> callable` registry (`run(..., tools=...)`; the CLI ships deterministic demos
-`calc` and `search`). The optional `tools:` block documents the contract and lets
-`mklang check` warn on a `tool` state that references an undeclared name; the actual
-binding stays host-side. A tool state does not call the LLM, so it consumes no tier
-and no tokens.
+`name -> callable` registry (`run(..., tools=...)`; the CLI loads builtins plus
+packaging entry points in the `mklang.tools` group — demos `calc` and `search`).
+The optional `tools:` block documents the contract and lets `mklang check` warn on
+a `tool` state that references an undeclared name; the actual binding stays
+host-side. A tool state does not call the LLM, so it consumes no tier and no tokens.
 
 ---
 

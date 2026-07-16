@@ -23,6 +23,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Use code-hook gates for exact checks** (`hook: name` → host `(ctx, output) -> bool`).
   Amounts, equality, allowlists: do **not** ask the LLM. Put hooks **above** prose
   gates; keep `when` as the trace label. See `examples/hook_gates.mk` and ADR 0006.
+  Custom tools/hooks: package entry points `mklang.tools` / `mklang.hooks` (see
+  CONTRIBUTING).
 - **End every non-terminal state with an `otherwise` gate.** Without it, a run can
   `halt` with `no-gate-matched` — and if the judge returns garbage, the runtime
   **hard-halts** with `judge-unparseable` unless `otherwise` is eligible (soft

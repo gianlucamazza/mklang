@@ -67,21 +67,23 @@ def cmd_run(args) -> int:
         for e in errors:
             print(f"{args.machine}: error: {e}", file=sys.stderr)
         return 2
-    from .hooks import BUILTINS as HOOK_BUILTINS
-    from .tools import BUILTINS
+    from .hooks import load_hook_registry
+    from .tools import load_tool_registry
 
+    tools = load_tool_registry()
+    hooks = load_hook_registry()
     for sid, s in machine.states.items():
-        if s.kind == "tool" and s.tool not in BUILTINS:
+        if s.kind == "tool" and s.tool not in tools:
             print(
-                f"# warning: state '{sid}' uses tool '{s.tool}' not in the built-in "
-                f"registry {sorted(BUILTINS)} — the run halts if it is reached",
+                f"# warning: state '{sid}' uses tool '{s.tool}' not in the registry "
+                f"{sorted(tools)} — the run halts if it is reached",
                 file=sys.stderr,
             )
         for g in s.gates:
-            if g.hook and g.hook not in HOOK_BUILTINS:
+            if g.hook and g.hook not in hooks:
                 print(
-                    f"# warning: state '{sid}' uses hook '{g.hook}' not in the built-in "
-                    f"registry {sorted(HOOK_BUILTINS)} — the run halts if it is reached",
+                    f"# warning: state '{sid}' uses hook '{g.hook}' not in the registry "
+                    f"{sorted(hooks)} — the run halts if it is reached",
                     file=sys.stderr,
                 )
     ctx = _apply_sets(dict(machine.context), args.set)
@@ -95,8 +97,8 @@ def cmd_run(args) -> int:
         prov.judge_model(),
         tier_params=prov.params,
         cost_budget=args.max_tokens,
-        tools=BUILTINS,
-        hooks=HOOK_BUILTINS,
+        tools=tools,
+        hooks=hooks,
     )
     out = {
         "status": res.status,

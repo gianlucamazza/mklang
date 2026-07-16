@@ -3,7 +3,7 @@
 from mklang.engine import run
 from mklang.llm.mock import MockLLM
 from mklang.model import parse_machine
-from mklang.tools import calc
+from mklang.tools import BUILTINS, calc, load_tool_registry
 
 TIERS = {"fast": "m", "balanced": "m", "reasoning": "m"}
 
@@ -81,3 +81,19 @@ def test_fanout_over_a_tool():
     tools = {"dbl": lambda inp: str(int(inp["n"]) * 2)}
     r = run(m, {"items": ["2", "5"]}, {"t": m}, MockLLM(), TIERS, "m", tools=tools)
     assert r.trace[0]["branches"] == ["4", "10"]
+
+
+def test_load_tool_registry_merges_builtins_and_extra():
+    reg = load_tool_registry(extra={"echo": lambda d: d.get("x", "")}, include_entry_points=False)
+    assert set(BUILTINS) <= set(reg)
+    assert reg["echo"]({"x": "hi"}) == "hi"
+    # extra wins over builtin name collision
+    reg2 = load_tool_registry(extra={"calc": lambda d: "override"}, include_entry_points=False)
+    assert reg2["calc"]({}) == "override"
+
+
+def test_load_tool_registry_includes_entry_points_when_installed():
+    # In editable/install, our own package registers calc/search; still must be present.
+    reg = load_tool_registry(include_entry_points=True)
+    assert "calc" in reg and "search" in reg
+    assert reg["calc"]({"expr": "1+1"}) == "2"

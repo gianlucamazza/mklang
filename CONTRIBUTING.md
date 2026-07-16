@@ -16,6 +16,25 @@ Secrets live in `.env` (gitignored); copy `.env.example` and add provider keys f
 live runs. The example runtime defaults to **DeepSeek** (`DEEPSEEK_API_KEY` +
 `active: deepseek`). Never commit a key.
 
+### Plugin tools / hooks
+
+Third-party packages can register callables without patching core:
+
+```toml
+# in the plugin package's pyproject.toml
+[project.entry-points."mklang.tools"]
+my_search = "mypkg.tools:search"
+
+[project.entry-points."mklang.hooks"]
+amount_ok = "mypkg.hooks:amount_ok"
+```
+
+- Tools: `(dict) -> str` (tool-state observations).
+- Hooks: `(context: dict, output) -> bool` (gate predicates).
+
+The CLI loads `load_tool_registry()` / `load_hook_registry()` (builtins + entry
+points). Library users may still pass explicit `tools=` / `hooks=` to `run()`.
+
 ## The change checklist
 
 A change to the **language** must land as a coherent set — in this order:

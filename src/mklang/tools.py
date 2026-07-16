@@ -1,13 +1,19 @@
 """Host tools for `tool` states. A tool is a callable `(dict) -> str`.
 
-The interpreter passes a name→callable registry to `run(..., tools=...)`. Library
-users supply their own; the CLI ships these deterministic demos so the examples run
-offline."""
+The interpreter receives a name→callable map via `run(..., tools=...)`. The CLI
+merges package builtins with third-party plugins discovered from the
+``mklang.tools`` entry-point group (see ``load_tool_registry``).
+"""
 
 from __future__ import annotations
 
 import ast
 import operator
+import sys
+from collections.abc import Callable
+from importlib.metadata import entry_points
+
+ToolFn = Callable[[dict], str]
 
 _BINOPS = {
     ast.Add: operator.add,
@@ -48,4 +54,45 @@ def search(inp: dict) -> str:
     return f"[no external search bound] query was: {query!r}"
 
 
-BUILTINS: dict[str, callable] = {"calc": calc, "search": search}
+BUILTINS: dict[str, ToolFn] = {"calc": calc, "search": search}
+
+ENTRY_POINT_GROUP = "mklang.tools"
+
+
+def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
+    """Load third-party tools from packaging entry points.
+
+    Each entry point name becomes the tool name; the loaded object must be a
+    callable ``(dict) -> str`` (or a factory returning one). Failures are skipped
+    with a stderr warning so a broken plugin cannot sink the CLI.
+    """
+    reg: dict[str, ToolFn] = {}
+    try:
+        eps = entry_points()
+        selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
+    except Exception as e:  # noqa: BLE001
+        print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
+        return reg
+    for ep in selected:
+        try:
+            obj = ep.load()
+            if not callable(obj):
+                raise TypeError(f"{ep.name} is not callable")
+            reg[ep.name] = obj  # type: ignore[assignment]
+        except Exception as e:  # noqa: BLE001
+            print(f"# warning: tool plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
+    return reg
+
+
+def load_tool_registry(
+    extra: dict[str, ToolFn] | None = None,
+    *,
+    include_entry_points: bool = True,
+) -> dict[str, ToolFn]:
+    """Builtins ← entry-point plugins ← ``extra`` (later keys win)."""
+    reg = dict(BUILTINS)
+    if include_entry_points:
+        reg.update(load_entry_point_tools())
+    if extra:
+        reg.update(extra)
+    return reg

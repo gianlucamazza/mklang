@@ -8,9 +8,11 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.2.1`).
+  `pyproject.toml` (currently `0.2.2`).
 
 ## [Unreleased]
+
+## [0.2.2] — 2026-07-16
 
 ### Added
 
@@ -18,6 +20,9 @@ All notable changes to mklang are documented here. The format follows
   `(context, output) -> bool` without the LLM (ADR 0006). Top-level `hooks:`
   declarations; CLI builtins (`auto_approve_ok`, …); example `hook_gates.mk`. Trace
   records `gate_via: hook|llm|otherwise`.
+- **Tool / hook plugin registry** — entry-point groups `mklang.tools` and
+  `mklang.hooks`; `load_tool_registry()` / `load_hook_registry()` merge builtins with
+  third-party plugins (later keys win). Documented in CONTRIBUTING / patterns.
 
 ### Changed
 

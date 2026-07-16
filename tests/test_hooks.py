@@ -1,7 +1,7 @@
 """Code-hook gates: host predicates fire without the LLM (ADR 0006)."""
 
 from mklang.engine import run
-from mklang.hooks import BUILTINS, auto_approve_ok
+from mklang.hooks import BUILTINS, auto_approve_ok, load_hook_registry
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 from mklang.loader import semantic_check
@@ -171,7 +171,7 @@ def test_semantic_check_warns_undeclared_hook():
 
 
 def test_example_hook_gates_machine_validates():
-    from mklang.loader import load_machine, validate_dict, load_dict
+    from mklang.loader import load_dict, load_machine, validate_dict
 
     d = load_dict("examples/hook_gates.mk")
     validate_dict(d)
@@ -188,3 +188,12 @@ def test_example_hook_gates_machine_validates():
     assert r.status == "done"
     assert r.trace[0]["gate_via"] == "hook"
     assert r.trace[0]["to"] == "END"
+
+
+def test_load_hook_registry_merges_extra():
+    reg = load_hook_registry(
+        extra={"always_true": lambda c, o: False},
+        include_entry_points=False,
+    )
+    assert reg["always_true"]({}, None) is False  # extra overrides builtin
+    assert reg["auto_approve_ok"]({"amount": 1, "has_receipt": True}, None) is True

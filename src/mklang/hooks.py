@@ -1,15 +1,20 @@
 """Host gate hooks: callables `(context, output) -> bool`.
 
 Optional `hook: <name>` on a gate evaluates the named predicate without the LLM
-(ADR 0006 / SPEC §5). Library users pass `run(..., hooks=...)`; the CLI ships a
-few deterministic demos for examples and tests.
+(ADR 0006 / SPEC §5). The CLI merges builtins with plugins from the
+``mklang.hooks`` entry-point group (see ``load_hook_registry``).
 """
 
 from __future__ import annotations
 
-from typing import Any, Callable
+import sys
+from collections.abc import Callable
+from importlib.metadata import entry_points
+from typing import Any
 
 HookFn = Callable[[dict, Any], bool]
+
+ENTRY_POINT_GROUP = "mklang.hooks"
 
 
 def always_true(_ctx: dict, _output: Any) -> bool:
@@ -45,3 +50,37 @@ BUILTINS: dict[str, HookFn] = {
     "has_receipt": has_receipt,
     "auto_approve_ok": auto_approve_ok,
 }
+
+
+def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
+    """Load third-party hooks from packaging entry points (name → callable)."""
+    reg: dict[str, HookFn] = {}
+    try:
+        eps = entry_points()
+        selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
+    except Exception as e:  # noqa: BLE001
+        print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
+        return reg
+    for ep in selected:
+        try:
+            obj = ep.load()
+            if not callable(obj):
+                raise TypeError(f"{ep.name} is not callable")
+            reg[ep.name] = obj  # type: ignore[assignment]
+        except Exception as e:  # noqa: BLE001
+            print(f"# warning: hook plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
+    return reg
+
+
+def load_hook_registry(
+    extra: dict[str, HookFn] | None = None,
+    *,
+    include_entry_points: bool = True,
+) -> dict[str, HookFn]:
+    """Builtins ← entry-point plugins ← ``extra`` (later keys win)."""
+    reg = dict(BUILTINS)
+    if include_entry_points:
+        reg.update(load_entry_point_hooks())
+    if extra:
+        reg.update(extra)
+    return reg

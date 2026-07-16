@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "0.2.1"
+version = "0.2.2"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,6 +26,22 @@ dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]
 mklang = "mklang.cli:main"
+
+# Third parties register tools/hooks without patching core:
+#   [project.entry-points."mklang.tools"]
+#   my_tool = "mypkg.tools:my_tool"
+#   [project.entry-points."mklang.hooks"]
+#   my_hook = "mypkg.hooks:my_hook"
+[project.entry-points."mklang.tools"]
+calc = "mklang.tools:calc"
+search = "mklang.tools:search"
+
+[project.entry-points."mklang.hooks"]
+always_true = "mklang.hooks:always_true"
+always_false = "mklang.hooks:always_false"
+amount_le_100 = "mklang.hooks:amount_le_100"
+has_receipt = "mklang.hooks:has_receipt"
+auto_approve_ok = "mklang.hooks:auto_approve_ok"
 
 [build-system]
 requires = ["hatchling"]

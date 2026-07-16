@@ -152,8 +152,9 @@ deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
 ## Status
 
-**Language v0.2 / package 0.2.1** — core complete (fan-out, sub-machines, reasoning,
-tools, context-append) with a hardened multi-provider reference interpreter.
+**Language v0.2 / package 0.2.2** — core complete (fan-out, sub-machines, reasoning,
+tools, code-hook gates, context-append) with a hardened multi-provider reference
+interpreter and entry-point plugins for tools/hooks.
 
 - **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
   `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an
