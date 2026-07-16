@@ -84,8 +84,16 @@ The `.mk` picks a **tier**; a host-side config picks the **model**. This is the
 whole of "make it multi-provider":
 
 ```yaml
-active: anthropic # anthropic | openai | google | local
+active: deepseek # deepseek | anthropic | openai | google | openrouter | xai | mistral | local
 providers:
+  deepseek:
+    base_url: https://api.deepseek.com
+    tiers:
+      {
+        fast: deepseek-chat,
+        balanced: deepseek-chat,
+        reasoning: deepseek-reasoner,
+      }
   anthropic:
     tiers:
       {
@@ -93,22 +101,20 @@ providers:
         balanced: claude-sonnet-5,
         reasoning: claude-opus-4-8,
       }
-  openai:
-    tiers: { fast: gpt-5-mini, balanced: gpt-5, reasoning: gpt-5.4 }
   local:
     base_url: http://localhost:11434/v1
     tiers: { fast: qwen3:8b, balanced: qwen3:32b, reasoning: deepseek-r1:70b }
 ```
 
-Flip `active: openai` (or `local`) and every example runs unchanged. The example
-config ships blocks for **Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI
-(Grok), Mistral, and local** (Ollama/vLLM) — every non-Anthropic one is
-OpenAI-compatible, so a single adapter serves them all. **OpenRouter** is a
-meta-provider: its `vendor/model` ids let each tier target a different vendor
-through one endpoint. Per-tier, provider-specific params (Anthropic
-adaptive-thinking + `effort`, OpenAI/xAI `reasoning_effort`, …) live under
-`params`. See [`config/runtime.example.yaml`](./config/runtime.example.yaml) for
-the full, current-model config.
+The example config defaults to **DeepSeek** (the path we live-test against). Flip
+`active: anthropic` (or `openai` / `local` / …) and every example runs unchanged.
+Blocks ship for **Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI (Grok),
+Mistral, and local** (Ollama/vLLM) — every non-Anthropic one is OpenAI-compatible,
+so a single adapter serves them all. **OpenRouter** is a meta-provider: its
+`vendor/model` ids let each tier target a different vendor through one endpoint.
+Per-tier params (Anthropic adaptive-thinking + `effort`, OpenAI/xAI
+`reasoning_effort`, …) live under `params`. Full map:
+[`config/runtime.example.yaml`](./config/runtime.example.yaml).
 
 ## Reasoning architectures
 
@@ -132,24 +138,25 @@ guidance in [`docs/patterns.md`](./docs/patterns.md).
 ## Quickstart (reference interpreter)
 
 ```bash
-cp .env.example .env            # add your provider key(s)
+cp .env.example .env            # set DEEPSEEK_API_KEY=… (or another provider key)
 uv run mklang check examples/self_consistency.mk
 uv run mklang run examples/self_consistency.mk \
-  --provider deepseek --set question.text="What is the capital of Australia?"
+  --set question.text="What is the capital of Australia?"
+# default provider is deepseek; override with --provider anthropic|openai|…
 ```
 
-The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models; the key
-comes from `.env`. Same machine, any provider.
+The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
+deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
 ## Status
 
 **Language v0.2 / package 0.2.1** — core complete (fan-out, sub-machines, reasoning,
 tools, context-append) with a hardened multi-provider reference interpreter.
 
-- **Live-tested on DeepSeek**; Anthropic adapter is unit-tested (live e2e when a key
-  is available). The spec stays language- and provider-agnostic. See
-  [`ROADMAP.md`](./ROADMAP.md) for what's next and [`CHANGELOG.md`](./CHANGELOG.md)
-  for the history.
+- **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
+  `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an
+  `ANTHROPIC_API_KEY` is available). The spec stays language- and provider-agnostic.
+  See [`ROADMAP.md`](./ROADMAP.md) and [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## License
 

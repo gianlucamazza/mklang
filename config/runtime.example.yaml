@@ -8,8 +8,12 @@
 # Model IDs below are current as of 2026-07-03. Anthropic IDs are authoritative;
 # the others are the current best-in-class per provider and are host-updatable —
 # verify against each provider's catalog before production.
+#
+# Default `active` is DeepSeek: OpenAI-compatible, cheap for smoke/live tests, and
+# the path historically used to validate the reference interpreter end-to-end.
+# Swap to anthropic | openai | … (or pass --provider) without editing any .mk.
 
-active: anthropic # provider block the runtime uses: anthropic | openai | google | deepseek | openrouter | xai | mistral | local
+active: deepseek # deepseek | anthropic | openai | google | openrouter | xai | mistral | local
 
 # NOTE: every non-Anthropic provider below speaks the OpenAI-compatible protocol,
 # so one adapter (base_url + api_key_env + tiers) serves them all. OpenRouter is a

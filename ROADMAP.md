@@ -17,8 +17,10 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   `ProviderError` / JSON judge / temperature), pre-run tier validation, strict
   `over` path, structured error taxonomy, cost accounting, golden + cookbook tests
   (**60** MockLLM unit tests).
-- **Live:** DeepSeek e2e historically green. Anthropic **unit-tested**; **live e2e
-  deferred** until an `ANTHROPIC_API_KEY` is available in the environment.
+- **Live:** DeepSeek e2e green (default `active: deepseek` in
+  `config/runtime.example.yaml`; re-verified 2026-07-16 —
+  `expense_approval.mk` → `done`). Anthropic **unit-tested**; **live e2e deferred**
+  until an `ANTHROPIC_API_KEY` is available.
 
 ## Language
 

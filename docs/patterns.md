@@ -64,8 +64,9 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 ## Provider notes
 
 - The `.mk` never names a model — only tiers. Pick models in
-  [`config/runtime.example.yaml`](../config/runtime.example.yaml); keys come from
-  `.env`. Switching provider is a one-line `active:` change.
+  [`config/runtime.example.yaml`](../config/runtime.example.yaml) (default
+  `active: deepseek`); keys come from `.env` (`DEEPSEEK_API_KEY`, …). Switching
+  provider is a one-line `active:` change or `mklang run --provider …`.
 - **Diversity for `sample`** comes from temperature; keep the sampling state on a
   model that honors it (most chat models do — some reasoner models ignore it).
 - **`reason: true`** yields a captured chain only on models that expose thinking

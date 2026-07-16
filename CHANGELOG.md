@@ -12,6 +12,12 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Default runtime provider is **DeepSeek** (`active: deepseek` in
+  `config/runtime.example.yaml`); README quickstart and status aligned. Live smoke
+  re-verified on DeepSeek (`expense_approval.mk` → `done`).
+
 ## [0.2.1] — 2026-07-16
 
 Correctness hardening and multi-provider polish on top of the v0.2 core.

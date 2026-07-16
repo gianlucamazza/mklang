@@ -13,7 +13,8 @@ uv run mklang check examples/*.mk     # validate the example machines
 ```
 
 Secrets live in `.env` (gitignored); copy `.env.example` and add provider keys for
-live runs. Never commit a key.
+live runs. The example runtime defaults to **DeepSeek** (`DEEPSEEK_API_KEY` +
+`active: deepseek`). Never commit a key.
 
 ## The change checklist
 
