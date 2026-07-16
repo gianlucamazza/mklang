@@ -8,7 +8,49 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.5.2`).
+  `pyproject.toml` (currently `0.5.3`).
+
+## [0.5.3] — 2026-07-16
+
+Third remediation pass (Follow-up 003): closes the residue Remediation 002
+delivered without declaring. The language stays **0.2**; no `.mk` needs changes.
+
+### Added
+
+- **`mklang test` — deterministic machine testing without API keys (R3-1).**
+  A new subcommand runs a machine against a script of named scenarios with a
+  **scripted LLM** (produce texts + judge picks) and scripted tools/hooks —
+  fully deterministic, no provider or key. Per-scenario PASS/FAIL with a minimal
+  diff (first mismatched key, expected vs actual); exit 0 iff all pass. The
+  scripted LLM, `hooks:`/`tools:` bindings, and expectation matcher now live once
+  in `src/mklang/scripttest.py`, shared with the conformance runner (all 21 cases
+  green through it, unchanged). Ships `examples/triage.test.yaml` (happy path +
+  KB-empty escalation). Docs: README "Test your machine without API keys",
+  `docs/patterns.md`, `conformance/README.md` cross-reference. CI runs
+  `uv run mklang test examples/triage.mk --script examples/triage.test.yaml`
+  in the unit-test job (no API keys); the same scenarios are also covered by
+  `tests/test_scripttest.py` in the normal pytest run.
+- **Static budget-feasibility check (R3-2).** `mklang check`/`lint` now BFS the
+  shortest path (in states) from `entry` to a gate `to: END`. `budget` below it is
+  a guaranteed `budget-exhausted` halt, reported as error `budget-infeasible`;
+  `budget < shortest + 2` warns (no headroom for a single repair). Fan-out states
+  count as 1 (branch counts are data-dependent), so the check is a lower bound —
+  the message says so. SPEC §7 documents it next to the charging rule. Host
+  pre-validation only; run semantics unchanged.
+- **Dotted second-segment lint on inline context maps (R3-3, completes F7).** When
+  a `{{root.key}}` root resolves to an inline dict literal in `context:`
+  (`ticket: {body: …}`), the second segment is now validated against the map's
+  keys, so `{{ticket.bod}}` is flagged. Skipped for state outputs and runtime
+  roots (`human`/`item`/`index`) whose shape is unknowable; deeper than segment 2
+  stays out of scope.
+- **Schema-copy identity test (R3-4).** One test asserts `schema/mklang.schema.json`
+  and the packaged copy `src/mklang/data/mklang.schema.json` are byte-identical,
+  with a failure message naming the sync direction (repo `schema/` is the source).
+- **ADR 0010 — LLM-assisted lint (R3-5, Proposed, design only).** An opt-in
+  `mklang lint --llm` that would generate synthetic outputs and measure
+  gate-selection stability/overlap (reusing `gate_divergence.py`) to catch
+  ambiguous prose `when` conditions. Documents cost model, determinism caveats,
+  relation to the conformance suite, and why it is out of 0.5.x. No code.
 
 ## [0.5.2] — 2026-07-16
 
@@ -69,6 +111,10 @@ Second remediation pass. The language stays **0.2**; no `.mk` needs changes.
   explicitly, with the map-reduce budget-sizing implication and a worked example;
   `docs/patterns.md` and ROADMAP note the possible v0.3 `budget`/`branch_budget`
   split.
+
+> **Deferred from Remediation 002, delivered in 0.5.3:** author-facing scripted
+> testing (`mklang test`), budget-feasibility check, dotted-segment lint,
+> schema-identity test, ADR 0010.
 
 ## [0.5.1] — 2026-07-16
 

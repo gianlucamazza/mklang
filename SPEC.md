@@ -633,6 +633,17 @@ possible. Guards:
   steps, not 1 (conformance case `budget-fanout-charging`). A future version may
   split this into a transition `budget` and a separate `branch_budget` for fan-out
   volume (ROADMAP); v0.2 keeps one number for both.
+
+  A host MAY **statically pre-validate** feasibility: if `budget` is below the
+  shortest path (in states) from `entry` to a gate `to: END`, the run is a
+  guaranteed `budget-exhausted` halt before it starts. The reference validator
+  reports this as an error (`budget-infeasible`) in `mklang check`/`lint`, and warns
+  when `budget` leaves no headroom above the shortest path (`< shortest + 2`, i.e.
+  no room for a single repair or loop-back). Fan-out states count as **1** here —
+  the true `max(1, len(branches))` charge is data-dependent, so the check is a lower
+  bound (a machine that passes it can still exhaust its budget on a wide fan-out).
+  This is host pre-validation, not run semantics: the interpreter's runtime halt is
+  unchanged.
 - **Per-gate repair budget** (`repair: N`): how many times that gate may
   self-correct. Exhausted → the gate is skipped and evaluation proceeds.
 - **Call-depth cap** (`MAX_CALL_DEPTH`, runtime): bounds recursion so a machine that

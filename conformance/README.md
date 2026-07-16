@@ -6,6 +6,15 @@ with its own runner. The reference runner is `tests/test_conformance.py`; a
 second implementation (TypeScript, Rust, …) writes its own runner against the
 same YAML files.
 
+The reference runner is a thin consumer of **`src/mklang/scripttest.py`** — the
+single source of truth for the scripted LLM, the scripted `hooks:`/`tools:`
+bindings, and the expectation matcher (status / error / `error_prefix` / result /
+`at` / trace skeleton / context). The same module powers `mklang test`, which
+lets *authors* run their own `.mk` against a script of named scenarios in exactly
+this case format (see [README: "Test your machine without API keys"](../README.md)).
+The case format below and the `mklang test` scenario format are therefore one
+format, matched by one matcher.
+
 ## Case format (`cases/*.yaml`)
 
 ```yaml

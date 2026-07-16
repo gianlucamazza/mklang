@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+from collections import deque
 from pathlib import Path
 
 import jsonschema
@@ -39,6 +40,33 @@ def load_machine(path: str | Path, validate: bool = True) -> Machine:
     if validate:
         validate_dict(d)
     return parse_machine(d)
+
+
+def shortest_path_to_end(machine: Machine) -> int | None:
+    """Fewest states on any path from `entry` to a gate `to: END` (None if none).
+
+    A step count, not an edge count: entering the entry state is 1 step, and a run
+    completes the k-state path `entry → … → sk(gate to END)` iff `budget ≥ k` (the
+    engine checks `steps >= budget` at the top of each state). **Fan-out states are
+    counted as 1** — the real charge is `max(1, len(branches))`, but the branch
+    count is data-dependent and unknown at check time, so this is a lower bound on
+    the true cost (host pre-validation, not run semantics). BFS pops states in
+    nondecreasing distance, so the first END-gated state popped gives the minimum.
+    """
+    dist = {machine.entry: 1}
+    q: deque[str] = deque([machine.entry])
+    while q:
+        cur = q.popleft()
+        d = dist[cur]
+        state = machine.states[cur]
+        if any(g.to == "END" for g in state.gates):
+            return d
+        for g in state.gates:
+            nxt = g.to
+            if nxt and nxt != "END" and nxt in machine.states and nxt not in dist:
+                dist[nxt] = d + 1
+                q.append(nxt)
+    return None
 
 
 def semantic_check(
@@ -100,6 +128,25 @@ def semantic_check(
         errors.append("no reachable path to END")
     for dead in sorted(ids - seen):
         warnings.append(f"{dead}: unreachable state (never entered from '{machine.entry}')")
+
+    # Static budget feasibility: `budget` bounds steps, so a budget below the
+    # shortest path to END is a guaranteed `budget-exhausted` halt at run time —
+    # detectable now (SPEC §7). Only meaningful when END is reachable and the
+    # entry exists (the checks above already error otherwise).
+    if machine.entry in ids:
+        sp = shortest_path_to_end(machine)
+        if sp is not None:
+            if machine.budget < sp:
+                errors.append(
+                    f"budget-infeasible: budget {machine.budget} is below the {sp}-step "
+                    f"shortest path to END (fan-out states counted as 1 step — actual "
+                    f"branch counts are data-dependent and may push the true cost higher)"
+                )
+            elif machine.budget < sp + 2:
+                warnings.append(
+                    f"budget {machine.budget} leaves no headroom above the {sp}-step "
+                    f"shortest path to END — a single repair or loop-back would exhaust it"
+                )
 
     return errors, warnings
 

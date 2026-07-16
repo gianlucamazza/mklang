@@ -39,6 +39,7 @@ nav:
       - Resumable checkpoints: adr/0007-resumable-checkpoints.md
       - HITL escalate suspend: adr/0008-hitl-escalate-suspend.md
       - Conformance suite: adr/0009-conformance-suite.md
+      - LLM-assisted lint: adr/0010-llm-assisted-lint.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md

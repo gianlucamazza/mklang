@@ -48,8 +48,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   empty string and silently degrades the prompt. Under `--strict` it fails the run.
   If a host injects extra context keys at run time, declare them in `context:` with
   placeholder values so the reference to them resolves and the lint stays quiet.
-  (The rule checks the first path segment only; dotted tails like `ticket.body`
-  can't be verified statically against prose `structure`.)
+  (When the root is an **inline `context:` map** — `ticket: {body: …}` — the second
+  segment is checked too, so `{{ticket.bod}}` is caught. Deeper tails, and roots
+  whose shape isn't statically known (state outputs, runtime `human`/`item`/`index`),
+  are not verified against prose `structure`.)
 - **Cap `repair`.** A `repair: N` with a modest `N` (1–2) plus a following
   `escalate`/`fail` gate prevents an endless self-correction loop.
 - **Give escalation a safe sink.** Route hard cases to a terminal `human_review`
@@ -70,6 +72,25 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Fan-out concurrency** is a `ThreadPoolExecutor` with `max_workers=5` today —
   fine for modest `sample`/`over` widths; very wide maps should stay small or wait
   for the async roadmap item.
+
+## Testing — pin the gates before you spend a token
+
+- **Write scenario tests for every gate you would be embarrassed to see misfire.**
+  `mklang test machine.mk --script machine.test.yaml` runs the machine against a
+  **scripted LLM** (produce texts + judge picks) and scripted tools/hooks — no
+  provider, no API key, fully deterministic. Each scenario is a named case in the
+  conformance format (`llm`/`tools`/`hooks`/`run` + `expect`), and the runner
+  shares its matcher with the [conformance suite](../conformance/README.md), so a
+  green scenario means the *interpreter* would route your machine exactly that way.
+- **Cover both the happy path and the escape hatches.** The value is in the
+  branches you hope never fire: the escalate-to-human path, the repair loop giving
+  up, the empty-tool-result fallback. Script the judge pick that steers into each
+  and assert the `trace` skeleton (`state` → `to`, `policy`) lands where you think.
+  See [`examples/triage.test.yaml`](../examples/triage.test.yaml) (happy path +
+  KB-empty escalation).
+- **Keep scenarios next to the machine** (`triage.mk` → `triage.test.yaml`) and
+  run them in CI — a `.mk` edit that reroutes a gate fails the scenario, not a
+  customer.
 
 ## Reasoning & observability
 

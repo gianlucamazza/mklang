@@ -98,6 +98,67 @@ def test_unsupported_version_warns_then_errors_under_strict():
     assert not any("0.3" in w for w in warnings_s)
 
 
+def _linear_to_end(budget, n=3):
+    """n generative states in a line; the last gates to END. Shortest path = n."""
+    states = {}
+    for i in range(n):
+        sid = f"s{i}"
+        to = "END" if i == n - 1 else f"s{i + 1}"
+        states[sid] = {
+            "structure": "x",
+            "prompt": "p",
+            "output": f"o{i}",
+            "gates": [{"when": "otherwise", "then": "ok", "to": to}],
+        }
+    return mk({"machine": "m", "entry": "s0", "budget": budget, "states": states})
+
+
+def test_budget_infeasible_error_below_shortest_path():
+    m = _linear_to_end(budget=2, n=3)  # shortest path is 3 states, budget 2
+    errors, _ = semantic_check(m, {"m": m})
+    assert any("budget-infeasible" in e and "3-step" in e for e in errors)
+
+
+def test_budget_no_headroom_warns_at_shortest_path_and_plus_one():
+    for budget in (3, 4):  # sp == 3: budget < sp + 2 → warning, no error
+        m = _linear_to_end(budget=budget, n=3)
+        errors, warnings = semantic_check(m, {"m": m})
+        assert not any("budget-infeasible" in e for e in errors), budget
+        assert any("no headroom" in w for w in warnings), budget
+
+
+def test_budget_feasible_with_headroom_is_silent():
+    m = _linear_to_end(budget=5, n=3)  # sp 3 + 2 headroom
+    errors, warnings = semantic_check(m, {"m": m})
+    assert not any("budget-infeasible" in e for e in errors)
+    assert not any("headroom" in w for w in warnings)
+
+
+def test_fanout_state_counts_as_one_step_for_feasibility():
+    """A `sample: N` state on the path costs 1 for the static check, not N (R3-2)."""
+    from mklang.loader import shortest_path_to_end
+
+    m = mk(
+        {
+            "machine": "f",
+            "entry": "explore",
+            "budget": 1,
+            "states": {
+                "explore": {
+                    "structure": "one candidate",
+                    "prompt": "branch {{index}}",
+                    "sample": 8,  # 8 branches, but counts as 1 step statically
+                    "output": "cands",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                }
+            },
+        }
+    )
+    assert shortest_path_to_end(m) == 1
+    errors, _ = semantic_check(m, {"f": m})
+    assert not any("budget-infeasible" in e for e in errors)  # budget 1 >= sp 1
+
+
 def test_bundled_schema_matches_repo_root():
     root = json.loads(Path("schema/mklang.schema.json").read_text(encoding="utf-8"))
     assert _schema() == root

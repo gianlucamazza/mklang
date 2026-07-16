@@ -38,39 +38,69 @@ def _referenced_roots(machine: Machine) -> set[str]:
 
 
 def _unresolved_interpolation(machine: Machine) -> list[str]:
-    """`unresolved-interpolation`: a `{{path}}` whose FIRST segment nothing provides.
+    """`unresolved-interpolation`: a `{{path}}` the machine cannot statically resolve.
 
-    The valid-key set is the top-level `context:` keys, every state's `output:`, and
-    the HITL `human` resume root; `item`/`index` are valid only inside a fan-out
-    state. Only the first path segment is checked — dotted tails (`ticket.body`)
-    cannot be resolved statically against prose `structure`. This is presence in the
-    global key set, NOT a flow-sensitive "defined before use" analysis: a loop or
-    branch may legitimately read an output produced on an earlier visit, so define-
-    before-use is deliberately out of scope for v0.2 (hosts injecting extra keys at
-    run time should declare them in `context:` with placeholders).
+    Two checks:
+
+    - **First segment.** The valid-root set is the top-level `context:` keys, every
+      state's `output:`, and the HITL `human` resume root; `item`/`index` are valid
+      only inside a fan-out state. A root nothing provides is flagged.
+    - **Second segment (inline context maps only).** When a root resolves to an
+      inline dict literal in `context:` (e.g. `ticket: {body: …}`), the second path
+      segment is statically known — `{{ticket.bod}}` is a typo for `{{ticket.body}}`.
+      It is validated against the map's keys. Skipped when the root is a state
+      output or a runtime root (`human`/`item`/`index`) whose shape is unknowable,
+      and skipped when the root's context value is not a dict. Anything deeper than
+      the second segment stays out of scope (a nested-dict tail can't be pinned to a
+      construct the linter models).
+
+    This is presence in the static key set, NOT a flow-sensitive "defined before
+    use" analysis: a loop or branch may legitimately read an output produced on an
+    earlier visit, so define-before-use is deliberately out of scope for v0.2
+    (hosts injecting extra keys at run time should declare them in `context:` with
+    placeholders).
     """
-    provided = set(machine.context) | {s.output for s in machine.states.values()} | _RESUME_ROOTS
+    context = machine.context
+    outputs = {s.output for s in machine.states.values()}
+    provided = set(context) | outputs | _RESUME_ROOTS
     findings: list[str] = []
     for sid, s in machine.states.items():
-        seen: set[str] = set()
+        seen_roots: set[str] = set()
+        seen_dotted: set[str] = set()
         for t in _templates_of(s):
             for path in _VAR.findall(t):
-                root = path.split(".")[0]
-                if root in seen:
-                    continue
-                seen.add(root)
-                if root in _FANOUT_ROOTS:
-                    if not s.is_fanout:
+                segs = path.split(".")
+                root = segs[0]
+                if root not in seen_roots:
+                    seen_roots.add(root)
+                    if root in _FANOUT_ROOTS:
+                        if not s.is_fanout:
+                            findings.append(
+                                f"{sid}: template references '{{{{{root}}}}}' but the state is "
+                                "not a fan-out — item/index exist only inside a sample/over state"
+                            )
+                    elif root not in provided:
                         findings.append(
-                            f"{sid}: template references '{{{{{root}}}}}' but the state is "
-                            "not a fan-out — item/index exist only inside a sample/over state"
+                            f"{sid}: template references '{{{{{root}}}}}' but no context key or "
+                            f"state output provides '{root}'"
                         )
-                    continue
-                if root not in provided:
-                    findings.append(
-                        f"{sid}: template references '{{{{{root}}}}}' but no context key or "
-                        f"state output provides '{root}'"
-                    )
+                # Second-segment check: only against an inline context dict whose
+                # shape is statically known (not a state output / runtime root).
+                if len(segs) >= 2 and path not in seen_dotted:
+                    seen_dotted.add(path)
+                    val = context.get(root)
+                    if (
+                        isinstance(val, dict)
+                        and root not in outputs
+                        and root not in _FANOUT_ROOTS
+                        and root not in _RESUME_ROOTS
+                        and segs[1] not in val
+                    ):
+                        findings.append(
+                            f"{sid}: template references '{{{{{path}}}}}' but the inline "
+                            f"context map '{root}' has no key '{segs[1]}' "
+                            f"(keys: {sorted(val)})"
+                        )
     return findings
 
 
