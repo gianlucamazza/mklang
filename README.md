@@ -205,27 +205,21 @@ minimal diff (the first differing key, expected vs actual) and exits 1. See
 
 ## Status
 
-**Language v0.2 / package 0.5.3** — core complete (fan-out, sub-machines, reasoning,
-tools, code-hook gates, context-append) with a hardened multi-provider reference
-interpreter, entry-point plugins for tools/hooks/providers, resumable runs
-(checkpoint on budget exhaustion + `mklang resume`, ADR 0007), human-in-the-loop
-escalation (`--hitl` suspend + `resume --set`, ADR 0008), `mklang lint`, and an
-implementation-neutral **[conformance suite](./conformance/README.md)** that pins
-the language semantics (ADR 0009). 0.5.1: honest showcase tools, judge OOR
-no longer silent-clamped, SPEC threat model, gate-divergence experiment scaffold.
-0.5.2: gate judging follows the state tier by default (§2.1; `judge:` is now an
-opt-in override — an observable-behavior change), strict judge-reply parsing,
-`unresolved-interpolation` lint, `--strict` version gating, `0600` checkpoints, and
-conformance coverage for hook precedence and `tool` states. 0.5.3: **`mklang test`**
-(deterministic scenario testing, no API keys, sharing one matcher with the
-conformance runner), static budget-feasibility check (`budget-infeasible`),
-dotted-segment lint on inline context maps, a schema-copy identity test, and
-ADR 0010 (LLM-assisted lint, Proposed).
+**Language v0.2 / package 0.5.3** — core complete: states + gates + prose, tiers,
+`reason` / `accumulate` / fan-out / `call` / `tool` states / code-hook gates;
+multi-provider interpreter with entry-point plugins (tools, hooks, providers);
+resumable checkpoints (`mklang resume`, ADR 0007); human-in-the-loop (`--hitl`,
+ADR 0008); `mklang check` / `lint` / **`test`** (scripted scenarios, no API keys);
+implementation-neutral **[conformance suite](./conformance/README.md)** (ADR 0009).
+Gate judging follows the state tier by default; see CHANGELOG 0.5.2 for the
+observable change and 0.5.3 for authoring tooling.
 
 - **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
-  `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an
-  `ANTHROPIC_API_KEY` is available). The spec stays language- and provider-agnostic.
-  See [`ROADMAP.md`](./ROADMAP.md) and [`CHANGELOG.md`](./CHANGELOG.md).
+  `examples/expense_approval.mk`). Anthropic is unit-tested; live e2e needs
+  `ANTHROPIC_API_KEY`. PyPI publish and cross-provider gate-divergence results are
+  the main open items.
+- Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
+  [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## License
 

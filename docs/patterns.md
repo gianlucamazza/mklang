@@ -62,6 +62,13 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
   the width of any fan-out (a `sample: N` costs N steps). Leave headroom; hitting the
   budget is a `halt`.
+- **Let `mklang check`/`lint` catch impossible budgets.** If `budget` is below the
+  shortest path (in states) from `entry` to a gate `to: END`, validation reports
+  error `budget-infeasible` — a guaranteed `budget-exhausted` before the first
+  provider call. `budget < shortest + 2` is a warning (no headroom for a single
+  repair). Fan-out states count as **1** in this static check (branch width is
+  data-dependent), so a machine can still exhaust budget on a wide map even after
+  the check passes (SPEC §7).
 - **Map-reduce: size `budget` against data cardinality.** A fan-out charges
   `max(1, len(branches))` steps (SPEC §7), so `budget` is also a volume cap — an
   `over` on 30 items with `budget: 25` halts `budget-exhausted` before the reducer.

@@ -25,6 +25,7 @@ GH="https://github.com/gianlucamazza/mklang"
 find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./conformance/README\.md)|(conformance.md)|g" \
 	-e "s|(\.\./conformance/README\.md)|(conformance.md)|g" \
+	-e "s|(\.\./\.\./conformance/README\.md)|(../conformance.md)|g" \
 	-e "s|(\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\.\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\.\./SPEC\.md)|(SPEC.md)|g" \

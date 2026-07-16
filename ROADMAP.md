@@ -12,7 +12,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   Cookbook in [`SPEC.md §10`](./SPEC.md).
 - JSON Schema + semantic checks; multi-provider interpreter; nested trace; CLI.
 - **0.2.1 hardening:** call-halt, shared cost budget, judge reasoning, judge-unparseable,
-  Anthropic parity, tier validation, strict `over`, error taxonomy (~70 MockLLM tests).
+  Anthropic parity, tier validation, strict `over`, error taxonomy (MockLLM unit suite;
+  full offline coverage today is unit + conformance + `mklang test` — see pytest).
 - **0.2.2:** code-hook gates (ADR 0006); tool/hook **entry-point plugins**; default
   `active: deepseek` with live smoke re-verified.
 - **0.3.0:** **resumable runs / checkpoints** (ADR 0007) — budget exhaustion suspends
