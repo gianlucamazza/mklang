@@ -155,7 +155,8 @@ guidance in [`docs/patterns.md`](./docs/patterns.md).
 ## Install
 
 ```bash
-pip install git+https://github.com/gianlucamazza/mklang   # PyPI release coming
+pip install git+https://github.com/gianlucamazza/mklang   # PyPI: token pending (0.5.3 wheel ready)
+# after publish: pip install mklang
 ```
 
 Editor validation for `.mk` files works out of the box via the JSON Schema —
@@ -214,10 +215,12 @@ implementation-neutral **[conformance suite](./conformance/README.md)** (ADR 000
 Gate judging follows the state tier by default; see CHANGELOG 0.5.2 for the
 observable change and 0.5.3 for authoring tooling.
 
-- **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
-  `examples/expense_approval.mk`). Anthropic is unit-tested; live e2e needs
-  `ANTHROPIC_API_KEY`. PyPI publish and cross-provider gate-divergence results are
-  the main open items.
+- **Live:** DeepSeek (default) and **OpenAI** smoke green (2026-07-16). Anthropic
+  is unit-tested; live blocked by provider billing, not missing adapter support.
+  Gate-divergence (deepseek×openai, 3× each): **agreement 1.0** on the synthetic
+  task — see [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
+- **Open:** PyPI publish (API token), Anthropic live once the account has credit,
+  accept/implement ADR 0010 (LLM lint) and ADR 0011 (MCP) when ready.
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 

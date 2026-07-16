@@ -70,12 +70,26 @@ temperature ablation.
 
 ## Results
 
-_Not yet filled. Run the script when at least two provider keys are available and
-paste a dated summary table here._
-
 | Date | Providers | Agreement rate | Distinct signatures | Notes |
 | ---- | --------- | -------------- | ------------------- | ----- |
-| —    | —         | —              | —                   | —     |
+| 2026-07-16 | deepseek, openai (×3 each) | **1.0** | 1 | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key). |
+
+### 2026-07-16 detail
+
+```bash
+uv run python scripts/gate_divergence.py --providers deepseek,openai --repeats 3
+```
+
+- **runs_done:** 6 (3×deepseek + 3×openai)
+- **signature_agreement_rate:** `1.0` (all pairwise comparisons agreed)
+- **distinct_signatures:**
+  - `label|the output is the word "spam"|llm|spam_path || spam_path|otherwise|otherwise|END`
+- **Interpretation:** On this tiny synthetic task, DeepSeek and OpenAI agreed on
+  routing under default tier-following judges. This is a single data point — not a
+  portability guarantee. High-stakes prose gates still need hooks/HITL (SPEC §11).
+- **Anthropic:** live smoke and divergence blocked by provider billing
+  (`invalid_request_error` / purchase credits), not by missing `ANTHROPIC_API_KEY`
+  or adapter bugs. Re-run when the account has credit.
 
 ## Related
 

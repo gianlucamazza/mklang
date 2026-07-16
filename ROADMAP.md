@@ -36,7 +36,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   (`scripttest.py`) with the conformance runner; static budget-feasibility check
   (`budget-infeasible`); dotted-segment lint on inline context maps (completes F7);
   schema-copy identity test; ADR 0010 (LLM-assisted lint, Proposed).
-- **Live:** DeepSeek e2e green. Anthropic unit-tested; live e2e deferred without key.
+- **Live (2026-07-16):** DeepSeek + OpenAI smoke green. Anthropic unit-tested;
+  live blocked by account billing (key exists). Gate-divergence deepseek×openai
+  agreement **1.0** (3× each) on the synthetic harness.
 
 ## Language
 
@@ -71,23 +73,31 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   [`scripts/gate_divergence.py`](./scripts/gate_divergence.py) +
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
   Document portability is syntactic until agreement rates are measured live.
-- **[next] Fill gate-divergence results** — run the harness with ≥2 provider keys;
-  record agreement rate and dated table in the experiment note.
+- **Shipped (results, 2026-07-16):** first gate-divergence table —
+  deepseek×openai, 3 repeats each, **agreement rate 1.0** on the synthetic spam
+  machine (tier-following judges). Dated row in
+  [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
+  Re-run when model IDs or judge defaults change; Anthropic still billing-blocked.
 - **[later] LLM-assisted lint** (`mklang lint --llm`, design in
   [ADR 0010](./docs/adr/0010-llm-assisted-lint.md), Proposed) — opt-in, reuses the
   gate-divergence reducer to flag ambiguous / overlapping prose `when` conditions,
   the authoring failure invisible to every static layer. Out of 0.5.x (breaks the
-  offline-CI, no-key property); waits on live gate-divergence numbers.
-- **[next] Anthropic live pass** — blocked only on a key: set `ANTHROPIC_API_KEY`
-  and run `MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=anthropic pytest tests/test_live.py`.
+  offline-CI, no-key property). First live agreement numbers exist; design still
+  needs acceptance before code.
+- **Shipped (partial multi-provider live, 2026-07-16):** DeepSeek + **OpenAI**
+  live smoke green (`MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=…`). **Anthropic** adapter
+  remains unit-tested; live e2e blocked by **account billing/credits**, not by a
+  missing key (key present in 1Password; API returns purchase-credits error).
 
 ## Organizational
 
 - **Shipped (0.5.0):** docs site (mkdocs-material on GitHub Pages, assembled
   from the repo's canonical markdown) and `mklang lint` (static analysis
   beyond `check`); conformance suite as the language contract (ADR 0009).
-- **[next] Publish to PyPI** — metadata ready, `dist/` built; needs a PyPI
-  token (`uv publish`).
+- **[next] Publish to PyPI** — metadata + `uv build` wheel/sdist for **0.5.3**
+  ready; needs a **PyPI API token** (`pypi-…`) in 1Password / `UV_PUBLISH_TOKEN`
+  (`uv publish`). Account password alone is not enough. GitHub homepage set to
+  the docs site.
 - **[later] Editor tooling** — LSP / syntax highlighting beyond the YAML
   schema; `mklang lint` is the first brick.
 - **[maybe] Rename `.mk` extension** — collides with Makefile includes /
