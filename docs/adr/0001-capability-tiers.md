@@ -13,7 +13,10 @@ final synthesis is not. We must let authors express that without naming models
 States route by a **provider-neutral capability tier** — `fast` / `balanced` /
 `reasoning` — set per machine (`default_tier`) and overridable per state (`tier`).
 The runtime holds a `tier → (provider, model)` map in its config. A tier applies to
-both generation and gate-judging (a runtime may use a cheaper model for judging).
+both generation and gate-judging. The reference interpreter is **tier-following by
+default** (a `reasoning` state's gates are judged by the reasoning model); a runtime
+MAY use a cheaper model for judging as an optimization, exposed here as the opt-in
+`judge:` config override — never the silent default (see the 0.5.2 remediation).
 
 ## Consequences
 

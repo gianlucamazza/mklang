@@ -18,6 +18,14 @@ active: deepseek # deepseek | anthropic | openai | google | openrouter | xai | m
 # NOTE: every non-Anthropic provider below speaks the OpenAI-compatible protocol,
 # so one adapter (base_url + api_key_env + tiers) serves them all. OpenRouter is a
 # meta-provider — its `vendor/model` ids let each tier target a different vendor.
+#
+# JUDGE MODEL: by default a state's gates are judged by the SAME tier that generated
+# it (SPEC §2.1) — so a `reasoning` state's high-stakes gates are judged by the
+# reasoning model, not silently downgraded. The optional `judge:` key below is an
+# opt-in GLOBAL override that forces ONE model for ALL gate judging (a cost/latency
+# optimization that trades judging quality on your hardest gates). It is left
+# commented out so the default is tier-following; uncomment only if you accept that
+# trade-off.
 
 providers:
   # --- Anthropic -----------------------------------------------------------
@@ -27,7 +35,7 @@ providers:
       fast: claude-haiku-4-5 # cheapest/fastest ($1/$5 per Mtok)
       balanced: claude-sonnet-5 # near-Opus quality at Sonnet cost ($3/$15)
       reasoning: claude-opus-4-8 # strongest Opus-tier ($5/$25); swap to claude-fable-5 for the max tier
-    judge: claude-haiku-4-5 # optional: cheaper model used only for gate judging
+    # judge: claude-haiku-4-5 # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
       # Latest-model features. Opus 4.8 / Sonnet 5: adaptive thinking + effort
       # (budget_tokens is removed on these models — do NOT use it).
@@ -48,7 +56,7 @@ providers:
       fast: gpt-5-mini
       balanced: gpt-5
       reasoning: gpt-5.4
-    judge: gpt-5-mini
+    # judge: gpt-5-mini # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
       reasoning:
         reasoning_effort: high # minimal | low | medium | high
@@ -62,7 +70,7 @@ providers:
       fast: gemini-3-flash
       balanced: gemini-3-pro
       reasoning: gemini-3-pro
-    judge: gemini-3-flash
+    # judge: gemini-3-flash # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
       reasoning:
         thinking_level: high # Gemini 3 dynamic thinking control
@@ -77,7 +85,7 @@ providers:
       fast: deepseek-chat
       balanced: deepseek-chat
       reasoning: deepseek-reasoner
-    judge: deepseek-chat
+    # judge: deepseek-chat # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
 
   # --- OpenRouter (meta-provider / aggregator) -----------------------------
   # One endpoint, hundreds of models across every vendor. Model ids are
@@ -90,7 +98,7 @@ providers:
       fast: google/gemini-3-flash
       balanced: anthropic/claude-sonnet-5
       reasoning: openai/gpt-5.4
-    judge: openai/gpt-5-mini
+    # judge: openai/gpt-5-mini # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
 
   # --- xAI (Grok) ----------------------------------------------------------
   xai:
@@ -100,7 +108,7 @@ providers:
       fast: grok-4-fast
       balanced: grok-4
       reasoning: grok-4-heavy
-    judge: grok-4-fast
+    # judge: grok-4-fast # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
       reasoning:
         reasoning_effort: high
@@ -113,7 +121,7 @@ providers:
       fast: mistral-small-latest
       balanced: mistral-large-latest
       reasoning: magistral-medium-latest # Mistral's reasoning model
-    judge: mistral-small-latest
+    # judge: mistral-small-latest # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
 
   # --- Local (OpenAI-compatible endpoint: Ollama / vLLM / LM Studio) --------
   local:
@@ -123,7 +131,7 @@ providers:
       fast: qwen3:8b
       balanced: qwen3:32b
       reasoning: deepseek-r1:70b # a reasoning-tuned local model
-    judge: qwen3:8b
+    # judge: qwen3:8b # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
 
 # Global run defaults applied by the runtime (not model selection).
 run:

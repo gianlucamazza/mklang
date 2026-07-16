@@ -81,6 +81,49 @@ def test_template_typo_root():
     )
     findings = lint_machine(m)
     assert any("qestion" in f for f in findings)
-    # runtime roots never flagged
-    ok = M({"a": state(prompt="reply {{human.reply}} on {{item}}", output="o")})
-    assert not any("human" in f or "item" in f for f in lint_machine(ok))
+    # A valid dotted path (first segment in context) is not flagged.
+    ok_dotted = M(
+        {"a": state(prompt="use {{question.text}}", output="o")},
+        context={"question": {"text": "hi"}},
+    )
+    assert not any("question" in f for f in lint_machine(ok_dotted))
+    # The HITL resume root `human` is always allowable, never flagged.
+    ok_human = M({"a": state(prompt="reply {{human.reply}}", output="o")})
+    assert not any("human" in f for f in lint_machine(ok_human))
+
+
+def test_output_produced_key_not_flagged():
+    """A key produced by an earlier state's output is a valid reference (F7)."""
+    m = M(
+        {
+            "a": state(output="draft", gates=[gate("otherwise", then="ok", to="b")]),
+            "b": state(prompt="polish {{draft}}", output="final"),
+        }
+    )
+    assert not any("unresolved" in f.lower() or "draft" in f for f in lint_machine(m))
+
+
+def test_fanout_vars_outside_fanout_flagged():
+    """`item`/`index` in a non-fan-out state is an authoring mistake (F7)."""
+    bad = M({"a": state(prompt="branch {{index}}", output="o")})
+    findings = lint_machine(bad)
+    assert any("index" in f and "fan-out" in f for f in findings)
+
+    # Inside a fan-out (sample) state, {{index}} is valid and not flagged.
+    ok_sample = parse_machine(
+        {
+            "machine": "m",
+            "entry": "a",
+            "budget": 5,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "branch {{index}}",
+                    "sample": 3,
+                    "output": "o",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                }
+            },
+        }
+    )
+    assert not any("index" in f for f in lint_machine(ok_sample))

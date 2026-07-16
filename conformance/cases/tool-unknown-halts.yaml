@@ -1,0 +1,23 @@
+case: tool-unknown-halts
+description: >
+  SPEC §4.9 / §7: a tool state naming a callable the host did not register cannot
+  execute. The run halts with a state-error at that state (the exact message tail is
+  implementation-specific; the reason class and halt location are the contract).
+machine:
+  machine: tool_unknown
+  entry: act
+  budget: 3
+  states:
+    act:
+      tool: not_registered
+      input: { x: "1" }
+      output: o
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: []
+tools: {} # `not_registered` is deliberately absent
+expect:
+  status: halt
+  error_prefix: state-error
+  at: act

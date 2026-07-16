@@ -1,0 +1,45 @@
+case: budget-fanout-charging
+description: >
+  A fan-out charges max(1, len(branches)) steps against the global budget (SPEC §7).
+  After one prior step, an `over` on a 3-item list drives the total to 4 (1 + 3), so
+  budget 3 is exhausted before the post-reduce state runs. If a runtime charged the
+  fan-out only 1 step the run would reach END; halting here pins the charging rule.
+machine:
+  machine: budget_fanout
+  entry: pre
+  budget: 3
+  context:
+    items: ["x", "y", "z"]
+  states:
+    pre:
+      structure: s
+      prompt: prep
+      output: o
+      gates:
+        - { when: otherwise, then: ok, to: mapper }
+    mapper:
+      over: "{{items}}"
+      structure: s
+      prompt: handle {{item}}
+      output: mapped
+      gates:
+        - { when: otherwise, then: ok, to: post }
+    post:
+      structure: s
+      prompt: reduce {{mapped}}
+      output: final
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "prep": "P"
+    "handle x": "X"
+    "handle y": "Y"
+    "handle z": "Z"
+    "reduce": "R"
+expect:
+  status: halt
+  error: budget-exhausted
+  trace:
+    - { state: pre, policy: ok, to: mapper }
+    - { state: mapper, policy: ok, to: post }

@@ -93,8 +93,13 @@ Three provider-neutral tiers:
 - A machine sets a default with top-level `default_tier` (defaults to `balanced`
   if omitted); a state overrides it with `tier` (§4).
 - A state's tier applies to both its **generation** (`LLM.produce`) and its **gate
-  judging** (`LLM.judge`) — though a runtime MAY use a cheaper model for judging as
-  an optimization.
+  judging** (`LLM.judge`). The **reference interpreter is tier-following by
+  default**: a `reasoning` state's high-stakes gates are judged by the reasoning
+  model, not silently downgraded. A runtime MAY use a cheaper model for judging as
+  an optimization — in the reference this is the opt-in `judge:` config key, a
+  **global** override that forces one model for **all** gate judging (documented in
+  `config/runtime.example.yaml`). Trading judging quality on your hardest gates is a
+  deliberate host choice, never the default.
 - Example config (illustrative, host-side — **not** part of the `.mk`):
   `reasoning → anthropic:claude-opus-4-8` on one deployment,
   `reasoning → openai:<model>` or `reasoning → ollama:<local-model>` on another.
@@ -224,7 +229,8 @@ Reserved keys:
 - Tool state: `tool`, `input`, `sample`, `over`, `accumulate`, `output`, `gates`.
 - Gate: `when`, `hook`, `then`, `repair`, `escalate`, `fail`, `to`.
 - Tier values: `fast`, `balanced`, `reasoning`.
-- Fan-out vars (inside `over` states): `{{item}}`, `{{index}}`.
+- Fan-out vars: `{{index}}` (inside any `sample`/`over` state), `{{item}}` (inside
+  `over` states only).
 - Sentinels: `END` (terminal destination), `otherwise` (always-true catch-all
   condition, §5).
 
@@ -324,11 +330,17 @@ gather:
 
 A generative or call state becomes a **fan-out** with exactly one of:
 
-- `sample: N` — run the (rendered) prompt **N independent times** (N ≥ 2). `output`
-  becomes a **list of N results**. Basis for self-consistency and sampled ensembles.
+- `sample: N` — run the (rendered) prompt **N independent times** (N ≥ 2). Each run
+  sees its own `{{index}}` (0-based branch number), so a prompt can differentiate
+  branches ("you are branch {{index}}, take a different approach" — Tree-of-Thought,
+  debate). `output` becomes a **list of N results**. Basis for self-consistency and
+  sampled ensembles.
 - `over: "{{list}}"` — run **once per item** of a context list. Each run additionally
   sees `{{item}}` (the element) and `{{index}}` (0-based). `output` becomes a list
   aligned to the input. Basis for map / map-reduce / plan-execute.
+
+`{{index}}` is available in **both** fan-out forms; `{{item}}` only under `over`
+(there is no per-item element to bind under `sample`).
 
 Semantics:
 
@@ -447,6 +459,15 @@ with a policy and (except for `fail`) a destination.
   judge. The reference interpreter caps it at **4000** characters
   (`JUDGE_CONTEXT_CHARS`). Authors must not assume unbounded context is available
   to prose gates; put critical facts in the state's output when possible.
+- **Conformant judge replies are terse.** A conformant judge returns the choice as
+  the JSON object above and **nothing else** — in particular, no other numbers.
+  Reference adapters parse defensively (strict JSON, then a whole-reply bare number,
+  then the **last** number in the reply, since a model concludes with its answer;
+  the last two are traced as `judge_parse` — anomaly-adjacent, not a fallback). But
+  a verbose, visibly-reasoning judge that interleaves condition numbers into prose
+  ("Condition 1 fails… Condition 2 holds…") is **out of contract**: map the `judge:`
+  tier (or a native-thinking model used as a judge) to an instruct-style model, or
+  keep reasoning private so only the final choice is emitted.
 
 ### The four policies
 
@@ -597,8 +618,21 @@ Non-determinism + loops (`repair`, loop-back gates, recursion) make **divergence
 possible. Guards:
 
 - **Global budget** (`budget:` on the machine): max steps per run. A fan-out state
-  consumes `sample` (or `len(list)`) steps. Exceeded → `halt(error="budget-exhausted")`.
-  Mandatory. Each sub-machine `call` runs under **its own** budget.
+  charges **`max(1, len(branches))`** steps — `sample` for `sample: N`, `len(list)`
+  for `over` (an empty `over` still charges 1). The budget is checked at the top of
+  each state, so the charge is felt at the **next** state. Exceeded →
+  `halt(error="budget-exhausted")`. Mandatory. Each sub-machine `call` runs under
+  **its own** budget.
+
+  This means the budget doubles as a **volume cap** on fan-out, not just a loop
+  guard: a map-reduce whose `over` list has 30 items needs `budget ≥ 30 + machine
+  overhead`, or it halts before the reducer runs. Size `budget` against the expected
+  data cardinality, or bound the list before the fan-out. _Worked example:_ entry
+  `pre` (1 step) → `map` over a 3-item list (charges 3, total 4) with `budget: 3`
+  halts `budget-exhausted` before the post-map state — proving the fan-out charged 3
+  steps, not 1 (conformance case `budget-fanout-charging`). A future version may
+  split this into a transition `budget` and a separate `branch_budget` for fan-out
+  volume (ROADMAP); v0.2 keeps one number for both.
 - **Per-gate repair budget** (`repair: N`): how many times that gate may
   self-correct. Exhausted → the gate is skipped and evaluation proceeds.
 - **Call-depth cap** (`MAX_CALL_DEPTH`, runtime): bounds recursion so a machine that
@@ -823,6 +857,9 @@ language contract; silent omission would be worse than incomplete mitigation.
 - **Side effects** — host `tool:` callables (search, send, payments, …).
 - **Confidential context** — API keys are host-side; blackboard values may still
   contain PII or internal policy text that is sent to the LLM provider.
+- **Checkpoint files** — a suspended run (budget exhaustion or HITL escalation)
+  serializes the **full blackboard** to a host-chosen path (§7). These files hold
+  the same confidential context, at rest.
 
 ### Trust boundary
 
@@ -857,6 +894,15 @@ language contract; silent omission would be worse than incomplete mitigation.
 
 4. **Provider / host compromise** — out of scope for the language (use ordinary
    secret management and network policy).
+
+5. **Checkpoint at rest.** A checkpoint (`--checkpoint` / `--hitl`) writes the full
+   blackboard as **plaintext JSON** to a user-chosen path — customer text, PII,
+   internal policy. HITL suspends precisely on the most delicate cases (escalations),
+   so these files linger longest exactly when they are most sensitive. The reference
+   interpreter writes them `0600` (owner-only), but that is a floor, not
+   confidentiality: mitigation is **host-side** — restrictive filesystem
+   permissions, encrypted volumes, and a retention/erasure policy. Encryption of
+   checkpoints is an **explicit non-goal for v0.2**.
 
 ### Partial mitigations available today
 

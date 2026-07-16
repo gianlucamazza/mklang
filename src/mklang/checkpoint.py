@@ -4,10 +4,32 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 FORMAT = 1
+
+
+def _write_private(path: str | Path, text: str) -> None:
+    """Write text with owner-only (0600) permissions.
+
+    A checkpoint serializes the FULL blackboard — customer text, PII, internal
+    policy — as plaintext JSON, and HITL suspends precisely on the most sensitive
+    cases (escalations), so these files linger longest exactly when they matter
+    most (SPEC §11). Encryption at rest is a host concern and an explicit v0.2
+    non-goal; owner-only permissions are the cheap, real baseline. Create the file
+    restricted from the start (no world-readable window) and chmod to cover a
+    pre-existing file whose mode `os.open` would not tighten. POSIX-only: on
+    Windows the mode is advisory and chmod may be a no-op."""
+    p = Path(path)
+    fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        os.chmod(p, 0o600)
+    except (OSError, NotImplementedError):  # non-POSIX / unsupported filesystem
+        pass
 
 
 def encode_repair(repair_left: dict[tuple[str, int], int]) -> list[list]:
@@ -71,7 +93,7 @@ def save_checkpoint(
         "hitl": hitl,
         "frames": frames,
     }
-    Path(path).write_text(json.dumps(envelope, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_private(path, json.dumps(envelope, ensure_ascii=False, indent=2))
 
 
 def load_checkpoint(path: str | Path) -> dict:

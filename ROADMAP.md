@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.5.1**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.5.2**, language **0.2**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
@@ -22,6 +22,14 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   gates suspend; `mklang resume --set human.reply=…` injects the decision.
 - **0.5.0:** **language-grade rigor** — conformance suite (ADR 0009),
   `mklang lint`, provider entry-point plugins, CI + docs site, public packaging.
+- **0.5.1:** showcase honesty (`triage.mk` real tool states), silent judge-clamp
+  fix, normative judge protocol, threat model (§11), gate-divergence scaffold.
+- **0.5.2 (second remediation pass):** gate judging **follows the state tier** by
+  default (§2.1; `judge:` becomes an opt-in override) — an observable-behavior
+  change; strict judge-reply parsing (`bare`/`last-number`, traced `judge_parse`);
+  `{{index}}` in `sample` branches; `unresolved-interpolation` lint; `--strict`
+  rejects unsupported `mklang:` versions; `0600` checkpoints + §11 at-rest note;
+  conformance now covers hook precedence and `tool` states.
 - **Live:** DeepSeek e2e green. Anthropic unit-tested; live e2e deferred without key.
 
 ## Language
@@ -35,6 +43,10 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped:** structured judge, error taxonomy, shared cost budget, call-failed,
   Anthropic parity, tier validation, tool/hook plugin registries via entry points.
 - **[later] Judge confidence score** — numeric confidence alongside choice.
+- **[maybe] Budget split** — a fan-out charges `max(1, len(branches))` steps, so the
+  single `budget:` couples the loop guard with a fan-out volume cap (SPEC §7). A v0.3
+  ADR could split it into a transition `budget` and a separate `branch_budget` for
+  fan-out width; decide via ADR, keep one number in v0.2.
 - **[later] Async concurrency** — asyncio fan-out beyond `ThreadPoolExecutor(5)`.
 - **Shipped (0.5.0):** provider adapter registry — `mklang.providers` entry
   points; OpenAI-compatible stays the default for unregistered names.

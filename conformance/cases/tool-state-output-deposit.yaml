@@ -1,0 +1,38 @@
+case: tool-state-output-deposit
+description: >
+  SPEC §4.9: a tool state invokes a host callable (no LLM, no tier/tokens). The
+  returned string is the observation deposited under `output` and readable by a
+  downstream state via {{...}}.
+machine:
+  machine: tool_deposit
+  entry: lookup
+  budget: 4
+  result: answer
+  context:
+    q: warranty
+  states:
+    lookup:
+      tool: search_kb
+      input: { query: "{{q}}" }
+      output: kb
+      gates:
+        - { when: otherwise, then: ok, to: reply }
+    reply:
+      structure: x
+      prompt: "answer using {{kb}}"
+      output: answer
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "answer using [kb] fact A": "final-answer"
+tools:
+  search_kb: ["[kb] fact A"]
+expect:
+  status: done
+  result: "final-answer"
+  context:
+    kb: "[kb] fact A"
+  trace:
+    - { state: lookup, policy: ok, to: reply }
+    - { state: reply, policy: ok, to: END }

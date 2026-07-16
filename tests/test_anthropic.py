@@ -121,8 +121,8 @@ def test_retries_transient_then_succeeds(monkeypatch):
 
 def test_judge_parses_json_choice():
     llm = _adapter(text='{"choice": 2}')
-    idx = llm.judge("m", ["a", "b", "c"], "out", {})
-    assert idx == 1
+    idx, method = llm.judge("m", ["a", "b", "c"], "out", {})
+    assert idx == 1 and method == "json"
     assert "JSON object" in llm.client.messages.captured["messages"][0]["content"]
 
 

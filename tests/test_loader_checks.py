@@ -71,6 +71,33 @@ def test_load_registry_skips_malformed_siblings(tmp_path):
     assert set(reg) == {"g"}
 
 
+def test_unsupported_version_warns_then_errors_under_strict():
+    """`mklang: "0.3"` is a warning by default, a hard error under --strict (F6)."""
+    m = mk(
+        {
+            "machine": "v",
+            "entry": "a",
+            "budget": 3,
+            "mklang": "0.3",
+            "states": {
+                "a": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    errors, warnings = semantic_check(m, {"v": m})
+    assert any("0.3" in w for w in warnings)
+    assert not any("version-unsupported" in e for e in errors)
+
+    errors_s, warnings_s = semantic_check(m, {"v": m}, strict=True)
+    assert any("version-unsupported" in e for e in errors_s)
+    assert not any("0.3" in w for w in warnings_s)
+
+
 def test_bundled_schema_matches_repo_root():
     root = json.loads(Path("schema/mklang.schema.json").read_text(encoding="utf-8"))
     assert _schema() == root

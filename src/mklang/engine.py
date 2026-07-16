@@ -44,6 +44,15 @@ def _model_for(state: State, machine: Machine, tiers: dict) -> str:
         raise KeyError(f"tier {tier!r} not configured (available: {sorted(tiers)})") from None
 
 
+def _judge_model_for(state: State, machine: Machine, deps: "_Ctx") -> str:
+    """Model that judges this state's gates (SPEC §2.1): the state's own tier by
+    default, so a `reasoning` state's high-stakes gates are judged by the reasoning
+    model — not silently downgraded. A configured `judge` override wins globally."""
+    if deps.judge_override:
+        return deps.judge_override
+    return _model_for(state, machine, deps.tiers)
+
+
 def _system(state: State) -> str:
     return (
         "You are executing ONE state of an mklang state machine.\n"
@@ -59,7 +68,9 @@ class _Ctx:
 
     llm: object
     tiers: dict
-    judge_model: str
+    # Global judge-model override (config `judge:`). None → judging follows each
+    # state's tier (SPEC §2.1). See `_judge_model_for`.
+    judge_override: str | None
     registry: dict
     tier_params: dict  # tier -> provider-specific params
     tools: dict  # tool name -> callable(dict) -> str
@@ -90,9 +101,11 @@ def _select_gate(
     ctx: dict,
     deps: _Ctx,
     judge_reasoning: str | None,
+    judge_model: str,
 ) -> tuple[int, Gate, dict]:
     """Pick the first true gate (hooks / otherwise / fused LLM prose batch).
 
+    `judge_model` is the model this state's prose gates are judged by (SPEC §2.1).
     Returns (gate_index_in_state, gate, step_annotations).
     """
     ann: dict = {}
@@ -124,19 +137,30 @@ def _select_gate(
             i += 1
             continue
         try:
-            local = deps.llm.judge(
-                deps.judge_model,
+            verdict = deps.llm.judge(
+                judge_model,
                 [g.when for _, g in batch],
                 fmt(result),
                 ctx,
                 reasoning=judge_reasoning,
             )
+            # Adapters return the chosen index, optionally paired with the parse
+            # method ("json" / "bare" / "last-number"). Mock/scripted judges return
+            # a bare int (method unknown).
+            if isinstance(verdict, tuple):
+                local, parse_method = verdict
+            else:
+                local, parse_method = verdict, None
             # Adapters must return an index in [0, len(batch)); do not clamp here —
             # silent clamp would misroute with gate_via: llm and no anomaly flag.
             if not isinstance(local, int) or local < 0 or local >= len(batch):
                 raise JudgeUnparseable(f"out-of-range choice {local!r} for n={len(batch)}")
             gi, gate = batch[local]
             ann["gate_via"] = "llm"
+            ann["judge_model"] = judge_model
+            # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
+            if parse_method and parse_method != "json":
+                ann["judge_parse"] = parse_method
             return gi, gate, ann
         except JudgeUnparseable as e:
             ann["judge_fallback"] = True
@@ -173,7 +197,7 @@ def _exec_one(
             deps.registry,
             deps.llm,
             deps.tiers,
-            deps.judge_model,
+            deps.judge_override,
             depth=depth + 1,
             max_workers=deps.max_workers,
             tier_params=deps.tier_params,
@@ -224,7 +248,15 @@ def _safe_exec(state, ctx, deps, machine, depth):
 
 def _branch_contexts(state: State, ctx: dict) -> list[dict]:
     if state.sample:
-        return [dict(ctx) for _ in range(state.sample)]
+        # Each sample branch sees its own `index` (0-based) so a prompt can say
+        # "you are branch {{index}}, take a different approach" (Tree-of-Thought,
+        # debate). `item` is only meaningful under `over`, so it is not set here.
+        out = []
+        for i in range(state.sample):
+            b = dict(ctx)
+            b["index"] = i
+            out.append(b)
+        return out
     m = _OVER_VAR.search(state.over or "")  # extract the path from "{{chunks}}"
     if not m:
         raise ValueError(f"over: invalid expression {state.over!r} (expected {{{{path}}}})")
@@ -255,7 +287,7 @@ def run(
     registry: dict,
     llm,
     tiers: dict,
-    judge_model: str,
+    judge: str | None = None,
     depth: int = 0,
     max_workers: int = 5,
     tier_params: dict | None = None,
@@ -271,7 +303,7 @@ def run(
     deps = _Ctx(
         llm,
         tiers,
-        judge_model,
+        judge,
         registry,
         tier_params or {},
         tools or {},
@@ -488,7 +520,8 @@ def run(
                 "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
             )
         try:
-            i, gate, gann = _select_gate(eligible, result, ctx, deps, judge_reasoning)
+            judge_model = _judge_model_for(S, machine, deps)
+            i, gate, gann = _select_gate(eligible, result, ctx, deps, judge_reasoning, judge_model)
             step.update(gann)
         except JudgeUnparseable:
             step.update(step=steps, gate=None, policy="judge-unparseable", to=None)

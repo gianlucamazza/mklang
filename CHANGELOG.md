@@ -8,7 +8,67 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.5.1`).
+  `pyproject.toml` (currently `0.5.2`).
+
+## [0.5.2] — 2026-07-16
+
+Second remediation pass. The language stays **0.2**; no `.mk` needs changes.
+
+### Changed (observable behavior)
+
+- **Default judge model now follows each state's tier (F1).** Previously every
+  gate — including the highest-stakes gates on `reasoning` states (refund
+  thresholds, legal matters, human escalation) — was judged by the cheapest
+  (`fast`) model, silently deviating from SPEC §2.1. Gate judging now uses the
+  state's own effective tier by default. **This changes which model judges your
+  gates.** To restore the previous single-model behavior, set the provider
+  `judge:` key in the runtime config — it is now an explicit, opt-in *global*
+  override, no longer the default (it ships commented out in
+  `config/runtime.example.yaml`). The chosen judge model is recorded in the trace
+  as `judge_model` on every `gate_via: llm` step. Gate-divergence numbers
+  collected before this change are not comparable with those after; re-run
+  `scripts/gate_divergence.py` (now with a `--judge-tier` flag) to refresh them.
+
+### Fixed
+
+- **Strict judge-reply parsing (F2).** The bare-number fallback no longer grabs
+  the *first* digit anywhere in the reply (a verbose judge's "Condition 1 fails…"
+  misread as choice 1). Parse order is now: strict JSON, then a whole-reply bare
+  number, then the **last** number in the reply (models conclude with the answer).
+  The last two are traced as `judge_parse` (anomaly-adjacent, not a fallback). The
+  judge system prompt now forbids extra numbers; SPEC §5 constrains conformant
+  judges to terse instruct-style replies.
+- **`sample` branch diversity (F3).** Each `sample: N` branch now sees its own
+  `{{index}}` (0-based), so a prompt can say "you are branch {{index}}, take a
+  different approach" (Tree-of-Thought, debate) instead of relying on temperature
+  alone. `{{index}}` is now available in both fan-out forms; `{{item}}` remains
+  `over`-only.
+
+### Added
+
+- **`unresolved-interpolation` lint rule (F7).** `mklang lint` flags any `{{path}}`
+  whose first segment no `context:` key / state `output:` / (inside a fan-out)
+  `item`/`index` provides — the silent-typo bug (`{{kb_answr}}` → empty string).
+  `item`/`index` referenced outside a fan-out state are flagged too. First-segment
+  only (dotted tails can't be checked statically); warning by default, error under
+  `--strict`.
+- **`--strict` rejects unsupported `mklang:` versions (F6).** An unknown language
+  version stays a warning by default but becomes a hard error (`version-unsupported`)
+  under `mklang check --strict` / `lint --strict` / the new `run --strict`.
+- **`0600` checkpoints (F5).** Checkpoint files (full blackboard as plaintext JSON)
+  are written owner-only. SPEC §11 now lists checkpoints as an asset and documents
+  the plaintext-at-rest surface (host-side mitigation; encryption is a v0.2
+  non-goal). The `--checkpoint` help notes the plaintext content.
+- **Conformance coverage for hook precedence and `tool` states (F8).** The case
+  format gains scripted `hooks:` (boolean sequences) and `tools:` (list or
+  `{input-substring: output}` map) bindings, plus `expect.error_prefix`. New cases:
+  `hook-before-prose`, `hook-false-falls-through`, `tool-state-output-deposit`,
+  `tool-unknown-halts`, `fanout-sample-index` (F3), `budget-fanout-charging` (F4).
+  Suite: 15 → 21 cases.
+- **SPEC §7** now states the fan-out step-charging rule (`max(1, len(branches))`)
+  explicitly, with the map-reduce budget-sizing implication and a worked example;
+  `docs/patterns.md` and ROADMAP note the possible v0.3 `budget`/`branch_budget`
+  split.
 
 ## [0.5.1] — 2026-07-16
 

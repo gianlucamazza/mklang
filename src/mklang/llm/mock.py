@@ -21,6 +21,7 @@ class MockLLM:
         self._produce = produce_fn
         self._judge = judge_fn
         self.calls: list[dict] = []  # records produce calls (for assertions)
+        self.judge_calls: list[dict] = []  # records judge calls (model per gate eval)
 
     def produce(self, model, system, user, reason=False, temperature=0.4, params=None) -> Produced:
         self.calls.append({"model": model, "reason": reason, "params": params or {}})
@@ -29,6 +30,7 @@ class MockLLM:
         return Produced(text="ok", reasoning=("thought" if reason else None))
 
     def judge(self, model, conditions, output, context, reasoning=None) -> int:
+        self.judge_calls.append({"model": model, "conditions": list(conditions)})
         if self._judge:
             # Pass reasoning only when the callback accepts it (existing tests use *a / 4 args).
             try:
