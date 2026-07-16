@@ -143,10 +143,11 @@ comes from `.env`. Same machine, any provider.
 
 ## Status
 
-**v0.2** — core language complete (fan-out, sub-machines, reasoning, context-append)
+**Language v0.2 / package 0.2.1** — core complete (fan-out, sub-machines, reasoning,
+tools, context-append) with a hardened multi-provider reference interpreter.
 
-- a working **multi-provider reference interpreter** (`src/mklang/`), **live-tested
-  on DeepSeek**. The spec stays language- and provider-agnostic. See
+- **Live-tested on DeepSeek**; Anthropic adapter is unit-tested (live e2e when a key
+  is available). The spec stays language- and provider-agnostic. See
   [`ROADMAP.md`](./ROADMAP.md) for what's next and [`CHANGELOG.md`](./CHANGELOG.md)
   for the history.
 

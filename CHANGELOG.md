@@ -8,9 +8,13 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.2.0`).
+  `pyproject.toml` (currently `0.2.1`).
 
 ## [Unreleased]
+
+## [0.2.1] — 2026-07-16
+
+Correctness hardening and multi-provider polish on top of the v0.2 core.
 
 ### Fixed
 
@@ -31,6 +35,9 @@ All notable changes to mklang are documented here. The format follows
   else halts with `judge-unparseable`.
 - **`over` missing path / wrong type** — hard error (empty list still OK per SPEC).
 - **Fan-out branch `call` halt** — preserves `sub_trace` and child token usage.
+- Engine exception-safety (clean `halt`, isolated fan-out branches); empty-`eligible`
+  no longer crashes; `--set` accepts JSON (lists for `over`); `load_registry` skips
+  malformed siblings; `.env` discovered from cwd.
 
 ### Added
 
@@ -39,33 +46,22 @@ All notable changes to mklang are documented here. The format follows
   top-level `tools:` block; built-in demo tools (`calc`, `search`).
 - **Cost accounting** — per-step token usage in the trace, a run total, and an
   optional `cost_budget` (halt `cost-exhausted`).
-- **Error taxonomy** — `refusal` and `provider-error` halt reasons; typed adapter
-  exceptions; `CallFailed` for sub-machine propagation.
-- **Structured-output judge** — the OpenAI-compatible adapter judges via JSON mode
-  with a regex fallback.
+- **Error taxonomy** — `refusal`, `provider-error`, `call-failed`,
+  `judge-unparseable` halt reasons; typed adapter exceptions (`CallFailed`,
+  `JudgeUnparseable`, …).
+- **Structured-output judge** — OpenAI-compatible and Anthropic adapters judge via
+  JSON `{"choice": N}` with a regex fallback path in `parse_choice`.
+- Per-tier `params` applied to the model (effort / thinking / reasoning_effort),
+  best-effort with drop-on-error; pre-run validation in `mklang run`; richer
+  `mklang check` (dead states, unproduced `result`, catch-all warning, version
+  advisory).
+- Schema bundled as package data; `mklang: "0.2"` field; transient-error retry.
 - Apache-2.0 `LICENSE`, `CONTRIBUTING.md`, this changelog.
-- Quality: golden-trace and cookbook-conformance tests (the latter caught two
-  invalid-YAML snippets in `SPEC.md §10`); Anthropic adapter unit tests
-  (params/refusal/usage). Live Anthropic run deferred (no key available).
-- Docs: SPEC header aligned to **0.2**; ROADMAP `[next]` items that already shipped
-  marked done.
-
-## [0.2.x] — hardening pass
-
-### Added
-
-- Per-tier `params` (effort / thinking / reasoning_effort) are now **applied** to the
-  model, best-effort with drop-on-error.
-- Pre-run validation in `mklang run`; richer `mklang check` (dead states,
-  unproduced `result`, refined catch-all warning).
-- Schema bundled as package data (works pip-installed); `mklang:` spec-version field;
-  transient-error retry with backoff.
-
-### Fixed
-
-- Engine exception-safety (clean `halt`, isolated fan-out branches); empty-`eligible`
-  no longer crashes; `--set` accepts JSON (lists for `over`); `load_registry` skips
-  malformed siblings; `.env` discovered from cwd.
+- Quality: golden-trace and cookbook-conformance tests; Anthropic adapter unit tests
+  (params / refusal / usage / retry / judge). **Live Anthropic e2e still deferred**
+  (no `ANTHROPIC_API_KEY` in the release environment). Live-tested path remains
+  DeepSeek.
+- Docs: SPEC header aligned to **0.2**; ROADMAP shipped items synced.
 
 ## [0.2.0] — core v0.2 + reference interpreter
 

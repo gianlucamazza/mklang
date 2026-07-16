@@ -1,35 +1,30 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (v0.2) and where it can grow — technical **and** organizational.
-Items are marked **[next]** (clear near-term), **[later]** (valuable, not urgent), or
-**[maybe]** (worth evaluating). This is a living document; ADRs in
+Where mklang stands (package **0.2.1**, language **0.2**) and where it can grow —
+technical **and** organizational. Items are marked **[next]** (clear near-term),
+**[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2)
+## Where we are (v0.2 / package 0.2.1)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
-  fan-out (`sample`/`over`), sub-machine `call`. Every reasoning architecture in the
-  cookbook maps onto it ([`SPEC.md §10`](./SPEC.md)).
-- JSON Schema (`oneOf` generative|call) validates structure; semantic checks in the
-  loader (reachability, unknown targets, unresolved `call`, catch-all warnings).
-- Reference interpreter (`src/mklang/`): multi-provider (native Anthropic +
-  OpenAI-compatible for DeepSeek/OpenAI/OpenRouter/xAI/Mistral/local), fan-out
-  concurrency, nested trace, CLI (`run`/`check`). Deterministic tests on a MockLLM;
-  **live-tested on DeepSeek**.
-- Hardening pass (v0.2.x): per-tier `params` now **applied** to the model
-  (effort/thinking/reasoning_effort, best-effort with drop-on-error); pre-run
-  validation in `mklang run`; engine exception-safety (clean `halt`, isolated
-  fan-out branches); schema bundled for pip-install; `.env` from cwd; `mklang: "0.2"`
-  version field; transient-error retry; dead-state / unproduced-`result` checks.
-- Milestone 6+: **`tool` states**; structured judge; error taxonomy; cost accounting;
-  call-halt propagation; shared cost budget under `call`; judge unparseable policy;
-  Anthropic parity; tier pre-check; Apache-2.0 + CONTRIBUTING + CHANGELOG; golden +
-  cookbook tests (54→60 unit tests on MockLLM).
+  fan-out (`sample`/`over`), sub-machine `call`, `tool` states. Cookbook patterns in
+  [`SPEC.md §10`](./SPEC.md).
+- JSON Schema + semantic checks; multi-provider interpreter (native Anthropic +
+  OpenAI-compatible); fan-out concurrency; nested trace; CLI `run` / `check`.
+- **Hardening in 0.2.1:** call-halt propagation, shared `cost_budget` under `call`,
+  judge sees `reason`, judge-unparseable policy, Anthropic parity (retry /
+  `ProviderError` / JSON judge / temperature), pre-run tier validation, strict
+  `over` path, structured error taxonomy, cost accounting, golden + cookbook tests
+  (**60** MockLLM unit tests).
+- **Live:** DeepSeek e2e historically green. Anthropic **unit-tested**; **live e2e
+  deferred** until an `ANTHROPIC_API_KEY` is available in the environment.
 
 ## Language
 
-- **[later] Code-hook gates** — a gate evaluated by a host function returning a bool,
+- **[next] Code-hook gates** — a gate evaluated by a host function returning a bool,
   for exact/critical checks (`total == sum(lines)`), alongside LLM-judged gates.
+  Highest-ROI language feature for production reliability.
 - **[later] Formal types for `structure`** — optional typed I/O so composition and
   gates can be checked before spending tokens; stays opt-in over prose.
 - **[maybe] Determinism knobs** — per-state seed / temperature surfaced in a
@@ -37,47 +32,35 @@ Items are marked **[next]** (clear near-term), **[later]** (valuable, not urgent
 
 ## Runtime
 
-- **Shipped (see CHANGELOG):** structured-output judge (OpenAI-compat + Anthropic JSON
-  via shared `parse_choice`), error taxonomy (`refusal` / `provider-error` /
-  `call-failed` / `cost-exhausted` / `judge-unparseable`), token/cost accounting +
-  shared `cost_budget` (incl. nested `call`), `reason` passed to the judge
-  (SPEC §4.5), sub-machine halt propagation, Anthropic parity, pre-run tier
-  validation, judge unparseable → `otherwise` only (else hard halt), strict `over`
-  path lookup.
-- **[later] Judge confidence score** — optional numeric confidence alongside choice
-  (today: parse-ok vs unparseable is the only confidence signal).
-- **[later] Async concurrency** — swap the fan-out `ThreadPoolExecutor` for asyncio
-  with a bounded semaphore; matters at large `sample`/`over` widths. Document the
-  current `max_workers=5` limit until then.
-- **[later] Provider adapter registry (plugins)** — register adapters via entry
-  points so third parties add providers without touching core.
-- **[later] Caching / reproducibility** — per-state memoization (same input+prompt →
-  same output) for cheap deterministic replays and cost savings.
-- **[later] Sub-machine project manifest** — an `mklang.toml` naming the machine
-  directory and entry, instead of "load every `.mk` in the folder".
-- **[later] Resumable runs / checkpoints** — persist the blackboard + position so a
-  long agentic run can pause and resume (needed for human-in-the-loop escalation).
+- **Shipped (0.2.1):** see CHANGELOG — structured judge, error taxonomy, shared cost
+  budget, call-failed propagation, Anthropic parity, tier validation, judge
+  unparseable → `otherwise` or hard halt.
+- **[later] Judge confidence score** — optional numeric confidence alongside choice.
+- **[later] Async concurrency** — swap fan-out `ThreadPoolExecutor` (`max_workers=5`)
+  for asyncio + bounded semaphore at large `sample`/`over` widths.
+- **[later] Provider adapter registry (plugins)** — entry points for third-party
+  providers.
+- **[later] Caching / reproducibility** — per-state memoization for cheap replays.
+- **[later] Sub-machine project manifest** — `mklang.toml` instead of loading every
+  `.mk` in the folder.
+- **[later] Resumable runs / checkpoints** — blackboard + position for pause/resume
+  (foundation for real HITL).
 
 ## Quality
 
-- **[next] Live-test the Anthropic adapter** — the adapter is unit-tested (params /
-  refusal / usage), but no `ANTHROPIC_API_KEY` was available for an end-to-end run.
-- **[later] Gated live smoke tests** — opt-in (env-flagged) runs against a real
-  provider in CI, low token budget.
+- **[next] Live-test the Anthropic adapter** — needs `ANTHROPIC_API_KEY`; unit suite
+  already covers params / refusal / usage / retry / judge.
+- **[later] Gated live smoke tests** — opt-in env-flagged CI runs, low token budget.
 
 ## Organizational
 
 - **[later] Docs site** — mkdocs over `SPEC.md` + `docs/`; publish the cookbook.
-- **[later] Editor tooling** — the `yaml-language-server` schema hint already gives
-  completion/validation; add a `mklang lint` beyond `check` (style, dead states).
+- **[later] Editor tooling** — `mklang lint` beyond `check` (style, dead states).
 
 ## Integrations & extensions
 
-- **[later] Tool plugin registry** — host-provided tools (web search, RAG, code
-  exec) surfaced to `execution`, paired with the formal `tools:` block.
-- **[later] Human-in-the-loop hook** — an `escalate` target that suspends the run and
-  emits a request to an external system, resuming on reply.
-- **[maybe] Interop** — export a deterministic subset to LangGraph, or import from
-  it, for teams already invested there.
-- **[maybe] Observability export** — OpenTelemetry spans from the trace for existing
-  dashboards.
+- **[later] Tool plugin registry** — host tools (web search, RAG, code exec) beyond
+  CLI builtins `calc` / `search`.
+- **[later] Human-in-the-loop hook** — `escalate` that suspends and resumes on reply.
+- **[maybe] Interop** — LangGraph export/import for invested teams.
+- **[maybe] Observability export** — OpenTelemetry spans from the trace.
