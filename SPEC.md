@@ -595,7 +595,8 @@ soft-falls back only when an eligible `when: otherwise` exists (trace flag
 **missing** or non-list path is a hard error; an empty list still produces `[]`
 and fires gates. `escalate` is not itself terminal — it routes to a handler state
 that must reach `END`. **Every machine must have at least one reachable path to
-`END`** (author's responsibility in v0.2; a validator SHOULD check it).
+`END`** (the reference validator enforces this: `mklang check` errors when no
+path from `entry` reaches `END`, and warns on unreachable states).
 
 A host runtime MAY offer a third, non-normative outcome: **`suspended`** — on
 budget exhaustion, or (opt-in) when an `escalate` gate fires, the run checkpoints

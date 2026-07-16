@@ -1,0 +1,27 @@
+case: judge-unparseable-fallback
+description: An unparseable judge soft-falls back to an eligible otherwise gate.
+machine:
+  machine: jf
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: p
+      output: o
+      gates:
+        - { when: the output is perfect, then: ok, to: b }
+        - { when: otherwise, then: ok, to: END }
+    b:
+      structure: s
+      prompt: never reached here
+      output: o2
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["out"]
+  judge: unparseable
+expect:
+  status: done
+  trace:
+    - { state: a, policy: ok, to: END }

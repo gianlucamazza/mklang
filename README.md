@@ -1,5 +1,9 @@
 # mklang
 
+[![CI](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml/badge.svg)](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-gianlucamazza.github.io%2Fmklang-blue)](https://gianlucamazza.github.io/mklang/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green)](./LICENSE)
+
 **A declarative language for LLM-driven state machines.** A `.mk` file (mk =
 _machine_) describes an agent as a set of states; an LLM _is_ the runtime that
 executes it. The document is the program — no host code required.
@@ -137,11 +141,22 @@ guidance in [`docs/patterns.md`](./docs/patterns.md).
 | Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`              |
 | Exact policy checks     | gate `hook:` host `(ctx, output) -> bool` (no LLM)               |
 
+## Install
+
+```bash
+pip install git+https://github.com/gianlucamazza/mklang   # PyPI release coming
+```
+
+Editor validation for `.mk` files works out of the box via the JSON Schema —
+point yaml-language-server at
+`https://raw.githubusercontent.com/gianlucamazza/mklang/main/schema/mklang.schema.json`.
+
 ## Quickstart (reference interpreter)
 
 ```bash
 cp .env.example .env            # set DEEPSEEK_API_KEY=… (or another provider key)
 uv run mklang check examples/self_consistency.mk
+uv run mklang lint examples/self_consistency.mk   # + static analysis
 uv run mklang run examples/self_consistency.mk \
   --set question.text="What is the capital of Australia?"
 # default provider is deepseek; override with --provider anthropic|openai|…
@@ -160,11 +175,13 @@ deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
 ## Status
 
-**Language v0.2 / package 0.4.0** — core complete (fan-out, sub-machines, reasoning,
+**Language v0.2 / package 0.5.0** — core complete (fan-out, sub-machines, reasoning,
 tools, code-hook gates, context-append) with a hardened multi-provider reference
-interpreter, entry-point plugins for tools/hooks, resumable runs (checkpoint on
-budget exhaustion + `mklang resume`, ADR 0007) and human-in-the-loop escalation
-(`--hitl` suspend + `resume --set`, ADR 0008).
+interpreter, entry-point plugins for tools/hooks/providers, resumable runs
+(checkpoint on budget exhaustion + `mklang resume`, ADR 0007), human-in-the-loop
+escalation (`--hitl` suspend + `resume --set`, ADR 0008), `mklang lint`, and an
+implementation-neutral **[conformance suite](./conformance/README.md)** that pins
+the language semantics (ADR 0009).
 
 - **Live-tested on DeepSeek** (default `active` provider; re-verified 2026-07-16 on
   `examples/expense_approval.mk`). Anthropic adapter is unit-tested (live e2e when an

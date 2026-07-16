@@ -1,0 +1,27 @@
+case: escalate-routing
+description: escalate is not terminal - it routes to its handler state.
+machine:
+  machine: esc
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: triage
+      output: o
+      gates:
+        - { when: otherwise, escalate: true, to: h }
+    h:
+      structure: s
+      prompt: handle
+      output: final
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["hard case", "handled"]
+expect:
+  status: done
+  result: "handled"
+  trace:
+    - { state: a, policy: escalate, to: h }
+    - { state: h, policy: ok, to: END }

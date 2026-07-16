@@ -1,0 +1,44 @@
+site_name: mklang
+site_description: A declarative language for LLM-driven state machines.
+site_url: https://gianlucamazza.github.io/mklang/
+repo_url: https://github.com/gianlucamazza/mklang
+repo_name: gianlucamazza/mklang
+docs_dir: site-src # generated — run scripts/build-docs.sh first
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: { icon: material/weather-night, name: Dark mode }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: { icon: material/weather-sunny, name: Light mode }
+  features:
+    - navigation.sections
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Specification: SPEC.md
+  - Patterns: patterns.md
+  - Conformance: conformance.md
+  - ADRs:
+      - Capability tiers: adr/0001-capability-tiers.md
+      - Fan-out LLM reducer: adr/0002-fanout-llm-reducer.md
+      - Provider-agnostic: adr/0003-provider-agnostic.md
+      - LLM-as-runtime gates: adr/0004-llm-as-runtime-gates.md
+      - Reasoning first-class: adr/0005-reasoning-first-class.md
+      - Code-hook gates: adr/0006-code-hook-gates.md
+      - Resumable checkpoints: adr/0007-resumable-checkpoints.md
+      - HITL escalate suspend: adr/0008-hitl-escalate-suspend.md
+      - Conformance suite: adr/0009-conformance-suite.md
+  - Roadmap: ROADMAP.md
+  - Changelog: CHANGELOG.md
+  - Contributing: CONTRIBUTING.md

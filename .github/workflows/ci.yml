@@ -24,3 +24,28 @@ jobs:
           uv run --with check-jsonschema
           check-jsonschema --default-filetype yaml
           --schemafile config/runtime.schema.json config/runtime.example.yaml
+      - name: Semantic check + static analysis on examples
+        run: |
+          uv run mklang check examples/*.mk
+          uv run mklang lint --strict examples/*.mk
+      - name: Build sdist + wheel
+        run: uv build
+
+  live-smoke:
+    # Low-budget smoke against real providers; each test skips itself when its
+    # key is absent, so forks without secrets stay green.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Live smoke (active provider)
+        run: MKLANG_LIVE=1 uv run --extra dev pytest -q -rs tests/test_live.py
+      - name: Live smoke (anthropic)
+        run: >
+          MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=anthropic
+          uv run --all-extras pytest -q -rs tests/test_live.py

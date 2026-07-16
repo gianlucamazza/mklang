@@ -1,0 +1,23 @@
+case: no-gate-matched
+description: When every gate is an exhausted repair, the run halts with no-gate-matched.
+machine:
+  machine: ngm
+  entry: a
+  budget: 10
+  states:
+    a:
+      structure: s
+      prompt: p
+      output: o
+      gates:
+        - { when: the draft has gaps, repair: 1, to: a }
+llm:
+  produce: ["v1", "v2"]
+  judge: [0]
+expect:
+  status: halt
+  error: no-gate-matched
+  at: a
+  trace:
+    - { state: a, policy: repair, to: a }
+    - { state: a, policy: no-gate-matched }

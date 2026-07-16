@@ -1,0 +1,35 @@
+case: fanout-over
+description: over fans out per list item (item/index in each branch ctx); branches deposit as a list.
+machine:
+  machine: fo
+  entry: m
+  budget: 5
+  context:
+    items: ["x", "y"]
+  states:
+    m:
+      structure: s
+      prompt: process {{item}}
+      output: outs
+      over: "{{items}}"
+      gates:
+        - { when: otherwise, then: ok, to: r }
+    r:
+      structure: s
+      prompt: combine {{outs}}
+      output: final
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "process x": "X"
+    "process y": "Y"
+    "combine": "XY"
+expect:
+  status: done
+  result: "XY"
+  context:
+    outs: ["X", "Y"]
+  trace:
+    - { state: m, policy: ok, to: r }
+    - { state: r, policy: ok, to: END }

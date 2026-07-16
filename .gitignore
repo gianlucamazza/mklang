@@ -19,3 +19,7 @@ venv/
 # OS / editor
 .DS_Store
 *.swp
+
+# Generated docs site
+site-src/
+site/

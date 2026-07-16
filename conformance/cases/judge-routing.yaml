@@ -1,0 +1,34 @@
+case: judge-routing
+description: Consecutive prose gates are fused into one judge call; the returned index picks the route.
+machine:
+  machine: routing
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: classify
+      output: label
+      gates:
+        - { when: the label is spam, then: ok, to: spam }
+        - { when: the label is ham, then: ok, to: ham }
+    spam:
+      structure: s
+      prompt: handle spam
+      output: done_msg
+      gates:
+        - { when: otherwise, then: ok, to: END }
+    ham:
+      structure: s
+      prompt: handle ham
+      output: done_msg
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["looks like ham", "handled"]
+  judge: [1]
+expect:
+  status: done
+  trace:
+    - { state: a, policy: ok, to: ham }
+    - { state: ham, policy: ok, to: END }

@@ -1,0 +1,35 @@
+case: call-failed
+description: A sub-machine halt propagates to the parent as call-failed.
+machine:
+  machine: parent
+  entry: c1
+  budget: 5
+  states:
+    c1:
+      structure: s
+      call: child
+      output: sub_out
+      gates:
+        - { when: otherwise, then: ok, to: END }
+registry:
+  child:
+    machine: child
+    entry: s1
+    budget: 5
+    states:
+      s1:
+        structure: s
+        prompt: inner work
+        output: o
+        gates:
+          - { when: the output is broken, fail: true }
+          - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["broken"]
+  judge: [0]
+expect:
+  status: halt
+  error: "call-failed: gate-fail"
+  at: c1
+  trace:
+    - { state: c1, policy: call-failed }

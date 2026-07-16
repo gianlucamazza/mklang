@@ -1,0 +1,26 @@
+case: accumulate
+description: accumulate appends each visit's output; the implicit result stays the last raw output.
+machine:
+  machine: acc
+  entry: g
+  budget: 10
+  states:
+    g:
+      structure: s
+      prompt: gather more
+      output: notes
+      accumulate: true
+      gates:
+        - { when: more evidence is needed, then: ok, to: g }
+        - { when: the notes suffice, then: ok, to: END }
+llm:
+  produce: ["n1", "n2"]
+  judge: [0, 1]
+expect:
+  status: done
+  result: "n2"
+  context:
+    notes: ["n1", "n2"]
+  trace:
+    - { state: g, policy: ok, to: g }
+    - { state: g, policy: ok, to: END }

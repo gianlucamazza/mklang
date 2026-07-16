@@ -1,0 +1,34 @@
+case: call
+description: A call state runs a sub-machine and deposits its result.
+machine:
+  machine: parent
+  entry: c1
+  budget: 5
+  states:
+    c1:
+      structure: s
+      call: child
+      output: sub_out
+      gates:
+        - { when: otherwise, then: ok, to: END }
+registry:
+  child:
+    machine: child
+    entry: s1
+    budget: 5
+    states:
+      s1:
+        structure: s
+        prompt: inner work
+        output: o
+        gates:
+          - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["inner"]
+expect:
+  status: done
+  result: "inner"
+  context:
+    sub_out: "inner"
+  trace:
+    - { state: c1, policy: ok, to: END }

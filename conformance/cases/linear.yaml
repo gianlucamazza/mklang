@@ -1,0 +1,27 @@
+case: linear
+description: Two generative states routed by otherwise gates; the last output is the implicit result.
+machine:
+  machine: linear
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: first step
+      output: o_a
+      gates:
+        - { when: otherwise, then: ok, to: b }
+    b:
+      structure: s
+      prompt: second step using {{o_a}}
+      output: o_b
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["first", "second"]
+expect:
+  status: done
+  result: "second"
+  trace:
+    - { state: a, policy: ok, to: b }
+    - { state: b, policy: ok, to: END }

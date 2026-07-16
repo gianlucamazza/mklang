@@ -1,0 +1,26 @@
+case: budget-exhausted
+description: The step budget is checked before each state; exceeding it halts.
+machine:
+  machine: sb
+  entry: a
+  budget: 1
+  states:
+    a:
+      structure: s
+      prompt: one
+      output: o
+      gates:
+        - { when: otherwise, then: ok, to: b }
+    b:
+      structure: s
+      prompt: two
+      output: o2
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["only"]
+expect:
+  status: halt
+  error: budget-exhausted
+  trace:
+    - { state: a, policy: ok, to: b }

@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.4.0**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.5.0**, language **0.2**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2 / package 0.4.0)
+## Where we are (v0.2 / package 0.5.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -20,6 +20,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   uninterrupted; foundation for HITL.
 - **0.4.0:** **human-in-the-loop** (ADR 0008) — `--hitl` makes fired `escalate`
   gates suspend; `mklang resume --set human.reply=…` injects the decision.
+- **0.5.0:** **language-grade rigor** — conformance suite (ADR 0009),
+  `mklang lint`, provider entry-point plugins, CI + docs site, public packaging.
 - **Live:** DeepSeek e2e green. Anthropic unit-tested; live e2e deferred without key.
 
 ## Language
@@ -34,8 +36,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   Anthropic parity, tier validation, tool/hook plugin registries via entry points.
 - **[later] Judge confidence score** — numeric confidence alongside choice.
 - **[later] Async concurrency** — asyncio fan-out beyond `ThreadPoolExecutor(5)`.
-- **[later] Provider adapter registry (plugins)** — entry points for LLM providers
-  (tools/hooks already use entry points).
+- **Shipped (0.5.0):** provider adapter registry — `mklang.providers` entry
+  points; OpenAI-compatible stays the default for unregistered names.
 - **[later] Caching / reproducibility** — per-state memoization.
 - **[later] Sub-machine project manifest** — `mklang.toml`.
 - **Shipped (0.3.0):** resumable runs / checkpoints — blackboard + position
@@ -52,8 +54,13 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Organizational
 
-- **[later] Docs site** — mkdocs over SPEC + docs.
-- **[later] Editor tooling** — `mklang lint` beyond `check`.
+- **Shipped (0.5.0):** docs site (mkdocs-material on GitHub Pages, assembled
+  from the repo's canonical markdown) and `mklang lint` (static analysis
+  beyond `check`); conformance suite as the language contract (ADR 0009).
+- **[next] Publish to PyPI** — metadata ready, `dist/` built; needs a PyPI
+  token (`uv publish`).
+- **[later] Editor tooling** — LSP / syntax highlighting beyond the YAML
+  schema; `mklang lint` is the first brick.
 
 ## Integrations & extensions
 

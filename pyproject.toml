@@ -1,13 +1,22 @@
 [project]
 name = "mklang"
-version = "0.4.0"
+version = "0.5.0"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "Gianluca", email = "homen3@gmail.com" }]
+authors = [{ name = "Gianluca Mazza", email = "info@gianlucamazza.it" }]
 keywords = ["llm", "state-machine", "agents", "dsl", "reasoning"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Interpreters",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
   "pyyaml>=6",
   "jsonschema>=4",
@@ -16,9 +25,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/gianluca/mklang"
-Specification = "https://github.com/gianluca/mklang/blob/main/SPEC.md"
-Changelog = "https://github.com/gianluca/mklang/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/gianlucamazza/mklang"
+Documentation = "https://gianlucamazza.github.io/mklang/"
+Specification = "https://github.com/gianlucamazza/mklang/blob/main/SPEC.md"
+Changelog = "https://github.com/gianlucamazza/mklang/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.40"]
@@ -35,6 +45,9 @@ mklang = "mklang.cli:main"
 [project.entry-points."mklang.tools"]
 calc = "mklang.tools:calc"
 search = "mklang.tools:search"
+
+[project.entry-points."mklang.providers"]
+anthropic = "mklang.providers:anthropic"
 
 [project.entry-points."mklang.hooks"]
 always_true = "mklang.hooks:always_true"

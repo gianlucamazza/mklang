@@ -15,13 +15,9 @@ from .registry import load_registry
 
 
 def _build_llm(prov):
-    if prov.name == "anthropic":
-        from .llm.anthropic import AnthropicLLM
+    from .providers import build_llm
 
-        return AnthropicLLM(prov.api_key, prov.base_url)
-    from .llm.openai_compat import OpenAICompatLLM
-
-    return OpenAICompatLLM(prov.api_key, prov.base_url)
+    return build_llm(prov)
 
 
 def _coerce(value: str):
@@ -201,6 +197,37 @@ def cmd_resume(args) -> int:
     return _emit(res, out_path, machine, machine_path, cost_budget, hitl=hitl)
 
 
+def cmd_lint(args) -> int:
+    from .lint import lint_machine
+
+    ok = True
+    findings_total = 0
+    for path in args.machines:
+        registry = load_registry(Path(path).parent, validate=False)
+        try:
+            machine = load_machine(path)
+        except Exception as e:  # noqa: BLE001 — surface any load/validation failure
+            print(f"{path}: SCHEMA ERROR: {getattr(e, 'message', str(e))}")
+            ok = False
+            continue
+        errors, warnings = semantic_check(machine, registry)
+        findings = lint_machine(machine)
+        findings_total += len(findings)
+        for w in warnings:
+            print(f"{path}: warning: {w}")
+        for e in errors:
+            print(f"{path}: error: {e}")
+        for f in findings:
+            print(f"{path}: lint: {f}")
+        if errors:
+            ok = False
+        elif not findings:
+            print(f"{path}: ok")
+    if not ok:
+        return 1
+    return 1 if (args.strict and findings_total) else 0
+
+
 def cmd_check(args) -> int:
     ok = True
     for path in args.machines:
@@ -289,6 +316,11 @@ def main(argv: list[str] | None = None) -> int:
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
     c.add_argument("machines", nargs="+")
     c.set_defaults(fn=cmd_check)
+
+    li = sub.add_parser("lint", help="check + static analysis (dead gates, unread outputs, typos)")
+    li.add_argument("machines", nargs="+")
+    li.add_argument("--strict", action="store_true", help="exit 1 when lint findings exist")
+    li.set_defaults(fn=cmd_lint)
 
     args = ap.parse_args(argv)
     return args.fn(args)

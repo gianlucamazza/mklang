@@ -1,0 +1,23 @@
+case: fail-gate
+description: A fired fail gate halts the run with gate-fail.
+machine:
+  machine: f
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: validate
+      output: o
+      gates:
+        - { when: the input is invalid, fail: true }
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["bad"]
+  judge: [0]
+expect:
+  status: halt
+  error: gate-fail
+  at: a
+  trace:
+    - { state: a, policy: fail }

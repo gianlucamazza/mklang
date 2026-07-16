@@ -1,0 +1,36 @@
+case: cost-exhausted
+description: The host cost budget halts the run once total tokens reach the cap.
+machine:
+  machine: cb
+  entry: a
+  budget: 10
+  states:
+    a:
+      structure: s
+      prompt: one
+      output: o
+      gates:
+        - { when: otherwise, then: ok, to: b }
+    b:
+      structure: s
+      prompt: two
+      output: o2
+      gates:
+        - { when: otherwise, then: ok, to: c }
+    c:
+      structure: s
+      prompt: three
+      output: o3
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["r1", "r2", "r3"]
+  tokens: [10, 5]
+run:
+  cost_budget: 20
+expect:
+  status: halt
+  error: cost-exhausted
+  trace:
+    - { state: a, policy: ok, to: b }
+    - { state: b, policy: ok, to: c }

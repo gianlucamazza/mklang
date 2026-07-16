@@ -8,16 +8,37 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.2"`).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.4.0`).
+  `pyproject.toml` (currently `0.5.0`).
 
-## [Unreleased]
+## [0.5.0] — 2026-07-16
 
 ### Added
 
+- **Conformance suite** (ADR 0009) — `conformance/cases/*.yaml`:
+  implementation-neutral cases (machine + scripted LLM + expected outcome) that
+  pin the language semantics; any second interpreter must pass them with its own
+  runner. Reference runner in `tests/test_conformance.py` (15 cases).
+- **`mklang lint`** — `check` plus static analysis: dead gates after
+  `otherwise`, repair-only states, outputs nobody reads (terminal/judged states
+  exempt), template roots nothing provides (`--strict` exits 1 on findings).
+- **Provider adapters as entry-point plugins** — group `mklang.providers`
+  (factory `(ProviderConfig) -> LLM`); builtin `anthropic`, unknown names fall
+  back to the OpenAI-compatible adapter. Completes the plugin story
+  (tools/hooks/providers).
 - **Gated live smoke tests** (`tests/test_live.py`) — opt-in via `MKLANG_LIVE=1`,
   provider-agnostic: they run the config's `active` provider (override with
   `MKLANG_LIVE_PROVIDER`) and skip when its key is missing. All providers,
   Anthropic included, share the same path — no provider-specific test code.
+- **CI + docs site** — extended GitHub Actions workflow (tests, ruff, schema +
+  semantic checks, lint, build, gated live smoke on main) and an mkdocs-material
+  site assembled from the repo's canonical markdown (`scripts/build-docs.sh`,
+  deployed to GitHub Pages).
+
+### Changed
+
+- SPEC termination paragraph: the END-reachability validator is enforced (it
+  already was — the prose still said "SHOULD").
+- Packaging metadata: classifiers, corrected repository URLs, author contact.
 
 ## [0.4.0] — 2026-07-16
 

@@ -1,0 +1,35 @@
+case: judge-unparseable-halt
+description: An unparseable judge with no eligible otherwise halts the run.
+machine:
+  machine: jh
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: p
+      output: o
+      gates:
+        - { when: route left, then: ok, to: b }
+        - { when: route right, then: ok, to: c }
+    b:
+      structure: s
+      prompt: pb
+      output: ob
+      gates:
+        - { when: otherwise, then: ok, to: END }
+    c:
+      structure: s
+      prompt: pc
+      output: oc
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["out"]
+  judge: unparseable
+expect:
+  status: halt
+  error: judge-unparseable
+  at: a
+  trace:
+    - { state: a, policy: judge-unparseable }

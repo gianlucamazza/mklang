@@ -1,0 +1,22 @@
+case: repair-exhausted-reroutes
+description: An exhausted repair gate becomes ineligible; the remaining catch-all fires.
+machine:
+  machine: rr
+  entry: a
+  budget: 10
+  states:
+    a:
+      structure: s
+      prompt: draft
+      output: o
+      gates:
+        - { when: the draft has gaps, repair: 1, to: a }
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["v1", "v2"]
+  judge: [0]
+expect:
+  status: done
+  trace:
+    - { state: a, policy: repair, to: a }
+    - { state: a, policy: ok, to: END }
