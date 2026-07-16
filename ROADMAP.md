@@ -100,5 +100,10 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped (0.4.0):** human-in-the-loop — `escalate` suspends (`--hitl`) and
   resumes on reply (`resume --set`), ADR 0008. A per-gate `hitl:` field is the
   natural [maybe] extension if run-level opt-in proves too coarse.
+- **[later] MCP server surface** (`mklang-mcp`, design in
+  [ADR 0011](./docs/adr/0011-mcp-server-surface.md), Proposed) — optional stdio
+  MCP host so agentic clients can commission a machine (`run`/`resume`) and get
+  `trace` + `usage` back, without embedding the library. Design only until
+  accepted; not in 0.5.x core install.
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.
