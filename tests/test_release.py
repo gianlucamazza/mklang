@@ -37,8 +37,8 @@ def test_current_version_docs_are_synchronized():
 
 
 def test_console_docs_link_to_host_path_ssot():
-    best_practices = (ROOT / "docs/best-practices.md").read_text(encoding="utf-8")
-    console = (ROOT / "docs/console.md").read_text(encoding="utf-8")
+    best_practices = (ROOT / "docs/guides/best-practices.md").read_text(encoding="utf-8")
+    console = (ROOT / "docs/guides/console.md").read_text(encoding="utf-8")
     anchor = "#current-host-layout-documentation-ssot"
     session_path = "$XDG_STATE_HOME/mklang/console/sessions/<id>/"
 

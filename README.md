@@ -40,7 +40,7 @@ Each **state** has four faces:
 | `gates`     | when to exit?  | see below                                     | separate **judge** call |
 
 Sticky policy goes in `execution`; turn data and `{{context}}` go in `prompt`.
-There is no `system:` keyword — see [Best practices §3](./docs/best-practices.md).
+There is no `system:` keyword — see [Best practices §3](./docs/guides/best-practices.md).
 
 Real side effects (search, send, calc) are **`tool:` states** — host callables,
 not prose in `execution`. See [`examples/react.mk`](./examples/react.mk) and
@@ -101,11 +101,14 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   runtime config: the `tier → model` map for each provider
   ([schema](./config/runtime.schema.json)).
 - [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
-- [`docs/`](./docs) — [`best-practices.md`](./docs/best-practices.md) (checklist),
-  [`patterns.md`](./docs/patterns.md), [`authoring.md`](./docs/authoring.md),
-  [`stdlib.md`](./docs/stdlib.md), [`console.md`](./docs/console.md),
-  [`demos.md`](./docs/demos.md), and
-  [`adr/`](./docs/adr); plus [`ROADMAP.md`](./ROADMAP.md).
+- [`docs/`](./docs) — `guides/` ([best practices](./docs/guides/best-practices.md),
+  [patterns](./docs/guides/patterns.md), [authoring](./docs/guides/authoring.md),
+  [console](./docs/guides/console.md), [install](./docs/guides/install.md)),
+  `reference/` ([CLI](./docs/reference/cli.md), [stdlib](./docs/reference/stdlib.md),
+  [cheatsheet](./docs/reference/cheatsheet.md),
+  [architecture](./docs/reference/architecture.md)),
+  [`demos.md`](./docs/demos.md), and the [ADR index](./docs/adr/README.md);
+  plus [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
   - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
   - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
@@ -160,7 +163,7 @@ Per-tier params (Anthropic adaptive-thinking + `effort`, OpenAI/xAI
 
 Every modern reasoning/agentic pattern maps onto the core (states + gates + prose +
 tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
-guidance in [`docs/patterns.md`](./docs/patterns.md).
+guidance in [`docs/guides/patterns.md`](./docs/guides/patterns.md).
 
 Eight of these ship as **ready, general-purpose `std_*` machines** — parameterized
 by context, callable from your machines (`call: std_refine`), runnable by name:
@@ -169,7 +172,7 @@ by context, callable from your machines (`call: std_refine`), runnable by name:
 mklang run std_self_consistency --set task="Estimate the risk of X"
 ```
 
-See the [stdlib catalog](./docs/stdlib.md) (ADR 0012). The patterns that need host
+See the [stdlib catalog](./docs/reference/stdlib.md) (ADR 0012). The patterns that need host
 tools/hooks or static `call:` targets (ReAct, router, exact policy) stay as
 authored examples.
 
@@ -216,16 +219,10 @@ uv run mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
 uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
-For an installed package outside this repository, scaffold the XDG user host or
-a project without overwriting existing files:
-
-```bash
-mklang init --user              # ~/.config, ~/.local/share, ~/.local/state
-mklang init                     # ./config/runtime.yaml, ./machines, ./.env
-```
-
-CLI commands accept `--format auto|text|json`; `run`, `resume`, and `machines`
-keep JSON on piped stdout while showing a concise Rich view in a terminal.
+For an installed package outside this repository, `mklang init` (project) or
+`mklang init --user` (XDG host) scaffold config without overwriting files — see
+the [installation guide](./docs/guides/install.md). Every command, flag, and
+exit code: [CLI reference](./docs/reference/cli.md).
 
 The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
 deepseek` by default); the key comes from `.env`. Same machine, any provider.
@@ -279,7 +276,7 @@ you inline. The agent itself **is** a machine
 ([`agent.mk`](./src/mklang/data/console/agent.mk)) — read it, lint it, swap it
 with `--agent your_brain.mk` (ADR 0015). Agent replies render as Markdown; the
 brain declares host clocks `today` / `now` for wall-clock questions. Details:
-[`docs/console.md`](./docs/console.md).
+[`docs/guides/console.md`](./docs/guides/console.md).
 
 ```bash
 pip install 'mklang[console]'
@@ -298,10 +295,10 @@ web `search` (offline stub by default); host tool stub architecture for
 `search` / `search_kb` / `send_reply` (ADR 0020); host clock conventions
 `context.today` / `context.now`; sectioned produce system prompts from
 `structure`+`execution`; output anti-cutoff + context budgets (ADR 0016–0019);
-[best practices](./docs/best-practices.md). Gate judging follows the state tier
+[best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green in the 0.9.2 release matrix,
+- **Live:** DeepSeek (default) and **OpenAI** green in the latest (0.9.3) release matrix,
   including gate-divergence agreement **1.0** on the synthetic
   harness — see
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).

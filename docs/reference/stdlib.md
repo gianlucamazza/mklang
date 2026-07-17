@@ -1,6 +1,6 @@
 # Machine stdlib
 
-mklang ships the reasoning architectures of the [cookbook](SPEC.md) as **ready,
+mklang ships the reasoning architectures of the [cookbook](../../SPEC.md) as **ready,
 general-purpose machines** — parameterized by context, callable from your own
 machines, runnable by name. These are ordinary `.mk` documents bundled with the
 package (ADR 0012); discover them with `mklang machines` or the MCP
@@ -77,6 +77,6 @@ Notes:
 | Router-of-experts  | routes to domain `call:` targets, which are static — see [`examples/triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                                              |
 | Exact policy gates | needs host `hook:`s — see [`examples/hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                     |
 
-These stay as documented patterns: the [cookbook](SPEC.md) has the skeletons,
-the [authoring guide](authoring.md) the recipe, and
-[best practices](best-practices.md) the host-tool / layer checklist.
+These stay as documented patterns: the [cookbook](../../SPEC.md) has the skeletons,
+the [authoring guide](../guides/authoring.md) the recipe, and
+[best practices](../guides/best-practices.md) the host-tool / layer checklist.

@@ -3,7 +3,7 @@
 Thanks for your interest. mklang is a small, opinionated project: a language spec
 plus a reference interpreter. Keep changes coherent with the design in
 [`SPEC.md`](./SPEC.md), the decisions in [`docs/adr/`](./docs/adr), and the
-operating rules in [`docs/best-practices.md`](./docs/best-practices.md)
+operating rules in [`docs/guides/best-practices.md`](./docs/guides/best-practices.md)
 (especially **layer discipline**: language vs host tools vs surfaces).
 
 ## Dev setup
@@ -64,7 +64,7 @@ A change to the **language** must land as a coherent set — in this order:
 5. **Examples** — add/adjust a machine in `examples/` that exercises the feature;
    where gate paths matter, a sibling `*.test.yaml` for `mklang test` is welcome.
 6. **Tests** — deterministic coverage with `MockLLM` in `tests/`; keep `ruff` clean.
-7. **Docs** — `README.md`, `docs/patterns.md`, `CHANGELOG.md`, and `ROADMAP.md`.
+7. **Docs** — `README.md`, `docs/guides/patterns.md`, `CHANGELOG.md`, and `ROADMAP.md`.
 
 A change to the **interpreter only** (no language change) skips steps 1–2 and 4
 unless the host tooling surface needs a new conformance-facing scripted binding.
@@ -72,8 +72,8 @@ unless the host tooling surface needs a new conformance-facing scripted binding.
 ## Design decisions (ADRs)
 
 Non-trivial or contentious decisions get a short ADR in `docs/adr/NNNN-title.md`
-(Context / Decision / Consequences). See the existing ADRs in `docs/adr/`
-(0001–0020) for the format. Reference the ADR in your PR.
+(Context / Decision / Consequences). See the [ADR index](./docs/adr/README.md)
+for the format and the existing decisions. Reference the ADR in your PR.
 
 ## Versioning
 

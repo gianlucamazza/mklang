@@ -3,7 +3,7 @@
 Canonical checklist for writing, running, and hosting mklang machines.
 **How to author a correct file:** [Authoring](authoring.md).  
 **How to tune reliability and cost:** [Patterns](patterns.md).  
-**What the language guarantees:** [SPEC](../SPEC.md) (cookbook §10, threat model §11).
+**What the language guarantees:** [SPEC](../../SPEC.md) (cookbook §10, threat model §11).
 
 This page answers: *what should I always do, never do, and where does each rule live?*
 
@@ -285,7 +285,7 @@ Three channels — do not merge them into one API.
 8. **MCP.** Keep `mklang.event` for run vocabulary only. Host stack traces use a
    different logger name (e.g. `mklang.host`), not the event stream.
 9. **OTel (optional, later).** Spans are a **projection** of the trace for
-   platforms; they do not replace `RunResult.trace` ([ROADMAP](../ROADMAP.md)).
+   platforms; they do not replace `RunResult.trace` ([ROADMAP](../../ROADMAP.md)).
 
 ### Anti-patterns
 
@@ -424,12 +424,12 @@ Until then: use **host policy + patterns + this checklist**. Do **not** invent a
 | --- | --- |
 | [Authoring](authoring.md) | Recipe + skeleton + faces → LLM channels |
 | [Patterns](patterns.md) | Tiers, reliability, clocks, `execution` usage |
-| [Stdlib](stdlib.md) | Ready `std_*` architectures |
+| [Stdlib](../reference/stdlib.md) | Ready `std_*` architectures |
 | [Console](console.md) | TUI, rendering, brain clocks, consent, workspace FS |
-| [SPEC §4–§6](../SPEC.md) | Faces + produce/judge semantics (+ non-normative host notes) |
-| [SPEC §8](../SPEC.md) | Trace / observability |
-| [SPEC §11](../SPEC.md) | Threat model (injection, checkpoints at rest) |
-| [ADR 0015](adr/0015-console-surface.md) | Console scope (not an IDE) |
-| [ADR 0019](adr/0019-mcp-live-events.md) | `mklang.event` vs ops log |
-| [ADR 0020](adr/0020-host-tool-stub-architecture.md) | Tool envelope for I/O (incl. future FS tools) |
-| [ROADMAP](../ROADMAP.md) | OTel maybe; no bash/FS in core |
+| [SPEC §4–§6](../../SPEC.md) | Faces + produce/judge semantics (+ non-normative host notes) |
+| [SPEC §8](../../SPEC.md) | Trace / observability |
+| [SPEC §11](../../SPEC.md) | Threat model (injection, checkpoints at rest) |
+| [ADR 0015](../adr/0015-console-surface.md) | Console scope (not an IDE) |
+| [ADR 0019](../adr/0019-mcp-live-events.md) | `mklang.event` vs ops log |
+| [ADR 0020](../adr/0020-host-tool-stub-architecture.md) | Tool envelope for I/O (incl. future FS tools) |
+| [ROADMAP](../../ROADMAP.md) | OTel maybe; no bash/FS in core |
