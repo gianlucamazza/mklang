@@ -15,6 +15,7 @@ mklang console                 # DeepSeek by default; --provider anthropic|opena
 
 ```
 ┌ mklang console ──────────────────────────────┬─ inspector (F2) ────────┐
+│ READY · deepseek · tokens 922+212 · session …│                         │
 │ you: create a machine that triages my CSV    │ [Context|Trace|Session] │
 │ agent: created triage_csv.mk and ran it: …   │ …                       │
 │ ▼ console_agent                              │                         │
@@ -23,20 +24,20 @@ mklang console                 # DeepSeek by default; --provider anthropic|opena
 │ │  ● save   [ok] → decide                    │                         │
 │ │  ● do_run ┬ ▼ triage_csv …                 │                         │
 ├──────────────────────────────────────────────┴─────────────────────────┤
-│ session tokens: 922+212 · provider deepseek · 20260717-104512-ab3f     │
 │ > _                                                                    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-Conversation on top, the live **activity tree** of the current turn beneath it
+Conversation is the primary workspace, with the bounded live **activity tree**
+of the current turn beneath it
 (brain states under `console_agent`; Textual draws a single expand toggle ▶/▼
 per expandable row — run labels are the machine name only). Each commissioned
 run nests under the state that launched it; `call:` sub-runs by depth; fan-out
 branches as leaves.
-State rows are **not** expandable unless they have content: a nested run and/or
-an output preview leaf. The token HUD and the input line sit below. `F2`
-toggles the inspector (last run's blackboard, trace, session facts); `ctrl+l`
-clears the conversation.
+Normal state output stays in the inspector; only exceptional/truncated previews
+expand the tree. `F2` toggles the inspector (docked at 100+ columns, full workspace
+below that), `ctrl+t` toggles activity, `ctrl+g` requests a cooperative stop after
+the current state, and `ctrl+l` clears the conversation.
 
 ## Conversation rendering
 
@@ -95,6 +96,9 @@ brain must not AUTHOR a machine solely to read the clock.
 | `/resume [n]`                    | list / finish the session's parked turns          |
 | `/session`                       | current session facts                             |
 | `/help` · `/quit`                | help · exit                                       |
+
+Slash commands use shell-style quoting, so `/run demo task="hello world"` keeps
+the value together. Command names are suggested while typing.
 
 ## Sessions
 

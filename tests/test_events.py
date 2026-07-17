@@ -68,6 +68,7 @@ def test_events_mirror_the_trace():
         "state-done",
         "state-start",
         "state-done",
+        "run-finished",
     ]
     done = [e for e in events if e["type"] == "state-done"]
     for ev, step in zip(done, res.trace):
@@ -114,7 +115,12 @@ def test_nested_call_events_carry_depth():
     assert res.status == "done"
     child_events = [e for e in events if e["machine"] == "child"]
     assert {e["depth"] for e in child_events} == {1}
-    assert [e["type"] for e in child_events] == ["run-start", "state-start", "state-done"]
+    assert [e["type"] for e in child_events] == [
+        "run-start",
+        "state-start",
+        "state-done",
+        "run-finished",
+    ]
     # the child completes before the parent's call state is recorded
     parent_done = events.index(
         next(e for e in events if e["type"] == "state-done" and e["machine"] == "parent")
@@ -174,8 +180,18 @@ def test_hitl_suspension_records_the_escalating_state():
     )
     res, events = collect(m, suspendable=True, escalate_suspend=True)
     assert res.status == "suspended"
-    last = events[-1]
-    assert last["type"] == "state-done" and last["policy"] == "escalate"
+    assert events[-2]["type"] == "state-done" and events[-2]["policy"] == "escalate"
+    assert events[-1]["type"] == "run-finished" and events[-1]["status"] == "suspended"
+
+
+def test_cooperative_cancellation_and_terminal_event():
+    m = linear()
+    checks = iter([False, True])
+    res, events = collect(m, cancel_requested=lambda: next(checks, True))
+    assert res.status == "halt" and res.error == "cancelled"
+    assert [step["state"] for step in res.trace] == ["a"]
+    assert events[-1]["type"] == "run-finished"
+    assert events[-1]["error"] == "cancelled"
 
 
 def test_state_done_event_carries_truncated_flag():
@@ -195,9 +211,7 @@ def test_state_done_event_carries_truncated_flag():
         }
     )
     llm = MockLLM(
-        produce_fn=lambda *a: Produced(
-            text="partial", truncated=True, finish_reason="length"
-        )
+        produce_fn=lambda *a: Produced(text="partial", truncated=True, finish_reason="length")
     )
     res, events = collect(m, llm=llm)
     assert res.status == "done"

@@ -19,7 +19,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-DEFAULT_BASE = Path.home() / ".mklang" / "console" / "sessions"
+
+def default_base() -> Path:
+    from ..paths import host_paths
+
+    return host_paths().sessions
+
+
+DEFAULT_BASE = default_base()
 
 # Prompt-side budget for the brain's {{history}} (not the on-disk audit).
 HISTORY_CHARS = 8_000

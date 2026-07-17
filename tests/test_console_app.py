@@ -142,6 +142,7 @@ def test_activity_tree_untrusted_labels_are_plain():
             "policy": "ok",
             "to": "reply",
             "output": "see **bold** and [b]tag[/b]",
+            "truncated": True,
         }
     )
     labels = all_labels(tree.root)
@@ -191,8 +192,10 @@ def test_activity_tree_leaf_states_are_not_vacuously_expandable():
             "output": "REPLY: hello",
         }
     )
-    assert decide.allow_expand is True
-    assert any("REPLY: hello" in str(c.label) for c in decide.children)
+    # Normal previews now live in the inspector; only exceptional/truncated
+    # output expands the activity tree.
+    assert decide.allow_expand is False
+    assert len(decide.children) == 0
 
 
 def test_activity_tree_and_inspector(tmp_path):
@@ -229,9 +232,9 @@ def test_activity_tree_and_inspector(tmp_path):
 
             # inspector: hidden by default, F2 shows it, content is filled
             panel = app.query_one(Inspector)
-            assert not panel.display
+            assert panel.styles.visibility == "hidden"
             await pilot.press("f2")
-            assert panel.display
+            assert panel.styles.visibility == "visible"
             from textual.widgets import Static
 
             session_text = str(app.query_one("#inspector-session", Static).render())
@@ -247,6 +250,38 @@ def test_activity_tree_and_inspector(tmp_path):
             assert not any("do it" in label for label in labels2)
 
     asyncio.run(drive())
+
+
+def test_responsive_inspector_and_activity_toggle(tmp_path):
+    from mklang.console.widgets import ActivityTree, Inspector
+
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: scripted_llm({}, [4]),
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.press("f2")
+            assert app.query_one("#body").has_class("inspector-narrow")
+            assert app.query_one(Inspector).styles.visibility == "visible"
+            await pilot.press("f2")
+            assert app.query_one(Inspector).styles.visibility == "hidden"
+            await pilot.press("ctrl+t")
+            assert app.query_one(ActivityTree).has_class("hidden")
+
+    asyncio.run(drive())
+
+
+def test_slash_parser_supports_quoted_values():
+    from mklang.console.commands import parse_command
+
+    cmd, args = parse_command('/run demo task="hello world"')
+    assert cmd == "/run"
+    assert args == ["demo", "task=hello world"]
 
 
 def test_slash_commands(tmp_path):

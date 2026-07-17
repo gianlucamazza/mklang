@@ -77,6 +77,17 @@ def tree_run(machine: str) -> Text:
     return line
 
 
+def tree_run_finished(machine: str, status: str, error: str | None = None) -> Text:
+    glyph = {"done": "✓", "suspended": "⏸", "halt": "!"}.get(status, "•")
+    style = {"done": "green", "suspended": "yellow", "halt": "red"}.get(status, "dim")
+    line = Text(f"{glyph} ", style=style)
+    line.append(machine or "run", style="bold")
+    line.append(f"  {status}", style=style)
+    if error:
+        line.append(f" · {error}", style="dim")
+    return line
+
+
 def tree_state_start(state: str, kind: str, tier: str) -> Text:
     line = Text(f"◐ {state or ''} ")
     line.append(f"{kind or ''}·{tier or ''}", style="dim")

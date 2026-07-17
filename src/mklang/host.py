@@ -50,9 +50,12 @@ def _default_build_llm(prov):
 
 
 def _provider(
-    config: str, provider: str | None, build_llm
+    config: str | None, provider: str | None, build_llm
 ) -> tuple[ProviderConfig, object, list[str]]:
-    prov = load_provider(config, provider)
+    try:
+        prov = load_provider(config, provider)
+    except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+        raise PrepareError([str(exc)], kind="load") from exc
     warnings = []
     if not prov.api_key and prov.name != "local":
         warnings.append(f"no API key for provider '{prov.name}' — set it in .env")
@@ -134,7 +137,7 @@ def check_machine(
 
 
 def prepare_path(
-    config: str,
+    config: str | None,
     provider: str | None,
     machine_path: str,
     *,
@@ -173,7 +176,7 @@ def prepare_path(
 
 
 def prepare_source(
-    config: str,
+    config: str | None,
     provider: str | None,
     source: str,
     *,
@@ -213,9 +216,7 @@ def build_output(res: RunResult) -> dict:
 RESULT_OBS_CHARS = 2000
 
 
-def inject_host_defaults(
-    ctx: dict, *, today: str | None = None, now: str | None = None
-) -> dict:
+def inject_host_defaults(ctx: dict, *, today: str | None = None, now: str | None = None) -> dict:
     """Fill host-convention keys **only when the machine declared them**.
 
     Convention (no language change): if the blackboard already has a top-level

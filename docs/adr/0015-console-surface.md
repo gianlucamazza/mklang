@@ -61,7 +61,8 @@ the brain is an ordinary 0.3 machine.
 
 `engine.run(..., on_event=None)`: an optional callback receiving small dicts —
 `state-start`, `state-done` (output preview, gate, policy, to, tokens),
-`branch-progress` for fan-out, `suspended`, `halt`, `done` — with `depth` so
+`branch-done` for fan-out and additive `run-finished` (`status` / `error` / usage)
+— with `depth` so
 nested `call:`/tool-launched runs render as a tree. Purely additive; no
 behavior change when absent; the same seam later serves OpenTelemetry export
 (ROADMAP). The trace stays the canonical record; events are its live shadow.

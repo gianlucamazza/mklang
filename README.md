@@ -200,6 +200,17 @@ uv run mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
 uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
+For an installed package outside this repository, scaffold the XDG user host or
+a project without overwriting existing files:
+
+```bash
+mklang init --user              # ~/.config, ~/.local/share, ~/.local/state
+mklang init                     # ./config/runtime.yaml, ./machines, ./.env
+```
+
+CLI commands accept `--format auto|text|json`; `run`, `resume`, and `machines`
+keep JSON on piped stdout while showing a concise Rich view in a terminal.
+
 The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
 deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
@@ -261,7 +272,7 @@ mklang console
 
 ## Status
 
-**Language v0.3 / package 0.8.1** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 0.9.0** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`

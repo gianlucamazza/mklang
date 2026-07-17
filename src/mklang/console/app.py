@@ -51,13 +51,14 @@ def build_app(
     from rich.console import RenderableType
     from textual.app import App, ComposeResult
     from textual.containers import Horizontal, Vertical
+    from textual.suggester import SuggestFromList
     from textual.widgets import Footer, Header, Input, RichLog, Static
 
-    from .session import DEFAULT_BASE, Session
+    from .session import Session, default_base
     from .widgets import ActivityTree, Inspector
 
     brain = load_brain(agent_path)
-    base = Path(session_base) if session_base else DEFAULT_BASE
+    base = Path(session_base) if session_base else default_base()
 
     class TextualBridge:
         """Bridge impl: emit from any thread; ask/confirm block the worker."""
@@ -93,33 +94,52 @@ def build_app(
     class ConsoleApp(App):
         TITLE = "mklang console"
         CSS = """
+        Screen { layout: vertical; }
         #body { height: 1fr; }
         #main { width: 2fr; }
-        #log { height: 2fr; }
-        #activity { height: 1fr; border-top: solid $panel; }
-        #status { height: 1; color: $text-muted; }
-        #inspector { width: 1fr; display: none; border-left: solid $panel; }
+        #log { height: 1fr; padding: 0 1; scrollbar-gutter: stable; }
+        #activity { height: 11; border-top: solid $panel; padding: 0 1; }
+        #activity.hidden { display: none; }
+        #status { height: 1; padding: 0 1; color: $text-muted; background: $boost; }
+        #prompt { height: 3; border-top: solid $primary; }
+        #inspector { width: 40%; border-left: solid $panel; }
         """
         BINDINGS = [
             ("ctrl+c", "quit", "Quit"),
             ("f2", "toggle_inspector", "Inspector"),
+            ("ctrl+t", "toggle_activity", "Activity"),
+            ("ctrl+g", "cancel_run", "Stop"),
             ("ctrl+l", "clear_log", "Clear"),
         ]
 
         def __init__(self):
             super().__init__()
             self.bridge = TextualBridge(self)
+            self.cancel_event = threading.Event()
             self.tools = ConsoleTools(
                 config=config,
                 provider=provider,
                 bridge=self.bridge,
                 workspace=Path(workspace),
                 build_llm=build_llm,
+                cancel_requested=self.cancel_event.is_set,
             )
             if session_id:
-                self.session = Session.load(base / session_id)
+                target = base / session_id
+                if not target.is_dir() and session_base is None:
+                    from ..paths import legacy_sessions
+
+                    legacy = legacy_sessions() / session_id
+                    if legacy.is_dir():
+                        target = legacy
+                self.session = Session.load(target)
             elif continue_session:
-                self.session = Session.latest(base) or Session.create(
+                self.session = Session.latest(base)
+                if self.session is None and session_base is None:
+                    from ..paths import legacy_sessions
+
+                    self.session = Session.latest(legacy_sessions())
+                self.session = self.session or Session.create(
                     base, workspace=str(self.tools.workspace), brain=brain.name
                 )
             else:
@@ -131,42 +151,97 @@ def build_app(
             self.spent_out = self.session.spent_out
             self.tools._consented.update(self.session.consented)
             self.answer_mode = False
+            self.running = False
+            self.activity_visible = True
+            self.inspector_visible = False
             self.log_history: list[str] = []  # plain mirror of the log, for tests
 
         def compose(self) -> ComposeResult:
-            yield Header()
+            yield Header(show_clock=False)
+            yield Static("", id="status")
             with Horizontal(id="body"):
                 with Vertical(id="main"):
                     # markup=False: untrusted content never rides Rich tags via write(str).
                     # Chrome uses Text.from_markup / Markdown renderables instead.
                     yield RichLog(id="log", wrap=True, markup=False)
                     yield ActivityTree()
-                    yield Static("", id="status")
-                    yield Input(placeholder="what should happen? (ctrl+c quits)", id="prompt")
+                    from .commands import COMMANDS
+
+                    yield Input(
+                        placeholder="Ask the agent or type / for commands",
+                        id="prompt",
+                        suggester=SuggestFromList(
+                            [f"/{command.name}" for command in COMMANDS], case_sensitive=False
+                        ),
+                    )
                 yield Inspector()
             yield Footer()
 
         def action_toggle_inspector(self) -> None:
-            panel = self.query_one(Inspector)
-            panel.display = not panel.display
+            self.inspector_visible = not self.inspector_visible
+            self.apply_responsive_layout()
+
+        def action_toggle_activity(self) -> None:
+            self.activity_visible = not self.activity_visible
+            self.query_one(ActivityTree).set_class(not self.activity_visible, "hidden")
+
+        def action_cancel_run(self) -> None:
+            if not self.running or self.answer_mode:
+                return
+            self.cancel_event.set()
+            self.log_chrome(
+                "[yellow]Stop requested — waiting for the current state to finish…[/yellow]"
+            )
+            self.update_status("stopping")
 
         def action_clear_log(self) -> None:
             self.query_one("#log", RichLog).clear()
             self.log_history.clear()
 
         def on_mount(self) -> None:
-            # Banner values are host-local (brain name, provider, paths, session id).
             self.log_chrome(
-                f"[b]mklang console[/b] · brain={brain.name} · "
-                f"provider={self.tools.prov.name} · workspace={self.tools.workspace} · "
-                f"session={self.session.id}"
+                "[b]Ready.[/b] Ask the agent what should happen, or type [cyan]/help[/cyan]."
             )
             if self.history:
                 self.log_chrome(
                     f"[dim]resumed session with {len(self.history)} chars of history[/dim]"
                 )
-            self.update_status()
+            self.update_status("ready")
+            self.query_one(Inspector).show_session(
+                self.session, self.spent_in, self.spent_out, self.tools._consented
+            )
+            self.apply_responsive_layout()
             self.query_one("#prompt", Input).focus()
+
+        def on_resize(self, _event) -> None:
+            self.apply_responsive_layout()
+
+        def apply_responsive_layout(self) -> None:
+            body = self.query_one("#body")
+            main = self.query_one("#main")
+            panel = self.query_one(Inspector)
+            body.remove_class("inspector-wide", "inspector-narrow")
+            if not self.inspector_visible:
+                main.display = True
+                panel.display = True
+                panel.styles.visibility = "hidden"
+                panel.styles.width = 0
+            elif self.size.width >= 100:
+                body.add_class("inspector-wide")
+                main.display = True
+                panel.display = True
+                panel.styles.visibility = "visible"
+                panel.styles.width = "40%"
+                panel.styles.min_width = 32
+                panel.styles.max_width = 46
+            else:
+                body.add_class("inspector-narrow")
+                main.display = False
+                panel.display = True
+                panel.styles.visibility = "visible"
+                panel.styles.width = "100%"
+                panel.styles.min_width = 0
+                panel.styles.max_width = None
 
         # -- rendering -----------------------------------------------------
 
@@ -194,7 +269,12 @@ def build_app(
             )
 
         def log_fenced(
-            self, body: str, *, label_markup: str | None = None, mirror_label: str = "", lang: str = ""
+            self,
+            body: str,
+            *,
+            label_markup: str | None = None,
+            mirror_label: str = "",
+            lang: str = "",
         ) -> None:
             """Fenced code (JSON / machine source); optional chrome label."""
             if label_markup:
@@ -205,10 +285,11 @@ def build_app(
             else:
                 self.log_write(log_render.fenced(body, lang=lang), body)
 
-        def update_status(self) -> None:
+        def update_status(self, state: str | None = None) -> None:
+            state = state or ("running" if self.running else "ready")
             self.query_one("#status", Static).update(
-                f"session tokens: {self.spent_in}+{self.spent_out} · "
-                f"provider {self.tools.prov.name} · {self.session.id}"
+                f"{state.upper()} · {self.tools.prov.name} · tokens {self.spent_in}+{self.spent_out} "
+                f"· session {self.session.id}"
             )
 
         def render_event(self, e: dict) -> None:
@@ -238,7 +319,7 @@ def build_app(
             box.value = ""
             if self.answer_mode:
                 self.answer_mode = False
-                box.placeholder = "what should happen? (ctrl+c quits)"
+                box.placeholder = "Ask the agent or type / for commands"
                 self.log_plain(text, label_markup="[yellow]you:[/yellow] ", mirror_label="you:")
                 box.disabled = True
                 self.bridge.deliver(text)
@@ -252,6 +333,9 @@ def build_app(
             self.session.append({"t": "user", "text": text})
             self.query_one(ActivityTree).new_turn(text[:60])
             box.disabled = True
+            self.running = True
+            self.cancel_event.clear()
+            self.update_status("running")
             self.run_worker(lambda: self.turn(text), thread=True, exclusive=True)
 
         # -- slash commands (operator affordances, bypass the brain) ---------
@@ -262,15 +346,19 @@ def build_app(
             from ..checkpoint import load_checkpoint
             from ..cli import _coerce
 
-            parts = text.split()
-            cmd, args = parts[0].lower(), parts[1:]
-            if cmd == "/help":
-                help_text = (
-                    "/machines · /run <name> [k=v…] · /check <name> · /read <name> · "
-                    "/budget <n> · /resume [n] · /session · /quit — plain text goes to the "
-                    "agent; F2 inspector, ctrl+l clear"
+            from .commands import BY_NAME, help_text, parse_command
+
+            try:
+                cmd, args = parse_command(text)
+            except ValueError as exc:
+                self.log_plain(
+                    str(exc),
+                    label_markup="[red]command error:[/red] ",
+                    mirror_label="command error:",
                 )
-                self.log_chrome(f"[dim]{help_text}[/dim]")
+                return
+            if cmd == "/help":
+                self.log_fenced(help_text())
             elif cmd == "/machines":
                 rows = _json.loads(self.tools.list_machines({}))["machines"]
                 for r in rows:
@@ -297,6 +385,9 @@ def build_app(
                 )
                 self.query_one(ActivityTree).new_turn(f"/run {target}")
                 self.query_one("#prompt", Input).disabled = True
+                self.running = True
+                self.cancel_event.clear()
+                self.update_status("running")
                 self.run_worker(lambda: self.slash_run(target, inputs), thread=True, exclusive=True)
             elif cmd == "/check" and args:
                 verdict = _json.loads(self.tools.check_machine({"name": args[0]}))
@@ -307,7 +398,10 @@ def build_app(
                 self.log_fenced(source, lang="yaml")
             elif cmd == "/budget" and args:
                 try:
-                    self.tools.default_cost_budget = int(args[0])
+                    budget = int(args[0])
+                    if budget <= 0:
+                        raise ValueError
+                    self.tools.default_cost_budget = budget
                     self.log_chrome(f"[dim]default cost budget → {args[0]} tokens[/dim]")
                 except ValueError:
                     self.log_chrome("[red]/budget needs an integer[/red]")
@@ -322,22 +416,32 @@ def build_app(
                     if not cks:
                         self.log_chrome("[dim]no parked checkpoints in this session[/dim]")
                     for i, ck in enumerate(cks):
-                        self.log_plain(
-                            ck.name, label_markup=f"  [[{i}]] ", mirror_label=f"  [{i}]"
-                        )
+                        self.log_plain(ck.name, label_markup=f"  [[{i}]] ", mirror_label=f"  [{i}]")
                     return
                 try:
                     ck = load_checkpoint(cks[int(args[0])])
                 except (IndexError, ValueError, OSError) as e:
-                    self.log_plain(str(e), label_markup="[red]cannot resume:[/red] ", mirror_label="cannot resume:")
+                    self.log_plain(
+                        str(e),
+                        label_markup="[red]cannot resume:[/red] ",
+                        mirror_label="cannot resume:",
+                    )
                     return
                 name = cks[int(args[0])].name
-                self.log_plain(name, label_markup="[b cyan]/resume[/b cyan] ", mirror_label="/resume")
+                self.log_plain(
+                    name, label_markup="[b cyan]/resume[/b cyan] ", mirror_label="/resume"
+                )
                 self.query_one(ActivityTree).new_turn("/resume")
                 self.query_one("#prompt", Input).disabled = True
                 self.run_worker(lambda: self.slash_resume(ck), thread=True, exclusive=True)
             elif cmd == "/quit":
                 self.exit()
+            elif cmd in ("/run", "/check", "/read", "/budget"):
+                self.log_plain(
+                    f"usage: {BY_NAME[cmd].usage}",
+                    label_markup="[red]missing argument:[/red] ",
+                    mirror_label="missing argument:",
+                )
             else:
                 self.log_chrome(f"[red]unknown command {cmd} — try /help[/red]")
 
@@ -363,6 +467,8 @@ def build_app(
             )
             self.session.append({"t": "slash-result", "text": observation})
             self.session.save_state()
+            self.running = False
+            self.update_status("ready")
             box = self.query_one("#prompt", Input)
             box.disabled = False
             box.focus()
@@ -382,6 +488,7 @@ def build_app(
                 suspendable=True,
                 resume=resume,
                 on_event=self.bridge.emit,
+                cancel_requested=self.cancel_event.is_set,
             )
 
         def turn(self, user_message: str) -> None:
@@ -418,7 +525,9 @@ def build_app(
         def finish_turn(self, user_message: str, res) -> None:
             if res.status == "done":
                 body = str(res.result or "")
-                self.log_markdown(body, label_markup="[b green]agent:[/b green]", mirror_label="agent:")
+                self.log_markdown(
+                    body, label_markup="[b green]agent:[/b green]", mirror_label="agent:"
+                )
                 self.history += f"\nuser: {user_message}\nagent: {res.result}"
             else:
                 detail = f"{res.error} (at {res.at})"
@@ -438,6 +547,8 @@ def build_app(
             self.session.spent_out = self.spent_out
             self.session.consented = sorted(self.tools._consented)
             self.session.save_state()
+            self.running = False
+            self.update_status("ready")
             box = self.query_one("#prompt", Input)
             box.disabled = False
             box.focus()

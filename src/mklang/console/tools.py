@@ -47,7 +47,7 @@ def _obs(payload: dict) -> str:
 
 @dataclass
 class ConsoleTools:
-    config: str
+    config: str | None
     provider: str | None
     bridge: Bridge
     workspace: Path
@@ -55,6 +55,7 @@ class ConsoleTools:
     # Output anti-cutoff policy for commissioned machines (ADR 0018).
     on_truncate: str = "report"
     build_llm: object = None
+    cancel_requested: object = None
     _consented: set = field(default_factory=set)
 
     def __post_init__(self):
@@ -215,6 +216,7 @@ class ConsoleTools:
             escalate_suspend=True,
             on_event=lambda e: self.bridge.emit({"run": target, **e}),
             on_truncate=self.on_truncate,
+            cancel_requested=self.cancel_requested,
         )
         # HITL: broker every escalation to the human, then resume in place.
         while res.status == "suspended" and res.error == "escalated":
@@ -240,6 +242,7 @@ class ConsoleTools:
                 resume=res.frames,
                 on_event=lambda e: self.bridge.emit({"run": target, **e}),
                 on_truncate=self.on_truncate,
+                cancel_requested=self.cancel_requested,
             )
         # Compact + honest observation for the brain (ADR 0015/0017/0018):
         # propagate produce truncation; never silent-cut the result string.

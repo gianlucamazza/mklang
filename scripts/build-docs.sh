@@ -14,8 +14,9 @@ cp docs/authoring.md site-src/
 cp docs/best-practices.md site-src/
 cp docs/stdlib.md site-src/
 cp docs/console.md site-src/
+cp docs/install.md site-src/
 cp conformance/README.md site-src/conformance.md
-cp docs/adr/*.md site-src/adr/  # includes 0020 host tool stub architecture
+cp docs/adr/*.md site-src/adr/
 cp -r schema site-src/schema
 
 # Rewrite repo-relative links for the flattened site: in-site pages point to

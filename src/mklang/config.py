@@ -29,15 +29,28 @@ class ProviderConfig:
         return self.judge
 
 
-def load_provider(config_path: str, provider: str | None = None) -> ProviderConfig:
+def load_provider(config_path: str | Path | None, provider: str | None = None) -> ProviderConfig:
     """Load a provider block from the runtime YAML; resolve its key from the env.
 
     `.env` is loaded first (python-dotenv), so keys never live in the config file."""
-    load_dotenv(find_dotenv(usecwd=True))  # search from cwd upward, not the package dir
-    cfg = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+    from .paths import host_paths, resolve_config
+
+    resolved = resolve_config(config_path)
+    # Project .env wins naturally; the user config .env is a fallback.
+    project_env = find_dotenv(usecwd=True)
+    if project_env:
+        load_dotenv(project_env)
+    elif host_paths().user_env.is_file():
+        load_dotenv(host_paths().user_env)
+    try:
+        cfg = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ValueError(f"cannot read runtime config {resolved}: {exc}") from exc
+    if not isinstance(cfg, dict) or not isinstance(cfg.get("providers"), dict):
+        raise ValueError(f"runtime config {resolved} must define `active` and `providers`")
     name = provider or cfg["active"]
     if name not in cfg.get("providers", {}):
-        raise KeyError(f"provider {name!r} not in {config_path}")
+        raise ValueError(f"provider {name!r} not in {resolved}")
     p = cfg["providers"][name]
     api_key = os.environ.get(p.get("api_key_env", ""), "")
     return ProviderConfig(

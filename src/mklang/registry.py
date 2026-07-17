@@ -82,9 +82,35 @@ def load_entry_point_machines(group: str = ENTRY_POINT_GROUP) -> dict[str, Machi
 
 
 def base_registry(*, include_entry_points: bool = True) -> dict[str, Machine]:
-    """Stdlib ← entry-point plugins (later keys win); callers layer sibling
-    machines and the run target on top, so user machines always shadow these."""
+    """Stdlib ← plugins ← system ← user (later keys win)."""
+    from .paths import machine_layers
+
     reg = dict(load_stdlib_registry())
     if include_entry_points:
         reg.update(load_entry_point_machines())
+    for _source, directory in machine_layers():
+        reg.update(load_registry(directory, validate=False))
     return reg
+
+
+def registry_with_sources(
+    project_dir: str | Path | None = None,
+) -> tuple[dict[str, Machine], dict[str, str]]:
+    """Build the public discovery registry and retain each winning source label."""
+    from .paths import machine_layers
+
+    stdlib = load_stdlib_registry()
+    reg = dict(stdlib)
+    sources = {name: "stdlib" for name in stdlib}
+    for name, machine in load_entry_point_machines().items():
+        reg[name] = machine
+        sources[name] = "plugin"
+    for source, directory in machine_layers():
+        for name, machine in load_registry(directory, validate=False).items():
+            reg[name] = machine
+            sources[name] = source
+    if project_dir:
+        for name, machine in load_registry(project_dir, validate=False).items():
+            reg[name] = machine
+            sources[name] = "local"
+    return reg, sources

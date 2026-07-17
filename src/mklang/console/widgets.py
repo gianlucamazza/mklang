@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import json
 
+from rich.syntax import Syntax
+from rich.table import Table
+from textual.containers import Vertical
 from textual.widgets import RichLog, Static, TabbedContent, TabPane, Tree
 
 from . import render as log_render
@@ -32,6 +35,7 @@ class ActivityTree(Tree):
         self._brain_open = None  # the brain state currently in flight
         self._run_nodes = {}  # (tag, depth) -> run node
         self._state_nodes = {}  # (tag, depth, state) -> state node
+        self._state_kinds = {}
 
     def new_turn(self, title: str) -> None:
         """One turn on display at a time — history lives in the transcript."""
@@ -78,12 +82,15 @@ class ActivityTree(Tree):
             parent = self._run_nodes.get((tag, depth)) or self._turn_node
             # Leaves until something nests under them (commissioned run / preview).
             node = parent.add(
-                log_render.tree_state_start(e.get("state", ""), e.get("kind", ""), e.get("tier", "")),
+                log_render.tree_state_start(
+                    e.get("state", ""), e.get("kind", ""), e.get("tier", "")
+                ),
                 expand=False,
                 allow_expand=False,
             )
             self._state_nodes[(tag, depth, e["state"])] = node
             self._state_nodes[(tag, depth, None)] = node  # the in-flight state
+            self._state_kinds[(tag, depth, e["state"])] = e.get("kind", "")
             if tag is None:
                 self._brain_open = node
         elif kind == "state-done":
@@ -94,7 +101,20 @@ class ActivityTree(Tree):
                 )
                 # Expandable only when there is something to show: nested run
                 # children already present, and/or an output preview leaf.
-                preview = e.get("output")
+                # Keep the default tree scannable. Full outputs live in Context;
+                # previews are reserved for exceptional/truncated states.
+                preview = (
+                    e.get("output")
+                    if e.get("truncated")
+                    or e.get("policy")
+                    in (
+                        "fail",
+                        "call-failed",
+                        "no-gate-matched",
+                        "judge-unparseable",
+                    )
+                    else None
+                )
                 if preview:
                     self._enable_expand(node)
                     node.add_leaf(log_render.tree_preview(preview))
@@ -105,33 +125,51 @@ class ActivityTree(Tree):
             if node is not None:
                 self._enable_expand(node)
                 node.add_leaf(log_render.tree_branch(e.get("index")))
+        elif kind == "run-finished":
+            node = self._run_nodes.get((tag, depth))
+            if node is not None:
+                node.set_label(
+                    log_render.tree_run_finished(
+                        e.get("machine", ""), e.get("status", ""), e.get("error")
+                    )
+                )
 
 
-class Inspector(TabbedContent):
+class Inspector(Vertical):
     """Side panel: the last run's blackboard, its trace, and session facts."""
 
     def __init__(self):
         super().__init__(id="inspector")
 
     def compose(self):
-        with TabPane("Context", id="tab-context"):
-            yield RichLog(id="inspector-context", wrap=True, markup=False)
-        with TabPane("Trace", id="tab-trace"):
-            yield RichLog(id="inspector-trace", wrap=True, markup=False)
-        with TabPane("Session", id="tab-session"):
-            yield Static("", id="inspector-session")
+        with TabbedContent(initial="tab-session", id="inspector-tabs"):
+            with TabPane("Context", id="tab-context"):
+                yield RichLog(id="inspector-context", wrap=True, markup=False)
+            with TabPane("Trace", id="tab-trace"):
+                yield RichLog(id="inspector-trace", wrap=True, markup=False)
+            with TabPane("Session", id="tab-session"):
+                yield Static("", id="inspector-session")
 
     def show_result(self, res) -> None:
         ctx_log = self.query_one("#inspector-context", RichLog)
         ctx_log.clear()
-        ctx_log.write(json.dumps(res.context, ensure_ascii=False, indent=2, default=str))
+        payload = json.dumps(res.context, ensure_ascii=False, indent=2, default=str)
+        ctx_log.write(Syntax(payload, "json", word_wrap=True, background_color="default"))
         trace_log = self.query_one("#inspector-trace", RichLog)
         trace_log.clear()
+        table = Table(show_header=True, header_style="bold", expand=True)
+        table.add_column("#", width=4)
+        table.add_column("State")
+        table.add_column("Policy")
+        table.add_column("To")
         for step in res.trace:
-            trace_log.write(
-                f"{step.get('step')}. {step['state']} [{step.get('policy')}] "
-                f"gate={step.get('gate')!r} -> {step.get('to')}"
+            table.add_row(
+                str(step.get("step", "")),
+                str(step.get("state", "")),
+                str(step.get("policy", "—")),
+                str(step.get("to", "—")),
             )
+        trace_log.write(table)
 
     def show_session(self, session, spent_in: int, spent_out: int, consented) -> None:
         self.query_one("#inspector-session", Static).update(

@@ -32,6 +32,7 @@ nav:
   - Authoring guide: authoring.md
   - Machine stdlib: stdlib.md
   - Console: console.md
+  - Installation: install.md
   - Conformance: conformance.md
   - ADRs:
       - Capability tiers: adr/0001-capability-tiers.md
@@ -54,6 +55,8 @@ nav:
       - Output truncation anti-cutoff: adr/0018-output-truncation-anti-cutoff.md
       - MCP live events: adr/0019-mcp-live-events.md
       - Host tool stub architecture: adr/0020-host-tool-stub-architecture.md
+      - Filesystem layout: adr/0021-filesystem-layout-local-install.md
+      - CLI and console experience: adr/0022-cli-console-experience.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md

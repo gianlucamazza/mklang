@@ -91,6 +91,9 @@ class _Ctx:
     # Per-value produce-prompt cap for {{…}} interpolation (ADR 0017). None →
     # interpolate.PROMPT_VALUE_CHARS; 0 → unlimited.
     prompt_value_chars: int | None = None
+    # Cooperative cancellation, checked between states. The active provider
+    # call is never interrupted mid-response.
+    cancel_requested: object = None
 
 
 def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields) -> None:
@@ -238,6 +241,7 @@ def _exec_one(
             on_event=deps.on_event,
             on_truncate=deps.on_truncate,
             prompt_value_chars=deps.prompt_value_chars,
+            cancel_requested=deps.cancel_requested,
         )
         u = sub.usage or {}
         tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -364,7 +368,7 @@ def _pick_otherwise(eligible: list[tuple[int, object]]) -> tuple[int, object] | 
     return None
 
 
-def run(
+def _run_impl(
     machine: Machine,
     context: dict,
     registry: dict,
@@ -383,6 +387,7 @@ def run(
     on_event=None,
     on_truncate: str = "report",
     prompt_value_chars: int | None = None,
+    cancel_requested=None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -403,6 +408,7 @@ def run(
         on_event,
         on_truncate,
         prompt_value_chars,
+        cancel_requested,
     )
     ctx = dict(context)
     state_id = machine.entry
@@ -501,6 +507,13 @@ def run(
 
     _emit(deps, "run-start", machine.name, depth, entry=state_id, resumed=bool(resume))
     while True:
+        if cancel_requested is not None:
+            try:
+                cancelled = bool(cancel_requested())
+            except Exception:
+                cancelled = False
+            if cancelled:
+                return RunResult("halt", trace, ctx, error="cancelled", at=state_id, usage=usage())
         if steps >= machine.budget:
             return suspend_or_halt("budget-exhausted")
         if cost_budget is not None and spent() >= cost_budget:
@@ -705,3 +718,68 @@ def run(
             rv = ctx.get(machine.result) if machine.result else result
             return RunResult("done", trace, ctx, result=rv, usage=usage())
         state_id = gate.to
+
+
+def run(
+    machine: Machine,
+    context: dict,
+    registry: dict,
+    llm,
+    tiers: dict,
+    judge: str | None = None,
+    depth: int = 0,
+    max_workers: int = 5,
+    tier_params: dict | None = None,
+    cost_budget: int | None = None,
+    tools: dict | None = None,
+    hooks: dict | None = None,
+    suspendable: bool = False,
+    escalate_suspend: bool = False,
+    resume: list[dict] | None = None,
+    on_event=None,
+    on_truncate: str = "report",
+    prompt_value_chars: int | None = None,
+    cancel_requested=None,
+) -> RunResult:
+    """Run a machine and emit one additive terminal event for every outcome.
+
+    ``cancel_requested`` is cooperative and observed between states. Existing
+    callers that omit it retain identical semantics.
+    """
+    result = _run_impl(
+        machine,
+        context,
+        registry,
+        llm,
+        tiers,
+        judge,
+        depth,
+        max_workers,
+        tier_params,
+        cost_budget,
+        tools,
+        hooks,
+        suspendable,
+        escalate_suspend,
+        resume,
+        on_event,
+        on_truncate,
+        prompt_value_chars,
+        cancel_requested,
+    )
+    if on_event is not None:
+        try:
+            on_event(
+                {
+                    "type": "run-finished",
+                    "machine": machine.name,
+                    "depth": depth,
+                    "status": result.status,
+                    "error": result.error,
+                    "at": result.at,
+                    "tokens": result.usage or {"input_tokens": 0, "output_tokens": 0},
+                }
+            )
+        except Exception:
+            pass
+    return result

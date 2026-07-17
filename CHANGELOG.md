@@ -8,14 +8,25 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.8.2`).
+  `pyproject.toml` (currently `0.9.0`).
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-07-17
+
+Feature release (language stays **0.3**). Every local surface now works outside
+a repository checkout, preserves automation-safe output, and presents a
+responsive operational workspace in the terminal.
+
 ### Added
 
-- **ADR 0021 (proposed)** — filesystem layout, config resolution order, and
-  local installation (XDG user/system dirs, `mklang init`, packaging).
+- **Responsive console and CLI presentation (ADR 0022).** Rich human output with
+  stable piped JSON, shared diagnostics, responsive inspector/activity layout,
+  slash-command quoting/suggestions, operational status, cooperative stop, and
+  additive `run-finished` events.
+- **ADR 0021 phases 1–2.** XDG host paths, bundled config fallback,
+  idempotent `mklang init`, legacy console-session reads, and system/user/project
+  machine discovery with source labels.
 
 ### Fixed
 

@@ -1,6 +1,6 @@
 # ADR 0021 — Filesystem layout, config resolution, and local installation
 
-Status: Proposed
+Status: Accepted (phases 1–2 shipped; packaging phase 3 remains proposed)
 
 ## Context
 
@@ -64,6 +64,6 @@ host itself keeps config, machines, and state.
 
 ## Rollout
 
-Phase 1: `paths.py`, config resolution, state migration, `mklang init` (+docs
-`docs/install.md`). Phase 2: machine search path + `machines` labeling.
-Phase 3: install script, PKGBUILD, systemd unit.
+Phases 1–2 shipped: `paths.py`, config resolution, state migration,
+`mklang init`, machine search path, and discovery source labels. Phase 3 remains:
+install script, PKGBUILD, and systemd unit.

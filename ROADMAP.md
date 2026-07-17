@@ -189,8 +189,9 @@ language 0.4 without ADR + conformance):
 
 - **[next] `std_research`** — search → ground pattern as stdlib machine
   (discoverable from console/MCP); dogfood `today` + `tool: search`.
-- **[next] Local install & filesystem layout** (ADR 0021) — XDG user/system
-  dirs, config resolution order, `mklang init`, pipx script + PKGBUILD.
+- **Shipped (ADR 0021 phases 1–2):** XDG user/system dirs, config resolution,
+  `mklang init`, state migration, and layered machine discovery. **[next]** phase 3
+  packaging: pipx install script, PKGBUILD, and optional user service.
 - **[later] `std_compress`** — promote `research_compress.mk` into stdlib.
 - **[later] `runtime.yaml` tools block** (ADR 0016) — declarative host bindings.
 - **[later] Truncation `continue` stitching** (ADR 0018).
