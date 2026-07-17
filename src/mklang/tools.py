@@ -44,7 +44,7 @@ def calc(inp: dict) -> str:
     expr = str(inp.get("expr") or inp.get("query") or "").strip()
     try:
         return str(_eval(ast.parse(expr, mode="eval")))
-    except Exception as e:  # noqa: BLE001 — return the error as an observation
+    except Exception as e:  # return the error as an observation
         return f"error: could not evaluate {expr!r} ({e})"
 
 
@@ -107,7 +107,7 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
     try:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
         return reg
     for ep in selected:
@@ -116,7 +116,7 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
             if not callable(obj):
                 raise TypeError(f"{ep.name} is not callable")
             reg[ep.name] = obj  # type: ignore[assignment]
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"# warning: tool plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
     return reg
 

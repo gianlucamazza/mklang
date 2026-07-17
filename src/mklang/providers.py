@@ -45,13 +45,13 @@ def load_entry_point_providers(group: str = ENTRY_POINT_GROUP) -> dict[str, Prov
     try:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
         return reg
     for ep in selected:
         try:
             reg[ep.name] = ep.load()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"# warning: provider plugin '{ep.name}' failed to load: {e}", file=sys.stderr)
     return reg
 

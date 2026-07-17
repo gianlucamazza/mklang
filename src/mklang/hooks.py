@@ -58,7 +58,7 @@ def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
     try:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
         return reg
     for ep in selected:
@@ -67,7 +67,7 @@ def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
             if not callable(obj):
                 raise TypeError(f"{ep.name} is not callable")
             reg[ep.name] = obj  # type: ignore[assignment]
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"# warning: hook plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
     return reg
 

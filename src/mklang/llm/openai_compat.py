@@ -26,7 +26,7 @@ class OpenAICompatLLM:
         while True:
             try:
                 return self.client.chat.completions.create(**kwargs)
-            except Exception as e:  # noqa: BLE001 — classify, then retry or re-raise
+            except Exception as e:  # classify, then retry or re-raise
                 status = getattr(e, "status_code", None)
                 msg = str(e).lower()
                 if status in TRANSIENT_STATUS and attempt < self.max_retries:

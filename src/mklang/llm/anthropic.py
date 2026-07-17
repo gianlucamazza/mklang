@@ -33,7 +33,7 @@ class AnthropicLLM:
                 return self.client.messages.create(**kwargs)
             except RefusalError:
                 raise
-            except Exception as e:  # noqa: BLE001 — classify, then retry or wrap
+            except Exception as e:  # classify, then retry or wrap
                 # Refusal may surface as an API payload rather than our type.
                 if getattr(e, "stop_reason", None) == "refusal":
                     raise RefusalError("the model declined this request") from e
