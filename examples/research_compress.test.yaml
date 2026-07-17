@@ -1,0 +1,51 @@
+# Scenario tests for research_compress.mk
+#   mklang test examples/research_compress.mk --script examples/research_compress.test.yaml
+
+scenarios:
+  # Notes good on first check → finalize (no compress).
+  # check prose batch: 0=sufficient, 1=compress, 2=more search
+  - name: sufficient-without-compress
+    llm:
+      produce:
+        - "topic overview"
+        - "verdict: notes are enough"
+        - "Answer grounded in the single search."
+      judge: [0, 0]
+    tools:
+      search:
+        - '{"query":"topic overview","results":[{"title":"T","url":"https://t.example","snippet":"facts"}],"error":null}'
+    expect:
+      status: done
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check_sufficiency }
+        - { state: check_sufficiency, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
+
+  # check → compress → plan → search → check sufficient → finalize.
+  - name: compress-then-another-round
+    llm:
+      produce:
+        - "first query"
+        - "verdict: notes too long, compress"
+        - "- fact A from first round\n- url https://a.example"
+        - "second query"
+        - "verdict: enough after compress + second search"
+        - "Final answer using compressed notes and second hit."
+      # check1: compress(1); finalize path after second check: sufficient(0); finalize grounded(0)
+      judge: [1, 0, 0]
+    tools:
+      search:
+        - '{"query":"first query","results":[{"title":"A","url":"https://a.example","snippet":"long noisy blob"}],"error":null}'
+        - '{"query":"second query","results":[{"title":"B","url":"https://b.example","snippet":"rest"}],"error":null}'
+    expect:
+      status: done
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check_sufficiency }
+        - { state: check_sufficiency, policy: ok, to: compress_notes }
+        - { state: compress_notes, policy: ok, to: plan_query }
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check_sufficiency }
+        - { state: check_sufficiency, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }

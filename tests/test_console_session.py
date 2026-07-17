@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from mklang.console.session import Session
+from mklang.console.session import Session, history_for_brain
 
 pytest.importorskip("textual")
 
@@ -39,6 +39,29 @@ def test_latest_picks_newest_and_handles_empty(tmp_path):
     a = Session.create(tmp_path)
     b = Session.create(tmp_path)
     assert Session.latest(tmp_path).id == max(a.id, b.id)
+
+
+def test_history_for_brain_keeps_last_turns_with_marker():
+    turns = [f"user: q{i}\nagent: a{i}" for i in range(20)]
+    full = "\n".join(turns)
+    view = history_for_brain(full, max_turns=3, max_chars=50_000)
+    assert "history_truncated" in view
+    assert "user: q19" in view and "user: q17" in view
+    assert "user: q0" not in view
+    # Audit string is untouched by the helper.
+    assert full.startswith("user: q0")
+
+
+def test_history_for_brain_char_cap_marks_truncation():
+    blob = "user: " + ("x" * 500) + "\nagent: y"
+    view = history_for_brain(blob, max_turns=12, max_chars=80)
+    assert view.startswith("…[history_truncated]")
+    assert len(view) <= 80
+
+
+def test_history_for_brain_short_is_identity():
+    h = "user: hi\nagent: hello"
+    assert history_for_brain(h, max_turns=12, max_chars=8000) == h
 
 
 def reply_llm():

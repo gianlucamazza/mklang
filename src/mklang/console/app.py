@@ -318,10 +318,14 @@ def build_app(
             )
 
         def turn(self, user_message: str) -> None:
+            # Full history stays on the session for audit; only a windowed view
+            # is injected into the brain (ADR 0017 console history budget).
+            from .session import history_for_brain
+
             ctx = {
                 **brain.context,
                 "user_message": user_message,
-                "history": self.history,
+                "history": history_for_brain(self.history),
                 "observation": [],
             }
             machine = brain
