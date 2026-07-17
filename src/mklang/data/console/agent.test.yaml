@@ -1,0 +1,86 @@
+# Scenario tests for agent.mk — run with:
+#   mklang test agent.mk --script agent.test.yaml
+#
+# decide's judge batch is the four action conditions [DISCOVER, RUN, CLARIFY,
+# REPLY] (`otherwise` never enters a batch); action states have a single
+# otherwise gate and are never judged. Tools are scripted, so every flow is
+# deterministic and key-free. decide's prompt contains "single next action";
+# prepare_run's contains "run request JSON"; reply's contains "final reply".
+
+scenarios:
+  # Direct answer: no tool needed — decide chooses REPLY (judge 3), reply ends.
+  - name: direct-reply
+    llm:
+      produce:
+        "single next action": "REPLY: 2+2 is 4."
+        "final reply": "4."
+      judge: [3]
+    expect:
+      status: done
+      result: "4."
+      trace:
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }
+
+  # The commissioning loop: decide RUN (judge 1) → prepare_run emits the JSON
+  # blob → do_run's scripted observation → decide REPLY (judge 3) → reply.
+  - name: run-then-reply
+    llm:
+      produce:
+        "single next action": "RUN: std_cot with task '17*23'"
+        "run request JSON": '{"target": "std_cot", "inputs": {"task": "17*23"}}'
+        "final reply": "std_cot says 391."
+      judge: [1, 3]
+    tools:
+      run_machine: ['{"status": "done", "result": "391"}']
+    expect:
+      status: done
+      result: "std_cot says 391."
+      context:
+        run_request: '{"target": "std_cot", "inputs": {"task": "17*23"}}'
+        observation: ['{"status": "done", "result": "391"}']
+      trace:
+        - { state: decide, policy: ok, to: prepare_run }
+        - { state: prepare_run, policy: ok, to: do_run }
+        - { state: do_run, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }
+
+  # Clarification: decide CLARIFY (judge 2) → ask_user's scripted reply lands
+  # in the observations → decide REPLY.
+  - name: clarify-then-reply
+    llm:
+      produce:
+        "single next action": "CLARIFY: which environment, staging or prod?"
+        "final reply": "Done for staging."
+      judge: [2, 3]
+    tools:
+      ask_user: ["staging"]
+    expect:
+      status: done
+      result: "Done for staging."
+      context:
+        observation: ["staging"]
+      trace:
+        - { state: decide, policy: ok, to: clarify }
+        - { state: clarify, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }
+
+  # Discovery: decide DISCOVER (judge 0) → scripted catalog → decide REPLY.
+  - name: discover-then-reply
+    llm:
+      produce:
+        "single next action": "DISCOVER: need the catalog first."
+        "final reply": "You have 8 stdlib machines available."
+      judge: [0, 3]
+    tools:
+      list_machines: ['{"machines": [{"name": "std_cot"}]}']
+    expect:
+      status: done
+      result: "You have 8 stdlib machines available."
+      trace:
+        - { state: decide, policy: ok, to: discover }
+        - { state: discover, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }

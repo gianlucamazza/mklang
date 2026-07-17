@@ -142,17 +142,31 @@ class ConsoleTools:
     # -- execution ---------------------------------------------------------
 
     def run_machine(self, input: dict) -> str:
-        target = (input.get("target") or "").strip()
+        budget_field = input.get("cost_budget")
+        if input.get("request"):
+            # One-blob form for machine authors: a single state output carries
+            # {"target": …, "inputs": {…}, "cost_budget"?} as one JSON object.
+            try:
+                req = json.loads(input["request"])
+            except ValueError as e:
+                return _obs({"error": f"request is not valid JSON: {e}"})
+            if not isinstance(req, dict):
+                return _obs({"error": "request must be a JSON object"})
+            target = str(req.get("target") or "").strip()
+            inputs = req.get("inputs") or {}
+            budget_field = req.get("cost_budget", budget_field)
+        else:
+            target = (input.get("target") or "").strip()
+            try:
+                inputs = json.loads(input.get("inputs") or "{}")
+            except ValueError as e:
+                return _obs({"error": f"inputs is not valid JSON: {e}"})
+        if not isinstance(inputs, dict):
+            return _obs({"error": "inputs must be a JSON object"})
         reg = self._registry()
         machine = reg.get(target)
         if machine is None:
             return _obs({"error": f"unknown machine '{target}'", "known": sorted(reg)})
-        try:
-            inputs = json.loads(input.get("inputs") or "{}")
-        except ValueError as e:
-            return _obs({"error": f"inputs is not valid JSON: {e}"})
-        if not isinstance(inputs, dict):
-            return _obs({"error": "inputs must be a JSON object"})
         used_tools = sorted({s.tool for s in machine.states.values() if s.kind == "tool"})
         if used_tools and not set(used_tools) <= self._consented:
             if not self.bridge.confirm(
@@ -163,8 +177,7 @@ class ConsoleTools:
         ctx = dict(machine.context)
         for k, v in inputs.items():
             host.set_path(ctx, k, v)
-        budget = input.get("cost_budget")
-        cost_budget = int(budget) if budget else self.default_cost_budget
+        cost_budget = int(budget_field) if budget_field else self.default_cost_budget
         from ..hooks import load_hook_registry
         from ..tools import load_tool_registry
 
