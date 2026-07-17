@@ -25,9 +25,14 @@ Show
 Type "uv run mklang check examples/triage.mk"
 Enter
 Wait+Screen /OK.*triage/
-Sleep 1s
+Sleep 2s
+
+Type "uv run mklang lint --strict examples/triage.mk"
+Enter
+Wait+Screen /findings=0/
+Sleep 2s
 
 Type "uv run mklang test examples/triage.mk --script examples/triage.test.yaml"
 Enter
 Wait+Screen /passed=2/
-Sleep 3s
+Sleep 6s

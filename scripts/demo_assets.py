@@ -87,6 +87,7 @@ REQUIRED_TEXT = {
     ),
     "test": (
         "OK examples/triage.mk",
+        "findings=0",
         "PASS happy-path",
         "PASS kb-empty-escalates",
         "passed=2",
