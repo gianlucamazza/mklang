@@ -65,7 +65,7 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 
 # Raw HTML is opaque to MkDocs' link rewriting. These checks keep nested
 # pretty URLs such as /demos/ from silently resolving media below /demos/assets/.
-rg -q 'src="../assets/demos/cli.webm"' site-src/demos.md
-rg -q 'src="../assets/demos/console.webm"' site-src/demos.md
+grep -q 'src="../assets/demos/cli.webm"' site-src/demos.md
+grep -q 'src="../assets/demos/console.webm"' site-src/demos.md
 
 echo "site-src assembled: $(find site-src -name '*.md' | wc -l) pages"
