@@ -1,0 +1,804 @@
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+>
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+> uv run mklang run examples/summarize_doc.mk --provi
+der deepseek --set text="Gates and traces make AI wor
+kflows auditable."
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+> uv run mklang run examples/summarize_doc.mk --provi
+der deepseek --set text="Gates and traces make AI wor
+kflows auditable."
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+> uv run mklang run examples/summarize_doc.mk --provi
+der deepseek --set text="Gates and traces make AI wor
+kflows auditable."
+# summarize_doc · provider=deepseek · tiers={'fast':
+'deepseek-chat', 'balanced': 'deepseek-chat', 'reason
+ing': 'deepseek-reasoner'}
+DONE summarize_doc · provider deepseek
+╭───────────────────── Result ──────────────────────╮
+│ Gates and traces enable auditing of AI workflows. │
+│ They provide a clear record of decisions and      │
+│ actions taken.                                    │
+╰───────────────────────────────────────────────────╯
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+> uv run mklang run examples/summarize_doc.mk --provi
+der deepseek --set text="Gates and traces make AI wor
+kflows auditable."
+# summarize_doc · provider=deepseek · tiers={'fast':
+'deepseek-chat', 'balanced': 'deepseek-chat', 'reason
+ing': 'deepseek-reasoner'}
+DONE summarize_doc · provider deepseek
+╭───────────────────── Result ──────────────────────╮
+│ Gates and traces enable auditing of AI workflows. │
+│ They provide a clear record of decisions and      │
+│ actions taken.                                    │
+╰───────────────────────────────────────────────────╯
+────────────────────────────────────────────────────────────────────────────────
+> uv run mklang check examples/summarize_doc.mk
+OK examples/summarize_doc.mk
+╭────────────────────── check ──────────────────────╮
+│ files=1                                           │
+╰───────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/summarize_doc.
+mk
+OK examples/summarize_doc.mk
+╭────────────────────── lint ───────────────────────╮
+│ files=1 · findings=0                              │
+╰───────────────────────────────────────────────────╯
+> uv run mklang run examples/summarize_doc.mk --provi
+der deepseek --set text="Gates and traces make AI wor
+kflows auditable."
+# summarize_doc · provider=deepseek · tiers={'fast':
+'deepseek-chat', 'balanced': 'deepseek-chat', 'reason
+ing': 'deepseek-reasoner'}
+DONE summarize_doc · provider deepseek
+╭───────────────────── Result ──────────────────────╮
+│ Gates and traces enable auditing of AI workflows. │
+│ They provide a clear record of decisions and      │
+│ actions taken.                                    │
+╰───────────────────────────────────────────────────╯
+────────────────────────────────────────────────────────────────────────────────

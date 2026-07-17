@@ -1,0 +1,85 @@
+{
+  "assets": {
+    "docs/assets/demos/cli.gif": {
+      "bytes": 792632,
+      "codec": "gif",
+      "duration_seconds": 13.41,
+      "height": 540,
+      "sha256": "56e8e7074b7da205e9e8cd3599e4f9daa8db7d91b90a49d5caaea91355754177",
+      "width": 960
+    },
+    "docs/assets/demos/cli.txt": {
+      "bytes": 17743,
+      "sha256": "80c2ec4f794d83040b2765af988b070d14585313d1c17208fdf6593717f6fc97"
+    },
+    "docs/assets/demos/cli.webm": {
+      "bytes": 160837,
+      "codec": "vp9",
+      "duration_seconds": 13.44,
+      "height": 675,
+      "sha256": "8fbb16e640c6a9b4cb40912bbf9758133fa6a50f9178e289d6c662975a5f3953",
+      "width": 1200
+    },
+    "docs/assets/demos/console.gif": {
+      "bytes": 831606,
+      "codec": "gif",
+      "duration_seconds": 11.41,
+      "height": 540,
+      "sha256": "a655dd3f5a1ccddad75c8ec88ed4749999aa0bae1ab2c2e9d8506eb61916a69d",
+      "width": 960
+    },
+    "docs/assets/demos/console.txt": {
+      "bytes": 14621,
+      "sha256": "1e4d7204498cff8eb25cee47c6856fa9ccd1ce28ce728d89ccf74ae589fa6ece"
+    },
+    "docs/assets/demos/console.webm": {
+      "bytes": 176084,
+      "codec": "vp9",
+      "duration_seconds": 11.4,
+      "height": 675,
+      "sha256": "54b63290c00e4cc0254d62155a6160fc9d544e887506e4b2e9a733cef63a970f",
+      "width": 1200
+    }
+  },
+  "generated_at": "2026-07-17T22:32:50.090216+00:00",
+  "generated_from": "62bbcfdea99839019305701d699f6d46c094e223",
+  "models": {
+    "balanced": "deepseek-chat",
+    "fast": "deepseek-chat",
+    "reasoning": "deepseek-reasoner"
+  },
+  "package_version": "0.9.3",
+  "provider": "deepseek",
+  "schema": 1,
+  "source": {
+    "files": {
+      "config/runtime.example.yaml": "5e52b6adf862323d726b8ab6645df86e0e8d4e38c0933731384398219517b7ad",
+      "demos/tapes/cli.tape": "903a029f93f9099e5f5043f8f45e379a54cc6912ba9180ee5f613f0ab3050d09",
+      "demos/tapes/console.tape": "9799986d1a9bc30cdc21e65c450517e9e456423ca97ae82a07c2a48d5df66199",
+      "examples/summarize_doc.mk": "a8df4eda29903e753de21f7a91daab9543348997194f7ffe3035540fb04f8de1",
+      "scripts/demo_assets.py": "c1700c31ed6fa504d9553e271d5634797155c639542649d67ebe6ac97136cb71",
+      "src/mklang/cli.py": "ea2450c93b818020df80ddc1a43b61be3b34a963cc093d304bd4d2d1341ae607",
+      "src/mklang/config.py": "83639ea46f2edf9bc998a12ce1fd21a547ccf5e54906c560844d476f9108d017",
+      "src/mklang/console/__init__.py": "dad58b3e68833660f6565d992d9eed87320b1216c137f657d122624e8af5d63a",
+      "src/mklang/console/app.py": "34d5da5a941afcb2d05d2df6e2d8b25b5f7f382b032f33a5ec796f0ed141bd7d",
+      "src/mklang/console/commands.py": "3e556499af51c12c372f6795d2b4a1e03129ffdedb52848fe97e44530d25b697",
+      "src/mklang/console/render.py": "844dd8941cf6b53a407bfbe8c0e8efa67e09830bec8162c139c0dbb61eb6873f",
+      "src/mklang/console/session.py": "0fd690e457f8fb69a0dd92a5954d65352cdd1c0506ced3f1aae3991f680c7a7a",
+      "src/mklang/console/tools.py": "46b5a821d2db63b5d4caa050adf298f93c552a81469adf6ccca4ba4fc17fad53",
+      "src/mklang/console/widgets.py": "891973a37e88f3f1d4d0c28e4ce1631c10538712a2c28103bbe923f3fe33f06b",
+      "src/mklang/data/stdlib/std_cot.mk": "f87ea945502b4573fa38371acd877fd5a5cabe27ecec762509a88ee8dc5a587c",
+      "src/mklang/engine.py": "b2001ba4c8ef02fa8017008ece6f46dd80418b533c55f6f7f5de447368a52abd",
+      "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
+      "src/mklang/llm/anthropic.py": "b542fe1a6716e3c2fbbb9ea343104677dce62ab40da2d13f8f26ea687ff5f617",
+      "src/mklang/llm/base.py": "939b9e061b476463de93715fd10eab80b014d891009f414aa4d5318d4d9d1483",
+      "src/mklang/llm/context_view.py": "ff6d745ef7e78c544a57bc5a92cd1ebd48e413c84b47aa525af2eef0dae237eb",
+      "src/mklang/llm/mock.py": "b83b5c22b4b322fe2163c4e2e933ec06b0bd19bc951fd4cc23b0bec58be1a9ef",
+      "src/mklang/llm/openai_compat.py": "31a8636b61c7199c69a97fb3f268b6f5bad68b3e4ad6031f6bd4ef8c3e6a6257",
+      "src/mklang/llm/prompts.py": "bc02ffc60021d3d89ae1bc3e8d1083330b849151450faa3d0ac2ef9f90377a11",
+      "src/mklang/presentation.py": "812a1c363ace95f5bc5778615ffd36ecf681ce33adf78c41857ee984c6e9b012",
+      "src/mklang/providers.py": "512c75ca22ffa02ed03116fed81a44682f3e1b39805405a8bb4a0fca7564be7d"
+    },
+    "sha256": "b2b4228675ccaf3415925e0b70c85ec4cefeb8a7f44c114cb82473545751e184"
+  },
+  "vhs_version": "v0.11.0 (c6af91a)"
+}
