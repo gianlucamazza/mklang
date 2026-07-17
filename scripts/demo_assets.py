@@ -14,16 +14,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
+from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSET_DIR = ROOT / "docs" / "assets" / "demos"
 TAPE_DIR = ROOT / "demos" / "tapes"
+TOOLCHAIN_FILE = ROOT / "demos" / "toolchain.conf"
 MANIFEST = ASSET_DIR / "manifest.json"
 DEMOS = ("cli", "console")
 FORMATS = ("webm", "gif", "txt")
 
 SOURCE_PATTERNS = (
     "demos/tapes/*.tape",
+    "demos/toolchain.conf",
     "scripts/demo_assets.py",
     "config/runtime.example.yaml",
     "examples/summarize_doc.mk",
@@ -64,6 +67,25 @@ ANSI = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 class DemoError(RuntimeError):
     pass
+
+
+def toolchain_config() -> dict[str, str]:
+    values = {
+        key: value
+        for key, value in dotenv_values(TOOLCHAIN_FILE).items()
+        if value is not None
+    }
+    required = {
+        "VHS_VERSION",
+        "VHS_ARCHIVE_SHA256",
+        "FONT_FAMILY",
+        "FONT_VERSION",
+        "FONT_ARCHIVE_SHA256",
+    }
+    missing = sorted(required - values.keys())
+    if missing:
+        raise DemoError("missing demo toolchain values: " + ", ".join(missing))
+    return values
 
 
 def _run(args: list[str], *, capture: bool = False) -> str:
@@ -108,6 +130,7 @@ def _asset_path(demo: str, extension: str) -> Path:
 def render() -> None:
     if not os.environ.get("DEEPSEEK_API_KEY"):
         raise DemoError("DEEPSEEK_API_KEY is required for canonical live demos")
+    _verify_render_toolchain()
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
     for demo in DEMOS:
         for extension in FORMATS:
@@ -115,6 +138,22 @@ def render() -> None:
         _run(["vhs", str(TAPE_DIR / f"{demo}.tape")])
         _normalize_transcript(_asset_path(demo, "txt"))
         _derive_gif(_asset_path(demo, "webm"), _asset_path(demo, "gif"))
+
+
+def _verify_render_toolchain() -> None:
+    config = toolchain_config()
+    vhs_version = _run(["vhs", "--version"], capture=True)
+    if f"v{config['VHS_VERSION']}" not in vhs_version:
+        raise DemoError(
+            f"VHS version mismatch: expected {config['VHS_VERSION']}, got {vhs_version}"
+        )
+    resolved_font = _run(
+        ["fc-match", "--format=%{family}", config["FONT_FAMILY"]], capture=True
+    )
+    if resolved_font != config["FONT_FAMILY"]:
+        raise DemoError(
+            f"font mismatch: expected {config['FONT_FAMILY']!r}, got {resolved_font!r}"
+        )
 
 
 def _derive_gif(source: Path, target: Path) -> None:
@@ -255,14 +294,26 @@ def write_manifest(metadata: dict[str, dict] | None = None) -> None:
     tiers = config["providers"]["deepseek"]["tiers"]
     commit = _run(["git", "rev-parse", "HEAD"], capture=True)
     vhs_version = _run(["vhs", "--version"], capture=True).removeprefix("vhs version ")
+    toolchain = toolchain_config()
     payload = {
-        "schema": 1,
+        "schema": 2,
         "provider": "deepseek",
         "models": tiers,
         "generated_at": datetime.now(UTC).isoformat(),
         "generated_from": commit,
         "package_version": __version__,
-        "vhs_version": vhs_version,
+        "toolchain": {
+            "vhs": {
+                "version": toolchain["VHS_VERSION"],
+                "archive_sha256": toolchain["VHS_ARCHIVE_SHA256"],
+                "reported_version": vhs_version,
+            },
+            "font": {
+                "family": toolchain["FONT_FAMILY"],
+                "version": toolchain["FONT_VERSION"],
+                "archive_sha256": toolchain["FONT_ARCHIVE_SHA256"],
+            },
+        },
         "source": source_state(),
         "assets": metadata,
     }
@@ -273,8 +324,25 @@ def check_drift() -> None:
     if not MANIFEST.is_file():
         raise DemoError(f"missing {MANIFEST.relative_to(ROOT)}; regenerate demos")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    if manifest.get("schema") != 1 or manifest.get("provider") != "deepseek":
+    if manifest.get("schema") != 2 or manifest.get("provider") != "deepseek":
         raise DemoError("unsupported demo manifest or non-canonical provider")
+    toolchain = toolchain_config()
+    expected_toolchain = {
+        "vhs": {
+            "version": toolchain["VHS_VERSION"],
+            "archive_sha256": toolchain["VHS_ARCHIVE_SHA256"],
+        },
+        "font": {
+            "family": toolchain["FONT_FAMILY"],
+            "version": toolchain["FONT_VERSION"],
+            "archive_sha256": toolchain["FONT_ARCHIVE_SHA256"],
+        },
+    }
+    recorded_toolchain = manifest.get("toolchain") or {}
+    for component, expected in expected_toolchain.items():
+        recorded = recorded_toolchain.get(component) or {}
+        if any(recorded.get(key) != value for key, value in expected.items()):
+            raise DemoError(f"demo toolchain drift: {component}")
     current = source_state()
     recorded = manifest.get("source") or {}
     if current["sha256"] != recorded.get("sha256"):

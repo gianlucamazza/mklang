@@ -29,9 +29,10 @@ machine, waits for completion, and exits normally.
 
 The canonical sources are [`demos/tapes/`](https://github.com/gianlucamazza/mklang/tree/main/demos/tapes)
 and [`scripts/demo_assets.py`](https://github.com/gianlucamazza/mklang/blob/main/scripts/demo_assets.py).
-The script renders WebM recordings, derives compact GIF previews, validates
+The pinned toolchain installs and verifies JetBrains Mono before rendering. The
+script renders WebM recordings, derives compact GIF previews, validates
 dimensions, duration, size, transcripts, and secret leakage, then records exact
-source and asset hashes in `manifest.json`.
+source, toolchain, and asset hashes in `manifest.json`.
 
 Regeneration is intentionally manual through the **Demo assets** GitHub Actions
 workflow because it performs live provider calls. The workflow opens or updates
