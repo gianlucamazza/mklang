@@ -1,48 +1,48 @@
 {
   "assets": {
     "docs/assets/demos/cli.gif": {
-      "bytes": 792632,
+      "bytes": 718448,
       "codec": "gif",
-      "duration_seconds": 13.41,
+      "duration_seconds": 12.58,
       "height": 540,
-      "sha256": "56e8e7074b7da205e9e8cd3599e4f9daa8db7d91b90a49d5caaea91355754177",
+      "sha256": "b230ecc94fecc750baefe3db3015ab4cd565f22dab7212bd436528430eebafc4",
       "width": 960
     },
     "docs/assets/demos/cli.txt": {
-      "bytes": 1326,
-      "sha256": "d08d633fbe38fb54de1869b29df23a312f0cbc6fb09aea49e19aeaeb9ea99861"
+      "bytes": 1819,
+      "sha256": "f1e8dfefdad49ee931ebedc90192b79d0656a1b181c151bdf8f40e4c910c8dcf"
     },
     "docs/assets/demos/cli.webm": {
-      "bytes": 160837,
+      "bytes": 175891,
       "codec": "vp9",
-      "duration_seconds": 13.44,
+      "duration_seconds": 12.6,
       "height": 675,
-      "sha256": "8fbb16e640c6a9b4cb40912bbf9758133fa6a50f9178e289d6c662975a5f3953",
+      "sha256": "c122c3ca7032207d314e5b05fed0ae56826a4d744d286aeb535a618658f973a3",
       "width": 1200
     },
     "docs/assets/demos/console.gif": {
-      "bytes": 831606,
+      "bytes": 509824,
       "codec": "gif",
-      "duration_seconds": 11.41,
+      "duration_seconds": 10.66,
       "height": 540,
-      "sha256": "a655dd3f5a1ccddad75c8ec88ed4749999aa0bae1ab2c2e9d8506eb61916a69d",
+      "sha256": "fe90be6c4dbf30f80fe38710d3c3afb06bf0d5df277033ce3f67eef8ef0f3c62",
       "width": 960
     },
     "docs/assets/demos/console.txt": {
-      "bytes": 1443,
-      "sha256": "178dae228a978c8c2cf1d3cec1f7521b9bee60b0a350666c792c107fd8f35841"
+      "bytes": 1848,
+      "sha256": "6ce266814ac9f42ecf56743a99e90969527121628e1e1f8f95f99502311192eb"
     },
     "docs/assets/demos/console.webm": {
-      "bytes": 176084,
+      "bytes": 135682,
       "codec": "vp9",
-      "duration_seconds": 11.4,
+      "duration_seconds": 10.64,
       "height": 675,
-      "sha256": "54b63290c00e4cc0254d62155a6160fc9d544e887506e4b2e9a733cef63a970f",
+      "sha256": "311c90ada7fbe4117a5df0fb282de3edded29e2866bb941491808bc5733ad7c1",
       "width": 1200
     }
   },
-  "generated_at": "2026-07-17T22:35:06.748793+00:00",
-  "generated_from": "62bbcfdea99839019305701d699f6d46c094e223",
+  "generated_at": "2026-07-17T22:57:49.011293+00:00",
+  "generated_from": "091214da46793b8057436604ba4d206b16e8b23e",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
@@ -50,14 +50,15 @@
   },
   "package_version": "0.9.3",
   "provider": "deepseek",
-  "schema": 1,
+  "schema": 2,
   "source": {
     "files": {
       "config/runtime.example.yaml": "5e52b6adf862323d726b8ab6645df86e0e8d4e38c0933731384398219517b7ad",
-      "demos/tapes/cli.tape": "903a029f93f9099e5f5043f8f45e379a54cc6912ba9180ee5f613f0ab3050d09",
-      "demos/tapes/console.tape": "9799986d1a9bc30cdc21e65c450517e9e456423ca97ae82a07c2a48d5df66199",
+      "demos/tapes/cli.tape": "f76b560d9922c3fe5506fbd7d88ccd4c58534fe349193fedaf10e414d8e30352",
+      "demos/tapes/console.tape": "7fb3ebe9a837aaf09547d0c721d4e1fbc81f4a1a3dc2655cb10ff32253ef03ec",
+      "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
       "examples/summarize_doc.mk": "a8df4eda29903e753de21f7a91daab9543348997194f7ffe3035540fb04f8de1",
-      "scripts/demo_assets.py": "ce6cedf97f938b0692d39c24243594f3311d8a7599f4d2ce858f8c1a261e0f38",
+      "scripts/demo_assets.py": "ecb0cb13ec83c4b84de12f78715a57a9dd652454a3d7cd74d9d8edb8510778e4",
       "src/mklang/cli.py": "ea2450c93b818020df80ddc1a43b61be3b34a963cc093d304bd4d2d1341ae607",
       "src/mklang/config.py": "83639ea46f2edf9bc998a12ce1fd21a547ccf5e54906c560844d476f9108d017",
       "src/mklang/console/__init__.py": "dad58b3e68833660f6565d992d9eed87320b1216c137f657d122624e8af5d63a",
@@ -79,7 +80,18 @@
       "src/mklang/presentation.py": "812a1c363ace95f5bc5778615ffd36ecf681ce33adf78c41857ee984c6e9b012",
       "src/mklang/providers.py": "512c75ca22ffa02ed03116fed81a44682f3e1b39805405a8bb4a0fca7564be7d"
     },
-    "sha256": "307e7c9bb48c870f7a3b05fec1ac015276cd2953d6e0b00fd5180adff98190e4"
+    "sha256": "5904b9bd4dc141cdae52f7040834947c46b90db5595731f9d8949d7c9ff0b5f9"
   },
-  "vhs_version": "v0.11.0 (c6af91a)"
+  "toolchain": {
+    "font": {
+      "archive_sha256": "6f6376c6ed2960ea8a963cd7387ec9d76e3f629125bc33d1fdcd7eb7012f7bbf",
+      "family": "JetBrains Mono",
+      "version": "2.304"
+    },
+    "vhs": {
+      "archive_sha256": "99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009",
+      "reported_version": "v0.11.0 (c6af91a)",
+      "version": "0.11.0"
+    }
+  }
 }

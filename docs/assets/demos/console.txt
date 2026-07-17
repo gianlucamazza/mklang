@@ -1,26 +1,21 @@
-> uv run mklang console --provider deepseek --workspace /tm
-p/mklang-demo-machines
- ⭘                   mklang console
- READY · deepseek · tokens 0+0 · session
- Ready. Ask the agent what should happen, or type /help
-┌────────────────────────────────────────────────────────┐
-▊  Ask the agent or type / for commands                  ▎
-▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
-                                                      ▏
- f2 Inspector  ^t Activity  ^g Stop  ^l Clear  ▏^p palette
-▊  e benefit of auditable AI workflows in five words."   ▎
- READY · deepseek · tokens 144+5 · session
- /run std_cot {'task': 'Name one benefit of auditable A
- words.'}
- result:
-  {"status": "done", "error": null, "result": "Increase
-  accountability.", "usage": {"input_tokens": 144, "out
-  "trace": {"steps": 1, "truncated": false, "truncated_
-  "truncated": false}                                  ▇▇
-                                      ▌
+> uv run mklang console --provider deepseek --workspace /tmp/mklang-demo-machines
+ ⭘                                     mklang console
+ READY · deepseek · tokens 0+0 · session 20260717-225728-5c6a
+ Ready. Ask the agent what should happen, or type /help.
+┌───────────────────────────────────────────────────────────────────────────────────────────┐
+▊  Ask the agent or type / for commands                                                     ▎
+▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
+ f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                     ▏^p palette
+▊  /run std_cot task="Name one benefit of auditable AI workflows in five words."            ▎
+ RUNNING · deepseek · tokens 0+0 · session 20260717-225728-5c6a
+ /run std_cot {'task': 'Name one benefit of auditable AI workflows in five words.'}
  ▼ /run std_cot
+ READY · deepseek · tokens 144+5 · session 20260717-225728-5c6a
+ /run std_cot {'task': 'Name one benefit of auditable AI workflows in five words.'}       ▁▁
+ result:
+  {"status": "done", "error": null, "result": "Increased trust and accountability.",
+  "usage": {"input_tokens": 144, "output_tokens": 5}, "trace": {"steps": 1, "truncated":
+  false, "truncated_steps": []}, "truncated": false}
  └── ▼ ✓ std_cot  done
      └── ● solve ok → END
- /run std_cot {'task': 'Name one benefit of auditable A▁▁
-  "truncated": false}
-▊  /quit                                                 ▎
+▊  /quit                                                                                    ▎
