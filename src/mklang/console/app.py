@@ -69,10 +69,16 @@ def build_app(
             self._event = threading.Event()
 
         def emit(self, event: dict) -> None:
+            if self.app.shutting_down:
+                return
             self.app.call_from_thread(self.app.render_event, event)
 
         def ask(self, question: str) -> str:
+            if self.app.shutting_down:
+                return ""
             self._event.clear()
+            if self.app.shutting_down:
+                return ""
             self.app.call_from_thread(self.app.enter_answer_mode, question)
             self._event.wait()
             return self._reply or ""
@@ -89,6 +95,11 @@ def build_app(
 
         def deliver(self, reply: str) -> None:
             self._reply = reply
+            self._event.set()
+
+        def cancel(self) -> None:
+            """Release a worker blocked on a human answer during shutdown."""
+            self._reply = None
             self._event.set()
 
     class ConsoleApp(App):
@@ -152,6 +163,9 @@ def build_app(
             self.tools._consented.update(self.session.consented)
             self.answer_mode = False
             self.running = False
+            self.shutting_down = False
+            self._worker_done = threading.Event()
+            self._worker_done.set()
             self.activity_visible = True
             self.inspector_visible = False
             self.log_history: list[str] = []  # plain mirror of the log, for tests
@@ -193,6 +207,48 @@ def build_app(
                 "[yellow]Stop requested — waiting for the current state to finish…[/yellow]"
             )
             self.update_status("stopping")
+
+        async def action_quit(self) -> None:
+            """Stop the active run cleanly before Textual tears down its event loop."""
+            self._begin_shutdown()
+            await self._wait_for_worker()
+            self.exit()
+
+        async def on_unmount(self) -> None:
+            """Cover SIGINT and other exits which bypass the ``quit`` action."""
+            self._begin_shutdown()
+            await self._wait_for_worker()
+
+        def _begin_shutdown(self) -> None:
+            if self.shutting_down:
+                return
+            self.shutting_down = True
+            self.cancel_event.set()
+            self.bridge.cancel()
+            try:
+                self.tools.close()
+            except Exception:
+                # Shutdown must still release the console if a third-party
+                # provider implements a broken optional close hook.
+                pass
+
+        async def _wait_for_worker(self) -> None:
+            import asyncio
+
+            while not self._worker_done.is_set():
+                await asyncio.sleep(0.01)
+
+        def _run_thread_worker(self, work) -> None:
+            """Start work and track the backing thread, not only Textual's task."""
+            self._worker_done.clear()
+
+            def tracked_work():
+                try:
+                    return work()
+                finally:
+                    self._worker_done.set()
+
+            self.run_worker(tracked_work, thread=True, exclusive=True)
 
         def action_clear_log(self) -> None:
             self.query_one("#log", RichLog).clear()
@@ -336,7 +392,7 @@ def build_app(
             self.running = True
             self.cancel_event.clear()
             self.update_status("running")
-            self.run_worker(lambda: self.turn(text), thread=True, exclusive=True)
+            self._run_thread_worker(lambda: self.turn(text))
 
         # -- slash commands (operator affordances, bypass the brain) ---------
 
@@ -388,7 +444,7 @@ def build_app(
                 self.running = True
                 self.cancel_event.clear()
                 self.update_status("running")
-                self.run_worker(lambda: self.slash_run(target, inputs), thread=True, exclusive=True)
+                self._run_thread_worker(lambda: self.slash_run(target, inputs))
             elif cmd == "/check" and args:
                 verdict = _json.loads(self.tools.check_machine({"name": args[0]}))
                 payload = _json.dumps(verdict, ensure_ascii=False, indent=2)
@@ -433,7 +489,7 @@ def build_app(
                 )
                 self.query_one(ActivityTree).new_turn("/resume")
                 self.query_one("#prompt", Input).disabled = True
-                self.run_worker(lambda: self.slash_resume(ck), thread=True, exclusive=True)
+                self._run_thread_worker(lambda: self.slash_resume(ck))
             elif cmd == "/quit":
                 self.exit()
             elif cmd in ("/run", "/check", "/read", "/budget"):
@@ -449,15 +505,19 @@ def build_app(
             import json as _json
 
             obs = self.tools.run_machine({"target": target, "inputs": _json.dumps(inputs)})
-            self.call_from_thread(self.finish_slash, obs)
+            if not self.shutting_down:
+                self.call_from_thread(self.finish_slash, obs)
 
         def slash_resume(self, ck: dict) -> None:
             steps = ck["frames"][0].get("steps", 0)
             machine = dc_replace(brain, budget=steps + 8)
             res = self._run_brain(machine, dict(machine.context), resume=ck["frames"])
-            self.call_from_thread(self.finish_turn, "(resumed turn)", res)
+            if not self.shutting_down:
+                self.call_from_thread(self.finish_turn, "(resumed turn)", res)
 
         def finish_slash(self, observation: str) -> None:
+            if self.shutting_down:
+                return
             # Observations are JSON envelopes — fence them, do not full-MD parse.
             self.log_fenced(
                 observation,
@@ -520,9 +580,12 @@ def build_app(
                     break
                 machine = dc_replace(machine, budget=machine.budget + 8)
                 res = self._run_brain(machine, dict(machine.context), resume=res.frames)
-            self.call_from_thread(self.finish_turn, user_message, res)
+            if not self.shutting_down:
+                self.call_from_thread(self.finish_turn, user_message, res)
 
         def finish_turn(self, user_message: str, res) -> None:
+            if self.shutting_down:
+                return
             if res.status == "done":
                 body = str(res.result or "")
                 self.log_markdown(

@@ -97,6 +97,11 @@ brain must not AUTHOR a machine solely to read the clock.
 | `/session`                       | current session facts                             |
 | `/help` · `/quit`                | help · exit                                       |
 
+`Ctrl+C` performs a clean shutdown: an active run is cancelled, any pending
+human prompt is released, and the console waits for the provider worker to stop
+before returning to the shell. `Ctrl+G` only requests cancellation of the
+current run and keeps the console open.
+
 Slash commands use shell-style quoting, so `/run demo task="hello world"` keeps
 the value together. Command names are suggested while typing.
 

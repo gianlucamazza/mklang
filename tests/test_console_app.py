@@ -1,6 +1,7 @@
 """The console TUI skeleton (ADR 0015 M1d): headless Pilot + scripted LLM, no keys."""
 
 import asyncio
+import threading
 
 import pytest
 
@@ -356,3 +357,78 @@ def test_clarify_turn_uses_answer_mode(tmp_path):
             assert "agent: Done on staging." in app.history
 
     asyncio.run(drive())
+
+
+def test_ctrl_c_closes_provider_and_waits_for_pending_worker(tmp_path):
+    class BlockingLLM(MockLLM):
+        def __init__(self):
+            super().__init__()
+            self.started = threading.Event()
+            self.released = threading.Event()
+            self.close_calls = 0
+
+        def produce(self, *args, **kwargs):
+            self.started.set()
+            assert self.released.wait(2), "provider close did not release the request"
+            return Produced(text="stopped")
+
+        def close(self):
+            self.close_calls += 1
+            self.released.set()
+
+    llm = BlockingLLM()
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test() as pilot:
+            await pilot.click("#prompt")
+            await pilot.press(*"keep working")
+            await pilot.press("enter")
+            for _ in range(100):
+                await pilot.pause(0.01)
+                if llm.started.is_set():
+                    break
+            assert llm.started.is_set(), "provider request never started"
+            await pilot.press("ctrl+c")
+
+    asyncio.run(drive())
+    assert llm.close_calls == 1
+    assert app._worker_done.is_set()
+
+
+def test_ctrl_c_releases_pending_human_answer(tmp_path):
+    llm = scripted_llm(
+        {
+            "single next action": "CLARIFY: staging or prod?",
+            "final reply": "Done.",
+        },
+        [2, 4],
+    )
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test() as pilot:
+            await pilot.click("#prompt")
+            await pilot.press(*"deploy it")
+            await pilot.press("enter")
+            for _ in range(100):
+                await pilot.pause(0.01)
+                if app.answer_mode:
+                    break
+            assert app.answer_mode, "ask_user never reached the UI"
+            await pilot.press("ctrl+c")
+
+    asyncio.run(drive())
+    assert app._worker_done.is_set()

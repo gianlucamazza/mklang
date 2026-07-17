@@ -110,6 +110,37 @@ def test_tool_registry_names(tools):
     }
 
 
+def test_close_is_optional_and_idempotent(tmp_path):
+    class ClosableLLM(MockLLM):
+        def __init__(self):
+            super().__init__()
+            self.close_calls = 0
+
+        def close(self):
+            self.close_calls += 1
+
+    llm = ClosableLLM()
+    closable = ConsoleTools(
+        config=CONFIG,
+        provider=None,
+        bridge=FakeBridge(),
+        workspace=tmp_path / "closable",
+        build_llm=lambda prov: llm,
+    )
+    closable.close()
+    closable.close()
+    assert llm.close_calls == 1
+
+    tools_without_close = ConsoleTools(
+        config=CONFIG,
+        provider=None,
+        bridge=FakeBridge(),
+        workspace=tmp_path / "no-close",
+        build_llm=echo_llm,
+    )
+    tools_without_close.close()
+
+
 def test_list_and_describe_include_workspace_machines(tools):
     (tools.workspace / "approval.mk").write_text(HITL_SRC, encoding="utf-8")
     listed = json.loads(tools.list_machines({}))

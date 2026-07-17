@@ -8,9 +8,20 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.9.1`).
+  `pyproject.toml` (currently `0.9.2`).
 
 ## [Unreleased]
+
+## [0.9.2] — 2026-07-17
+
+Console shutdown patch (language stays **0.3**).
+
+### Fixed
+
+- Shut down the console cleanly when `Ctrl+C` is pressed during an active run:
+  request cooperative cancellation, release pending human prompts, close the
+  provider client, and wait for the backing thread before returning to the shell.
+- Prevent late UI callbacks and session writes after console shutdown starts.
 
 ## [0.9.1] — 2026-07-17
 

@@ -50,6 +50,10 @@ class _Messages:
 class _Client:
     def __init__(self, stop_reason="end_turn", side_effect=None, text="ok"):
         self.messages = _Messages(stop_reason, side_effect=side_effect, text=text)
+        self.close_calls = 0
+
+    def close(self):
+        self.close_calls += 1
 
 
 def _adapter(stop_reason="end_turn", side_effect=None, text="ok") -> AnthropicLLM:
@@ -57,6 +61,12 @@ def _adapter(stop_reason="end_turn", side_effect=None, text="ok") -> AnthropicLL
     llm.client = _Client(stop_reason, side_effect=side_effect, text=text)
     llm.max_retries = 3
     return llm
+
+
+def test_close_delegates_to_sdk_client():
+    llm = _adapter()
+    llm.close()
+    assert llm.client.close_calls == 1
 
 
 def test_params_map_to_thinking_and_effort():

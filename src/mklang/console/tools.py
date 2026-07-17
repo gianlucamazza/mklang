@@ -13,6 +13,7 @@ explicit one-time consent per tool set (SPEC §11 applies to the console too).
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
@@ -57,12 +58,24 @@ class ConsoleTools:
     build_llm: object = None
     cancel_requested: object = None
     _consented: set = field(default_factory=set)
+    _close_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
+    _closed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self):
         self.workspace = Path(self.workspace).resolve()
         self.workspace.mkdir(parents=True, exist_ok=True)
         self.prov = load_provider(self.config, self.provider)
         self.llm = (self.build_llm or _default_build_llm)(self.prov)
+
+    def close(self) -> None:
+        """Release the provider client once, if the adapter exposes a lifecycle hook."""
+        with self._close_lock:
+            if self._closed:
+                return
+            self._closed = True
+        close = getattr(self.llm, "close", None)
+        if callable(close):
+            close()
 
     # -- registry ----------------------------------------------------------
 

@@ -33,6 +33,10 @@ class AnthropicLLM:
         self.client = anthropic.Anthropic(**kwargs)
         self.max_retries = max_retries
 
+    def close(self) -> None:
+        """Close the SDK client, interrupting any in-flight console request."""
+        self.client.close()
+
     def _create(self, **kwargs):
         """messages.create with transient retry and param drop-on-reject."""
         attempt = 0

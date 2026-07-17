@@ -27,6 +27,10 @@ class OpenAICompatLLM:
         self.client = OpenAI(api_key=api_key or "unused", base_url=base_url)
         self.max_retries = max_retries
 
+    def close(self) -> None:
+        """Close the SDK client, interrupting any in-flight console request."""
+        self.client.close()
+
     def _create(self, **kwargs):
         """Robust create: retry transient errors with backoff; drop any single param a
         provider rejects (unsupported temperature / reasoning_effort / extra_body key)."""

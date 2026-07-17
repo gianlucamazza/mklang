@@ -47,6 +47,14 @@ def _adapter(side_effect=None, max_retries=3) -> OpenAICompatLLM:
     return llm
 
 
+def test_close_delegates_to_sdk_client():
+    llm = _adapter()
+    closed = []
+    llm.client.close = lambda: closed.append(True)
+    llm.close()
+    assert closed == [True]
+
+
 def test_retries_connection_error_then_succeeds(monkeypatch):
     """Network blips carry no status_code; they must retry like a 503."""
 
