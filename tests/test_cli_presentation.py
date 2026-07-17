@@ -32,6 +32,9 @@ def test_invalid_set_is_a_clean_diagnostic(monkeypatch, capsys):
 
 
 def test_missing_console_session_does_not_dump_traceback(tmp_path, monkeypatch, capsys):
+    import pytest
+
+    pytest.importorskip("textual")
     monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
     rc = cli.main(["console", "--session", "missing", "--workspace", str(tmp_path / "machines")])
     captured = capsys.readouterr()

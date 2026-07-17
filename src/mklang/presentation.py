@@ -81,10 +81,11 @@ def emit_result(
         style = {"warning": "yellow", "error": "red"}.get(diagnostic.severity, "cyan")
         prefix = f"{diagnostic.path}: " if diagnostic.path else ""
         console.print(
-            f"[{style}]{diagnostic.severity.upper()}[/{style}] {prefix}{diagnostic.message}"
+            f"[{style}]{diagnostic.severity.upper()}[/{style}] {prefix}{diagnostic.message}",
+            soft_wrap=True,
         )
         if diagnostic.hint:
-            console.print(f"  [dim]Hint: {diagnostic.hint}[/dim]")
+            console.print(f"  [dim]Hint: {diagnostic.hint}[/dim]", soft_wrap=True)
     if result.summary:
         console.print(
             Panel(" · ".join(f"{k}={v}" for k, v in result.summary.items()), title=result.command)

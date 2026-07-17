@@ -8,9 +8,18 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.9.0`).
+  `pyproject.toml` (currently `0.9.1`).
 
 ## [Unreleased]
+
+## [0.9.1] — 2026-07-17
+
+Release-pipeline patch (language stays **0.3**).
+
+### Fixed
+
+- Keep fatal CLI diagnostics on one stable line when stdout/stderr is not a TTY.
+- Skip the console-session CLI test when the optional Textual extra is absent.
 
 ## [0.9.0] — 2026-07-17
 

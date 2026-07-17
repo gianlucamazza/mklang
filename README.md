@@ -272,7 +272,7 @@ mklang console
 
 ## Status
 
-**Language v0.3 / package 0.9.0** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 0.9.1** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
