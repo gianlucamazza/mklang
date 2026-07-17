@@ -293,7 +293,14 @@ def cmd_console(args) -> int:
             file=sys.stderr,
         )
         return 2
-    return console_main(args.config, args.provider, args.workspace, args.agent)
+    return console_main(
+        args.config,
+        args.provider,
+        args.workspace,
+        args.agent,
+        continue_session=args.continue_session,
+        session_id=args.session,
+    )
 
 
 def cmd_check(args) -> int:
@@ -403,6 +410,13 @@ def main(argv: list[str] | None = None) -> int:
         metavar="FILE.mk",
         help="swap the console's brain with your own machine (same tool contract)",
     )
+    co.add_argument(
+        "--continue",
+        dest="continue_session",
+        action="store_true",
+        help="reopen the most recent session (history, spend, consents)",
+    )
+    co.add_argument("--session", default=None, metavar="ID", help="reopen a specific session by id")
     co.set_defaults(fn=cmd_console)
 
     m = sub.add_parser("machines", help="list commissionable machines (stdlib, plugins) as JSON")

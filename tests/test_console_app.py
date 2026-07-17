@@ -49,7 +49,13 @@ def test_direct_reply_turn(tmp_path):
         {"single next action": "REPLY: it is 4.", "final reply": "4."},
         [4],
     )
-    app = build_app(CONFIG, None, str(tmp_path / "ws"), build_llm=lambda prov: llm)
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
 
     async def drive():
         async with app.run_test() as pilot:
@@ -72,7 +78,13 @@ def test_clarify_turn_uses_answer_mode(tmp_path):
         },
         [2, 4],
     )
-    app = build_app(CONFIG, None, str(tmp_path / "ws"), build_llm=lambda prov: llm)
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
 
     async def drive():
         from textual.widgets import Input

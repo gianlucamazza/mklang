@@ -10,10 +10,13 @@ are `ConsoleTools`, and the run tree is the `on_event` stream.
 from __future__ import annotations
 
 import threading
+from dataclasses import replace as dc_replace
+from datetime import datetime
 from pathlib import Path
 
 import yaml
 
+from ..checkpoint import save_checkpoint
 from ..engine import run as run_engine
 from ..loader import validate_dict
 from ..model import Machine, parse_machine
@@ -39,13 +42,19 @@ def build_app(
     workspace: str,
     agent_path: str | None = None,
     build_llm=None,
+    session_base: str | None = None,
+    continue_session: bool = False,
+    session_id: str | None = None,
 ):
     """Construct the Textual app (imported lazily so the core stays TUI-free)."""
     from textual.app import App, ComposeResult
     from textual.containers import Vertical
     from textual.widgets import Footer, Input, RichLog, Static
 
+    from .session import DEFAULT_BASE, Session
+
     brain = load_brain(agent_path)
+    base = Path(session_base) if session_base else DEFAULT_BASE
 
     class TextualBridge:
         """Bridge impl: emit from any thread; ask/confirm block the worker."""
@@ -89,9 +98,20 @@ def build_app(
                 workspace=Path(workspace),
                 build_llm=build_llm,
             )
-            self.history = ""
-            self.spent_in = 0
-            self.spent_out = 0
+            if session_id:
+                self.session = Session.load(base / session_id)
+            elif continue_session:
+                self.session = Session.latest(base) or Session.create(
+                    base, workspace=str(self.tools.workspace), brain=brain.name
+                )
+            else:
+                self.session = Session.create(
+                    base, workspace=str(self.tools.workspace), brain=brain.name
+                )
+            self.history = self.session.history
+            self.spent_in = self.session.spent_in
+            self.spent_out = self.session.spent_out
+            self.tools._consented.update(self.session.consented)
             self.answer_mode = False
 
         def compose(self) -> ComposeResult:
@@ -105,8 +125,13 @@ def build_app(
         def on_mount(self) -> None:
             self.log_line(
                 f"[b]mklang console[/b] · brain={brain.name} · "
-                f"provider={self.tools.prov.name} · workspace={self.tools.workspace}"
+                f"provider={self.tools.prov.name} · workspace={self.tools.workspace} · "
+                f"session={self.session.id}"
             )
+            if self.history:
+                self.log_line(
+                    f"[dim]resumed session with {len(self.history)} chars of history[/dim]"
+                )
             self.update_status()
             self.query_one("#prompt", Input).focus()
 
@@ -117,10 +142,12 @@ def build_app(
 
         def update_status(self) -> None:
             self.query_one("#status", Static).update(
-                f"session tokens: {self.spent_in}+{self.spent_out} · provider {self.tools.prov.name}"
+                f"session tokens: {self.spent_in}+{self.spent_out} · "
+                f"provider {self.tools.prov.name} · {self.session.id}"
             )
 
         def render_event(self, e: dict) -> None:
+            self.session.append({"t": "event", **e})
             pad = "  " * (e.get("depth", 0) + 1)
             run_tag = f"[dim]{e.get('run', e.get('machine', ''))}[/dim]"
             if e["type"] == "run-start":
@@ -161,10 +188,26 @@ def build_app(
             if not text:
                 return
             self.log_line(f"[b cyan]you:[/b cyan] {text}")
+            self.session.append({"t": "user", "text": text})
             box.disabled = True
             self.run_worker(lambda: self.turn(text), thread=True, exclusive=True)
 
         # -- the agent turn (worker thread) ----------------------------------
+
+        def _run_brain(self, machine, ctx, resume=None):
+            return run_engine(
+                machine,
+                ctx,
+                {machine.name: machine},
+                self.tools.llm,
+                self.tools.prov.tiers,
+                self.tools.prov.judge_override(),
+                tier_params=self.tools.prov.params,
+                tools=self.tools.as_tool_registry(),
+                suspendable=True,
+                resume=resume,
+                on_event=self.bridge.emit,
+            )
 
         def turn(self, user_message: str) -> None:
             ctx = {
@@ -173,17 +216,21 @@ def build_app(
                 "history": self.history,
                 "observation": [],
             }
-            res = run_engine(
-                brain,
-                ctx,
-                {brain.name: brain},
-                self.tools.llm,
-                self.tools.prov.tiers,
-                self.tools.prov.judge_override(),
-                tier_params=self.tools.prov.params,
-                tools=self.tools.as_tool_registry(),
-                on_event=self.bridge.emit,
-            )
+            machine = brain
+            res = self._run_brain(machine, ctx)
+            # Budget exhaustion is a UI moment: extend and resume, or park a
+            # checkpoint in the session for a later /resume (ADR 0015).
+            while res.status == "suspended" and res.error == "budget-exhausted":
+                if not self.bridge.confirm(
+                    f"turn budget exhausted ({machine.budget} steps) — continue with +8?"
+                ):
+                    ck = self.session.checkpoints_dir / f"turn-{datetime.now():%H%M%S}.json"
+                    save_checkpoint(
+                        ck, machine.name, "<console-brain>", res.error, res.frames, None
+                    )
+                    break
+                machine = dc_replace(machine, budget=machine.budget + 8)
+                res = self._run_brain(machine, dict(machine.context), resume=res.frames)
             self.call_from_thread(self.finish_turn, user_message, res)
 
         def finish_turn(self, user_message: str, res) -> None:
@@ -192,6 +239,14 @@ def build_app(
                 self.history += f"\nuser: {user_message}\nagent: {res.result}"
             else:
                 self.log_line(f"[b red]agent {res.status}:[/b red] {res.error} (at {res.at})")
+            self.session.append(
+                {"t": "agent", "status": res.status, "text": str(res.result or res.error)}
+            )
+            self.session.history = self.history
+            self.session.spent_in = self.spent_in
+            self.session.spent_out = self.spent_out
+            self.session.consented = sorted(self.tools._consented)
+            self.session.save_state()
             box = self.query_one("#prompt", Input)
             box.disabled = False
             box.focus()
@@ -199,7 +254,21 @@ def build_app(
     return ConsoleApp()
 
 
-def main(config: str, provider: str | None, workspace: str, agent_path: str | None) -> int:
-    app = build_app(config, provider, workspace, agent_path)
+def main(
+    config: str,
+    provider: str | None,
+    workspace: str,
+    agent_path: str | None,
+    continue_session: bool = False,
+    session_id: str | None = None,
+) -> int:
+    app = build_app(
+        config,
+        provider,
+        workspace,
+        agent_path,
+        continue_session=continue_session,
+        session_id=session_id,
+    )
     app.run()
     return 0
