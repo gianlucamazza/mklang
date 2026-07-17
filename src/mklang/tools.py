@@ -49,9 +49,16 @@ def calc(inp: dict) -> str:
 
 
 def search(inp: dict) -> str:
-    """Stub search — a real host binds a web/RAG tool here."""
-    query = str(inp.get("query") or "").strip()
-    return f"[no external search bound] query was: {query!r}"
+    """Web search host tool (ADR 0016).
+
+    Offline by default (structured stub). Bind a real backend via
+    ``mklang.search.configure_search`` or env ``MKLANG_SEARCH_BACKEND``
+    (``fake`` / ``tavily`` + ``TAVILY_API_KEY``). Entry-point plugins may still
+    replace this callable entirely.
+    """
+    from .search import search as _search
+
+    return _search(inp)
 
 
 def search_kb(inp: dict) -> str:

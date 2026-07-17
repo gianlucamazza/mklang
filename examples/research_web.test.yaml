@@ -1,0 +1,53 @@
+# Scenario tests for research_web.mk — run with:
+#   mklang test examples/research_web.mk --script examples/research_web.test.yaml
+#
+# Search is scripted (no network). Judge picks are indices into each state's
+# fused prose-gate batch in visit order.
+
+scenarios:
+  # One search round yields usable notes → finalize → END.
+  # plan_query → search → check(judge 0 = sufficient) → finalize → END.
+  - name: single-round-sufficient
+    llm:
+      produce:
+        - "mklang declarative state machines"
+        - "verdict: notes cover the definition and design"
+        - "mklang is a declarative language for LLM state machines (from notes)."
+      # check_sufficiency prose batch: 0=sufficient, 1=missing; finalize: 0=grounded
+      judge: [0, 0]
+    tools:
+      search:
+        - '{"query":"mklang declarative state machines","results":[{"title":"mklang","url":"https://example.com/mklang","snippet":"YAML state machines driven by LLMs."}],"error":null}'
+    expect:
+      status: done
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check_sufficiency }
+        - { state: check_sufficiency, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
+
+  # First check loops for another search; second check finalizes.
+  # plan → search → check(1=missing) → plan → search → check(0=sufficient) → finalize(0).
+  - name: two-round-then-finalize
+    llm:
+      produce:
+        - "first query"
+        - "verdict: still missing sources"
+        - "second query"
+        - "verdict: enough now"
+        - "Final answer grounded in two search rounds."
+      judge: [1, 0, 0]
+    tools:
+      search:
+        - '{"query":"first query","results":[{"title":"A","url":"https://a.example","snippet":"partial"}],"error":null}'
+        - '{"query":"second query","results":[{"title":"B","url":"https://b.example","snippet":"rest"}],"error":null}'
+    expect:
+      status: done
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check_sufficiency }
+        - { state: check_sufficiency, policy: ok, to: plan_query }
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check_sufficiency }
+        - { state: check_sufficiency, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
