@@ -21,7 +21,7 @@ ASSET_DIR = ROOT / "docs" / "assets" / "demos"
 TAPE_DIR = ROOT / "demos" / "tapes"
 TOOLCHAIN_FILE = ROOT / "demos" / "toolchain.conf"
 MANIFEST = ASSET_DIR / "manifest.json"
-DEMOS = ("cli", "console")
+DEMOS = ("cli", "console", "agent", "hitl", "search", "test")
 FORMATS = ("webm", "gif", "txt")
 
 SOURCE_PATTERNS = (
@@ -30,6 +30,15 @@ SOURCE_PATTERNS = (
     "scripts/demo_assets.py",
     "config/runtime.example.yaml",
     "examples/summarize_doc.mk",
+    "examples/expense_approval.mk",
+    "examples/triage.mk",
+    "examples/triage.test.yaml",
+    "examples/news_search.mk",
+    "src/mklang/checkpoint.py",
+    "src/mklang/scripttest.py",
+    "src/mklang/search.py",
+    "src/mklang/tools.py",
+    "src/mklang/data/console/agent.mk",
     "src/mklang/cli.py",
     "src/mklang/config.py",
     "src/mklang/engine.py",
@@ -37,7 +46,7 @@ SOURCE_PATTERNS = (
     "src/mklang/providers.py",
     "src/mklang/llm/*.py",
     "src/mklang/console/*.py",
-    "src/mklang/data/stdlib/std_cot.mk",
+    "src/mklang/data/stdlib/std_self_consistency.mk",
 )
 
 REQUIRED_TEXT = {
@@ -48,7 +57,42 @@ REQUIRED_TEXT = {
         "provider deepseek",
         "Result",
     ),
-    "console": ("Ready", "/run std_cot", "status", "done"),
+    "console": (
+        "Ready",
+        "/machines",
+        "/run std_self_consistency",
+        "status",
+        "done",
+    ),
+    "agent": (
+        "Ready",
+        "you:",
+        "Consent",
+        "agent:",
+        "news_search",
+        "boil that down",
+    ),
+    "hitl": (
+        "SUSPENDED expense_approval",
+        "Checkpoint",
+        "resume",
+        "DONE expense_approval",
+        "provider deepseek",
+        "Result",
+    ),
+    "search": (
+        "DONE news_search",
+        "provider deepseek",
+        "Result",
+    ),
+    "test": (
+        "OK examples/triage.mk",
+        "findings=0",
+        "PASS happy-path",
+        "PASS kb-empty-escalates",
+        "passed=2",
+        "failed=0",
+    ),
 }
 FORBIDDEN_TEXT = (
     "Traceback (most recent call last)",
@@ -71,9 +115,7 @@ class DemoError(RuntimeError):
 
 def toolchain_config() -> dict[str, str]:
     values = {
-        key: value
-        for key, value in dotenv_values(TOOLCHAIN_FILE).items()
-        if value is not None
+        key: value for key, value in dotenv_values(TOOLCHAIN_FILE).items() if value is not None
     }
     required = {
         "VHS_VERSION",
@@ -147,13 +189,9 @@ def _verify_render_toolchain() -> None:
         raise DemoError(
             f"VHS version mismatch: expected {config['VHS_VERSION']}, got {vhs_version}"
         )
-    resolved_font = _run(
-        ["fc-match", "--format=%{family}", config["FONT_FAMILY"]], capture=True
-    )
+    resolved_font = _run(["fc-match", "--format=%{family}", config["FONT_FAMILY"]], capture=True)
     if resolved_font != config["FONT_FAMILY"]:
-        raise DemoError(
-            f"font mismatch: expected {config['FONT_FAMILY']!r}, got {resolved_font!r}"
-        )
+        raise DemoError(f"font mismatch: expected {config['FONT_FAMILY']!r}, got {resolved_font!r}")
 
 
 def _derive_gif(source: Path, target: Path) -> None:

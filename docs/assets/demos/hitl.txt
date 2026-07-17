@@ -1,0 +1,19 @@
+> uv run mklang run examples/expense_approval.mk --provider deepseek --hitl --checkpoi
+nt /tmp/mklang-demo-ck.json --set report.text="Team dinner with a client, 240 EUR, ite
+mized receipt attached"
+# expense_approval · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': '
+deepseek-chat', 'reasoning': 'deepseek-reasoner'}
+# suspended (escalated) — checkpoint written to /tmp/mklang-demo-ck.json
+SUSPENDED expense_approval · provider deepseek
+tokens 314+319 · steps 2
+Error: escalated
+Checkpoint: /tmp/mklang-demo-ck.json
+> uv run mklang resume /tmp/mklang-demo-ck.json --provider deepseek --set manager_note
+="Approved: client dinner, within policy"
+# expense_approval · resume · provider=deepseek · tiers={'fast': 'deepseek-chat', 'bal
+anced': 'deepseek-chat', 'reasoning': 'deepseek-reasoner'}
+DONE expense_approval · provider deepseek
+╭────────────────────────────────────── Result ──────────────────────────────────────╮
+│ Expense: 240 EUR, Meals. Policy verdict: Compliant, manager approval required.     │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+tokens 455+339 · steps 3

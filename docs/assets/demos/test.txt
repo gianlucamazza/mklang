@@ -1,17 +1,13 @@
-> uv run mklang check examples/summarize_doc.mk
-OK examples/summarize_doc.mk
+> uv run mklang check examples/triage.mk
+OK examples/triage.mk
 ╭────────────────────────────────────── check ───────────────────────────────────────╮
 │ files=1                                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
-> uv run mklang lint --strict examples/summarize_doc.mk
+> uv run mklang lint --strict examples/triage.mk
 ╭─────────────────────────────────────── lint ───────────────────────────────────────╮
 │ files=1 · findings=0                                                               │
-> uv run mklang run examples/summarize_doc.mk --provider deepseek --set text="Gates an
-d traces make AI workflows auditable."
-# summarize_doc · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': 'dee
-pseek-chat', 'reasoning': 'deepseek-reasoner'}
-DONE summarize_doc · provider deepseek
-╭────────────────────────────────────── Result ──────────────────────────────────────╮
-│ Gates and traces enable auditing of AI workflows by providing checkpoints and      │
-│ logs. This ensures transparency and accountability in AI processes.                │
-tokens 119+25 · steps 1
+> uv run mklang test examples/triage.mk --script examples/triage.test.yaml
+PASS happy-path
+PASS kb-empty-escalates
+╭─────────────────────────────────────── test ───────────────────────────────────────╮
+│ passed=2 · failed=0                                                                │

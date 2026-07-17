@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
       BRANCH: automation/demo-assets
     steps:
       - uses: actions/checkout@v7

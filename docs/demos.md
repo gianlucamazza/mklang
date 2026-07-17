@@ -1,8 +1,9 @@
 # Live demos
 
-These recordings exercise the real `mklang` CLI and Textual console against
-DeepSeek. They are generated from versioned VHS tapes, not hand-edited terminal
-captures.
+These six recordings exercise the real `mklang` CLI and Textual console. All
+but the deterministic test demo run against DeepSeek; the search and agent
+demos also hit the live web through the host `search` tool. They are generated
+from versioned VHS tapes, not hand-edited terminal captures.
 
 ## CLI: check, lint, run
 
@@ -21,9 +22,60 @@ provider. [Read the terminal transcript](assets/demos/cli.txt).
   Your browser does not support embedded WebM video.
 </video>
 
-The console recording starts a clean workspace, runs the standard chain-of-thought
-machine, waits for completion, and exits normally.
+The console recording starts a clean workspace, lists the commissionable
+machines with `/machines`, runs `std_self_consistency` — a five-sample
+fan-out with majority vote — on the classic "9.11 vs 9.9" trap, and inspects
+the session with `/session`.
 [Read the terminal transcript](assets/demos/console.txt).
+
+## Agent: natural-language commissioning
+
+<video autoplay loop muted playsinline controls width="100%">
+  <source src="assets/demos/agent.webm" type="video/webm">
+  Your browser does not support embedded WebM video.
+</video>
+
+The agent recording is a free-language, multi-turn session: the first request
+makes the agent brain commission `news_search` (live web via the host `search`
+tool) and report a sourced brief; the follow-up turn chains on that context to
+distill a one-line takeaway — no slash commands involved.
+[Read the terminal transcript](assets/demos/agent.txt).
+
+## HITL: suspend and resume
+
+<video autoplay loop muted playsinline controls width="100%">
+  <source src="assets/demos/hitl.webm" type="video/webm">
+  Your browser does not support embedded WebM video.
+</video>
+
+The HITL recording runs `expense_approval` with `--hitl`: an escalate gate
+suspends the run and writes a checkpoint, then `mklang resume` injects the
+manager's reply and completes it.
+[Read the terminal transcript](assets/demos/hitl.txt).
+
+## Search: chained states with live web
+
+<video autoplay loop muted playsinline controls width="100%">
+  <source src="assets/demos/search.webm" type="video/webm">
+  Your browser does not support embedded WebM video.
+</video>
+
+The search recording runs `news_search` end to end: the machine plans a query,
+calls the host `search` tool (Tavily), judges whether the notes are usable, and
+finalizes a sourced brief — a chained multi-state flow with real side effects.
+[Read the terminal transcript](assets/demos/search.txt).
+
+## Tests: deterministic scenarios
+
+<video autoplay loop muted playsinline controls width="100%">
+  <source src="assets/demos/test.webm" type="video/webm">
+  Your browser does not support embedded WebM video.
+</video>
+
+The test recording checks `triage.mk`, then runs its scripted scenarios with
+`mklang test` — the LLM, judges, and tools are all scripted, so this command
+needs no provider or API key.
+[Read the terminal transcript](assets/demos/test.txt).
 
 ## Reproducibility and review
 
