@@ -1,8 +1,8 @@
 # mklang conformance suite
 
 Implementation-neutral test cases for the **language semantics** (SPEC §5–§7).
-An interpreter conforms to mklang v0.2 when it passes every case in `cases/`
-with its own runner. The reference runner is `tests/test_conformance.py`; a
+An interpreter conforms to mklang v0.3 (v0.2 documents remain valid) when it
+passes every case in `cases/` with its own runner. The reference runner is `tests/test_conformance.py`; a
 second implementation (TypeScript, Rust, …) writes its own runner against the
 same YAML files.
 
@@ -10,7 +10,7 @@ The reference runner is a thin consumer of **`src/mklang/scripttest.py`** — th
 single source of truth for the scripted LLM, the scripted `hooks:`/`tools:`
 bindings, and the expectation matcher (status / error / `error_prefix` / result /
 `at` / trace skeleton / context). The same module powers `mklang test`, which
-lets *authors* run their own `.mk` against a script of named scenarios in exactly
+lets _authors_ run their own `.mk` against a script of named scenarios in exactly
 this case format (see [README: "Test your machine without API keys"](../README.md)).
 The case format below and the `mklang test` scenario format are therefore one
 format, matched by one matcher.

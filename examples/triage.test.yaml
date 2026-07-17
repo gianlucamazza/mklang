@@ -3,7 +3,7 @@
 #
 # No provider or API key required: the LLM, the KB/send tools, and the gate
 # judges are all scripted, so the flow is fully deterministic. Each scenario
-# pins one path an author would be embarrassed to see misfire (docs/patterns.md).
+# pins one path an author would be embarrassed to see misfire (docs/guides/patterns.md).
 #
 # `judge:` picks are indices into each state's fused prose-gate batch, in the
 # order the states are visited. `produce:` texts are returned to generative

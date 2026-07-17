@@ -26,16 +26,23 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Specification: SPEC.md
-  - Best practices: best-practices.md
-  - Patterns: patterns.md
-  - Authoring guide: authoring.md
-  - Machine stdlib: stdlib.md
-  - Console: console.md
-  - Live demos: demos.md
-  - Installation: install.md
-  - Conformance: conformance.md
-  - ADRs:
+  - Language:
+      - Specification: SPEC.md
+      - Cheatsheet: cheatsheet.md
+      - Conformance: conformance.md
+  - Guides:
+      - Installation: install.md
+      - Authoring guide: authoring.md
+      - Best practices: best-practices.md
+      - Patterns: patterns.md
+      - Console: console.md
+      - Live demos: demos.md
+  - Reference:
+      - CLI: cli.md
+      - Machine stdlib: stdlib.md
+      - Interpreter architecture: architecture.md
+  - Decisions (ADRs):
+      - Index: adr/README.md
       - Capability tiers: adr/0001-capability-tiers.md
       - Fan-out LLM reducer: adr/0002-fanout-llm-reducer.md
       - Provider-agnostic: adr/0003-provider-agnostic.md
@@ -58,6 +65,9 @@ nav:
       - Host tool stub architecture: adr/0020-host-tool-stub-architecture.md
       - Filesystem layout: adr/0021-filesystem-layout-local-install.md
       - CLI and console experience: adr/0022-cli-console-experience.md
-  - Roadmap: ROADMAP.md
-  - Changelog: CHANGELOG.md
-  - Contributing: CONTRIBUTING.md
+  - Research:
+      - Gate divergence: experiments/gate-divergence.md
+  - Project:
+      - Roadmap: ROADMAP.md
+      - Changelog: CHANGELOG.md
+      - Contributing: CONTRIBUTING.md

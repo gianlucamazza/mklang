@@ -656,7 +656,7 @@ Notes:
   `structure` / `execution` are **not** interpolated. Gate judging uses a fixed
   host system role plus a user payload of OUTPUT / CONTEXT / CONDITIONS — not
   the produce system template. Authoring guidance:
-  [docs/best-practices.md](./docs/best-practices.md) §3.
+  [docs/guides/best-practices.md](./docs/guides/best-practices.md) §3.
 - **Host clock keys (reference interpreter, non-normative):** if the machine
   declares empty top-level context keys `today` and/or `now`, hosts MAY fill
   them when still empty after inputs — `today` as ISO date `YYYY-MM-DD`, `now`

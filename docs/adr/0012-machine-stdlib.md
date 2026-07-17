@@ -72,7 +72,7 @@ task="…"` and MCP `run(path="std_cot")` with no server change. A run-by-name
   never be broken by a stdlib name, only warned when they shadow one.
 - List-valued parameters (`items`, `personas`) work from CLI/MCP but not
   through `call: input:` — documented per machine in the catalog
-  (docs/stdlib.md). Lifting this needs structured outputs, the same gap that
+  (docs/reference/stdlib.md). Lifting this needs structured outputs, the same gap that
   blocks Plan-and-Execute.
 - The stdlib's quality bar is enforced by tests, not by runtime checks; a
   malformed stdlib file would vanish from the registry silently at runtime but
