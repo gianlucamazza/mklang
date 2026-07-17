@@ -71,6 +71,14 @@ def test_params_map_to_thinking_and_effort():
     assert p.text == "ok" and p.input_tokens == 3 and p.output_tokens == 2
 
 
+def test_max_tokens_stop_sets_truncated():
+    llm = _adapter(stop_reason="max_tokens", text="partial")
+    p = llm.produce("claude-x", "sys", "hi")
+    assert p.truncated is True
+    assert p.finish_reason == "max_tokens"
+    assert p.text == "partial"
+
+
 def test_thinking_disabled_suppresses_thinking():
     llm = _adapter()
     llm.produce("claude-x", "sys", "hi", reason=True, params={"thinking": "disabled"})

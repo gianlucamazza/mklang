@@ -6,11 +6,18 @@ budget_tokens on Opus 4.7+/Sonnet 5); the summarized thinking is captured as
 
 from __future__ import annotations
 
-import json
 import time
 
 from ..errors import JudgeUnparseable, ProviderError, RefusalError
-from .base import JUDGE_CONTEXT_CHARS, JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
+from .base import (
+    JUDGE_CONTEXT_CHARS,
+    JUDGE_SYSTEM,
+    TRANSIENT_STATUS,
+    Produced,
+    is_length_stop,
+    parse_choice,
+)
+from .context_view import format_judge_context
 
 
 class AnthropicLLM:
@@ -77,7 +84,8 @@ class AnthropicLLM:
         if "effort" in params:  # low | medium | high | xhigh | max
             kwargs["output_config"] = {"effort": params["effort"]}
         msg = self._create(**kwargs)
-        if getattr(msg, "stop_reason", None) == "refusal":
+        stop = getattr(msg, "stop_reason", None)
+        if stop == "refusal":
             raise RefusalError("the model declined this request")
         text, reasoning = "", None
         for block in msg.content:
@@ -88,7 +96,14 @@ class AnthropicLLM:
         u = getattr(msg, "usage", None)
         it = getattr(u, "input_tokens", 0) if u else 0
         ot = getattr(u, "output_tokens", 0) if u else 0
-        return Produced(text=text.strip(), reasoning=reasoning, input_tokens=it, output_tokens=ot)
+        return Produced(
+            text=text.strip(),
+            reasoning=reasoning,
+            input_tokens=it,
+            output_tokens=ot,
+            truncated=is_length_stop(stop),
+            finish_reason=stop,
+        )
 
     def judge(
         self,
@@ -102,7 +117,7 @@ class AnthropicLLM:
         parts = [f"OUTPUT:\n{output}"]
         if reasoning:
             parts.append(f"REASONING:\n{reasoning}")
-        parts.append(f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:JUDGE_CONTEXT_CHARS]}")
+        parts.append(f"CONTEXT:\n{format_judge_context(context, JUDGE_CONTEXT_CHARS)}")
         parts.append(f"CONDITIONS (priority order, 1-based):\n{lines}")
         parts.append('Reply with ONLY a JSON object: {"choice": <number>}.')
         user = "\n\n".join(parts)

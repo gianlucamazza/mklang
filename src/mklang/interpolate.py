@@ -7,6 +7,10 @@ import re
 
 _PAT = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
 
+# Per-value cap when formatting into produce prompts (ADR 0017). High enough to
+# be a no-op for normal machines; 0 disables. Hosts may override via render/fmt.
+PROMPT_VALUE_CHARS = 20_000
+
 
 def lookup(ctx: dict, path: str):
     """Resolve a dotted path into a nested dict; return None if missing."""
@@ -19,27 +23,47 @@ def lookup(ctx: dict, path: str):
     return cur
 
 
-def fmt(value) -> str:
+def _clip(text: str, max_chars: int) -> str:
+    """Hard-cap a string; if truncated, end with an explicit marker inside the budget."""
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    marker = "…[truncated]"
+    if len(marker) >= max_chars:
+        return marker[:max_chars]
+    return text[: max_chars - len(marker)] + marker
+
+
+def fmt(value, *, max_chars: int | None = None) -> str:
     """Render a context value for inclusion in a prompt.
 
-    Lists become a readable numbered enumeration (what a reducer wants to see)."""
+    Lists become a readable numbered enumeration (what a reducer wants to see).
+    ``max_chars`` caps the formatted string (default ``PROMPT_VALUE_CHARS``;
+    ``0`` = unlimited). Truncation is marked with ``…[truncated]`` (ADR 0017).
+    """
+    limit = PROMPT_VALUE_CHARS if max_chars is None else max_chars
     if value is None:
         return ""
     if isinstance(value, str):
-        return value
-    if isinstance(value, list):
-        return "\n".join(f"{i + 1}. {fmt(x)}" for i, x in enumerate(value))
-    return json.dumps(value, ensure_ascii=False)
+        raw = value
+    elif isinstance(value, list):
+        # Nested items are not individually capped; the joined blob is.
+        raw = "\n".join(f"{i + 1}. {fmt(x, max_chars=0)}" for i, x in enumerate(value))
+    else:
+        raw = json.dumps(value, ensure_ascii=False)
+    return _clip(raw, limit)
 
 
-def render(text: str | None, ctx: dict) -> str:
-    """Replace {{path}} occurrences in `text` with formatted context values."""
+def render(text: str | None, ctx: dict, *, value_chars: int | None = None) -> str:
+    """Replace {{path}} occurrences in `text` with formatted context values.
+
+    ``value_chars`` is the per-value cap passed to :func:`fmt` (None → default).
+    """
     if text is None:
         return ""
 
     def rep(m: re.Match) -> str:
         v = lookup(ctx, m.group(1))
-        return fmt(v) if v is not None else ""
+        return fmt(v, max_chars=value_chars) if v is not None else ""
 
     return _PAT.sub(rep, text)
 

@@ -97,6 +97,7 @@ def cmd_run(args) -> int:
         hooks=hooks,
         suspendable=args.checkpoint is not None,
         escalate_suspend=args.hitl,
+        on_truncate=getattr(args, "on_truncate", "report"),
     )
     return _emit(res, args.checkpoint, machine, args.machine, args.max_tokens, hitl=args.hitl)
 
@@ -156,6 +157,7 @@ def cmd_resume(args) -> int:
         suspendable=True,
         escalate_suspend=hitl,
         resume=ck["frames"],
+        on_truncate=getattr(args, "on_truncate", "report"),
     )
     return _emit(res, out_path, machine, machine_path, cost_budget, hitl=hitl)
 
@@ -360,6 +362,13 @@ def main(argv: list[str] | None = None) -> int:
         help="refuse to run a document whose mklang: version is unsupported "
         "(version-unsupported); default is a warning",
     )
+    r.add_argument(
+        "--on-truncate",
+        choices=("report", "halt"),
+        default="report",
+        help="when produce hits max_tokens/length: annotate the trace (report, default) "
+        "or halt with state-error: output-truncated (halt) — ADR 0018",
+    )
     r.set_defaults(fn=cmd_run)
 
     s = sub.add_parser("resume", help="resume a suspended run from a checkpoint")
@@ -393,6 +402,12 @@ def main(argv: list[str] | None = None) -> int:
         help="where to write the checkpoint on re-suspension (default: overwrite the input)",
     )
     s.add_argument("--force", action="store_true", help="resume even if the machine file changed")
+    s.add_argument(
+        "--on-truncate",
+        choices=("report", "halt"),
+        default="report",
+        help="produce truncation policy on resume (same as run; ADR 0018)",
+    )
     s.set_defaults(fn=cmd_resume)
 
     co = sub.add_parser("console", help="agent-first console TUI (needs the [console] extra)")

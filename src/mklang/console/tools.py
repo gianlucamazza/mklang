@@ -52,6 +52,8 @@ class ConsoleTools:
     bridge: Bridge
     workspace: Path
     default_cost_budget: int | None = None
+    # Output anti-cutoff policy for commissioned machines (ADR 0018).
+    on_truncate: str = "report"
     build_llm: object = None
     _consented: set = field(default_factory=set)
 
@@ -207,6 +209,7 @@ class ConsoleTools:
             suspendable=True,
             escalate_suspend=True,
             on_event=lambda e: self.bridge.emit({"run": target, **e}),
+            on_truncate=self.on_truncate,
         )
         # HITL: broker every escalation to the human, then resume in place.
         while res.status == "suspended" and res.error == "escalated":
@@ -231,6 +234,7 @@ class ConsoleTools:
                 escalate_suspend=True,
                 resume=res.frames,
                 on_event=lambda e: self.bridge.emit({"run": target, **e}),
+                on_truncate=self.on_truncate,
             )
         out = host.build_output(res)
         out["trace"] = f"{len(res.trace)} steps"  # observations stay compact

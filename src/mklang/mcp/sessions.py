@@ -33,6 +33,8 @@ class Session:
     # path / bundled name, or the inline source text. At most one is set.
     origin_path: str | None = None
     origin_source: str | None = None
+    # Output anti-cutoff policy for this session (ADR 0018); resume reuses it.
+    on_truncate: str = "report"
 
 
 class SessionStore:

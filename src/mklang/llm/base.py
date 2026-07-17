@@ -14,6 +14,10 @@ class Produced:
     reasoning: str | None = None
     input_tokens: int = 0
     output_tokens: int = 0
+    # Output anti-cutoff (ADR 0018): adapters set truncated when the provider
+    # stopped for length/max_tokens; finish_reason is the normalized stop label.
+    truncated: bool = False
+    finish_reason: str | None = None
 
 
 @runtime_checkable
@@ -63,8 +67,18 @@ JUDGE_SYSTEM = (
     "Do not include any other numbers in your reply."
 )
 
-# Host MAY truncate judge CONTEXT; reference adapters use this cap (SPEC §5).
+# Host MAY truncate judge CONTEXT; reference adapters use this cap (SPEC §5 / ADR 0017).
 JUDGE_CONTEXT_CHARS = 4000
+
+# Provider-normalized stop reasons that mean the completion hit a token/length cap.
+LENGTH_FINISH_REASONS = frozenset({"length", "max_tokens", "model_context_window_exceeded"})
+
+
+def is_length_stop(reason: str | None) -> bool:
+    """True when a provider stop/finish reason indicates output was cut off."""
+    if not reason:
+        return False
+    return reason.lower() in LENGTH_FINISH_REASONS
 
 # Transient HTTP statuses worth retrying (rate limits, gateway, overload).
 TRANSIENT_STATUS = (408, 409, 429, 500, 502, 503, 504)

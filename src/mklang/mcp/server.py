@@ -14,9 +14,23 @@ handles; passing `checkpoint_path` additionally writes the CLI's file envelope
 (0600) so a run can be resumed across processes — `resume` accepts either kind.
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
+
+try:
+    # Real Context enables FastMCP's ctx injection; the annotation must resolve
+    # from module globals because `from __future__ import annotations` stringifies
+    # it. The fallback keeps `import mklang.mcp.server` working without the extra
+    # (main() then shows the friendly install hint).
+    from mcp.server.fastmcp import Context
+except ImportError:  # pragma: no cover - exercised by the no-extra install
+
+    class Context:  # placeholder type so annotations resolve; never instantiated
+        pass
+
 
 from .. import host
 from ..checkpoint import load_checkpoint, save_checkpoint, verify_hash
@@ -38,7 +52,7 @@ def _error(slug: str, errors: list[str], warnings: list[str] | None = None) -> d
 
 
 def _event_forwarder(ctx):
-    """Bridge engine events to MCP logging notifications (ADR 0016).
+    """Bridge engine events to MCP logging notifications (ADR 0015 live seam).
 
     The forwarder is created on the server's event loop (FastMCP invokes sync
     tools there), but engine events may fire from fan-out worker threads too —
@@ -98,7 +112,14 @@ def _finish(
     return out
 
 
-def _session_from(p: host.Prepared, cost_budget, hitl, origin_path, origin_source) -> Session:
+def _session_from(
+    p: host.Prepared,
+    cost_budget,
+    hitl,
+    origin_path,
+    origin_source,
+    on_truncate: str = "report",
+) -> Session:
     return Session(
         machine=p.machine,
         registry=p.registry,
@@ -112,6 +133,7 @@ def _session_from(p: host.Prepared, cost_budget, hitl, origin_path, origin_sourc
         reason=None,
         origin_path=origin_path,
         origin_source=origin_source,
+        on_truncate=on_truncate,
     )
 
 
@@ -128,9 +150,15 @@ def run_tool(
     strict: bool = False,
     checkpoint_path: str | None = None,
     on_event=None,
+    on_truncate: str = "report",
 ) -> dict:
     if (source is None) == (path is None):
         return _error("invalid-request", ["provide exactly one of `source` or `path`"])
+    if on_truncate not in ("report", "halt"):
+        return _error(
+            "invalid-request",
+            [f"on_truncate must be 'report' or 'halt', got {on_truncate!r}"],
+        )
     cfg = config or defaults["config"]
     prov_name = provider or defaults["provider"]
     try:
@@ -157,12 +185,13 @@ def run_tool(
         suspendable=True,
         escalate_suspend=hitl,
         on_event=on_event,
+        on_truncate=on_truncate,
     )
-    session = _session_from(p, cost_budget, hitl, path, source)
+    session = _session_from(p, cost_budget, hitl, path, source, on_truncate=on_truncate)
     return _finish(store, res, p.warnings, session, checkpoint_path)
 
 
-def _rerun(session: Session, frames: list[dict], budget, on_event=None) -> object:
+def _rerun(session: Session, frames: list[dict], budget, on_event=None, on_truncate=None) -> object:
     return run_machine(
         session.machine,
         dict(session.machine.context),
@@ -178,6 +207,7 @@ def _rerun(session: Session, frames: list[dict], budget, on_event=None) -> objec
         escalate_suspend=session.hitl,
         resume=frames,
         on_event=on_event,
+        on_truncate=on_truncate if on_truncate is not None else session.on_truncate,
     )
 
 
@@ -199,6 +229,7 @@ def _resume_from_file(
     checkpoint_path: str | None,
     force: bool,
     on_event=None,
+    on_truncate: str = "report",
 ) -> dict:
     try:
         ck = load_checkpoint(ck_path)
@@ -229,9 +260,14 @@ def _resume_from_file(
     for k, v in (inputs or {}).items():
         host.set_path(ck["frames"][-1]["ctx"], k, v)
     session = _session_from(
-        p, budget, ck.get("hitl", False), None if source else machine_path, source
+        p,
+        budget,
+        ck.get("hitl", False),
+        None if source else machine_path,
+        source,
+        on_truncate=on_truncate,
     )
-    res = _rerun(session, ck["frames"], budget)
+    res = _rerun(session, ck["frames"], budget, on_event, on_truncate)
     # Re-suspension persists to the file it came from unless redirected.
     return _finish(store, res, warnings, session, checkpoint_path or ck_path)
 
@@ -246,13 +282,22 @@ def resume_tool(
     checkpoint_path: str | None = None,
     force: bool = False,
     on_event=None,
+    on_truncate: str | None = None,
 ) -> dict:
     defaults = defaults or {"config": DEFAULT_CONFIG, "provider": None}
     s = store.get(checkpoint)
     if s is None:
         if Path(checkpoint).is_file():
             return _resume_from_file(
-                store, defaults, checkpoint, inputs, cost_budget, checkpoint_path, force, on_event
+                store,
+                defaults,
+                checkpoint,
+                inputs,
+                cost_budget,
+                checkpoint_path,
+                force,
+                on_event,
+                on_truncate=on_truncate or "report",
             )
         return _error(
             "unknown-checkpoint",
@@ -266,7 +311,14 @@ def resume_tool(
     # A human reply lands in the innermost frame's context (the suspended run).
     for k, v in (inputs or {}).items():
         host.set_path(s.frames[-1]["ctx"], k, v)
-    res = _rerun(s, s.frames, budget, on_event)
+    if on_truncate is not None:
+        if on_truncate not in ("report", "halt"):
+            return _error(
+                "invalid-request",
+                [f"on_truncate must be 'report' or 'halt', got {on_truncate!r}"],
+            )
+        s.on_truncate = on_truncate
+    res = _rerun(s, s.frames, budget, on_event, s.on_truncate)
     store.delete(checkpoint)
     s.cost_budget = budget
     return _finish(store, res, warnings, s, checkpoint_path)
@@ -305,7 +357,7 @@ def check_tool(source: str | None = None, path: str | None = None, strict: bool 
 
 def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
     """Build the FastMCP server. Requires the `mcp` package (`pip install mklang[mcp]`)."""
-    from mcp.server.fastmcp import Context, FastMCP
+    from mcp.server.fastmcp import FastMCP
 
     server = FastMCP("mklang")
     store = SessionStore()
@@ -322,6 +374,7 @@ def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
         hitl: bool = False,
         strict: bool = False,
         checkpoint_path: str | None = None,
+        on_truncate: str = "report",
         ctx: Context = None,
     ) -> dict:
         """Commission an mklang machine and return its result with full provenance
@@ -330,7 +383,8 @@ def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
         the bare name of a bundled machine (see list_machines) — exactly one of the
         two. Inline sources may `call:` bundled machines. `inputs` merges values
         into the machine's context by dotted key (e.g. {"ticket.body": "..."});
-        list values are allowed. `cost_budget` caps total tokens. With
+        list values are allowed. `cost_budget` caps total tokens. `on_truncate` is
+        `report` (default: annotate truncated produce) or `halt` (ADR 0018). With
         `hitl: true`, a fired escalate gate suspends the run: the reply has
         `status: "suspended"` and an opaque single-use `checkpoint` handle for
         `resume`; pass `checkpoint_path` to ALSO persist the suspension to a file
@@ -351,6 +405,7 @@ def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
             strict=strict,
             checkpoint_path=checkpoint_path,
             on_event=_event_forwarder(ctx),
+            on_truncate=on_truncate,
         )
 
     @server.tool()
@@ -360,6 +415,7 @@ def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
         cost_budget: int | None = None,
         checkpoint_path: str | None = None,
         force: bool = False,
+        on_truncate: str | None = None,
         ctx: Context = None,
     ) -> dict:
         """Resume a suspended run. `checkpoint` is either the opaque single-use
@@ -368,10 +424,10 @@ def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
         --checkpoint` works too). `inputs` injects values into the suspended
         context — e.g. the human reply as {"human.reply": "approve"}.
         `cost_budget` sets a new total token budget (must exceed the exhausted one
-        to make progress). If the run suspends again, the reply carries a NEW
-        handle, and a file checkpoint is rewritten in place (or to
-        `checkpoint_path`). `force: true` resumes even if the machine file changed
-        since the checkpoint."""
+        to make progress). `on_truncate` overrides the session policy if set.
+        If the run suspends again, the reply carries a NEW handle, and a file
+        checkpoint is rewritten in place (or to `checkpoint_path`). `force: true`
+        resumes even if the machine file changed since the checkpoint."""
         return resume_tool(
             store,
             checkpoint,
@@ -381,6 +437,7 @@ def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
             checkpoint_path=checkpoint_path,
             force=force,
             on_event=_event_forwarder(ctx),
+            on_truncate=on_truncate,
         )
 
     @server.tool()

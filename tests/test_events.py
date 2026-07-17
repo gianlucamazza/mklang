@@ -178,6 +178,35 @@ def test_hitl_suspension_records_the_escalating_state():
     assert last["type"] == "state-done" and last["policy"] == "escalate"
 
 
+def test_state_done_event_carries_truncated_flag():
+    m = M(
+        {
+            "machine": "t",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "long",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                }
+            },
+        }
+    )
+    llm = MockLLM(
+        produce_fn=lambda *a: Produced(
+            text="partial", truncated=True, finish_reason="length"
+        )
+    )
+    res, events = collect(m, llm=llm)
+    assert res.status == "done"
+    assert res.trace[0].get("truncated") is True
+    done = [e for e in events if e["type"] == "state-done"][0]
+    assert done.get("truncated") is True
+    assert done.get("finish_reason") == "length"
+
+
 def test_output_preview_is_truncated():
     llm = MockLLM(produce_fn=lambda *a: Produced(text="x" * 500), judge_fn=lambda *a: 0)
     _, events = collect(linear(), llm=llm)

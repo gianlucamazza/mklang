@@ -86,6 +86,13 @@ class _Ctx:
     # terminal outcomes stay on RunResult. Must be thread-safe (fan-out branches
     # emit from worker threads) and is isolated: its exceptions never reach the run.
     on_event: object = None
+    # Output anti-cutoff policy (ADR 0018): "report" annotates the trace;
+    # "halt" aborts with state-error: output-truncated. Default report preserves
+    # existing machine behavior while making cutoff observable.
+    on_truncate: str = "report"
+    # Per-value produce-prompt cap for {{…}} interpolation (ADR 0017). None →
+    # interpolate.PROMPT_VALUE_CHARS; 0 → unlimited.
+    prompt_value_chars: int | None = None
 
 
 def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields) -> None:
@@ -203,7 +210,12 @@ def _exec_one(
     depth: int,
     resume: list[dict] | None = None,
 ):
-    """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out) tokens)."""
+    """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
+
+    ``meta`` carries produce-side annotations (ADR 0018 truncation). Empty for
+    tool/call states.
+    """
+    empty_meta: dict = {}
     if state.kind == "call":
         sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
         sub_machine = deps.registry.get(state.call)
@@ -226,29 +238,44 @@ def _exec_one(
             escalate_suspend=deps.escalate_suspend,
             resume=resume,
             on_event=deps.on_event,
+            on_truncate=deps.on_truncate,
+            prompt_value_chars=deps.prompt_value_chars,
         )
         u = sub.usage or {}
         tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
         if sub.status != "done":
             # Parent must not continue as success with a missing/partial sub-result.
             raise CallFailed(sub.error or "sub-halted", sub.trace, tin, tout)
-        return sub.result, sub.trace, None, (tin, tout)
+        return sub.result, sub.trace, None, (tin, tout), empty_meta
     if state.kind == "tool":
         tool_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
         fn = deps.tools.get(state.tool)
         if fn is None:
             raise KeyError(f"tool: unknown tool {state.tool!r} (register it via run(tools=...))")
-        return str(fn(tool_input)), None, None, (0, 0)
+        return str(fn(tool_input)), None, None, (0, 0), empty_meta
     tier = state.tier or machine.default_tier
     model = _model_for(state, machine, deps.tiers)
     params = deps.tier_params.get(tier)
-    user = render(state.prompt, ctx) + (f"\n\n[Repair feedback] {feedback}" if feedback else "")
+    user = render(state.prompt, ctx, value_chars=deps.prompt_value_chars) + (
+        f"\n\n[Repair feedback] {feedback}" if feedback else ""
+    )
     temperature = 0.8 if state.sample else 0.4
     p = deps.llm.produce(
         model, _system(state), user, reason=state.reason, temperature=temperature, params=params
     )
+    meta = {}
+    if getattr(p, "truncated", False):
+        meta["truncated"] = True
+        if getattr(p, "finish_reason", None):
+            meta["finish_reason"] = p.finish_reason
+        if deps.on_truncate == "halt":
+            raise ValueError("output-truncated")
+        if state.parse == "list":
+            # Partial JSON from a length stop is almost never a valid array —
+            # fail with a clearer label than a generic parse error (ADR 0018).
+            raise ValueError("parse-list-truncated")
     out = _parse_list(p.text) if state.parse == "list" else p.text
-    return out, None, p.reasoning, (p.input_tokens, p.output_tokens)
+    return out, None, p.reasoning, (p.input_tokens, p.output_tokens), meta
 
 
 def _parse_list(text: str) -> list:
@@ -283,9 +310,15 @@ def _safe_exec(state, ctx, deps, machine, depth):
         )
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
-        out = (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
+        out = (
+            f"[branch-error: {e.error}]",
+            e.sub_trace,
+            None,
+            (e.input_tokens, e.output_tokens),
+            {},
+        )
     except Exception as e:  # isolate the branch
-        out = (f"[branch-error: {e}]", None, None, (0, 0))
+        out = (f"[branch-error: {e}]", None, None, (0, 0), {})
     _emit(
         deps,
         "branch-done",
@@ -350,9 +383,13 @@ def run(
     escalate_suspend: bool = False,
     resume: list[dict] | None = None,
     on_event=None,
+    on_truncate: str = "report",
+    prompt_value_chars: int | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
+    if on_truncate not in ("report", "halt"):
+        raise ValueError(f"on_truncate must be 'report' or 'halt', got {on_truncate!r}")
     deps = _Ctx(
         llm,
         tiers,
@@ -366,6 +403,8 @@ def run(
         suspendable,
         escalate_suspend,
         on_event,
+        on_truncate,
+        prompt_value_chars,
     )
     ctx = dict(context)
     state_id = machine.entry
@@ -455,6 +494,11 @@ def run(
             fields["branches"] = len(step["branches"])
         if "cost" in step:
             fields["tokens"] = step["cost"]
+        # Surface output anti-cutoff to live observers (console tree, MCP logs).
+        if step.get("truncated"):
+            fields["truncated"] = True
+            if step.get("finish_reason"):
+                fields["finish_reason"] = step["finish_reason"]
         _emit(deps, "state-done", machine.name, depth, **fields)
 
     _emit(deps, "run-start", machine.name, depth, entry=state_id, resumed=bool(resume))
@@ -519,10 +563,18 @@ def run(
                 judge_reasoning = "\n---\n".join(rs) if rs else None
             step_in = sum(o[3][0] for o in outs)
             step_out = sum(o[3][1] for o in outs)
+            # Any branch that reported produce truncation annotates the parent step.
+            trunc_metas = [o[4] for o in outs if (o[4] or {}).get("truncated")]
+            if trunc_metas:
+                step["truncated"] = True
+                # First branch's finish_reason is enough signal for the parent step.
+                fr = trunc_metas[0].get("finish_reason")
+                if fr:
+                    step["finish_reason"] = fr
         else:
             steps += 1
             try:
-                out, sub, reasoning, (step_in, step_out) = _exec_one(
+                out, sub, reasoning, (step_in, step_out), meta = _exec_one(
                     S, ctx, feedback, deps, machine, depth, resume=sub_resume
                 )
             except _Suspend as s:
@@ -575,6 +627,10 @@ def run(
                 step["reasoning"] = reasoning
             if sub is not None:
                 step["sub_trace"] = sub
+            if meta.get("truncated"):
+                step["truncated"] = True
+                if meta.get("finish_reason"):
+                    step["finish_reason"] = meta["finish_reason"]
         feedback = ""
         total_in += step_in
         total_out += step_out

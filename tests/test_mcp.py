@@ -116,6 +116,27 @@ def test_run_requires_exactly_one_of_source_and_path(store):
     assert both["error"] == neither["error"] == "invalid-request"
 
 
+def test_on_truncate_halt_parity(monkeypatch, store):
+    """MCP exposes the same on_truncate=halt policy as the CLI (ADR 0018)."""
+
+    def truncating():
+        return MockLLM(
+            produce_fn=lambda *a: Produced(text="cut", truncated=True, finish_reason="length"),
+            judge_fn=lambda *a: 0,
+        )
+
+    use_llm(monkeypatch, truncating)
+    out = srv.run_tool(store, DEFAULTS, source=LINEAR, on_truncate="halt")
+    assert out["status"] == "halt"
+    assert out["error"] == "state-error: output-truncated"
+
+
+def test_on_truncate_invalid_is_error_payload(store):
+    out = srv.run_tool(store, DEFAULTS, source=LINEAR, on_truncate="continue")
+    assert out["status"] == "error"
+    assert out["error"] == "invalid-request"
+
+
 def test_run_invalid_source_is_error_payload(monkeypatch, store):
     use_llm(monkeypatch, echo_llm)
     out = srv.run_tool(store, DEFAULTS, source="states: [unclosed")

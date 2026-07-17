@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
-import json
 import time
 
 from ..errors import JudgeUnparseable, ProviderError
-from .base import JUDGE_CONTEXT_CHARS, JUDGE_SYSTEM, TRANSIENT_STATUS, Produced, parse_choice
+from .base import (
+    JUDGE_CONTEXT_CHARS,
+    JUDGE_SYSTEM,
+    TRANSIENT_STATUS,
+    Produced,
+    is_length_stop,
+    parse_choice,
+)
+from .context_view import format_judge_context
 
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
 _TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "top_p", "seed"}
@@ -54,11 +61,18 @@ class OpenAICompatLLM:
         }
         _apply_params(kwargs, params)
         r = self._create(**kwargs)
-        msg = r.choices[0].message
+        choice = r.choices[0]
+        msg = choice.message
         reasoning = getattr(msg, "reasoning_content", None) if reason else None
         it, ot = _usage(r)
+        finish = getattr(choice, "finish_reason", None)
         return Produced(
-            text=(msg.content or "").strip(), reasoning=reasoning, input_tokens=it, output_tokens=ot
+            text=(msg.content or "").strip(),
+            reasoning=reasoning,
+            input_tokens=it,
+            output_tokens=ot,
+            truncated=is_length_stop(finish),
+            finish_reason=finish,
         )
 
     def judge(
@@ -73,7 +87,7 @@ class OpenAICompatLLM:
         parts = [f"OUTPUT:\n{output}"]
         if reasoning:
             parts.append(f"REASONING:\n{reasoning}")
-        parts.append(f"CONTEXT:\n{json.dumps(context, ensure_ascii=False)[:JUDGE_CONTEXT_CHARS]}")
+        parts.append(f"CONTEXT:\n{format_judge_context(context, JUDGE_CONTEXT_CHARS)}")
         parts.append(f"CONDITIONS (priority order, 1-based):\n{lines}")
         parts.append('Reply with ONLY a JSON object: {"choice": <number>}.')
         user = "\n\n".join(parts)

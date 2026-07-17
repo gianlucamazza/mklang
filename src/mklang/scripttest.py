@@ -18,7 +18,7 @@ bindings, and the expectation matcher (status, error, `error_prefix`, result,
 llm:   { produce: [...], judge: [...], tokens: [in, out] }
 tools: { name: [...] | {input-substring: output} }
 hooks: { name: [bool, ...] }
-run:   { cost_budget: N }        # optional interpreter options
+run:   { cost_budget: N, on_truncate: report|halt }  # optional interpreter options
 expect:
   status: done | halt            # required
   error / error_prefix / result / at / context / trace   # optional
