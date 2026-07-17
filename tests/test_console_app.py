@@ -77,6 +77,51 @@ def all_labels(node):
     return out
 
 
+def test_activity_tree_leaf_states_are_not_vacuously_expandable():
+    """Regression: Textual defaults allow_expand=True, so empty brain states
+    showed a chevron that revealed nothing. Leaves stay non-expandable until
+    they gain a nested run or an output preview."""
+    from mklang.console.widgets import ActivityTree
+
+    tree = ActivityTree()
+    tree.new_turn("q")
+    tree.feed(
+        {
+            "type": "run-start",
+            "machine": "console_agent",
+            "depth": 0,
+            "entry": "decide",
+        }
+    )
+    tree.feed(
+        {
+            "type": "state-start",
+            "machine": "console_agent",
+            "depth": 0,
+            "state": "decide",
+            "kind": "generative",
+            "tier": "reasoning",
+        }
+    )
+    decide = tree._state_nodes[(None, 0, "decide")]
+    assert decide.allow_expand is False
+    assert len(decide.children) == 0
+
+    tree.feed(
+        {
+            "type": "state-done",
+            "machine": "console_agent",
+            "depth": 0,
+            "state": "decide",
+            "policy": "ok",
+            "to": "reply",
+            "output": "REPLY: hello",
+        }
+    )
+    assert decide.allow_expand is True
+    assert any("REPLY: hello" in str(c.label) for c in decide.children)
+
+
 def test_activity_tree_and_inspector(tmp_path):
     from mklang.console.widgets import ActivityTree, Inspector
 

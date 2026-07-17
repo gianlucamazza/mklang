@@ -45,6 +45,13 @@ class ActivityTree(Tree):
             (tag, depth - 1)
         )
 
+    @staticmethod
+    def _enable_expand(node) -> None:
+        """Textual defaults allow_expand=True even for empty leaves — only opt in
+        when a node actually gains children (nested run, preview, branch)."""
+        if node is not None and not node.allow_expand:
+            node.allow_expand = True
+
     def feed(self, e: dict) -> None:
         if self._turn_node is None:
             self.new_turn("turn")
@@ -55,11 +62,17 @@ class ActivityTree(Tree):
             parent = self._parent_for(e)
             if parent is None:
                 return
-            node = parent.add(f"▶ [b]{e['machine']}[/b]", expand=True)
+            self._enable_expand(parent)
+            node = parent.add(f"▶ [b]{e['machine']}[/b]", expand=True, allow_expand=True)
             self._run_nodes[(tag, depth)] = node
         elif kind == "state-start":
             parent = self._run_nodes.get((tag, depth)) or self._turn_node
-            node = parent.add(f"◐ {e['state']} [dim]{e['kind']}·{e['tier']}[/dim]")
+            # Leaves until something nests under them (commissioned run / preview).
+            node = parent.add(
+                f"◐ {e['state']} [dim]{e['kind']}·{e['tier']}[/dim]",
+                expand=False,
+                allow_expand=False,
+            )
             self._state_nodes[(tag, depth, e["state"])] = node
             self._state_nodes[(tag, depth, None)] = node  # the in-flight state
             if tag is None:
@@ -69,9 +82,18 @@ class ActivityTree(Tree):
             if node is not None:
                 arrow = f"→ {e['to']}" if e.get("to") else f"({e.get('policy')})"
                 node.set_label(f"● {e['state']} [dim]{e.get('policy')}[/dim] {arrow}")
+                # Expandable only when there is something to show: nested run
+                # children already present, and/or an output preview leaf.
+                preview = e.get("output")
+                if preview:
+                    self._enable_expand(node)
+                    node.add_leaf(f"[dim]{preview}[/dim]")
+                elif node.children:
+                    self._enable_expand(node)
         elif kind == "branch-done":
             node = self._state_nodes.get((tag, depth, e["state"]))
             if node is not None:
+                self._enable_expand(node)
                 node.add_leaf(f"· branch {e.get('index')}")
 
 

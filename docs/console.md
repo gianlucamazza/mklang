@@ -29,10 +29,12 @@ mklang console                 # DeepSeek by default; --provider anthropic|opena
 ```
 
 Conversation on top, the live **activity tree** of the current turn beneath it
-(brain states at the top level, each commissioned run nested under the state
-that launched it, `call:` sub-runs by depth, fan-out branches as leaves), the
-token HUD, and the input line. `F2` toggles the inspector (last run's
-blackboard, trace, session facts); `ctrl+l` clears the conversation.
+(brain states under `▶ console_agent`, each commissioned run nested under the
+state that launched it, `call:` sub-runs by depth, fan-out branches as leaves).
+State rows are **not** expandable unless they have content: a nested run and/or
+an output preview leaf. The token HUD and the input line sit below. `F2`
+toggles the inspector (last run's blackboard, trace, session facts); `ctrl+l`
+clears the conversation.
 
 ## The agent
 
