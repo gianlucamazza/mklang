@@ -86,7 +86,12 @@ generative prose that pretends to search). Host binding:
 
 Example workspace machine: `machines/news_search.mk` (topic → search → brief).
 Pattern references: `examples/research_web.mk`, `examples/research_compress.mk`.
-The brain will ask consent the first time a machine uses host tools.
+
+**Tool consent is not an error.** The first time a machine uses host tools
+(`search`, `calc`, …) the console pauses with a yellow prompt and asks you to
+allow it for the session. Type **`y`** / **`yes`** / **`sì`** and Enter.
+Afterwards it is remembered in the session (inspector: consented tools). Enter
+alone means **no**.
 
 ## Security model
 

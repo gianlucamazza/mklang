@@ -75,7 +75,14 @@ def build_app(
             return self._reply or ""
 
         def confirm(self, prompt: str) -> bool:
-            return self.ask(f"{prompt} [y/N]").strip().lower() in ("y", "yes", "s", "si", "sì")
+            # Accept common yes tokens (EN/IT). Default is no if the user hits enter.
+            return self.ask(f"{prompt}  → type y / yes / sì  (Enter = no)").strip().lower() in (
+                "y",
+                "yes",
+                "s",
+                "si",
+                "sì",
+            )
 
         def deliver(self, reply: str) -> None:
             self._reply = reply
@@ -182,7 +189,8 @@ def build_app(
             self.answer_mode = True
             self.log_line(f"[yellow]⏸ {question}[/yellow]")
             box = self.query_one("#prompt", Input)
-            box.placeholder = "your answer…"
+            # Consent prompts include "type y"; keep a short generic placeholder.
+            box.placeholder = "answer here, then Enter…"
             box.disabled = False
             box.focus()
 

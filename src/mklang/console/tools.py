@@ -183,8 +183,12 @@ class ConsoleTools:
             return _obs({"error": f"unknown machine '{target}'", "known": sorted(reg)})
         used_tools = sorted({s.tool for s in machine.states.values() if s.kind == "tool"})
         if used_tools and not set(used_tools) <= self._consented:
+            # One-time per session (SPEC §11). Wording must read as a yes/no
+            # gate, not a terminal error — users often misread this as failure.
+            tools_txt = ", ".join(used_tools)
             if not self.bridge.confirm(
-                f"machine '{target}' invokes host tools {used_tools} — run it?"
+                f"Consent: machine '{target}' will call host tool(s) [{tools_txt}] "
+                f"(e.g. live web search). Allow this once for the session?"
             ):
                 return _obs({"error": "run declined by the user", "tools": used_tools})
             self._consented.update(used_tools)
