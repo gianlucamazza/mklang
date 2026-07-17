@@ -82,6 +82,24 @@ class _Ctx:
     suspendable: bool = False
     # A fired escalate gate suspends for human input instead of just routing.
     escalate_suspend: bool = False
+    # Optional live-observability callback (ADR 0015). Events mirror the trace;
+    # terminal outcomes stay on RunResult. Must be thread-safe (fan-out branches
+    # emit from worker threads) and is isolated: its exceptions never reach the run.
+    on_event: object = None
+
+
+def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields) -> None:
+    if deps.on_event is None:
+        return
+    try:
+        deps.on_event({"type": type_, "machine": machine, "depth": depth, **fields})
+    except Exception:  # an observer must never affect the run
+        pass
+
+
+def _preview(value, limit: int = 200) -> str:
+    text = value if isinstance(value, str) else fmt(value)
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
 def _is_otherwise(gate: Gate) -> bool:
@@ -207,6 +225,7 @@ def _exec_one(
             suspendable=deps.suspendable,
             escalate_suspend=deps.escalate_suspend,
             resume=resume,
+            on_event=deps.on_event,
         )
         u = sub.usage or {}
         tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -259,14 +278,24 @@ def _safe_exec(state, ctx, deps, machine, depth):
     try:
         # Branches never suspend: a budget-exhausted sub halts into a marker as
         # usual, and an escalate inside a branch just routes.
-        return _exec_one(
+        out = _exec_one(
             state, ctx, "", replace(deps, suspendable=False, escalate_suspend=False), machine, depth
         )
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
-        return (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
+        out = (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
     except Exception as e:  # isolate the branch
-        return (f"[branch-error: {e}]", None, None, (0, 0))
+        out = (f"[branch-error: {e}]", None, None, (0, 0))
+    _emit(
+        deps,
+        "branch-done",
+        machine.name,
+        depth,
+        state=state.id,
+        index=ctx.get("index"),
+        tokens={"input_tokens": out[3][0], "output_tokens": out[3][1]},
+    )
+    return out
 
 
 def _branch_contexts(state: State, ctx: dict) -> list[dict]:
@@ -320,6 +349,7 @@ def run(
     suspendable: bool = False,
     escalate_suspend: bool = False,
     resume: list[dict] | None = None,
+    on_event=None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -335,6 +365,7 @@ def run(
         cost_budget,
         suspendable,
         escalate_suspend,
+        on_event,
     )
     ctx = dict(context)
     state_id = machine.entry
@@ -408,6 +439,25 @@ def run(
             return suspended(reason)
         return RunResult("halt", trace, ctx, error=reason, usage=usage())
 
+    def record(step: dict) -> None:
+        """Append to the trace and mirror it as a live event (ADR 0015)."""
+        trace.append(step)
+        fields = {
+            "state": step["state"],
+            "step": step.get("step"),
+            "gate": step.get("gate"),
+            "policy": step.get("policy"),
+            "to": step.get("to"),
+        }
+        if "output" in step:
+            fields["output"] = _preview(step["output"])
+        if "branches" in step:
+            fields["branches"] = len(step["branches"])
+        if "cost" in step:
+            fields["tokens"] = step["cost"]
+        _emit(deps, "state-done", machine.name, depth, **fields)
+
+    _emit(deps, "run-start", machine.name, depth, entry=state_id, resumed=bool(resume))
     while True:
         if steps >= machine.budget:
             return suspend_or_halt("budget-exhausted")
@@ -427,6 +477,16 @@ def run(
                 usage=usage(),
             )
         step: dict = {"state": state_id, "tier": S.tier or machine.default_tier}
+        _emit(
+            deps,
+            "state-start",
+            machine.name,
+            depth,
+            state=state_id,
+            step=steps + 1,
+            kind=S.kind,
+            tier=step["tier"],
+        )
 
         # 1) EXECUTE (isolate failures: single → halt cleanly, branch → marker)
         judge_reasoning: str | None = None
@@ -489,7 +549,7 @@ def run(
                         "output_tokens": e.output_tokens,
                     }
                 step.update(step=steps, gate=None, policy="call-failed", to=None)
-                trace.append(step)
+                record(step)
                 return RunResult(
                     "halt",
                     trace,
@@ -538,7 +598,7 @@ def run(
         ]
         if not eligible:  # every gate was a repair with an exhausted budget
             step.update(step=steps, gate=None, policy="no-gate-matched", to=None)
-            trace.append(step)
+            record(step)
             return RunResult(
                 "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
             )
@@ -550,7 +610,7 @@ def run(
             step.update(step=steps, gate=None, policy="judge-unparseable", to=None)
             if "judge_fallback" not in step:
                 step["judge_fallback"] = True
-            trace.append(step)
+            record(step)
             return RunResult(
                 "halt",
                 trace,
@@ -562,7 +622,7 @@ def run(
         except RuntimeError as e:
             if str(e) == "no-gate-matched":
                 step.update(step=steps, gate=None, policy="no-gate-matched", to=None)
-                trace.append(step)
+                record(step)
                 return RunResult(
                     "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
                 )
@@ -574,7 +634,7 @@ def run(
                 "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
             )
         step.update(step=steps, gate=gate.when, policy=gate.kind, to=gate.to)
-        trace.append(step)
+        record(step)
 
         # 4) TRANSITION
         if gate.kind == "fail":
