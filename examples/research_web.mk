@@ -19,12 +19,14 @@ result: answer
 tools:
   - name: search
     description: >
-      Web search. Input: {"query": "…", "max_results"?: 5}.
-      Returns JSON {query, results:[{title,url,snippet}], error}.
+      Web search. Input: {"query": "…", "max_results"?: 5, "days"?: N,
+      "topic"?: "news"|"general"}. Returns JSON
+      {query, results:[{title,url,snippet,published_date?}], error}.
 
 context:
   question:
     text: "<the research question>"
+  today: "" # host fills ISO date when empty
   notes: [] # accumulates search observations (tool results)
 
 states:
@@ -33,10 +35,12 @@ states:
       A single concise web search query for the open research question,
       informed by notes so far. Output ONLY the query string.
     prompt: |
+      Today is {{today}}.
       Research question: {{question.text}}
       Notes so far: {{notes}}
       Write ONE search query that would fill the biggest gap in the notes.
-      If notes are empty, start with the core of the question.
+      Prefer current sources; include the year from today when the question
+      is time-sensitive. If notes are empty, start with the core of the question.
     tier: fast
     output: query
     gates:
@@ -59,6 +63,7 @@ states:
       States whether the notes are enough to answer the question completely,
       with a one-line reason.
     prompt: |
+      Today is {{today}}.
       Question: {{question.text}}
       Notes (search observations): {{notes}}
       Are these notes sufficient for a grounded answer? What is still missing?
@@ -79,9 +84,13 @@ states:
     structure: >
       A cited answer grounded only in the notes; flag uncertainty.
     prompt: |
+      Today is {{today}}.
       Answer {{question.text}} using only these search notes:
       {{notes}}
-      Cite titles/URLs from the notes. If evidence is thin, say so.
+      Cite titles/URLs (and published_date when present) from the notes.
+      Prefer more recent evidence. If evidence is thin, say so.
+      Do not invent facts not in the notes. Do not fill gaps with pre-training
+      knowledge or a silent knowledge cutoff older than today.
     tier: reasoning
     output: answer
     gates:

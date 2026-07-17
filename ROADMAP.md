@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.7.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.8.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.7.0)
+## Where we are (language 0.3 / package 0.8.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -44,9 +44,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.7.0:** console M1–M3; MCP live events (ADR 0019); web `search` (ADR 0016);
   output anti-cutoff (ADR 0018); context Layer 0–1 (ADR 0017); `lint --llm`
   (ADR 0010 Accepted).
-- **Live (2026-07-17, release 0.7.0):** DeepSeek + OpenAI smoke and gate
-  agreement green on the release matrix. Anthropic unit-tested; live may be
-  billing-blocked.
+- **0.8.0:** host tool stub architecture (ADR 0020); console observation honesty
+  for truncation; `context.today` host convention; search recency fields; best
+  practices guide; OpenAI-compat default `max_tokens=4096`.
+- **Live (2026-07-17, release 0.7.0 matrix):** DeepSeek + OpenAI smoke and gate
+  agreement green. Anthropic unit-tested; live may be billing-blocked.
+  Re-verify on the 0.8.0 release workflow.
 
 ## Language
 
@@ -101,6 +104,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped (0.5.0):** docs site (mkdocs-material on GitHub Pages, assembled
   from the repo's canonical markdown) and `mklang lint` (static analysis
   beyond `check`); conformance suite as the language contract (ADR 0009).
+- **Shipped:** [best practices](./docs/best-practices.md) — layer discipline
+  (language / host / surface), tool contracts, web+time+cutoff checklist,
+  anti-patterns, and explicit non-goals for core (bash/FS, knowledge-cutoff magic).
 - **0.5.4 release path:** a published GitHub Release builds and tests one artifact
   set, requires DeepSeek + OpenAI live agreement, then publishes through PyPI
   Trusted Publishing (OIDC, no long-lived package token). The one-time external
@@ -115,8 +121,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 - **Shipped — web search host tool** ([ADR 0016](./docs/adr/0016-host-web-search-tool.md)
   Accepted) — structured `search` stub default; fake/tavily backends;
-  `research_web.mk` + scenario tests. **[later]** `runtime.yaml` tools block,
-  `std_research`.
+  optional `days`/`topic`/`published_date`; `research_web.mk` + scenario tests;
+  host `context.today` convention for time-sensitive machines. **[later]**
+  `runtime.yaml` tools block, `std_research`.
+- **Shipped — host tool stub architecture** ([ADR 0020](./docs/adr/0020-host-tool-stub-architecture.md))
+  — uniform JSON envelope for I/O tools; `search_kb` / `send_reply` stub+fake
+  backends; honest default `send_reply` (`sent: false`).
 - **Shipped — context rendering Layer 0–1** ([ADR 0017](./docs/adr/0017-context-content-management.md)
   Accepted) — judge CONTEXT marker; produce-prompt value cap; console
   `history_for_brain`; compress pattern (`research_compress.mk`). **[later]**

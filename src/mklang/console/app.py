@@ -330,12 +330,15 @@ def build_app(
             # is injected into the brain (ADR 0017 console history budget).
             from .session import history_for_brain
 
+            from .. import host as host_mod
+
             ctx = {
                 **brain.context,
                 "user_message": user_message,
                 "history": history_for_brain(self.history),
                 "observation": [],
             }
+            host_mod.inject_host_defaults(ctx)  # brain may declare context.today
             machine = brain
             res = self._run_brain(machine, ctx)
             # Budget exhaustion is a UI moment: extend and resume, or park a

@@ -3,6 +3,9 @@
 Operating guidance for building good machines. The **cookbook** ([`SPEC.md §10`](../SPEC.md))
 maps _architectures_ to constructs; this page is about configuring them _well_.
 
+**Canonical checklist** (do / don't / layers / tool contracts / anti-patterns):
+[Best practices](best-practices.md). **Correct-file recipe:** [Authoring](authoring.md).
+
 ## Tiers — route by cost, escalate for quality
 
 | Use `fast` for               | Use `balanced` for     | Use `reasoning` for                   |
@@ -33,18 +36,31 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   card: use `tool:` states (host callables). Do not write `execution: use tool X`
   on a generative state — the model cannot call tools there and will invent
   observations. Do not ask the model to "confirm the message was sent."
+- **Honest stub observations (ADR 0020).** Reference I/O tools return JSON with
+  `tool`, `stub`, `error`. Default `send_reply` has `sent: false`; default
+  `search` is unbound until Tavily/fake is enabled. Read `stub`/`error` before
+  treating an observation as live data ([Best practices §4](best-practices.md)).
 - **Web search is a host tool, not a model skill.** Builtin `search` is a
   structured stub until a backend is bound. **`TAVILY_API_KEY` alone auto-enables
   Tavily**; or set `MKLANG_SEARCH_BACKEND=fake|tavily|stub`. Never put "search
   the web" only in generative `prompt`/`execution` — the model will invent hits.
   Use `tool: search` (see `examples/research_web.mk`, `machines/news_search.mk`).
-  Snippets are **untrusted** (SPEC §11).
+  Optional tool inputs: `days`, `topic` (`news`|`general`); results may include
+  `published_date`. Snippets are **untrusted** (SPEC §11).
+- **Host clock convention (`today`).** Declare `today: ""` in `context:` when the
+  machine is time-sensitive. CLI / MCP / console fill an empty declared `today`
+  with the host ISO date (`YYYY-MM-DD`) — they never invent undeclared keys.
+  Prompts should say `Today is {{today}}`, prefer recent sources, and **forbid
+  filling gaps with pre-training knowledge** older than that date. This is host
+  convention + authoring discipline, not a language primitive.
 - **Watch for output cutoff.** When a produce hits max_tokens, the runtime sets
   `truncated: true` on the trace step and on live `state-done` events (ADR 0018).
   Default policy is `report` (annotate and continue); use `--on-truncate halt`
   or `run(..., on_truncate="halt")` (also on MCP/console) for strict runs.
   Prefer raising tier `max_tokens` params over relying on auto-continue
-  (continue stitching is deferred, not the default).
+  (continue stitching is deferred, not the default). Console `run_machine`
+  observations **propagate** produce truncation and mark clipped results with
+  `…[truncated]` + `result_truncated` — never treat a cut observation as complete.
 - **Bound growing blackboards (working memory vs archive).** Long `accumulate`
   / research loops explode prompts. Prefer an explicit **compress** generative
   state that rewrites a key shorter before the next loop — see
@@ -159,3 +175,18 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   Anthropic, `reasoning_effort` on OpenAI/xAI, etc. They're best-effort — a param a
   provider doesn't support is dropped and the call retried, so mixing providers never
   breaks. Put them under `providers.<name>.params.<tier>` in the runtime config.
+  Prefer setting a healthy `max_tokens` on balanced/reasoning tiers so produce is
+  less likely to hit a length stop (ADR 0018); truncation is still traced when it
+  happens.
+
+## Layer boundaries (quick)
+
+| Put in the `.mk` | Keep on the host / surface |
+| --- | --- |
+| Gates, tiers, `tool:` / `hook:` *names* | Tool/hook *implementations*, API keys |
+| `parse: list`, compress *states* | `on_truncate` default, search backend |
+| Declared `context.today: ""` | Filling `today` with the calendar date |
+| Scenario tests next to the machine | Console consent, MCP sessions, bash/FS plugins |
+
+See [Best practices §1 and §13](best-practices.md) for the full layer map and what
+may become language 0.4 later (not current syntax).

@@ -3,6 +3,10 @@
 The interpreter receives a name→callable map via `run(..., tools=...)`. The CLI
 merges package builtins with third-party plugins discovered from the
 ``mklang.tools`` entry-point group (see ``load_tool_registry``).
+
+I/O tools (search, search_kb, send_reply) follow the **stub architecture**
+(ADR 0020): structured JSON observations with ``tool`` / ``stub`` / ``error``.
+``calc`` is a pure offline evaluator (not a network stub).
 """
 
 from __future__ import annotations
@@ -40,7 +44,11 @@ def _eval(node):
 
 
 def calc(inp: dict) -> str:
-    """Evaluate a safe arithmetic expression. Input: {"expr": "(17+4)*3"}."""
+    """Evaluate a safe arithmetic expression. Input: {"expr": "(17+4)*3"}.
+
+    Pure offline tool — returns a plain numeric string (or ``error: …``), not
+    the I/O JSON envelope (ADR 0020).
+    """
     expr = str(inp.get("expr") or inp.get("query") or "").strip()
     try:
         return str(_eval(ast.parse(expr, mode="eval")))
@@ -49,12 +57,11 @@ def calc(inp: dict) -> str:
 
 
 def search(inp: dict) -> str:
-    """Web search host tool (ADR 0016).
+    """Web search host tool (ADR 0016 / 0020).
 
     Offline by default (structured stub). Bind a real backend via
     ``mklang.search.configure_search`` or env ``MKLANG_SEARCH_BACKEND``
-    (``fake`` / ``tavily`` + ``TAVILY_API_KEY``). Entry-point plugins may still
-    replace this callable entirely.
+    (``fake`` / ``tavily`` + ``TAVILY_API_KEY``).
     """
     from .search import search as _search
 
@@ -62,35 +69,25 @@ def search(inp: dict) -> str:
 
 
 def search_kb(inp: dict) -> str:
-    """Stub knowledge-base lookup for showcase machines (triage).
+    """Knowledge-base lookup (ADR 0020).
 
-    Returns deterministic placeholder facts tagged with the query. A production
-    host replaces this via entry points or ``run(..., tools=...)``. Never invents
-    policies beyond the stub payload.
+    Structured stub/fake by default. Configure via ``mklang.kb.configure_kb``
+    or ``MKLANG_KB_BACKEND=fake|stub``. Production: entry points / ``run(tools=…)``.
     """
-    query = str(inp.get("query") or inp.get("q") or "").strip()
-    if not query:
-        return "[kb] empty query — no facts"
-    return (
-        f"[kb stub] facts for query={query!r}:\n"
-        "- Warranty: 30-day return on unopened items with receipt.\n"
-        "- Billing: refunds over €50 require manager review.\n"
-        "- Bugs: known issue tracker acknowledges intermittent login 5xx; "
-        "workaround is retry after 60s.\n"
-        "(Host should bind a real RAG/KB tool for production.)"
-    )
+    from .kb import search_kb as _kb
+
+    return _kb(inp)
 
 
 def send_reply(inp: dict) -> str:
-    """Stub customer-reply sender — records the side effect without an LLM.
+    """Customer-reply sender (ADR 0020).
 
-    Real hosts bind email/ticket APIs here. The return value is the observation
-    deposited into context; gates must not ask a model to 'confirm' a send.
+    Default stub records intent with ``sent: false`` — does not pretend mail left
+    the host. Fake: ``MKLANG_MAIL_BACKEND=fake`` or ``configure_mail``.
     """
-    body = str(inp.get("body") or inp.get("draft") or "").strip()
-    to = str(inp.get("to") or "customer").strip()
-    preview = body if len(body) <= 120 else body[:117] + "..."
-    return f"[sent] to={to!r} chars={len(body)} preview={preview!r}"
+    from .mail import send_reply as _send
+
+    return _send(inp)
 
 
 BUILTINS: dict[str, ToolFn] = {

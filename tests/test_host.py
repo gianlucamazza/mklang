@@ -144,3 +144,37 @@ def test_set_path_nested_creation():
     # a non-dict intermediate is replaced, matching --set semantics
     host.set_path(ctx, "a.b", 3)
     assert ctx["a"] == {"b": 3}
+
+
+def test_inject_host_defaults_today_only_when_declared():
+    bare = {"q": "x"}
+    host.inject_host_defaults(bare)
+    assert "today" not in bare
+
+    empty = {"today": "", "q": "x"}
+    host.inject_host_defaults(empty, today="2026-07-17")
+    assert empty["today"] == "2026-07-17"
+
+    kept = {"today": "2099-01-01"}
+    host.inject_host_defaults(kept, today="2026-07-17")
+    assert kept["today"] == "2099-01-01"  # user/host override wins
+
+
+def test_compact_run_observation_honesty():
+    res = RunResult(
+        "done",
+        [{"state": "a", "truncated": True, "finish_reason": "length", "output": "cut"}],
+        {},
+        result="R" * 2500,
+    )
+    out = host.compact_run_observation(res)
+    assert out["truncated"] is True
+    assert out["finish_reason"] == "length"
+    assert out["trace"] == {
+        "steps": 1,
+        "truncated": True,
+        "truncated_steps": [{"state": "a", "finish_reason": "length"}],
+    }
+    assert out["result_truncated"] is True
+    assert out["result"].endswith("…[truncated]")
+    assert out["result_full_chars"] == 2500

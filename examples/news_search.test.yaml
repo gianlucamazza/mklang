@@ -1,0 +1,56 @@
+# Scenario tests for news_search.mk — run with:
+#   mklang test examples/news_search.mk --script examples/news_search.test.yaml
+#
+# Search is scripted (no network). Host today injection is not required here —
+# scenario supplies context via defaults + produce texts.
+
+scenarios:
+  # plan → search → check(usable) → finalize → END
+  - name: news-happy-path
+    context:
+      topic: "mklang"
+      today: "2026-07-17"
+    llm:
+      produce:
+        - "mklang state machine 2026"
+        - "usable news items present"
+        - "Brief: mklang ships declarative LLM FSMs (from notes)."
+      # check: 0=usable, 1=empty/unbound; finalize has only otherwise
+      judge: [0]
+    tools:
+      search:
+        - >-
+          {"tool":"search","stub":true,"error":null,"query":"mklang",
+          "results":[{"title":"mklang 0.7","url":"https://example.com/mklang",
+          "snippet":"Package release","published_date":"2026-07-17"}]}
+    expect:
+      status: done
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check }
+        - { state: check, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
+
+  # Unbound / empty search → no_search path
+  - name: news-no-search-bound
+    context:
+      topic: "anything"
+      today: "2026-07-17"
+    llm:
+      produce:
+        - "anything news"
+        - "notes empty, search not bound"
+        - "No web results available; set TAVILY_API_KEY to enable search."
+      judge: [1]
+    tools:
+      search:
+        - >-
+          {"tool":"search","stub":true,"error":"no external search bound",
+          "query":"anything","results":[]}
+    expect:
+      status: done
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check }
+        - { state: check, policy: ok, to: no_search }
+        - { state: no_search, policy: ok, to: END }

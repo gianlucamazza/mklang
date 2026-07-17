@@ -211,3 +211,104 @@ def test_run_machine_bad_inputs_and_unknown_target(tools):
 def test_ask_user_passthrough(tools):
     assert tools.ask_user({"question": "which env?"}) == "approved"
     assert tools.bridge.questions[-1] == "which env?"
+
+
+def test_run_machine_observation_propagates_produce_truncation(tools):
+    """ADR 0018 signal must reach the brain — not only the inner trace."""
+    long_src = """\
+mklang: "0.3"
+machine: longy
+entry: a
+budget: 4
+result: out
+context: {}
+states:
+  a:
+    structure: long text
+    prompt: "write a lot"
+    output: out
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+    (tools.workspace / "longy.mk").write_text(long_src, encoding="utf-8")
+
+    def truncating_llm(prov=None):
+        return MockLLM(
+            produce_fn=lambda model, system, user, reason: Produced(
+                text="partial answer that was cut",
+                truncated=True,
+                finish_reason="length",
+            )
+        )
+
+    tools.build_llm = truncating_llm
+    tools.llm = truncating_llm()
+    out = json.loads(tools.run_machine({"target": "longy", "inputs": "{}"}))
+    assert out["status"] == "done"
+    assert out["truncated"] is True
+    assert out["finish_reason"] == "length"
+    assert out["trace"]["truncated"] is True
+    assert out["trace"]["truncated_steps"][0]["state"] == "a"
+
+
+def test_run_machine_observation_marks_result_clip_honestly(tools):
+    long_src = """\
+mklang: "0.3"
+machine: big
+entry: a
+budget: 4
+result: out
+context: {}
+states:
+  a:
+    structure: long text
+    prompt: "pad"
+    output: out
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+    (tools.workspace / "big.mk").write_text(long_src, encoding="utf-8")
+    blob = "Z" * 2500
+
+    def long_llm(prov=None):
+        return MockLLM(produce_fn=lambda model, system, user, reason: Produced(text=blob))
+
+    tools.build_llm = long_llm
+    tools.llm = long_llm()
+    out = json.loads(tools.run_machine({"target": "big", "inputs": "{}"}))
+    assert out["result_truncated"] is True
+    assert out["result_full_chars"] == 2500
+    assert out["result"].endswith("…[truncated]")
+    assert len(out["result"]) == 2000
+    # produce itself was complete — only the observation budget clipped
+    assert out["truncated"] is False
+
+
+def test_run_machine_injects_declared_today(tools):
+    src = """\
+mklang: "0.3"
+machine: dated
+entry: a
+budget: 4
+result: out
+context:
+  today: ""
+states:
+  a:
+    structure: the date
+    prompt: "today is {{today}}"
+    output: out
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+    (tools.workspace / "dated.mk").write_text(src, encoding="utf-8")
+    out = json.loads(tools.run_machine({"target": "dated", "inputs": "{}"}))
+    assert out["status"] == "done"
+    # echo_llm returns the user prompt, which interpolates today
+    assert "today is 20" in out["result"]  # ISO year prefix

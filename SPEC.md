@@ -431,6 +431,10 @@ host-side. A tool state does not call the LLM, so it consumes no tier and no tok
 The reference `search` builtin is **offline by default** (structured stub
 observation); hosts opt into a real backend without changing the `.mk` (ADR 0016).
 Web/search observations re-entering the blackboard are **untrusted** (§11).
+Reference host tools that perform external I/O or side effects **SHOULD** return
+structured JSON observations including `tool`, `stub`, and `error` (ADR 0020) so
+machines can tell unbound stubs from live bindings — non-normative host guidance,
+not a language face. Pure offline tools such as arithmetic need not use that envelope.
 
 ---
 

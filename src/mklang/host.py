@@ -207,6 +207,69 @@ def build_output(res: RunResult) -> dict:
     return out
 
 
+# Compact observation budget for surfaces that feed a brain/agent (console).
+# Full result and full trace stay on the RunResult / session events; this only
+# shapes the (dict)->str observation the brain sees (ADR 0015 + 0017 honesty).
+RESULT_OBS_CHARS = 2000
+
+
+def inject_host_defaults(ctx: dict, *, today: str | None = None) -> dict:
+    """Fill host-convention keys **only when the machine declared them**.
+
+    Convention (no language change): if the blackboard already has a top-level
+    ``today`` key (from ``context:`` in the ``.mk``) and its value is still
+    empty/None after user inputs, set it to an ISO calendar date
+    (``YYYY-MM-DD``). Never invents undeclared keys — keeps check/lint and
+    document purity intact.
+    """
+    if "today" in ctx:
+        cur = ctx.get("today")
+        if cur is None or cur == "":
+            from datetime import date
+
+            ctx["today"] = today if today is not None else date.today().isoformat()
+    return ctx
+
+
+def compact_run_observation(res: RunResult, *, result_chars: int = RESULT_OBS_CHARS) -> dict:
+    """Wire shape for agent-facing observations: honest about cutoff, compact.
+
+    - Propagates produce truncation (ADR 0018) as top-level ``truncated`` plus a
+      compact ``trace`` summary (step count + which states truncated). Full trace
+      remains on the engine result / live events, not in this blob.
+    - If ``result`` is a long string, clips with an explicit ``…[truncated]``
+      marker (ADR 0017 style) and sets ``result_truncated`` — never a silent cut.
+    """
+    out = build_output(res)
+    steps = res.trace or []
+    truncated_steps: list[dict] = []
+    for s in steps:
+        if not isinstance(s, dict) or not s.get("truncated"):
+            continue
+        entry: dict = {"state": s.get("state")}
+        if s.get("finish_reason"):
+            entry["finish_reason"] = s["finish_reason"]
+        truncated_steps.append(entry)
+    produce_truncated = bool(truncated_steps)
+    out["trace"] = {
+        "steps": len(steps),
+        "truncated": produce_truncated,
+        "truncated_steps": truncated_steps,
+    }
+    out["truncated"] = produce_truncated
+    if truncated_steps and truncated_steps[0].get("finish_reason"):
+        out["finish_reason"] = truncated_steps[0]["finish_reason"]
+
+    result = out.get("result")
+    if isinstance(result, str) and result_chars > 0 and len(result) > result_chars:
+        marker = "…[truncated]"
+        keep = max(0, result_chars - len(marker))
+        out["result"] = result[:keep] + marker
+        out["result_truncated"] = True
+        out["result_full_chars"] = len(result)
+    return out
+
+
 def describe_machine(m: Machine, source: str | None = None) -> dict:
     """The commissionable contract of a machine: what to set, what comes back."""
     out = {

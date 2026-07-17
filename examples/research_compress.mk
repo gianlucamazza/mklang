@@ -18,12 +18,14 @@ result: answer
 tools:
   - name: search
     description: >
-      Web search. Input: {"query": "…", "max_results"?: 5}.
-      Returns JSON {query, results:[{title,url,snippet}], error}.
+      Web search. Input: {"query": "…", "max_results"?: 5, "days"?: N,
+      "topic"?: "news"|"general"}. Returns JSON
+      {query, results:[{title,url,snippet,published_date?}], error}.
 
 context:
   question:
     text: "<the research question>"
+  today: "" # host fills ISO date when empty
   notes: [] # accumulates search observations; may be rewritten by compress_notes
 
 states:
@@ -32,9 +34,11 @@ states:
       A single concise web search query for the open research question,
       informed by notes so far. Output ONLY the query string.
     prompt: |
+      Today is {{today}}.
       Research question: {{question.text}}
       Working notes: {{notes}}
       Write ONE search query that would fill the biggest gap.
+      Prefer current sources; include the year from today when helpful.
     tier: fast
     output: query
     gates:
@@ -58,6 +62,7 @@ states:
       should be compressed before another search (too long / noisy), or whether
       another search is needed with notes as they are.
     prompt: |
+      Today is {{today}}.
       Question: {{question.text}}
       Notes: {{notes}}
       Decide: (1) enough to answer, (2) notes are too long/noisy and should be
@@ -83,8 +88,9 @@ states:
       A short bullet list (max ~8 lines) of durable facts from the notes,
       dropping duplicates and low-value snippets. Plain text, not JSON.
     prompt: |
+      Today is {{today}}.
       Compress these research notes into a tight working memory for later
-      searches and the final answer. Keep only facts, titles, and URLs that
+      searches and the final answer. Keep only facts, titles, URLs, and dates that
       matter for: {{question.text}}
 
       Notes:
@@ -100,9 +106,12 @@ states:
     structure: >
       A cited answer grounded only in the notes; flag uncertainty.
     prompt: |
+      Today is {{today}}.
       Answer {{question.text}} using only these notes:
       {{notes}}
-      Cite sources. If evidence is thin, say so.
+      Cite sources (and dates when present). Prefer recent evidence.
+      If evidence is thin, say so. Do not invent facts or fill gaps with
+      pre-training knowledge older than today.
     tier: reasoning
     output: answer
     gates:

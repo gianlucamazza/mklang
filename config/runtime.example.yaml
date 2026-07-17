@@ -62,8 +62,10 @@ providers:
       reasoning: gpt-5.5
     # judge: gpt-5.4-mini # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
+      # max_tokens defaults to 4096 on OpenAI-compat when omitted (ADR 0018).
       reasoning:
         reasoning_effort: high # minimal | low | medium | high
+        # max_tokens: 8192
       balanced:
         reasoning_effort: medium
 

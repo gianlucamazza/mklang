@@ -95,6 +95,26 @@ allow it for the session. Type **`y`** / **`yes`** / **`sì`** and Enter.
 Afterwards it is remembered in the session (inspector: consented tools). Enter
 alone means **no**.
 
+## Observations from `run_machine` (anti-cutoff honesty)
+
+The brain sees a **compact** JSON observation of each commissioned run, not the
+full engine trace. That observation is still honest about cutoff:
+
+| Field | Meaning |
+| --- | --- |
+| `truncated` | A produce step hit max_tokens/length (ADR 0018) |
+| `finish_reason` | Provider stop reason when known |
+| `trace` | `{steps, truncated, truncated_steps:[{state, finish_reason?}]}` |
+| `result_truncated` | Observation budget clipped a long `result` string |
+| `result` | May end with `…[truncated]` when clipped (ADR 0017 style) |
+
+Full events still stream to the activity tree / session transcript. The agent is
+instructed not to invent the missing tail of a truncated result, and not to
+answer live-web questions from training knowledge alone.
+
+Time-sensitive workspace machines should declare `context.today: ""`; the host
+fills today's ISO date before the run (same convention as CLI/MCP).
+
 ## Security model
 
 The console inherits the SPEC §11 posture: authored machines are **confined to
@@ -103,7 +123,9 @@ traversal); running a machine whose states invoke host tools (including
 `search` if a machine uses it) asks consent once per tool set (remembered per
 session); provider keys stay in the host environment. The console cannot edit
 files outside the workspace, run shell commands, or touch git — it is an
-operational surface, not an IDE (ADR 0015).
+operational surface, not an IDE (ADR 0015). Generic bash/FS tools stay **out of
+core** (optional host plugins only). Full checklist:
+[Best practices](best-practices.md).
 
 ## For other clients
 

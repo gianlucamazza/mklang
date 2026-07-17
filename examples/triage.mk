@@ -18,11 +18,13 @@ tools:
   - name: search_kb
     description: >
       Look up support KB facts for a query string.
-      Input: {"query": "…"}. Host-bound (CLI ships a deterministic stub).
+      Input: {"query": "…"}. Returns JSON {tool, stub, facts, error} (ADR 0020).
+      Default is a demo stub; bind real RAG via entry points for production.
   - name: send_reply
     description: >
       Deliver the customer reply. Input: {"body": "…"}.
-      Host-bound side effect — not an LLM confirmation.
+      Returns JSON {tool, stub, sent, delivery, …}. Default stub has sent=false
+      (records intent only). Not an LLM confirmation.
 
 # Initial blackboard values. In a real run the host supplies these.
 context:

@@ -27,6 +27,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Specification: SPEC.md
+  - Best practices: best-practices.md
   - Patterns: patterns.md
   - Authoring guide: authoring.md
   - Machine stdlib: stdlib.md
@@ -52,6 +53,7 @@ nav:
       - Context content management: adr/0017-context-content-management.md
       - Output truncation anti-cutoff: adr/0018-output-truncation-anti-cutoff.md
       - MCP live events: adr/0019-mcp-live-events.md
+      - Host tool stub architecture: adr/0020-host-tool-stub-architecture.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md

@@ -171,6 +171,7 @@ def run_tool(
     ctx = dict(p.machine.context)
     for k, v in (inputs or {}).items():
         host.set_path(ctx, k, v)
+    host.inject_host_defaults(ctx)  # fill declared empty context.today, etc.
     res = run_machine(
         p.machine,
         ctx,

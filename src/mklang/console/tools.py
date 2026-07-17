@@ -195,6 +195,7 @@ class ConsoleTools:
         ctx = dict(machine.context)
         for k, v in inputs.items():
             host.set_path(ctx, k, v)
+        host.inject_host_defaults(ctx)  # e.g. context.today when declared
         cost_budget = int(budget_field) if budget_field else self.default_cost_budget
         from ..hooks import load_hook_registry
         from ..tools import load_tool_registry
@@ -240,11 +241,9 @@ class ConsoleTools:
                 on_event=lambda e: self.bridge.emit({"run": target, **e}),
                 on_truncate=self.on_truncate,
             )
-        out = host.build_output(res)
-        out["trace"] = f"{len(res.trace)} steps"  # observations stay compact
-        if isinstance(out.get("result"), str) and len(out["result"]) > 2000:
-            out["result"] = out["result"][:1999] + "…"
-        return _obs(out)
+        # Compact + honest observation for the brain (ADR 0015/0017/0018):
+        # propagate produce truncation; never silent-cut the result string.
+        return _obs(host.compact_run_observation(res))
 
     # -- human -------------------------------------------------------------
 

@@ -83,16 +83,16 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   runtime config: the `tier → model` map for each provider
   ([schema](./config/runtime.schema.json)).
 - [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
-- [`docs/`](./docs) — [`patterns.md`](./docs/patterns.md),
-  [`authoring.md`](./docs/authoring.md), [`stdlib.md`](./docs/stdlib.md),
-  [`console.md`](./docs/console.md), and [`adr/`](./docs/adr); plus
-  [`ROADMAP.md`](./ROADMAP.md).
+- [`docs/`](./docs) — [`best-practices.md`](./docs/best-practices.md) (checklist),
+  [`patterns.md`](./docs/patterns.md), [`authoring.md`](./docs/authoring.md),
+  [`stdlib.md`](./docs/stdlib.md), [`console.md`](./docs/console.md), and
+  [`adr/`](./docs/adr); plus [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
   - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
   - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
   - [`research_web.mk`](./examples/research_web.mk) — research loop with `tool: search` (host-bound).
   - [`research_compress.mk`](./examples/research_compress.mk) — same + explicit notes compression.
-  - [`news_search.mk`](./examples/news_search.mk) — topic → `tool: search` → news brief.
+  - [`news_search.mk`](./examples/news_search.mk) — topic → `tool: search` → news brief (`today` + recency).
   - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
   - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
   - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.
@@ -256,17 +256,20 @@ mklang console
 
 ## Status
 
-**Language v0.3 / package 0.7.0** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 0.8.0** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
 (`--llm` optional) / **`test`**; [conformance suite](./conformance/README.md);
 machine **stdlib** (`std_*`); **MCP** host; **console** TUI (M1–M3); structured
-web `search` (offline stub by default); output anti-cutoff + context budgets
-(ADR 0016–0019). Gate judging follows the state tier by default.
+web `search` (offline stub by default); host tool stub architecture for
+`search` / `search_kb` / `send_reply` (ADR 0020); `context.today` convention;
+output anti-cutoff + context budgets (ADR 0016–0019); [best practices](./docs/best-practices.md).
+Gate judging follows the state tier by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green (release matrix 0.7.0),
-  including gate-divergence agreement **1.0** on the synthetic harness — see
+- **Live:** DeepSeek (default) and **OpenAI** green (release matrix 0.7.0; re-run
+  on 0.8.0 publish), including gate-divergence agreement **1.0** on the synthetic
+  harness — see
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
   Anthropic unit-tested; live may be billing-blocked.
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are

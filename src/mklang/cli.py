@@ -83,6 +83,7 @@ def cmd_run(args) -> int:
         return prep
     prov, llm, registry, machine, tools, hooks = prep
     ctx = _apply_sets(dict(machine.context), args.set)
+    host.inject_host_defaults(ctx)  # fill declared empty context.today, etc.
     print(f"# {machine.name} · provider={prov.name} · tiers={prov.tiers}", file=sys.stderr)
     res = run(
         machine,

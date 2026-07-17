@@ -2,7 +2,8 @@
 
 A compact recipe for writing a correct `.mk` — aimed at LLM agents and humans who
 want the happy path without reading the full [SPEC](../SPEC.md) first. This page
-distills; it does not replace. Tuning advice lives in [Patterns](patterns.md).
+distills; it does not replace. Operating guidance lives in [Patterns](patterns.md);
+the full **do / don't checklist** is [Best practices](best-practices.md).
 
 ## The recipe
 
@@ -101,11 +102,18 @@ charges one step per branch at runtime but counts as 1 at check time.
   (`fast` / `balanced` / `reasoning`) only; the host config maps tiers to models
   (ADR 0003).
 - **No side effects in prose.** `execution` is policy, not action; anything that
-  touches the world is a `tool:` state.
+  touches the world is a `tool:` state (and listed under top-level `tools:`).
 - Every `{{key}}` must resolve: from `context:`, a previous state's `output:`,
   `human.*` (HITL resume), or `item`/`index` inside a fan-out state.
-- `call:` targets must exist as sibling `.mk` files (same directory) — an inline
-  MCP `source` machine can only call machines it ships with.
+- `call:` targets must exist as sibling `.mk` files (same directory), a bundled
+  `std_*` name, or an entry-point machine — an inline MCP `source` machine can
+  `call: std_*` but not arbitrary siblings unless the host registry includes them.
+- **Time-sensitive / web machines:** declare `today: ""` in `context:`; the host
+  fills the ISO date when empty. Ground answers in `tool: search` notes, not
+  training knowledge ([Best practices §5](best-practices.md)).
+- **Exact policy** (thresholds, allowlists) → `hook:` gates, not prose alone.
+- **Do not invent language syntax** outside the schema (no ad-hoc `$now`, inline
+  bash, or provider ids). Extend via host tools/hooks entry points instead.
 
 ## What the validators catch
 
@@ -140,13 +148,25 @@ CoT, self-consistency, refine, ToT, debate, map-reduce and cascade ship as ready
 | Iterative loop (training knowledge only)   | [`research.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mk)                 |
 | Research + host `tool: search`             | [`research_web.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_web.mk)         |
 | Research + explicit notes compression      | [`research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk) |
+| News brief + `today` + search recency      | [`news_search.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/news_search.mk) (+ `.test.yaml`) |
 | Fan-out `sample` + reducer                 | [`self_consistency.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/self_consistency.mk) |
 | `over` + `call` orchestration              | [`map_reduce.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/map_reduce.mk)             |
 | Deterministic hook gates                   | [`hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)             |
 | Divergent terminals + `fail`               | [`expense_approval.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/expense_approval.mk) |
 
+## Pre-flight (copy this)
+
+```text
+mklang check my.mk && mklang lint --strict my.mk
+mklang test my.mk --script my.test.yaml    # if scenarios exist
+# live only after scenarios are green:
+mklang run my.mk --set key=value
+```
+
 ## Go deeper
 
+- [Best practices](best-practices.md) — checklist, tool contracts, anti-patterns,
+  language vs host boundaries.
 - [Patterns](patterns.md) — tier routing, reliability tuning, `mklang test`,
   which architecture when.
 - [SPEC](../SPEC.md) — the full semantics; §10 is the pattern cookbook.

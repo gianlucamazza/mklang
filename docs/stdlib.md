@@ -78,4 +78,5 @@ Notes:
 | Exact policy gates | needs host `hook:`s — see [`examples/hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                     |
 
 These stay as documented patterns: the [cookbook](SPEC.md) has the skeletons,
-the [authoring guide](authoring.md) the recipe.
+the [authoring guide](authoring.md) the recipe, and
+[best practices](best-practices.md) the host-tool / layer checklist.

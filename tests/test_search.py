@@ -27,6 +27,8 @@ def test_stub_is_structured_and_honest(monkeypatch):
     monkeypatch.delenv("MKLANG_SEARCH_BACKEND", raising=False)
     raw = search({"query": "quantum"})
     data = json.loads(raw)
+    assert data["tool"] == "search"
+    assert data["stub"] is True
     assert data["query"] == "quantum"
     assert data["results"] == []
     assert "no external search bound" in data["error"]
@@ -61,21 +63,78 @@ def test_tavily_key_alone_auto_selects_backend(monkeypatch):
     )
     data = json.loads(search({"query": "trump news"}))
     assert data["error"] is None
+    assert data["stub"] is True  # FakeSearchBackend stand-in, not live Tavily
     assert data["results"] and data["results"][0]["title"] == "Auto"
 
 
 def test_empty_query():
     data = json.loads(search({}))
     assert data["error"] == "empty query"
+    assert data["stub"] is True
+    assert data["tool"] == "search"
 
 
 def test_fake_backend_via_configure():
     configure_search(FakeSearchBackend())
     data = json.loads(search({"query": "mklang", "max_results": 1}))
     assert data["error"] is None
+    assert data["stub"] is True
     assert len(data["results"]) == 1
     assert "mklang" in data["results"][0]["snippet"]
     assert data["results"][0]["url"].startswith("https://")
+
+
+def test_search_preserves_published_date_and_accepts_recency_inputs():
+    configure_search(
+        FakeSearchBackend(
+            [
+                {
+                    "title": "Fresh",
+                    "url": "https://example.com/2026",
+                    "snippet": "hit",
+                    "published_date": "2026-07-01",
+                }
+            ]
+        )
+    )
+    data = json.loads(search({"query": "news", "max_results": 3, "days": 30, "topic": "news"}))
+    assert data["error"] is None
+    assert data["results"][0]["published_date"] == "2026-07-01"
+
+
+def test_tavily_payload_includes_days_and_topic():
+    captured = {}
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps(
+                {
+                    "results": [
+                        {
+                            "title": "T",
+                            "url": "https://t.example",
+                            "content": "body",
+                            "published_date": "2026-06-01",
+                        }
+                    ]
+                }
+            ).encode()
+
+    def opener(req, timeout=0):
+        captured["body"] = json.loads(req.data.decode())
+        return _Resp()
+
+    backend = TavilySearchBackend("tvly-test", opener=opener)
+    rows = backend.search("q", max_results=2, days=14, topic="news")
+    assert captured["body"]["days"] == 14
+    assert captured["body"]["topic"] == "news"
+    assert rows[0]["published_date"] == "2026-06-01"
 
 
 def test_tavily_backend_uses_injected_opener():
@@ -131,4 +190,6 @@ def test_builtin_registry_points_at_search(monkeypatch):
 
 def test_stub_search_direct():
     data = json.loads(stub_search({"query": "z"}))
-    assert data["error"] == "no external search bound"
+    assert data["tool"] == "search"
+    assert data["stub"] is True
+    assert "no external search bound" in data["error"]

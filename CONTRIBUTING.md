@@ -2,7 +2,9 @@
 
 Thanks for your interest. mklang is a small, opinionated project: a language spec
 plus a reference interpreter. Keep changes coherent with the design in
-[`SPEC.md`](./SPEC.md) and the decisions recorded in [`docs/adr/`](./docs/adr).
+[`SPEC.md`](./SPEC.md), the decisions in [`docs/adr/`](./docs/adr), and the
+operating rules in [`docs/best-practices.md`](./docs/best-practices.md)
+(especially **layer discipline**: language vs host tools vs surfaces).
 
 ## Dev setup
 
@@ -71,7 +73,7 @@ unless the host tooling surface needs a new conformance-facing scripted binding.
 
 Non-trivial or contentious decisions get a short ADR in `docs/adr/NNNN-title.md`
 (Context / Decision / Consequences). See the existing ADRs in `docs/adr/`
-(0001–0019) for the format. Reference the ADR in your PR.
+(0001–0020) for the format. Reference the ADR in your PR.
 
 ## Versioning
 

@@ -60,6 +60,11 @@ class OpenAICompatLLM:
             "temperature": temperature,
         }
         _apply_params(kwargs, params)
+        # Align with Anthropic's explicit budget: avoid provider-default short
+        # completions that look like silent cutoff (ADR 0018). Tier params may
+        # override; unsupported max_tokens is dropped and retried by _create.
+        if "max_tokens" not in kwargs:
+            kwargs["max_tokens"] = 4096
         r = self._create(**kwargs)
         choice = r.choices[0]
         msg = choice.message

@@ -8,9 +8,54 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.7.0`).
+  `pyproject.toml` (currently `0.8.0`).
 
 ## [Unreleased]
+
+## [0.8.0] — 2026-07-17
+
+Package feature release (language stays **0.3**). Host tools gain a uniform stub
+architecture; console anti-cutoff observations stay honest; time-sensitive
+machines get a host `today` convention and richer search.
+
+### Fixed
+
+- **Console `run_machine` observation honesty (anti-cutoff chain).** Produce
+  truncation (ADR 0018) is propagated as `truncated` / `finish_reason` plus a
+  compact `trace` summary; long results are clipped with an explicit
+  `…[truncated]` marker and `result_truncated` — no more silent 2k cuts that
+  invited the brain to invent the missing tail.
+
+### Added
+
+- **Host convention `context.today`.** When a machine declares top-level
+  `today` and it is still empty after inputs, CLI / MCP / console fill the
+  host ISO date (`YYYY-MM-DD`). Never invents undeclared keys.
+- **Search recency fields** (ADR 0016 addendum): optional tool inputs `days` /
+  `topic`; optional `published_date` on results (Tavily when provided).
+- Research / news patterns and `agent.mk` instruct grounding in notes/today and
+  forbid filling gaps with pre-training knowledge; console docs document the
+  observation shape.
+- **Best practices guide** (`docs/best-practices.md`) — layer discipline, authoring
+  checklist, recommended tool contracts, web/time/cutoff rules, anti-patterns,
+  and what must stay host-side vs candidate language 0.4.
+- **Host tool stub architecture** (ADR 0020): shared JSON envelope
+  (`tool` / `stub` / `error`) for I/O tools; `search_kb` and `send_reply` use
+  structured observations; default `send_reply` has `sent: false` (no fake
+  delivery); fake backends via `MKLANG_KB_BACKEND` / `MKLANG_MAIL_BACKEND` and
+  `configure_kb` / `configure_mail`; modules `tool_obs`, `kb`, `mail`.
+- **`news_search` scenario tests** (`examples/news_search.test.yaml`) — happy path
+  and search-unbound → `no_search`.
+- OpenAI-compatible produce defaults **`max_tokens=4096`** when tier params omit
+  it (parity with Anthropic; reduces silent length stops; still overridable /
+  droppable per provider).
+
+### Changed
+
+- **Breaking (host observation shape only):** builtin `search_kb` / `send_reply`
+  no longer return free-text `[kb stub]…` / `[sent]…` strings — they return ADR
+  0020 JSON. Scripted scenario tools are unaffected. `search` adds `tool` +
+  `stub` fields (additive).
 
 ## [0.7.0] — 2026-07-17
 

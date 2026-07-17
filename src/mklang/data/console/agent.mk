@@ -27,6 +27,8 @@ tools:
       Commission a machine and return its outcome as JSON.
       Input: {"request": '{"target": "...", "inputs": {...}}'} — the console
       brokers HITL escalations to the human and streams live events.
+      Observation may include truncated: true / result_truncated: true —
+      never invent the missing tail of a cut result.
   - name: ask_user
     description: >
       Ask the human one question and return the reply.
@@ -41,6 +43,7 @@ context:
   user_message: ""
   history: "" # prior turns, supplied by the console session
   observation: [] # tool observations of THIS turn (accumulated)
+  today: "" # host fills ISO date when empty
 
 states:
   decide: # the ReAct "think" step
@@ -51,10 +54,11 @@ states:
       requirements of the machine to create; for REPLY the substance of the
       answer.
     prompt: |
-      You are the mklang console agent. You satisfy the user's request by
-      commissioning machines (self-contained LLM state machines) and reporting
-      results honestly. You cannot call the web yourself — only host tools
-      inside a commissioned machine can (especially tool: search).
+      You are the mklang console agent. Today is {{today}}.
+      You satisfy the user's request by commissioning machines (self-contained
+      LLM state machines) and reporting results honestly. You cannot call the
+      web yourself — only host tools inside a commissioned machine can
+      (especially tool: search).
 
       Conversation so far: {{history}}
       User request: {{user_message}}
@@ -65,9 +69,9 @@ states:
         a suitable one from the observations).
       - RUN — commission a machine now: name it and spell out its inputs.
         Prefer an existing machine that already does the job (stdlib or
-        workspace). For live web/news research, AUTHOR or RUN a machine that
-        uses the host tool `search` (see authoring rules) — never invent
-        search results in generative prose.
+        workspace). For live web/news/current-events, AUTHOR or RUN a machine
+        that uses the host tool `search` — never invent search results or
+        answer from training knowledge alone when the user needs the present.
       - CLARIFY — ask the human one precise question you cannot answer yourself.
       - AUTHOR — no existing machine covers the request: spell out the machine
         to create (purpose, inputs, states, when it should escalate). If a
@@ -76,7 +80,9 @@ states:
       - REPLY — the request is satisfied (or answerable directly): state the
         substance of the final answer. If a tool returned
         "no external search bound", say so clearly and how to enable search
-        (TAVILY_API_KEY or MKLANG_SEARCH_BACKEND).
+        (TAVILY_API_KEY or MKLANG_SEARCH_BACKEND). If an observation has
+        truncated: true or result_truncated: true, tell the user the answer
+        was cut off and do not invent the missing part.
     tier: reasoning
     reason: true
     output: thought
@@ -166,13 +172,16 @@ states:
         sample: N, over (a double-brace reference to a context list),
         parse: list (output becomes a JSON-parsed list).
       - Host tools available in this console (use real `tool:` states for I/O):
-        search (web — input query/max_results, returns JSON results),
-        calc (arithmetic expr), search_kb, send_reply. Declare them under
-        top-level tools: and call with e.g. tool: search, input mapping the
-        context key that holds the query string, output notes (accumulate ok).
+        search (web — input query/max_results/days/topic, returns JSON results
+        with optional published_date), calc (arithmetic expr), search_kb,
+        send_reply. Declare them under top-level tools: and call with e.g.
+        tool: search, input mapping the query, output notes (accumulate ok).
         NEVER put "search the web" only in a generative prompt — that fabricates
         results. For news/research: plan_query → tool search → check/finalize
-        (see research_web / research_compress patterns).
+        (see research_web / research_compress / news_search patterns).
+      - For time-sensitive machines declare `today: ""` in context: — the host
+        fills today's ISO date. Prompts should say "Today is {{today}}" and
+        forbid filling gaps with pre-training knowledge older than today.
       - Every gate is `when: <prose condition>` plus exactly one policy —
         `then: ok` / `repair: N` / `escalate: true` / `fail: true` — and
         `to: <state or END>` (fail has no to; escalate REQUIRES to:).
@@ -204,11 +213,16 @@ states:
       The final answer for the user: plain, complete, and honest about what was
       run and what it returned (or why nothing needed to run).
     prompt: |
+      Today is {{today}}.
       User request: {{user_message}}
       Your decision: {{thought}}
       Observations this turn: {{observation}}
 
       Write the final reply to the user.
+      Be honest: if search was unbound or empty, say so. If an observation has
+      truncated / result_truncated, say the output was cut off and do not invent
+      the rest. For live facts, ground only in tool observations — not training
+      knowledge that stops at an older year than today.
     output: reply
     gates:
       - when: otherwise

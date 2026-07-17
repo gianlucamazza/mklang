@@ -11,10 +11,11 @@ cp README.md site-src/index.md
 cp SPEC.md ROADMAP.md CHANGELOG.md CONTRIBUTING.md site-src/
 cp docs/patterns.md site-src/
 cp docs/authoring.md site-src/
+cp docs/best-practices.md site-src/
 cp docs/stdlib.md site-src/
 cp docs/console.md site-src/
 cp conformance/README.md site-src/conformance.md
-cp docs/adr/*.md site-src/adr/
+cp docs/adr/*.md site-src/adr/  # includes 0020 host tool stub architecture
 cp -r schema site-src/schema
 
 # Rewrite repo-relative links for the flattened site: in-site pages point to
@@ -49,8 +50,11 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./LICENSE)|($GH/blob/main/LICENSE)|g" \
 	-e "s|(\.\./README\.md)|(index.md)|g" \
 	-e "s|(\./ROADMAP\.md)|(ROADMAP.md)|g" \
+	-e "s|(\.\./ROADMAP\.md)|(ROADMAP.md)|g" \
 	-e "s|(\./CHANGELOG\.md)|(CHANGELOG.md)|g" \
+	-e "s|(\.\./CHANGELOG\.md)|(CHANGELOG.md)|g" \
 	-e "s|(\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
+	-e "s|(\.\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
 	-e "s|(\./SPEC\.md)|(SPEC.md)|g"
 
 echo "site-src assembled: $(find site-src -name '*.md' | wc -l) pages"
