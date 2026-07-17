@@ -48,10 +48,11 @@ def build_app(
 ):
     """Construct the Textual app (imported lazily so the core stays TUI-free)."""
     from textual.app import App, ComposeResult
-    from textual.containers import Vertical
-    from textual.widgets import Footer, Input, RichLog, Static
+    from textual.containers import Horizontal, Vertical
+    from textual.widgets import Footer, Header, Input, RichLog, Static
 
     from .session import DEFAULT_BASE, Session
+    from .widgets import ActivityTree, Inspector
 
     brain = load_brain(agent_path)
     base = Path(session_base) if session_base else DEFAULT_BASE
@@ -83,10 +84,18 @@ def build_app(
     class ConsoleApp(App):
         TITLE = "mklang console"
         CSS = """
-        #log { height: 1fr; }
+        #body { height: 1fr; }
+        #main { width: 2fr; }
+        #log { height: 2fr; }
+        #activity { height: 1fr; border-top: solid $panel; }
         #status { height: 1; color: $text-muted; }
+        #inspector { width: 1fr; display: none; border-left: solid $panel; }
         """
-        BINDINGS = [("ctrl+c", "quit", "Quit")]
+        BINDINGS = [
+            ("ctrl+c", "quit", "Quit"),
+            ("f2", "toggle_inspector", "Inspector"),
+            ("ctrl+l", "clear_log", "Clear"),
+        ]
 
         def __init__(self):
             super().__init__()
@@ -115,12 +124,22 @@ def build_app(
             self.answer_mode = False
 
         def compose(self) -> ComposeResult:
-            yield Vertical(
-                RichLog(id="log", wrap=True, markup=True),
-                Static("", id="status"),
-                Input(placeholder="what should happen? (ctrl+c quits)", id="prompt"),
-                Footer(),
-            )
+            yield Header()
+            with Horizontal(id="body"):
+                with Vertical(id="main"):
+                    yield RichLog(id="log", wrap=True, markup=True)
+                    yield ActivityTree()
+                    yield Static("", id="status")
+                    yield Input(placeholder="what should happen? (ctrl+c quits)", id="prompt")
+                yield Inspector()
+            yield Footer()
+
+        def action_toggle_inspector(self) -> None:
+            panel = self.query_one(Inspector)
+            panel.display = not panel.display
+
+        def action_clear_log(self) -> None:
+            self.query_one("#log", RichLog).clear()
 
         def on_mount(self) -> None:
             self.log_line(
@@ -148,21 +167,12 @@ def build_app(
 
         def render_event(self, e: dict) -> None:
             self.session.append({"t": "event", **e})
-            pad = "  " * (e.get("depth", 0) + 1)
-            run_tag = f"[dim]{e.get('run', e.get('machine', ''))}[/dim]"
-            if e["type"] == "run-start":
-                self.log_line(f"{pad}▶ {run_tag} run {e['machine']} (entry {e['entry']})")
-            elif e["type"] == "state-start":
-                self.log_line(f"{pad}◐ {run_tag} {e['state']} [{e['kind']}·{e['tier']}]…")
-            elif e["type"] == "state-done":
+            if e["type"] == "state-done":
                 tokens = e.get("tokens") or {}
                 self.spent_in += tokens.get("input_tokens", 0)
                 self.spent_out += tokens.get("output_tokens", 0)
-                arrow = f"→ {e.get('to')}" if e.get("to") else f"({e.get('policy')})"
-                self.log_line(f"{pad}● {run_tag} {e['state']} [{e.get('policy')}] {arrow}")
                 self.update_status()
-            elif e["type"] == "branch-done":
-                self.log_line(f"{pad}· {run_tag} branch {e.get('index')} done")
+            self.query_one(ActivityTree).feed(e)
 
         # -- human input ----------------------------------------------------
 
@@ -189,6 +199,7 @@ def build_app(
                 return
             self.log_line(f"[b cyan]you:[/b cyan] {text}")
             self.session.append({"t": "user", "text": text})
+            self.query_one(ActivityTree).new_turn(text[:60])
             box.disabled = True
             self.run_worker(lambda: self.turn(text), thread=True, exclusive=True)
 
@@ -242,6 +253,9 @@ def build_app(
             self.session.append(
                 {"t": "agent", "status": res.status, "text": str(res.result or res.error)}
             )
+            panel = self.query_one(Inspector)
+            panel.show_result(res)
+            panel.show_session(self.session, self.spent_in, self.spent_out, self.tools._consented)
             self.session.history = self.history
             self.session.spent_in = self.spent_in
             self.session.spent_out = self.spent_out

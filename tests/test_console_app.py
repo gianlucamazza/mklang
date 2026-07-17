@@ -70,6 +70,67 @@ def test_direct_reply_turn(tmp_path):
     asyncio.run(drive())
 
 
+def all_labels(node):
+    out = [str(node.label)]
+    for child in node.children:
+        out.extend(all_labels(child))
+    return out
+
+
+def test_activity_tree_and_inspector(tmp_path):
+    from mklang.console.widgets import ActivityTree, Inspector
+
+    llm = scripted_llm(
+        {
+            "single next action": "RUN: std_cot task 2+2",
+            "run request JSON": '{"target": "std_cot", "inputs": {"task": "2+2"}}',
+            "final reply": "4.",
+        },
+        [1, 4],
+    )
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.click("#prompt")
+            await pilot.press(*"do it")
+            await pilot.press("enter")
+            await _wait_input_enabled(app, pilot)
+            labels = all_labels(app.query_one(ActivityTree).root)
+            text = "\n".join(labels)
+            # brain states at the top level, the commissioned run nested inside
+            assert "decide" in text and "do_run" in text
+            assert "std_cot" in text and "solve" in text
+            assert "4." in app.history
+
+            # inspector: hidden by default, F2 shows it, content is filled
+            panel = app.query_one(Inspector)
+            assert not panel.display
+            await pilot.press("f2")
+            assert panel.display
+            from textual.widgets import Static
+
+            session_text = str(app.query_one("#inspector-session", Static).render())
+            assert app.session.id in session_text
+
+            # a second turn resets the tree to the new turn only
+            await pilot.click("#prompt")
+            await pilot.press(*"again")
+            await pilot.press("enter")
+            await _wait_input_enabled(app, pilot)
+            labels2 = all_labels(app.query_one(ActivityTree).root)
+            assert any("again" in label for label in labels2)
+            assert not any("do it" in label for label in labels2)
+
+    asyncio.run(drive())
+
+
 def test_clarify_turn_uses_answer_mode(tmp_path):
     llm = scripted_llm(
         {
