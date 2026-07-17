@@ -37,6 +37,7 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\./docs/demos\.md|(demos.md|g" \
 	-e "s|(\./docs/assets/|(assets/|g" \
+	-e 's|src="assets/demos/|src="../assets/demos/|g' \
 	-e "s|(\.\./SPEC\.md)|(SPEC.md)|g" \
 	-e "s|(\./docs/adr/\([^)]*\.md\))|(adr/\1)|g" \
 	-e "s|(\./docs/adr)|($GH/tree/main/docs/adr)|g" \
@@ -61,5 +62,10 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
 	-e "s|(\.\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
 	-e "s|(\./SPEC\.md)|(SPEC.md)|g"
+
+# Raw HTML is opaque to MkDocs' link rewriting. These checks keep nested
+# pretty URLs such as /demos/ from silently resolving media below /demos/assets/.
+rg -q 'src="../assets/demos/cli.webm"' site-src/demos.md
+rg -q 'src="../assets/demos/console.webm"' site-src/demos.md
 
 echo "site-src assembled: $(find site-src -name '*.md' | wc -l) pages"
