@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
+import yaml
+
 from .. import host
 from ..config import load_provider
 from ..engine import run as run_machine_engine
@@ -120,6 +122,16 @@ class ConsoleTools:
     def write_machine(self, input: dict) -> str:
         name = (input.get("name") or "").strip()
         source = input.get("source") or ""
+        if not name:
+            # Derive the filename from the document's own `machine:` field, so a
+            # single authored-source output is enough to save.
+            try:
+                doc = yaml.safe_load(source)
+            except yaml.YAMLError as e:
+                return _obs({"error": f"source is not valid YAML: {e}"})
+            if not isinstance(doc, dict) or not str(doc.get("machine") or "").strip():
+                return _obs({"error": "source has no `machine:` name to derive a filename from"})
+            name = str(doc["machine"]).strip()
         path = self._workspace_path(name)
         if path is None:
             return _obs({"error": f"'{name}' escapes the workspace — write refused"})

@@ -1,20 +1,23 @@
 # Scenario tests for agent.mk — run with:
 #   mklang test agent.mk --script agent.test.yaml
 #
-# decide's judge batch is the four action conditions [DISCOVER, RUN, CLARIFY,
-# REPLY] (`otherwise` never enters a batch); action states have a single
-# otherwise gate and are never judged. Tools are scripted, so every flow is
-# deterministic and key-free. decide's prompt contains "single next action";
-# prepare_run's contains "run request JSON"; reply's contains "final reply".
+# decide's judge batch is the five action conditions [DISCOVER=0, RUN=1,
+# CLARIFY=2, AUTHOR=3, REPLY=4] (`otherwise` never enters a batch); action
+# states have a single otherwise gate and are never judged. Tools are
+# scripted, so every flow is deterministic and key-free. Map-form produce
+# keys on per-state prompt tokens ("single next action" = decide,
+# "run request JSON" = prepare_run, "final reply" = reply); the authoring
+# flows use LIST-form produce because decide is visited multiple times with
+# different intended outputs.
 
 scenarios:
-  # Direct answer: no tool needed — decide chooses REPLY (judge 3), reply ends.
+  # Direct answer: no tool needed — decide chooses REPLY (judge 4), reply ends.
   - name: direct-reply
     llm:
       produce:
         "single next action": "REPLY: 2+2 is 4."
         "final reply": "4."
-      judge: [3]
+      judge: [4]
     expect:
       status: done
       result: "4."
@@ -23,14 +26,14 @@ scenarios:
         - { state: reply, policy: ok, to: END }
 
   # The commissioning loop: decide RUN (judge 1) → prepare_run emits the JSON
-  # blob → do_run's scripted observation → decide REPLY (judge 3) → reply.
+  # blob → do_run's scripted observation → decide REPLY (judge 4) → reply.
   - name: run-then-reply
     llm:
       produce:
         "single next action": "RUN: std_cot with task '17*23'"
         "run request JSON": '{"target": "std_cot", "inputs": {"task": "17*23"}}'
         "final reply": "std_cot says 391."
-      judge: [1, 3]
+      judge: [1, 4]
     tools:
       run_machine: ['{"status": "done", "result": "391"}']
     expect:
@@ -53,7 +56,7 @@ scenarios:
       produce:
         "single next action": "CLARIFY: which environment, staging or prod?"
         "final reply": "Done for staging."
-      judge: [2, 3]
+      judge: [2, 4]
     tools:
       ask_user: ["staging"]
     expect:
@@ -73,7 +76,7 @@ scenarios:
       produce:
         "single next action": "DISCOVER: need the catalog first."
         "final reply": "You have 8 stdlib machines available."
-      judge: [0, 3]
+      judge: [0, 4]
     tools:
       list_machines: ['{"machines": [{"name": "std_cot"}]}']
     expect:
@@ -82,5 +85,65 @@ scenarios:
       trace:
         - { state: decide, policy: ok, to: discover }
         - { state: discover, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }
+
+  # Authoring: decide AUTHOR (judge 3) → author emits the source → save's
+  # scripted verdict is clean → decide RUN of the newborn (judge 1) →
+  # decide REPLY (judge 4). LIST-form produce: one text per generative visit.
+  - name: author-run-reply
+    llm:
+      produce:
+        - "AUTHOR: a haiku machine — one generative state, topic in, haiku out."
+        - "machine: haiku\nentry: compose\nbudget: 3\n..."
+        - "RUN: haiku with topic 'sea'"
+        - '{"target": "haiku", "inputs": {"topic": "sea"}}'
+        - "REPLY: authored and ran the haiku machine."
+        - "Created haiku.mk and ran it: 'old silent sea...'"
+      judge: [3, 1, 4]
+    tools:
+      write_machine: ['{"written": "haiku.mk", "check": {"ok": true, "errors": []}}']
+      run_machine: ['{"status": "done", "result": "old silent sea..."}']
+    expect:
+      status: done
+      result: "Created haiku.mk and ran it: 'old silent sea...'"
+      trace:
+        - { state: decide, policy: ok, to: author }
+        - { state: author, policy: ok, to: save }
+        - { state: save, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: prepare_run }
+        - { state: prepare_run, policy: ok, to: do_run }
+        - { state: do_run, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }
+
+  # Authoring repair: the first source fails validation (verdict in the
+  # observation), decide chooses AUTHOR again (judge 3), the second source is
+  # clean, then REPLY. The repair happens through the decide loop — no extra
+  # states needed.
+  - name: author-fails-then-repairs
+    llm:
+      produce:
+        - "AUTHOR: a summarizer machine."
+        - "machine: summarizer\nentry: gone\n..."
+        - "AUTHOR: fix the entry state — it must exist in states."
+        - "machine: summarizer\nentry: s\n..."
+        - "REPLY: authored the summarizer after one fix."
+        - "summarizer.mk is saved and valid (one validation round-trip)."
+      judge: [3, 3, 4]
+    tools:
+      write_machine:
+        - '{"written": "summarizer.mk", "check": {"ok": false, "errors": ["entry ''gone'' is not a state"]}}'
+        - '{"written": "summarizer.mk", "check": {"ok": true, "errors": []}}'
+    expect:
+      status: done
+      result: "summarizer.mk is saved and valid (one validation round-trip)."
+      trace:
+        - { state: decide, policy: ok, to: author }
+        - { state: author, policy: ok, to: save }
+        - { state: save, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: author }
+        - { state: author, policy: ok, to: save }
+        - { state: save, policy: ok, to: decide }
         - { state: decide, policy: ok, to: reply }
         - { state: reply, policy: ok, to: END }

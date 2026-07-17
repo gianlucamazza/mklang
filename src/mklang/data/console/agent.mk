@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=../../../../schema/mklang.schema.json
 # agent.mk — the console's brain (ADR 0015): one run per user turn.
 #
-# Flow: decide → {discover | prepare_run → do_run | clarify | reply → END}
+# Flow: decide → {discover | prepare_run → do_run | clarify |
+#                 author → save | reply → END}
 #       (every action loops back to decide; the budget bounds the turn)
 # Shows: the console's intelligence as an ordinary, auditable machine — swap it
 # with `mklang console --agent your_brain.mk` as long as the tool contract
@@ -12,7 +13,7 @@
 mklang: "0.3"
 machine: console_agent
 entry: decide
-budget: 12 # ~5 decide/action cycles + the reply
+budget: 16 # decide/action cycles incl. an authoring repair + the reply
 default_tier: balanced
 result: reply
 
@@ -30,6 +31,11 @@ tools:
     description: >
       Ask the human one question and return the reply.
       Input: {"question": "..."}.
+  - name: write_machine
+    description: >
+      Save an authored .mk into the workspace (filename derived from its
+      machine: field) and return the validation verdict.
+      Input: {"source": "<the full .mk document>"}.
 
 context:
   user_message: ""
@@ -39,9 +45,10 @@ context:
 states:
   decide: # the ReAct "think" step
     structure: >
-      One line starting with exactly one of DISCOVER, RUN, CLARIFY or REPLY,
-      followed by the details: for RUN the machine name and the inputs to pass;
-      for CLARIFY the question to ask the user; for REPLY the substance of the
+      One line starting with exactly one of DISCOVER, RUN, CLARIFY, AUTHOR or
+      REPLY, followed by the details: for RUN the machine name and the inputs
+      to pass; for CLARIFY the question to ask the user; for AUTHOR the full
+      requirements of the machine to create; for REPLY the substance of the
       answer.
     prompt: |
       You are the mklang console agent. You satisfy the user's request by
@@ -57,6 +64,10 @@ states:
         a suitable one from the observations).
       - RUN — commission a machine now: name it and spell out its inputs.
       - CLARIFY — ask the user one precise question you cannot answer yourself.
+      - AUTHOR — no existing machine covers the request: spell out the machine
+        to create (purpose, inputs, states, when it should escalate). If a
+        previous authoring attempt failed validation, restate the requirements
+        including what to fix.
       - REPLY — the request is satisfied (or answerable directly): state the
         substance of the final answer.
     tier: reasoning
@@ -72,6 +83,9 @@ states:
       - when: the output chooses CLARIFY
         then: ok
         to: clarify
+      - when: the output chooses AUTHOR
+        then: ok
+        to: author
       - when: the output chooses REPLY
         then: ok
         to: reply
@@ -117,6 +131,53 @@ states:
     tool: ask_user
     input:
       question: "{{thought}}"
+    output: observation
+    accumulate: true
+    gates:
+      - when: otherwise
+        then: ok
+        to: decide
+
+  author: # write a new machine from the decided requirements
+    structure: >
+      A complete, valid .mk document and nothing else — no fences, no prose
+      around it.
+    prompt: |
+      Author the machine described here:
+      {{thought}}
+
+      Observations so far (fix any validation errors they report):
+      {{observation}}
+
+      Rules for a valid .mk document:
+      - Top-level keys: mklang: "0.3", machine (snake_case name), entry,
+        budget (shortest entry→END path + 2), optional default_tier / result /
+        context, states.
+      - A generative state has structure (output shape), prompt (which reads
+        context keys with the double-brace syntax), output (context key),
+        gates. Optional: tier (fast|balanced|reasoning), reason, accumulate,
+        sample: N, over (a double-brace reference to a context list),
+        parse: list (output becomes a JSON-parsed list).
+      - Every gate is `when: <prose condition>` plus exactly one policy —
+        `then: ok` / `repair: N` / `escalate: true` / `fail: true` — and
+        `to: <state or END>` (fail has no to).
+      - A state with more than one gate ends with `- when: otherwise` as the
+        catch-all, last.
+      - Declare a context default for every key the prompts read; `result`
+        names a key some state outputs.
+      - Never name a provider or model (route by tier). Do not invent tool:
+        states — only generative states unless told a host tool exists.
+    tier: reasoning
+    output: authored_source
+    gates:
+      - when: otherwise
+        then: ok
+        to: save
+
+  save: # persist + validate; the observation carries the check verdict
+    tool: write_machine
+    input:
+      source: "{{authored_source}}"
     output: observation
     accumulate: true
     gates:

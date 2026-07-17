@@ -47,7 +47,7 @@ async def _wait_input_enabled(app, pilot, timeout=5.0):
 def test_direct_reply_turn(tmp_path):
     llm = scripted_llm(
         {"single next action": "REPLY: it is 4.", "final reply": "4."},
-        [3],
+        [4],
     )
     app = build_app(CONFIG, None, str(tmp_path / "ws"), build_llm=lambda prov: llm)
 
@@ -70,7 +70,7 @@ def test_clarify_turn_uses_answer_mode(tmp_path):
             "single next action": "CLARIFY: staging or prod?",
             "final reply": "Done on staging.",
         },
-        [2, 3],
+        [2, 4],
     )
     app = build_app(CONFIG, None, str(tmp_path / "ws"), build_llm=lambda prov: llm)
 

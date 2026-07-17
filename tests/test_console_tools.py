@@ -136,6 +136,17 @@ def test_write_machine_is_workspace_confined(tools):
     assert "approval" in (tools.workspace / "approval.mk").read_text()
 
 
+def test_write_machine_derives_name_from_source(tools):
+    ok = json.loads(tools.write_machine({"source": HITL_SRC}))
+    assert ok["written"] == "approval.mk"
+    assert (tools.workspace / "approval.mk").is_file()
+
+    bad_yaml = json.loads(tools.write_machine({"source": "states: [unclosed"}))
+    assert "not valid YAML" in bad_yaml["error"]
+    nameless = json.loads(tools.write_machine({"source": "entry: a\nbudget: 3"}))
+    assert "no `machine:` name" in nameless["error"]
+
+
 def test_check_machine_reports_errors(tools):
     bad = json.loads(
         tools.check_machine(
