@@ -8,9 +8,22 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.9.2`).
+  `pyproject.toml` (currently `0.9.3`).
 
 ## [Unreleased]
+
+## [0.9.3] — 2026-07-17
+
+Documentation-alignment patch (language stays **0.3**).
+
+### Fixed
+
+- Make the best-practices guide the documentation SSOT for current XDG host
+  paths and console lifecycle behavior.
+- Align the console session path with ADR 0021 while retaining the legacy path
+  as a documented read fallback.
+- Bring the README live-matrix status and roadmap history up to date through
+  the 0.9.2 release, and mark ADR 0015's original path as superseded.
 
 ## [0.9.2] — 2026-07-17
 

@@ -272,7 +272,7 @@ mklang console
 
 ## Status
 
-**Language v0.3 / package 0.9.2** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 0.9.3** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
@@ -285,8 +285,8 @@ web `search` (offline stub by default); host tool stub architecture for
 [best practices](./docs/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green (release matrix 0.7.0; re-run
-  on 0.8.0 publish), including gate-divergence agreement **1.0** on the synthetic
+- **Live:** DeepSeek (default) and **OpenAI** green in the 0.9.2 release matrix,
+  including gate-divergence agreement **1.0** on the synthetic
   harness — see
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
   Anthropic unit-tested; live may be billing-blocked.

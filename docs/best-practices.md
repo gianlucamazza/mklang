@@ -307,6 +307,27 @@ Generic bash/FS stay **out of core**. When you need disk, pick the class:
 | **3. Machine data I/O** | Read CSV, write a report | **Host tool** (`mklang.tools` entry point) | Root allowlist, size/type limits, stub\|fake\|live (ADR 0020), consent |
 | **4. Arbitrary FS / shell** | `rm`, bash, git | **Never core**; explicit sandboxed plugin | Default off; high friction |
 
+### Current host layout (documentation SSOT)
+
+This section is the documentation source of truth for current host-owned paths;
+ADR 0021 records the decision and rollout history, while surface guides should
+link here instead of maintaining a separate path policy.
+
+| Root | Current location | Contents |
+| --- | --- | --- |
+| Config | `$XDG_CONFIG_HOME/mklang` (default `~/.config/mklang`) | `runtime.yaml`, `.env` |
+| Data | `$XDG_DATA_HOME/mklang` (default `~/.local/share/mklang`) | user `machines/` |
+| State | `$XDG_STATE_HOME/mklang` (default `~/.local/state/mklang`) | `console/sessions/<id>/` and checkpoints |
+| System | `/etc/mklang`, `/usr/share/mklang/machines` | system config and machines |
+
+New console sessions always use
+`$XDG_STATE_HOME/mklang/console/sessions/<id>/`. The legacy
+`~/.mklang/console/sessions/` directory is read only as a migration fallback.
+`MKLANG_CONFIG_DIR` and `MKLANG_DATA_DIR` override the corresponding user roots;
+`MKLANG_CONFIG` selects one runtime config file directly. The implementation
+authority is `mklang.paths`; changes to it must update this table and the
+console guide in the same commit.
+
 ### Rules for class 3 (data tools)
 
 1. **Names only in the `.mk`** — `tool: read_doc`, not path syntax in the language.
@@ -340,6 +361,19 @@ Generic bash/FS stay **out of core**. When you need disk, pick the class:
 | **CLI** | `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` + checkpoint for human gates; ops log on stderr when enabled |
 | **MCP** | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL |
 | **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mk` only** — no generic FS/bash |
+
+### Console cancellation and shutdown (documentation SSOT)
+
+- `Ctrl+G` requests cooperative cancellation between states and keeps the
+  console open; an active provider response is allowed to finish.
+- `Ctrl+C` and `/quit` close the surface. During an active run, shutdown sets
+  the cancellation signal, releases pending human input, invokes the optional
+  provider `close()` hook to interrupt in-flight I/O, waits for the backing
+  worker thread, and then tears down Textual.
+- Provider plugins remain compatible without `close()`, but network-backed
+  adapters should implement it so console shutdown cannot wait for an SDK
+  timeout. Shutdown hooks must be idempotent and must suppress late UI/session
+  callbacks after teardown begins.
 
 ---
 

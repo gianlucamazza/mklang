@@ -88,8 +88,11 @@ One conversation pane (user turns, agent narration, live run tree), an input
 line with slash commands that bypass the brain for operator use (`/machines`,
 `/run <name>`, `/check <path>`, `/resume <ck>`, `/budget`, `/provider`,
 `/quit`), and a toggleable inspector (context blackboard, full trace, usage).
-Sessions persist under `~/.mklang/console/<id>/` — blackboard, event
-transcript (JSONL), checkpoints — and `--continue` reopens the last one.
+Sessions persist under the host state root — blackboard, event transcript
+(JSONL), checkpoints — and `--continue` reopens the last one. [ADR 0021](0021-filesystem-layout-local-install.md)
+later standardized the XDG location and legacy fallback;
+[Best practices §13](../best-practices.md#current-host-layout-documentation-ssot)
+is the documentation SSOT for the current paths.
 Headless testing uses Textual's Pilot plus the scripted LLM, so the console
 has the same no-key CI story as everything else.
 

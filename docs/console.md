@@ -100,18 +100,24 @@ brain must not AUTHOR a machine solely to read the clock.
 `Ctrl+C` performs a clean shutdown: an active run is cancelled, any pending
 human prompt is released, and the console waits for the provider worker to stop
 before returning to the shell. `Ctrl+G` only requests cancellation of the
-current run and keeps the console open.
+current run and keeps the console open. The lifecycle contract is maintained in
+[Best practices §14](best-practices.md#console-cancellation-and-shutdown-documentation-ssot).
 
 Slash commands use shell-style quoting, so `/run demo task="hello world"` keeps
 the value together. Command names are suggested while typing.
 
 ## Sessions
 
-Every conversation persists under `~/.mklang/console/sessions/<id>/`:
+Every conversation persists under
+`$XDG_STATE_HOME/mklang/console/sessions/<id>/` (default
+`~/.local/state/mklang/console/sessions/<id>/`):
 `state.json` (history, spend, tool consents — rewritten atomically per turn),
 `transcript.jsonl` (turns + every engine event, streaming append), and
 `checkpoints/` for turns parked on budget exhaustion. `--continue` reopens the
-latest session; `--session <id>` a specific one.
+latest session; `--session <id>` a specific one. Existing sessions under the
+legacy `~/.mklang/console/sessions/` path remain readable. The canonical host
+layout is maintained in
+[Best practices §13](best-practices.md#current-host-layout-documentation-ssot).
 
 **History for the brain is windowed** (ADR 0017): the full conversation remains
 in the session audit / transcript, but only a tail of recent turns (and a char

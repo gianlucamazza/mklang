@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.8.1**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.9.3**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.8.1)
+## Where we are (language 0.3 / package 0.9.3)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -50,9 +50,16 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.8.1:** host `context.now`; console chrome/content Markdown rendering;
   sectioned produce system (`llm/prompts.py`) + BP §3; agent sticky policy in
   `execution`.
-- **Live (2026-07-17, release 0.7.0 matrix):** DeepSeek + OpenAI smoke and gate
-  agreement green. Anthropic unit-tested; live may be billing-blocked.
-  Re-verify on the 0.8.0 release workflow.
+- **0.8.2:** best-practices filesystem/observability guidance, console activity
+  glyph cleanup, and optional-dependency CI guard.
+- **0.9.0:** XDG/config/discovery phases 1–2 (ADR 0021), responsive Rich CLI and
+  console experience (ADR 0022), and connection-error retries.
+- **0.9.1–0.9.2:** release-check stabilization followed by clean console
+  shutdown with pending provider or human-input work.
+- **0.9.3:** documentation alignment for package status, live evidence, and XDG
+  session paths.
+- **Live (2026-07-17, release 0.9.2 matrix):** DeepSeek + OpenAI smoke and gate
+  agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
 
 ## Language
 
@@ -182,7 +189,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **[later] FS data tools (plugins)** — class-3 read/write under a root with
   ADR 0020 stub default; not console brain defaults; not language faces (BP §13).
 
-## Near-term after 0.8.1
+## Near-term after 0.9.3
 
 Elevate **one** host/stdlib item per package release (layer discipline: no
 language 0.4 without ADR + conformance):

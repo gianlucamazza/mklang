@@ -24,6 +24,30 @@ def test_package_versions_are_synchronized():
     assert project["project"]["version"] == mklang.__version__
 
 
+def test_current_version_docs_are_synchronized():
+    version = mklang.__version__
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+
+    assert f"`pyproject.toml` (currently `{version}`)" in changelog
+    assert f"## [{version}]" in changelog
+    assert f"package {version}**" in readme
+    assert f"package **{version}**" in roadmap
+
+
+def test_console_docs_link_to_host_path_ssot():
+    best_practices = (ROOT / "docs/best-practices.md").read_text(encoding="utf-8")
+    console = (ROOT / "docs/console.md").read_text(encoding="utf-8")
+    anchor = "#current-host-layout-documentation-ssot"
+    session_path = "$XDG_STATE_HOME/mklang/console/sessions/<id>/"
+
+    assert "### Current host layout (documentation SSOT)" in best_practices
+    assert session_path in best_practices
+    assert session_path in console
+    assert f"best-practices.md{anchor}" in console
+
+
 def test_release_gate_requires_every_core_repeat():
     _ci_errors = _gate_divergence_module()._ci_errors
 
