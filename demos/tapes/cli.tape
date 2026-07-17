@@ -30,7 +30,7 @@ Enter
 Wait+Screen /findings=0/
 Sleep 1s
 
-Type `uv run mklang run examples/summarize_doc.mk --provider deepseek --set text="mklang describes AI workflows as readable state machines with explicit gates, budgets, traces, and host-owned tools." --max-tokens 1000 --format text --color always`
+Type `uv run mklang run examples/summarize_doc.mk --provider deepseek --set text="Gates and traces make AI workflows auditable."`
 Enter
 Wait+Screen@60s /DONE.*summarize_doc.*provider deepseek/
 Wait+Screen@60s /Result/

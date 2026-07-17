@@ -27,7 +27,7 @@ Enter
 Wait+Screen@30s /Ready/
 Sleep 1s
 
-Type `/run std_cot task="Name one benefit of auditable AI workflows in one sentence."`
+Type `/run std_cot task="Name one benefit of auditable AI workflows in five words."`
 Enter
 Wait+Screen@75s /status.*done/
 Sleep 4s
