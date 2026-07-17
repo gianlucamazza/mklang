@@ -8,6 +8,8 @@ Set Width 1200
 Set Height 675
 Set FontSize 20
 Set FontFamily "JetBrains Mono"
+Set LetterSpacing 0
+Set LineHeight 1.0
 Set Theme "Catppuccin Frappe"
 Set Padding 20
 Set Framerate 24

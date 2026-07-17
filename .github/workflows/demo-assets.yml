@@ -22,22 +22,35 @@ jobs:
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v8.3.2
-      - name: Install pinned VHS and media tools
-        env:
-          VHS_VERSION: 0.11.0
-          VHS_SHA256: 99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009
+      - name: Install pinned VHS, font, and media tools
         run: |
+          set -a
+          source demos/toolchain.conf
+          set +a
           sudo apt-get update
-          sudo apt-get install --yes ffmpeg ttyd
-          archive="$RUNNER_TEMP/vhs.tar.gz"
+          sudo apt-get install --yes ffmpeg ttyd unzip
+          vhs_archive="$RUNNER_TEMP/vhs.tar.gz"
           curl --fail --location --silent --show-error \
             "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_Linux_x86_64.tar.gz" \
-            --output "$archive"
-          echo "$VHS_SHA256  $archive" | sha256sum --check --strict
+            --output "$vhs_archive"
+          echo "$VHS_ARCHIVE_SHA256  $vhs_archive" | sha256sum --check --strict
           mkdir -p "$RUNNER_TEMP/vhs/bin"
-          tar -xzf "$archive" --strip-components=1 -C "$RUNNER_TEMP/vhs/bin" \
+          tar -xzf "$vhs_archive" --strip-components=1 -C "$RUNNER_TEMP/vhs/bin" \
             "vhs_${VHS_VERSION}_Linux_x86_64/vhs"
           echo "$RUNNER_TEMP/vhs/bin" >> "$GITHUB_PATH"
+
+          font_archive="$RUNNER_TEMP/JetBrainsMono.zip"
+          curl --fail --location --silent --show-error \
+            "https://github.com/JetBrains/JetBrainsMono/releases/download/v${FONT_VERSION}/JetBrainsMono-${FONT_VERSION}.zip" \
+            --output "$font_archive"
+          echo "$FONT_ARCHIVE_SHA256  $font_archive" | sha256sum --check --strict
+          font_dir="$HOME/.local/share/fonts/JetBrainsMono"
+          mkdir -p "$font_dir"
+          for style in Regular Bold Italic BoldItalic; do
+            unzip -j -q "$font_archive" "fonts/ttf/JetBrainsMono-${style}.ttf" -d "$font_dir"
+          done
+          fc-cache --force "$font_dir"
+          test "$(fc-match --format='%{family}' "$FONT_FAMILY")" = "$FONT_FAMILY"
       - name: Render and validate live DeepSeek demos
         run: uv run --extra console python scripts/demo_assets.py all
       - uses: actions/upload-artifact@v7

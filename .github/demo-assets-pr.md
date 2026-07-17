@@ -13,6 +13,8 @@ size limits.
 ## Human visual review
 
 - [ ] Text is readable on desktop and mobile.
+- [ ] JetBrains Mono renders with normal tracking and aligned monospace columns.
+- [ ] Rich and Textual borders, symbols, and bold text render correctly.
 - [ ] Commands and output are not clipped or obscured.
 - [ ] Pacing makes the workflow understandable.
 - [ ] Commands still represent the recommended usage.
