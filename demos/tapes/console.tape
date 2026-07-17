@@ -13,9 +13,9 @@ Set LineHeight 1.0
 Set Theme "Catppuccin Frappe"
 Set Padding 20
 Set Framerate 24
-Set PlaybackSpeed 1.15
+Set PlaybackSpeed 2.5
 Set TypingSpeed 24ms
-Set WaitTimeout 75s
+Set WaitTimeout 180s
 
 Hide
 Type "export XDG_STATE_HOME=/tmp/mklang-demo-state"
@@ -29,10 +29,20 @@ Enter
 Wait+Screen@30s /Ready/
 Sleep 1s
 
-Type `/run std_cot task="Name one benefit of auditable AI workflows in five words."`
+Type "/machines"
 Enter
-Wait+Screen@75s /status.*done/
-Sleep 4s
+Wait+Screen@30s /std_self_consistency/
+Sleep 2s
+
+Type `/run std_self_consistency task="Which is larger: 9.11 or 9.9? Answer with the number only."`
+Enter
+Wait+Screen@180s /status.*done/
+Sleep 3s
+
+Type "/session"
+Enter
+Wait+Screen@30s /session/
+Sleep 3s
 
 Type "/quit"
 Enter

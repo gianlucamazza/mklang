@@ -1,10 +1,14 @@
-Automated regeneration of the canonical CLI and console demos using live
-DeepSeek calls.
+Automated regeneration of the canonical demo recordings using live DeepSeek
+calls (plus live Tavily web search for the agent and search demos).
 
 Preview the generated GIFs:
 
 - [CLI demo](https://raw.githubusercontent.com/gianlucamazza/mklang/automation/demo-assets/docs/assets/demos/cli.gif)
 - [Console demo](https://raw.githubusercontent.com/gianlucamazza/mklang/automation/demo-assets/docs/assets/demos/console.gif)
+- [Agent demo](https://raw.githubusercontent.com/gianlucamazza/mklang/automation/demo-assets/docs/assets/demos/agent.gif)
+- [HITL demo](https://raw.githubusercontent.com/gianlucamazza/mklang/automation/demo-assets/docs/assets/demos/hitl.gif)
+- [Search demo](https://raw.githubusercontent.com/gianlucamazza/mklang/automation/demo-assets/docs/assets/demos/search.gif)
+- [Test demo](https://raw.githubusercontent.com/gianlucamazza/mklang/automation/demo-assets/docs/assets/demos/test.gif)
 
 Automated validation covers source and asset hashes, required transcript
 markers, known failure output, secret leakage, dimensions, duration, audio, and

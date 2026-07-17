@@ -67,5 +67,9 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 # pretty URLs such as /demos/ from silently resolving media below /demos/assets/.
 grep -q 'src="../assets/demos/cli.webm"' site-src/demos.md
 grep -q 'src="../assets/demos/console.webm"' site-src/demos.md
+grep -q 'src="../assets/demos/agent.webm"' site-src/demos.md
+grep -q 'src="../assets/demos/hitl.webm"' site-src/demos.md
+grep -q 'src="../assets/demos/search.webm"' site-src/demos.md
+grep -q 'src="../assets/demos/test.webm"' site-src/demos.md
 
 echo "site-src assembled: $(find site-src -name '*.md' | wc -l) pages"
