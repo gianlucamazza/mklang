@@ -24,7 +24,7 @@ natural-language post-conditions the model judges, each carrying a policy
   interpreter, and production machines need tools + code-hook gates for exact
   checks and real I/O.
 - Soft correctness rides on prompt/condition quality; critical checks should use
-  code-hook gates (ADR 0006) plus authoring practices (docs/patterns.md).
+  code-hook gates (ADR 0006) plus authoring practices (docs/guides/patterns.md).
 - Determinism for critical gates is opt-in via **hooks**; caching remains later.
 - **"Reliability comes from gates" is an empirical claim.** Prose gates are judged
   by the same class of model whose unreliability they contain. Repair budgets,

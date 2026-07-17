@@ -114,7 +114,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped (0.5.0):** docs site (mkdocs-material on GitHub Pages, assembled
   from the repo's canonical markdown) and `mklang lint` (static analysis
   beyond `check`); conformance suite as the language contract (ADR 0009).
-- **Shipped:** [best practices](./docs/best-practices.md) — layer discipline
+- **Shipped:** [best practices](./docs/guides/best-practices.md) — layer discipline
   (language / host / surface), tool contracts, web+time+cutoff checklist,
   anti-patterns, and explicit non-goals for core (bash/FS, knowledge-cutoff magic).
 - **0.5.4 release path:** a published GitHub Release builds and tests one artifact
@@ -159,21 +159,21 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   eight bundled general-purpose `std_*` architecture machines (CoT,
   self-consistency, refine, ToT, debate, map-reduce, cascade, plan-execute), present in every
   registry with user-wins precedence, runnable by name from CLI/MCP, extensible
-  via the `mklang.machines` entry-point group. Catalog: `docs/stdlib.md`.
+  via the `mklang.machines` entry-point group. Catalog: `docs/reference/stdlib.md`.
 - **Shipped (0.3):** structured list outputs — `parse: list` deposits a parsed
   JSON array and whole-template `input:` values pass raw across `call:`/`tool:`
   ([ADR 0014](./docs/adr/0014-structured-list-outputs.md)); Plan-and-Execute
   ships as `std_plan_execute`.
 - **Shipped (M1–M3):** console surface (`mklang console`,
-  [ADR 0015](./docs/adr/0015-console-surface.md), [docs/console.md](./docs/console.md))
+  [ADR 0015](./docs/adr/0015-console-surface.md), [docs/guides/console.md](./docs/guides/console.md))
   — agent-first Textual TUI; authoring loop; sessions/`--continue`; activity
   tree + inspector; slash commands + `/resume`; brain history windowed for
   prompts (ADR 0017).
 - **Shipped (package polish):** console **conversation rendering** — agent
   replies as CommonMark; slash/JSON/YAML fenced; user text and activity-tree
   labels/previews as plain styled `Text` (no Rich-markup injection of untrusted
-  content). Docs: [console](./docs/console.md#conversation-rendering),
-  [best practices](./docs/best-practices.md) anti-pattern #12.
+  content). Docs: [console](./docs/guides/console.md#conversation-rendering),
+  [best practices](./docs/guides/best-practices.md) anti-pattern #12.
 - **Shipped:** live engine events on the MCP transport
   ([ADR 0019](./docs/adr/0019-mcp-live-events.md)) — `run`/`resume` stream the
   `on_event` sequence as `mklang.event` logging notifications; any MCP client
@@ -183,7 +183,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace
   (projection of the run trace; process logging stays host-side — see
-  [best practices §12](./docs/best-practices.md)).
+  [best practices §12](./docs/guides/best-practices.md)).
 - **[later] Process logging hygiene** — stdlib `logging` hierarchy +
   `MKLANG_LOG_LEVEL` / CLI flag; never replace trace/events (BP §12).
 - **[later] FS data tools (plugins)** — class-3 read/write under a root with

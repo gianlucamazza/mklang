@@ -1,7 +1,7 @@
 # Authoring guide
 
 A compact recipe for writing a correct `.mk` — aimed at LLM agents and humans who
-want the happy path without reading the full [SPEC](../SPEC.md) first. This page
+want the happy path without reading the full [SPEC](../../SPEC.md) first. This page
 distills; it does not replace. Operating guidance lives in [Patterns](patterns.md);
 the full **do / don't checklist** is [Best practices](best-practices.md).
 
@@ -144,7 +144,7 @@ root is no context key or output — typos like `{{ticket.bod}}` included).
 
 ## Which example to copy
 
-Before writing a generic architecture yourself, check the [machine stdlib](stdlib.md):
+Before writing a generic architecture yourself, check the [machine stdlib](../reference/stdlib.md):
 CoT, self-consistency, refine, ToT, debate, map-reduce and cascade ship as ready
 `std_*` machines you can `call:` or run by name.
 
@@ -177,5 +177,5 @@ mklang run my.mk --set key=value
   language vs host boundaries.
 - [Patterns](patterns.md) — tier routing, reliability tuning, `mklang test`,
   which architecture when.
-- [SPEC](../SPEC.md) — the full semantics; §10 is the pattern cookbook.
-- [Schema](../schema/mklang.schema.json) — structural validation for editors.
+- [SPEC](../../SPEC.md) — the full semantics; §10 is the pattern cookbook.
+- [Schema](../../schema/mklang.schema.json) — structural validation for editors.

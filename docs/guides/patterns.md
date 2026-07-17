@@ -1,6 +1,6 @@
 # Recommended configurations & flows
 
-Operating guidance for building good machines. The **cookbook** ([`SPEC.md §10`](../SPEC.md))
+Operating guidance for building good machines. The **cookbook** ([`SPEC.md §10`](../../SPEC.md))
 maps _architectures_ to constructs; this page is about configuring them _well_.
 
 **Canonical checklist** (do / don't / layers / tool contracts / anti-patterns):
@@ -134,13 +134,13 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   **scripted LLM** (produce texts + judge picks) and scripted tools/hooks — no
   provider, no API key, fully deterministic. Each scenario is a named case in the
   conformance format (`llm`/`tools`/`hooks`/`run` + `expect`), and the runner
-  shares its matcher with the [conformance suite](../conformance/README.md), so a
+  shares its matcher with the [conformance suite](../../conformance/README.md), so a
   green scenario means the *interpreter* would route your machine exactly that way.
 - **Cover both the happy path and the escape hatches.** The value is in the
   branches you hope never fire: the escalate-to-human path, the repair loop giving
   up, the empty-tool-result fallback. Script the judge pick that steers into each
   and assert the `trace` skeleton (`state` → `to`, `policy`) lands where you think.
-  See [`examples/triage.test.yaml`](../examples/triage.test.yaml) (happy path +
+  See [`examples/triage.test.yaml`](../../examples/triage.test.yaml) (happy path +
   KB-empty escalation).
 - **Keep scenarios next to the machine** (`triage.mk` → `triage.test.yaml`) and
   run them in CI — a `.mk` edit that reroutes a gate fails the scenario, not a
@@ -171,7 +171,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 ## Provider notes
 
 - The `.mk` never names a model — only tiers. Pick models in
-  [`config/runtime.example.yaml`](../config/runtime.example.yaml) (default
+  [`config/runtime.example.yaml`](../../config/runtime.example.yaml) (default
   `active: deepseek`); keys come from `.env` (`DEEPSEEK_API_KEY`, …). Switching
   provider is a one-line `active:` change or `mklang run --provider …`.
 - **Diversity for `sample`** comes from temperature; keep the sampling state on a

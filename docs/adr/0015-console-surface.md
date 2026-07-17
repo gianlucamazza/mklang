@@ -1,6 +1,6 @@
 # ADR 0015 — `mklang console`: an agent-first operational TUI whose brain is a machine
 
-Status: Accepted (M1–M3 shipped in package 0.7.0; see `docs/console.md`)
+Status: Accepted (M1–M3 shipped in package 0.7.0; see `docs/guides/console.md`)
 
 ## Context
 
@@ -91,7 +91,7 @@ line with slash commands that bypass the brain for operator use (`/machines`,
 Sessions persist under the host state root — blackboard, event transcript
 (JSONL), checkpoints — and `--continue` reopens the last one. [ADR 0021](0021-filesystem-layout-local-install.md)
 later standardized the XDG location and legacy fallback;
-[Best practices §13](../best-practices.md#current-host-layout-documentation-ssot)
+[Best practices §13](../guides/best-practices.md#current-host-layout-documentation-ssot)
 is the documentation SSOT for the current paths.
 Headless testing uses Textual's Pilot plus the scripted LLM, so the console
 has the same no-key CI story as everything else.
@@ -111,7 +111,7 @@ documented under ADR 0017; MCP live events under ADR 0019.
 **Package polish (post-M3, no language change):** conversation log renders agent
 prose as CommonMark; untrusted text (user, LLM, previews) is never interpolated
 into Rich markup tags on the log or activity tree (`console/render.py`). See
-`docs/console.md` § Conversation rendering. Slash `/provider` from the UX sketch
+`docs/guides/console.md` § Conversation rendering. Slash `/provider` from the UX sketch
 above was not shipped — use CLI `--provider` (or a later surface PR).
 
 ## Consequences
