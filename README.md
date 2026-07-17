@@ -92,6 +92,7 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
   - [`research_web.mk`](./examples/research_web.mk) — research loop with `tool: search` (host-bound).
   - [`research_compress.mk`](./examples/research_compress.mk) — same + explicit notes compression.
+  - [`news_search.mk`](./examples/news_search.mk) — topic → `tool: search` → news brief.
   - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
   - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
   - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.

@@ -72,6 +72,22 @@ cap) is injected as `{{history}}` into `agent.mk`, with an explicit
 `…[history_truncated…]…` marker when anything is dropped. This keeps long sessions
 from exploding the brain prompt.
 
+## Web search from the console
+
+Live web/news questions need a machine with a real `tool: search` state (not
+generative prose that pretends to search). Host binding:
+
+| Setup | Effect |
+| --- | --- |
+| `TAVILY_API_KEY=…` in `.env` | Tavily auto-enabled for the `search` tool |
+| `MKLANG_SEARCH_BACKEND=fake` | Deterministic offline hits (demos/tests) |
+| `MKLANG_SEARCH_BACKEND=stub` | Force offline even if a Tavily key is set |
+| unset key + unset backend | Structured stub: `"no external search bound…"` |
+
+Example workspace machine: `machines/news_search.mk` (topic → search → brief).
+Pattern references: `examples/research_web.mk`, `examples/research_compress.mk`.
+The brain will ask consent the first time a machine uses host tools.
+
 ## Security model
 
 The console inherits the SPEC §11 posture: authored machines are **confined to

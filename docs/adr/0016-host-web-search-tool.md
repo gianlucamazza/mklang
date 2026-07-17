@@ -17,7 +17,10 @@ provider-native tool-calling or browser automation.
 2. **Default remains the offline stub** — no search API key on core install.
 3. **Real binding is opt-in** via `mklang.search.configure_search` or env
    `MKLANG_SEARCH_BACKEND=fake|tavily` (+ `TAVILY_API_KEY` for Tavily).
-   Entry-point plugins may still override `search` entirely.
+   **Convenience:** if `TAVILY_API_KEY` is set and `MKLANG_SEARCH_BACKEND` is
+   unset, Tavily is selected automatically (the key is the host opt-in).
+   `MKLANG_SEARCH_BACKEND=stub` forces offline. Entry-point plugins may still
+   override `search` entirely.
 4. **No language change.** Example: `examples/research_web.mk` (+ scenario test).
 5. **Threat model.** Search observations are **untrusted context** (SPEC §11).
 

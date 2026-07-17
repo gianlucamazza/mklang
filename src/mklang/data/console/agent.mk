@@ -53,7 +53,8 @@ states:
     prompt: |
       You are the mklang console agent. You satisfy the user's request by
       commissioning machines (self-contained LLM state machines) and reporting
-      results honestly.
+      results honestly. You cannot call the web yourself — only host tools
+      inside a commissioned machine can (especially tool: search).
 
       Conversation so far: {{history}}
       User request: {{user_message}}
@@ -63,13 +64,19 @@ states:
       - DISCOVER — list the available machines (only if you don't already know
         a suitable one from the observations).
       - RUN — commission a machine now: name it and spell out its inputs.
-      - CLARIFY — ask the user one precise question you cannot answer yourself.
+        Prefer an existing machine that already does the job (stdlib or
+        workspace). For live web/news research, AUTHOR or RUN a machine that
+        uses the host tool `search` (see authoring rules) — never invent
+        search results in generative prose.
+      - CLARIFY — ask the human one precise question you cannot answer yourself.
       - AUTHOR — no existing machine covers the request: spell out the machine
         to create (purpose, inputs, states, when it should escalate). If a
         previous authoring attempt failed validation, restate the requirements
         including what to fix.
       - REPLY — the request is satisfied (or answerable directly): state the
-        substance of the final answer.
+        substance of the final answer. If a tool returned
+        "no external search bound", say so clearly and how to enable search
+        (TAVILY_API_KEY or MKLANG_SEARCH_BACKEND).
     tier: reasoning
     reason: true
     output: thought
@@ -152,21 +159,28 @@ states:
       Rules for a valid .mk document:
       - Top-level keys: mklang: "0.3", machine (snake_case name), entry,
         budget (shortest entry→END path + 2), optional default_tier / result /
-        context, states.
+        context, states. Optional top-level tools: list of {name, description}.
       - A generative state has structure (output shape), prompt (which reads
         context keys with the double-brace syntax), output (context key),
         gates. Optional: tier (fast|balanced|reasoning), reason, accumulate,
         sample: N, over (a double-brace reference to a context list),
         parse: list (output becomes a JSON-parsed list).
+      - Host tools available in this console (use real `tool:` states for I/O):
+        search (web — input query/max_results, returns JSON results),
+        calc (arithmetic expr), search_kb, send_reply. Declare them under
+        top-level tools: and call with e.g. tool: search, input mapping the
+        context key that holds the query string, output notes (accumulate ok).
+        NEVER put "search the web" only in a generative prompt — that fabricates
+        results. For news/research: plan_query → tool search → check/finalize
+        (see research_web / research_compress patterns).
       - Every gate is `when: <prose condition>` plus exactly one policy —
         `then: ok` / `repair: N` / `escalate: true` / `fail: true` — and
-        `to: <state or END>` (fail has no to).
+        `to: <state or END>` (fail has no to; escalate REQUIRES to:).
       - A state with more than one gate ends with `- when: otherwise` as the
-        catch-all, last.
+        catch-all, last. Do not use `when: always`.
       - Declare a context default for every key the prompts read; `result`
         names a key some state outputs.
-      - Never name a provider or model (route by tier). Do not invent tool:
-        states — only generative states unless told a host tool exists.
+      - Never name a provider or model (route by tier).
     tier: reasoning
     output: authored_source
     gates:

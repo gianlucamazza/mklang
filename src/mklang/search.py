@@ -119,17 +119,25 @@ def current_backend() -> SearchBackend | None:
 
 
 def _backend_from_env() -> SearchBackend | None:
-    """Lazy env binding: MKLANG_SEARCH_BACKEND=fake|tavily (default: none → stub)."""
+    """Lazy env binding for the search tool.
+
+    - ``MKLANG_SEARCH_BACKEND=stub|none|off`` → force offline stub
+    - ``fake`` / ``tavily`` → that backend (tavily needs ``TAVILY_API_KEY``)
+    - unset: if ``TAVILY_API_KEY`` is present, auto-select Tavily (host already
+      opted in by placing a key); otherwise offline stub
+    """
     name = (os.environ.get("MKLANG_SEARCH_BACKEND") or "").strip().lower()
-    if not name or name in ("stub", "none", "off"):
+    if name in ("stub", "none", "off"):
         return None
     if name == "fake":
         return FakeSearchBackend()
-    if name == "tavily":
+    if name == "tavily" or (not name and os.environ.get("TAVILY_API_KEY")):
         key = os.environ.get("TAVILY_API_KEY") or ""
         if not key:
-            return None  # fall through to stub with error in search()
+            return None
         return TavilySearchBackend(key)
+    if name:
+        return None  # unknown backend name → stub (search() explains how to fix)
     return None
 
 
@@ -146,11 +154,14 @@ def search(inp: dict) -> str:
 
     backend = _backend if _backend is not None else _backend_from_env()
     if backend is None:
-        # Keep the historical stub phrase discoverable for existing tests/docs,
-        # while also emitting the structured observation contract.
+        # Honest offline default + actionable enablement (console users hit this first).
+        how = (
+            "no external search bound — set TAVILY_API_KEY (auto-enables Tavily) "
+            "or MKLANG_SEARCH_BACKEND=fake|tavily"
+        )
         legacy = f"[no external search bound] query was: {query!r}"
         return json.dumps(
-            {"query": query, "results": [], "error": "no external search bound", "message": legacy},
+            {"query": query, "results": [], "error": how, "message": legacy},
             ensure_ascii=False,
         )
     try:

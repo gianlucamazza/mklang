@@ -33,12 +33,12 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   card: use `tool:` states (host callables). Do not write `execution: use tool X`
   on a generative state — the model cannot call tools there and will invent
   observations. Do not ask the model to "confirm the message was sent."
-- **Web search is a host tool, not a model skill.** Builtin `search` is offline
-  by default (structured stub). Bind a backend with
-  `MKLANG_SEARCH_BACKEND=fake|tavily` (and `TAVILY_API_KEY` for Tavily) or
-  `mklang.search.configure_search(...)`. Snippets are **untrusted** (SPEC §11) —
-  same injection class as customer text. See `examples/research_web.mk` and
-  ADR 0016.
+- **Web search is a host tool, not a model skill.** Builtin `search` is a
+  structured stub until a backend is bound. **`TAVILY_API_KEY` alone auto-enables
+  Tavily**; or set `MKLANG_SEARCH_BACKEND=fake|tavily|stub`. Never put "search
+  the web" only in generative `prompt`/`execution` — the model will invent hits.
+  Use `tool: search` (see `examples/research_web.mk`, `machines/news_search.mk`).
+  Snippets are **untrusted** (SPEC §11).
 - **Watch for output cutoff.** When a produce hits max_tokens, the runtime sets
   `truncated: true` on the trace step and on live `state-done` events (ADR 0018).
   Default policy is `report` (annotate and continue); use `--on-truncate halt`

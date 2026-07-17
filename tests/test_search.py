@@ -22,13 +22,46 @@ def teardown_function(_fn):
     configure_search(None)
 
 
-def test_stub_is_structured_and_honest():
+def test_stub_is_structured_and_honest(monkeypatch):
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.delenv("MKLANG_SEARCH_BACKEND", raising=False)
     raw = search({"query": "quantum"})
     data = json.loads(raw)
     assert data["query"] == "quantum"
     assert data["results"] == []
     assert "no external search bound" in data["error"]
+    assert "TAVILY_API_KEY" in data["error"]
     assert "no external search bound" in data["message"]
+
+
+def test_tavily_key_alone_auto_selects_backend(monkeypatch):
+    """A present TAVILY_API_KEY opts the host into search without an extra flag."""
+    monkeypatch.delenv("MKLANG_SEARCH_BACKEND", raising=False)
+    monkeypatch.setenv("TAVILY_API_KEY", "tvly-test")
+    configure_search(None)
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps(
+                {"results": [{"title": "T", "url": "https://t.example", "content": "hit"}]}
+            ).encode()
+
+    # Patch the class used when auto-binding so we never hit the network.
+    monkeypatch.setattr(
+        "mklang.search.TavilySearchBackend",
+        lambda key: FakeSearchBackend(
+            [{"title": "Auto", "url": "https://a.example", "snippet": "ok"}]
+        ),
+    )
+    data = json.loads(search({"query": "trump news"}))
+    assert data["error"] is None
+    assert data["results"] and data["results"][0]["title"] == "Auto"
 
 
 def test_empty_query():
@@ -86,7 +119,10 @@ def test_search_surfaces_backend_errors():
     assert "search failed" in data["error"]
 
 
-def test_builtin_registry_points_at_search():
+def test_builtin_registry_points_at_search(monkeypatch):
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.delenv("MKLANG_SEARCH_BACKEND", raising=False)
+    configure_search(None)
     assert "search" in BUILTINS
     reg = load_tool_registry(include_entry_points=False)
     out = reg["search"]({"query": "y"})
