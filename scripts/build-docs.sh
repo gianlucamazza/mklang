@@ -14,10 +14,12 @@ cp docs/authoring.md site-src/
 cp docs/best-practices.md site-src/
 cp docs/stdlib.md site-src/
 cp docs/console.md site-src/
+cp docs/demos.md site-src/
 cp docs/install.md site-src/
 cp conformance/README.md site-src/conformance.md
 cp docs/adr/*.md site-src/adr/
 cp -r schema site-src/schema
+cp -r docs/assets site-src/assets
 
 # Rewrite repo-relative links for the flattened site: in-site pages point to
 # their new location; repo-only targets (examples, config, sources) go to GitHub.
@@ -33,6 +35,8 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./\.\./conformance/README\.md)|(../conformance.md)|g" \
 	-e "s|(\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\.\./docs/patterns\.md)|(patterns.md)|g" \
+	-e "s|(\./docs/demos\.md|(demos.md|g" \
+	-e "s|(\./docs/assets/|(assets/|g" \
 	-e "s|(\.\./SPEC\.md)|(SPEC.md)|g" \
 	-e "s|(\./docs/adr/\([^)]*\.md\))|(adr/\1)|g" \
 	-e "s|(\./docs/adr)|($GH/tree/main/docs/adr)|g" \

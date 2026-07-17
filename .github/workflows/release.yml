@@ -29,6 +29,8 @@ jobs:
         run: |
           uv run --extra dev ruff check src tests scripts
           uv run --extra dev pytest -q
+      - name: Reject stale or modified demo assets
+        run: uv run python scripts/demo_assets.py check-drift
       - name: Validate examples and runtime config
         run: |
           uv run --with check-jsonschema check-jsonschema --default-filetype yaml --schemafile schema/mklang.schema.json examples/*.mk

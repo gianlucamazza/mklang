@@ -13,6 +13,15 @@ interpreter, optional tools, and optional code-hook gates.
 mklang : LangGraph  ::  a declarative spec : Python code
 ```
 
+## See it in action
+
+| CLI: check, lint, and run | Console: interactive run |
+| --- | --- |
+| [![Live mklang CLI demo](./docs/assets/demos/cli.gif)](./docs/demos.md#cli-check-lint-run) | [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) |
+
+Both recordings run the real surfaces against DeepSeek. See the
+[full WebM recordings, transcripts, and reproducibility notes](./docs/demos.md).
+
 ## The idea
 
 Each **state** has four faces:
@@ -88,7 +97,8 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
 - [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
 - [`docs/`](./docs) — [`best-practices.md`](./docs/best-practices.md) (checklist),
   [`patterns.md`](./docs/patterns.md), [`authoring.md`](./docs/authoring.md),
-  [`stdlib.md`](./docs/stdlib.md), [`console.md`](./docs/console.md), and
+  [`stdlib.md`](./docs/stdlib.md), [`console.md`](./docs/console.md),
+  [`demos.md`](./docs/demos.md), and
   [`adr/`](./docs/adr); plus [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
   - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.

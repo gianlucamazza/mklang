@@ -11,9 +11,11 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.3.2
       - name: Lint
-        run: uv run --extra dev ruff check src tests
+        run: uv run --extra dev ruff check src tests scripts
       - name: Unit tests (MockLLM — no network, incl. MCP surface)
         run: uv run --extra dev --extra mcp pytest -q
+      - name: Reject stale or modified demo assets
+        run: uv run python scripts/demo_assets.py check-drift
       - name: Validate example machines against the schema
         run: >
           uv run --with check-jsonschema

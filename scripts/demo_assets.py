@@ -25,7 +25,6 @@ FORMATS = ("webm", "gif", "txt")
 SOURCE_PATTERNS = (
     "demos/tapes/*.tape",
     "scripts/demo_assets.py",
-    "tests/test_demo_assets.py",
     "config/runtime.example.yaml",
     "examples/summarize_doc.mk",
     "src/mklang/cli.py",
@@ -114,6 +113,7 @@ def render() -> None:
         for extension in FORMATS:
             _asset_path(demo, extension).unlink(missing_ok=True)
         _run(["vhs", str(TAPE_DIR / f"{demo}.tape")])
+        _normalize_transcript(_asset_path(demo, "txt"))
         _derive_gif(_asset_path(demo, "webm"), _asset_path(demo, "gif"))
 
 
@@ -159,6 +159,21 @@ def _probe(path: Path) -> dict:
 
 def _clean_transcript(path: Path) -> str:
     return ANSI.sub("", path.read_text(encoding="utf-8", errors="replace"))
+
+
+def _normalize_transcript(path: Path) -> None:
+    """Turn VHS screen snapshots into a compact, readable plain-text transcript."""
+    lines: list[str] = []
+    seen: set[str] = set()
+    for raw in _clean_transcript(path).splitlines():
+        line = raw.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped == ">" or set(stripped) <= {"─"}:
+            continue
+        if line not in seen:
+            seen.add(line)
+            lines.append(line)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def validate() -> dict[str, dict]:
