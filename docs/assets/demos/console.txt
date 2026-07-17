@@ -1,21 +1,34 @@
 > uv run mklang console --provider deepseek --workspace /tmp/mklang-demo-machines
- ⭘                                     mklang console
- READY · deepseek · tokens 0+0 · session 20260717-225728-5c6a
+ ⭘                                         mklang console
+ READY · deepseek · tokens 0+0 · session 20260718-012959-5df5
  Ready. Ask the agent what should happen, or type /help.
-┌───────────────────────────────────────────────────────────────────────────────────────────┐
-▊  Ask the agent or type / for commands                                                     ▎
-▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
- f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                     ▏^p palette
-▊  /run std_cot task="Name one benefit of auditable AI workflows in five words."            ▎
- RUNNING · deepseek · tokens 0+0 · session 20260717-225728-5c6a
- /run std_cot {'task': 'Name one benefit of auditable AI workflows in five words.'}
- ▼ /run std_cot
- READY · deepseek · tokens 144+5 · session 20260717-225728-5c6a
- /run std_cot {'task': 'Name one benefit of auditable AI workflows in five words.'}       ▁▁
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+▊  Ask the agent or type / for commands                                                              ▎
+▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
+ f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                              ▏^p palette
+▊  /machines                                                                                         ▎
+   std_cot · result=answer · budget=3 · keys=task
+   std_debate · result=answer · budget=12 · keys=personas, task                                    ▄▄
+   std_map_reduce · result=answer · budget=20 · keys=item_task, items, reduce_task, task
+   std_plan_execute · result=answer · budget=16 · keys=task
+   std_refine · result=answer · budget=6 · keys=criteria, task
+   std_self_consistency · result=answer · budget=12 · keys=task
+   std_tot · result=answer · budget=10 · keys=best, task
+▊  /run std_self_consistency task="Which is larger: 9.11 or 9.9? Answer with the number only."       ▎
+ READY · deepseek · tokens 953+67 · session 20260718-012959-5df5
+ /run std_self_consistency {'task': 'Which is larger: 9.11 or 9.9? Answer with the number only.'}
  result:
-  {"status": "done", "error": null, "result": "Increased trust and accountability.",
-  "usage": {"input_tokens": 144, "output_tokens": 5}, "trace": {"steps": 1, "truncated":
-  false, "truncated_steps": []}, "truncated": false}
- └── ▼ ✓ std_cot  done
-     └── ● solve ok → END
-▊  /quit                                                                                    ▎
+  {"status": "done", "error": null, "result": "9.9", "usage": {"input_tokens": 953,                ▁▁
+  "output_tokens": 67}, "trace": {"steps": 2, "truncated": false, "truncated_steps": []},
+  "truncated": false}
+ ▼ /run std_self_consistency
+ └── ▼ ✓ std_self_consistency  done
+     ├── ▶ ● sample_answers ok → vote
+     └── ● vote ok → END
+▊  /session                                                                                          ▎
+  {"status": "done", "error": null, "result": "9.9", "usage": {"input_tokens": 953,                ▄▄
+                                                                                                   ▆▆
+  {"status": "done", "error": null, "result": "9.9", "usage": {"input_tokens": 953,
+ session 20260718-012959-5df5 · /tmp/mklang-demo-state/mklang/console/sessions/20260718-012959-5df5
+ · tokens 953+67
+▊  /quit                                                                                             ▎
