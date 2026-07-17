@@ -128,5 +128,10 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   JSON array and whole-template `input:` values pass raw across `call:`/`tool:`
   ([ADR 0014](./docs/adr/0014-structured-list-outputs.md)); Plan-and-Execute
   ships as `std_plan_execute`.
+- **[next] Console surface** (`mklang console`, design in
+  [ADR 0015](./docs/adr/0015-console-surface.md), Proposed) — agent-first
+  operational TUI (Textual, extra `mklang[console]`) whose brain is a bundled,
+  user-swappable `agent.mk` machine; prerequisite: an `on_event` observability
+  seam in `engine.run` (also the future OTel hook). Milestones M1-M3 in the ADR.
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.

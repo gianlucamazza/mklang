@@ -46,6 +46,7 @@ nav:
       - Machine stdlib: adr/0012-machine-stdlib.md
       - MCP surface completion: adr/0013-mcp-surface-completion.md
       - Structured list outputs: adr/0014-structured-list-outputs.md
+      - Console surface: adr/0015-console-surface.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md
