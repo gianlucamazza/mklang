@@ -39,7 +39,7 @@ jobs:
             "vhs_${VHS_VERSION}_Linux_x86_64/vhs"
           echo "$RUNNER_TEMP/vhs/bin" >> "$GITHUB_PATH"
       - name: Render and validate live DeepSeek demos
-        run: uv run python scripts/demo_assets.py all
+        run: uv run --extra console python scripts/demo_assets.py all
       - uses: actions/upload-artifact@v7
         with:
           name: demo-assets-preview

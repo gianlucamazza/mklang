@@ -16,11 +16,13 @@ Set TypingSpeed 24ms
 Set WaitTimeout 75s
 
 Hide
+Type "export XDG_STATE_HOME=/tmp/mklang-demo-state"
+Enter
 Type "rm -rf /tmp/mklang-demo-state /tmp/mklang-demo-machines && clear"
 Enter
 Show
 
-Type "XDG_STATE_HOME=/tmp/mklang-demo-state uv run mklang console --provider deepseek --workspace /tmp/mklang-demo-machines"
+Type "uv run mklang console --provider deepseek --workspace /tmp/mklang-demo-machines"
 Enter
 Wait+Screen@30s /Ready/
 Sleep 1s
