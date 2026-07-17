@@ -122,6 +122,7 @@ def build_app(
             self.spent_out = self.session.spent_out
             self.tools._consented.update(self.session.consented)
             self.answer_mode = False
+            self.log_history: list[str] = []  # plain mirror of the log, for tests
 
         def compose(self) -> ComposeResult:
             yield Header()
@@ -158,6 +159,7 @@ def build_app(
 
         def log_line(self, text: str) -> None:
             self.query_one("#log", RichLog).write(text)
+            self.log_history.append(text)
 
         def update_status(self) -> None:
             self.query_one("#status", Static).update(
@@ -197,11 +199,106 @@ def build_app(
                 return
             if not text:
                 return
+            if text.startswith("/"):
+                self.handle_slash(text)
+                return
             self.log_line(f"[b cyan]you:[/b cyan] {text}")
             self.session.append({"t": "user", "text": text})
             self.query_one(ActivityTree).new_turn(text[:60])
             box.disabled = True
             self.run_worker(lambda: self.turn(text), thread=True, exclusive=True)
+
+        # -- slash commands (operator affordances, bypass the brain) ---------
+
+        def handle_slash(self, text: str) -> None:
+            import json as _json
+
+            from ..checkpoint import load_checkpoint
+            from ..cli import _coerce
+
+            parts = text.split()
+            cmd, args = parts[0].lower(), parts[1:]
+            if cmd == "/help":
+                self.log_line(
+                    "[dim]/machines · /run <name> [k=v…] · /check <name> · /read <name> · "
+                    "/budget <n> · /resume [n] · /session · /quit — plain text goes to the "
+                    "agent; F2 inspector, ctrl+l clear[/dim]"
+                )
+            elif cmd == "/machines":
+                rows = _json.loads(self.tools.list_machines({}))["machines"]
+                for r in rows:
+                    self.log_line(
+                        f"  [b]{r['name']}[/b] · result={r['result']} · "
+                        f"budget={r['budget']} · keys={', '.join(r['context_keys']) or '—'}"
+                    )
+            elif cmd == "/run" and args:
+                target = args[0]
+                inputs = {}
+                for kv in args[1:]:
+                    if "=" in kv:
+                        k, v = kv.split("=", 1)
+                        inputs[k] = _coerce(v)
+                self.log_line(f"[b cyan]/run[/b cyan] {target} {inputs or ''}")
+                self.query_one(ActivityTree).new_turn(f"/run {target}")
+                self.query_one("#prompt", Input).disabled = True
+                self.run_worker(lambda: self.slash_run(target, inputs), thread=True, exclusive=True)
+            elif cmd == "/check" and args:
+                verdict = _json.loads(self.tools.check_machine({"name": args[0]}))
+                self.log_line(_json.dumps(verdict, ensure_ascii=False, indent=2))
+            elif cmd == "/read" and args:
+                self.log_line(self.tools.read_machine({"name": args[0]}))
+            elif cmd == "/budget" and args:
+                try:
+                    self.tools.default_cost_budget = int(args[0])
+                    self.log_line(f"[dim]default cost budget → {args[0]} tokens[/dim]")
+                except ValueError:
+                    self.log_line("[red]/budget needs an integer[/red]")
+            elif cmd == "/session":
+                self.log_line(
+                    f"[dim]session {self.session.id} · {self.session.dir} · "
+                    f"tokens {self.spent_in}+{self.spent_out}[/dim]"
+                )
+            elif cmd == "/resume":
+                cks = sorted(self.session.checkpoints_dir.glob("*.json"))
+                if not args:
+                    if not cks:
+                        self.log_line("[dim]no parked checkpoints in this session[/dim]")
+                    for i, ck in enumerate(cks):
+                        self.log_line(f"  [{i}] {ck.name}")
+                    return
+                try:
+                    ck = load_checkpoint(cks[int(args[0])])
+                except (IndexError, ValueError, OSError) as e:
+                    self.log_line(f"[red]cannot resume: {e}[/red]")
+                    return
+                self.log_line(f"[b cyan]/resume[/b cyan] {cks[int(args[0])].name}")
+                self.query_one(ActivityTree).new_turn("/resume")
+                self.query_one("#prompt", Input).disabled = True
+                self.run_worker(lambda: self.slash_resume(ck), thread=True, exclusive=True)
+            elif cmd == "/quit":
+                self.exit()
+            else:
+                self.log_line(f"[red]unknown command {cmd} — try /help[/red]")
+
+        def slash_run(self, target: str, inputs: dict) -> None:
+            import json as _json
+
+            obs = self.tools.run_machine({"target": target, "inputs": _json.dumps(inputs)})
+            self.call_from_thread(self.finish_slash, obs)
+
+        def slash_resume(self, ck: dict) -> None:
+            steps = ck["frames"][0].get("steps", 0)
+            machine = dc_replace(brain, budget=steps + 8)
+            res = self._run_brain(machine, dict(machine.context), resume=ck["frames"])
+            self.call_from_thread(self.finish_turn, "(resumed turn)", res)
+
+        def finish_slash(self, observation: str) -> None:
+            self.log_line(f"[b green]result:[/b green] {observation}")
+            self.session.append({"t": "slash-result", "text": observation})
+            self.session.save_state()
+            box = self.query_one("#prompt", Input)
+            box.disabled = False
+            box.focus()
 
         # -- the agent turn (worker thread) ----------------------------------
 

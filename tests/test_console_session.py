@@ -95,6 +95,65 @@ def test_budget_exhaustion_parks_a_checkpoint_on_decline(tmp_path):
     asyncio.run(drive())
 
 
+def park_then_reply_llm():
+    """Loops on DISCOVER until the judge script flips to REPLY (post-resume)."""
+    judges = [0] * 8 + [4]
+
+    def produce_fn(model, system, user, reason):
+        if "final reply" in user:
+            return Produced(text="resumed and finished.")
+        return Produced(text="DISCOVER: still looking.")
+
+    def judge_fn(model, conditions, output, context, reasoning=None):
+        return judges.pop(0) if len(judges) > 1 else judges[0]
+
+    return MockLLM(produce_fn=produce_fn, judge_fn=judge_fn)
+
+
+def test_slash_resume_finishes_a_parked_turn(tmp_path):
+    from textual.widgets import Input
+
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: park_then_reply_llm(),
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test() as pilot:
+            await pilot.click("#prompt")
+            await pilot.press(*"loop then reply")
+            await pilot.press("enter")
+            for _ in range(200):
+                await pilot.pause(0.05)
+                if app.answer_mode:
+                    break
+            await pilot.press("n")  # decline: park the checkpoint
+            await pilot.press("enter")
+            for _ in range(100):
+                await pilot.pause(0.05)
+                if not app.query_one("#prompt", Input).disabled:
+                    break
+
+            await pilot.click("#prompt")
+            await pilot.press(*"/resume")
+            await pilot.press("enter")
+            await pilot.pause(0.1)
+            assert any("[0]" in line for line in app.log_history)
+
+            await pilot.press(*"/resume 0")
+            await pilot.press("enter")
+            for _ in range(200):
+                await pilot.pause(0.05)
+                if "agent: resumed and finished." in "\n".join(app.log_history):
+                    break
+            assert any("resumed and finished." in line for line in app.log_history)
+
+    asyncio.run(drive())
+
+
 def test_continue_restores_history_and_spend(tmp_path):
     base = str(tmp_path / "sessions")
 

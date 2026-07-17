@@ -131,6 +131,43 @@ def test_activity_tree_and_inspector(tmp_path):
     asyncio.run(drive())
 
 
+def test_slash_commands(tmp_path):
+    llm = scripted_llm({}, [4])
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test() as pilot:
+
+            async def cmd(text):
+                await pilot.click("#prompt")
+                await pilot.press(*text)
+                await pilot.press("enter")
+                await pilot.pause(0.05)
+
+            await cmd("/help")
+            assert any("/machines" in line for line in app.log_history)
+            await cmd("/machines")
+            assert any("std_cot" in line for line in app.log_history)
+            await cmd("/budget 500")
+            assert app.tools.default_cost_budget == 500
+            await cmd("/xyz")
+            assert any("unknown command /xyz" in line for line in app.log_history)
+            await cmd("/session")
+            assert any(app.session.id in line for line in app.log_history)
+
+            await cmd("/run std_cot task=hello")
+            await _wait_input_enabled(app, pilot)
+            assert any("result:" in line and '"status": "done"' in line for line in app.log_history)
+
+    asyncio.run(drive())
+
+
 def test_clarify_turn_uses_answer_mode(tmp_path):
     llm = scripted_llm(
         {
