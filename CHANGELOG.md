@@ -14,6 +14,16 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Console surface, M1** (`mklang console`, ADR 0015 Accepted; extra
+  `mklang[console]`, Textual). Agent-first TUI whose brain is the bundled —
+  and `--agent`-swappable — `agent.mk` machine (decide → discover / run /
+  clarify / reply), with its hands as console-registered host tools. Live
+  state-by-state run tree via the new `engine.run(on_event=…)` observability
+  seam (thread-safe, observer-isolated, purely additive); HITL escalations and
+  tool-consent prompts brokered through the input line; authored machines
+  confined to the `--workspace` directory. Headless Pilot + scripted-LLM tests
+  keep the no-key CI story.
+
 - **LLM-assisted lint** (`mklang lint --llm`, ADR 0010 now Accepted): for every
   state with two or more prose gates, synthesize K borderline outputs and ask
   the real gate judge R times each; report instability (one output, different

@@ -1,6 +1,6 @@
 # ADR 0015 — `mklang console`: an agent-first operational TUI whose brain is a machine
 
-Status: Proposed
+Status: Accepted (M1 shipped; M2 authoring+sessions and M3 polish tracked in ROADMAP)
 
 ## Context
 

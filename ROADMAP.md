@@ -5,7 +5,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (v0.2 / package 0.5.4)
+## Where we are (language 0.3 / package 0.6.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -128,10 +128,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   JSON array and whole-template `input:` values pass raw across `call:`/`tool:`
   ([ADR 0014](./docs/adr/0014-structured-list-outputs.md)); Plan-and-Execute
   ships as `std_plan_execute`.
-- **[next] Console surface** (`mklang console`, design in
-  [ADR 0015](./docs/adr/0015-console-surface.md), Proposed) — agent-first
-  operational TUI (Textual, extra `mklang[console]`) whose brain is a bundled,
-  user-swappable `agent.mk` machine; prerequisite: an `on_event` observability
-  seam in `engine.run` (also the future OTel hook). Milestones M1-M3 in the ADR.
+- **Shipped (M1):** console surface (`mklang console`,
+  [ADR 0015](./docs/adr/0015-console-surface.md)) — agent-first Textual TUI
+  (extra `mklang[console]`) whose brain is the bundled, user-swappable
+  `agent.mk`; live run tree from the new `engine.run(on_event=…)` seam, HITL
+  and tool-consent brokered through the input line, workspace-confined writes.
+  **[next]** M2 (authoring loop, sessions, `--continue`) and M3 (slash
+  commands, inspector, resume flows) per the ADR.
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.

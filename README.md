@@ -232,6 +232,20 @@ e.g. `{"human.reply": "…"}` for HITL). Suspended runs stay in an in-memory
 session store — the blackboard never touches the server's disk. Provider keys
 resolve server-side from the environment, never over the wire.
 
+## Console (interactive)
+
+`mklang console` (extra `mklang[console]`) is the agent-first front door: type
+what you want, the console's agent authors or picks a machine, commissions it,
+and streams the run state-by-state — escalations and tool consent come back to
+you inline. The agent itself **is** a machine
+([`agent.mk`](./src/mklang/data/console/agent.mk)) — read it, lint it, swap it
+with `--agent your_brain.mk` (ADR 0015).
+
+```bash
+pip install 'mklang[console]'
+mklang console
+```
+
 ## Status
 
 **Language v0.2 / package 0.5.4** — core complete: states + gates + prose, tiers,
