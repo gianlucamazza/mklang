@@ -428,6 +428,9 @@ packaging entry points in the `mklang.tools` group — demos `calc` and `search`
 The optional `tools:` block documents the contract and lets `mklang check` warn on
 a `tool` state that references an undeclared name; the actual binding stays
 host-side. A tool state does not call the LLM, so it consumes no tier and no tokens.
+The reference `search` builtin is **offline by default** (structured stub
+observation); hosts opt into a real backend without changing the `.mk` (ADR 0016).
+Web/search observations re-entering the blackboard are **untrusted** (§11).
 
 ---
 
@@ -488,8 +491,10 @@ with a policy and (except for `fail`) a destination.
   `judge-unparseable` (§7).
 - **Judge CONTEXT (host):** the host MAY truncate the context JSON passed to the
   judge. The reference interpreter caps it at **4000** characters
-  (`JUDGE_CONTEXT_CHARS`). Authors must not assume unbounded context is available
-  to prose gates; put critical facts in the state's output when possible.
+  (`JUDGE_CONTEXT_CHARS`) and, when truncating, keeps a head and tail with an
+  explicit `…[context_truncated]…` marker (ADR 0017) — never a silent prefix-only
+  slice. Authors must not assume unbounded context is available to prose gates;
+  put critical facts in the state's output when possible.
 - **Conformant judge replies are terse.** A conformant judge returns the choice as
   the JSON object above and **nothing else** — in particular, no other numbers.
   Reference adapters parse defensively (strict JSON, then a whole-reply bare number,
@@ -640,6 +645,11 @@ Notes:
   `temperature=0.4` for ordinary produce, `0.8` when the state uses `sample`
   (diversity). Per-state portable knobs are out of core (§9). Hosts MAY override
   via provider `params`. Judge calls use `temperature=0` where the provider allows.
+- **Output truncation (host, non-normative):** when a provider stops for length /
+  max tokens, the reference adapters mark the produce as truncated. The engine
+  records `truncated: true` on the trace step (ADR 0018). Default host policy is
+  **report** (continue); a host MAY **halt** (`state-error: output-truncated`).
+  Auto-continue stitching is not the default.
 
 ---
 

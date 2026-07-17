@@ -28,20 +28,21 @@ All notable changes to mklang are documented here. The format follows
   any MCP client renders run progress; external console clients need no
   engine work.
 
-- **Output anti-cutoff (ADR 0018 Proposed, partial).** `Produced` carries
-  `truncated` / `finish_reason`; adapters set them from length/max_tokens stops.
-  Trace steps and `state-done` events annotate `truncated`. Policy `report`|`halt`
-  on CLI (`--on-truncate`), MCP, console, and scripttest `run: { on_truncate }`.
-  Truncated `parse: list` → `parse-list-truncated`. Auto-continue stitching deferred.
+- **Output anti-cutoff (ADR 0018 Accepted).** `Produced` carries `truncated` /
+  `finish_reason`; adapters set them from length/max_tokens stops. Trace steps
+  and `state-done` events annotate `truncated`. Policy `report`|`halt` on CLI
+  (`--on-truncate`), MCP, console, and scripttest. Truncated `parse: list` →
+  `parse-list-truncated`. Auto-continue stitching deferred.
 
-- **Web search tool (ADR 0016 Proposed, partial).** Builtin `search` returns a
-  structured JSON observation; offline stub by default. Opt-in backends via
+- **Web search tool (ADR 0016 Accepted).** Builtin `search` returns a structured
+  JSON observation; offline stub by default. Opt-in backends via
   `configure_search` / `MKLANG_SEARCH_BACKEND=fake|tavily`. Example + scenario
   tests: `examples/research_web.mk`.
 
-- **Context rendering (ADR 0017 Proposed, partial).** Judge CONTEXT uses
-  head+tail with `…[context_truncated]…` (`llm/context_view.py`). Produce-prompt
-  budgets and console history window remain open.
+- **Context management Layer 0–1 (ADR 0017 Accepted).** Judge CONTEXT head+tail
+  marker; produce-prompt per-value cap (`PROMPT_VALUE_CHARS` / `prompt_value_chars`);
+  console `history_for_brain` (prompt window, full audit kept); compress pattern
+  example `research_compress.mk`.
 
 - **Console surface, M1** (`mklang console`, ADR 0015 Accepted; extra
   `mklang[console]`, Textual). Agent-first TUI whose brain is the bundled —

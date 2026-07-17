@@ -108,15 +108,17 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Integrations & extensions
 
-- **[next] Web search host tool** ([ADR 0016](./docs/adr/0016-host-web-search-tool.md)) —
-  structured `search` observations; offline stub default; opt-in backends
-  (`MKLANG_SEARCH_BACKEND=fake|tavily`); example `examples/research_web.mk`.
-- **[next] Context rendering budgets** ([ADR 0017](./docs/adr/0017-context-content-management.md)) —
-  traced judge CONTEXT truncation; machine compress patterns next; language
-  zones deferred.
-- **[next] Output anti-cutoff** ([ADR 0018](./docs/adr/0018-output-truncation-anti-cutoff.md)) —
-  `Produced.truncated` + trace annotation; `--on-truncate report|halt`; continue
-  stitching deferred.
+- **Shipped — web search host tool** ([ADR 0016](./docs/adr/0016-host-web-search-tool.md)
+  Accepted) — structured `search` stub default; fake/tavily backends;
+  `research_web.mk` + scenario tests. **[later]** `runtime.yaml` tools block,
+  `std_research`.
+- **Shipped — context rendering Layer 0–1** ([ADR 0017](./docs/adr/0017-context-content-management.md)
+  Accepted) — judge CONTEXT marker; produce-prompt value cap; console
+  `history_for_brain`; compress pattern (`research_compress.mk`). **[later]**
+  language faces / `std_compress`.
+- **Shipped — output anti-cutoff** ([ADR 0018](./docs/adr/0018-output-truncation-anti-cutoff.md)
+  Accepted) — detect/trace/events; `report`/`halt` on CLI · MCP · console ·
+  scripttest; adapter fixtures. **[later]** `continue` stitching.
 - **Shipped:** tool plugin registry (`mklang.tools` entry points) and hook plugins
   (`mklang.hooks`); builtins remain available offline.
 - **Shipped (0.4.0):** human-in-the-loop — `escalate` suspends (`--hitl`) and
@@ -137,13 +139,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   JSON array and whole-template `input:` values pass raw across `call:`/`tool:`
   ([ADR 0014](./docs/adr/0014-structured-list-outputs.md)); Plan-and-Execute
   ships as `std_plan_execute`.
-- **Shipped (M1):** console surface (`mklang console`,
-  [ADR 0015](./docs/adr/0015-console-surface.md)) — agent-first Textual TUI
-  (extra `mklang[console]`) whose brain is the bundled, user-swappable
-  `agent.mk`; live run tree from the new `engine.run(on_event=…)` seam, HITL
-  and tool-consent brokered through the input line, workspace-confined writes.
-  **[next]** M2 (authoring loop, sessions, `--continue`) and M3 (slash
-  commands, inspector, resume flows) per the ADR.
+- **Shipped (M1–M3):** console surface (`mklang console`,
+  [ADR 0015](./docs/adr/0015-console-surface.md), [docs/console.md](./docs/console.md))
+  — agent-first Textual TUI; authoring loop; sessions/`--continue`; activity
+  tree + inspector; slash commands + `/resume`; brain history windowed for
+  prompts (ADR 0017).
 - **Shipped:** live engine events on the MCP transport
   ([ADR 0019](./docs/adr/0019-mcp-live-events.md)) — `run`/`resume` stream the
   `on_event` sequence as `mklang.event` logging notifications; any MCP client

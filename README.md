@@ -87,7 +87,9 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   flows) and [`adr/`](./docs/adr) (design decisions); [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
   - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
-  - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A).
+  - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
+  - [`research_web.mk`](./examples/research_web.mk) — research loop with `tool: search` (host-bound).
+  - [`research_compress.mk`](./examples/research_compress.mk) — same + explicit notes compression.
   - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
   - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
   - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.
