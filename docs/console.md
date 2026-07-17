@@ -66,14 +66,21 @@ Every conversation persists under `~/.mklang/console/sessions/<id>/`:
 `checkpoints/` for turns parked on budget exhaustion. `--continue` reopens the
 latest session; `--session <id>` a specific one.
 
+**History for the brain is windowed** (ADR 0017): the full conversation remains
+in the session audit / transcript, but only a tail of recent turns (and a char
+cap) is injected as `{{history}}` into `agent.mk`, with an explicit
+`…[history_truncated…]…` marker when anything is dropped. This keeps long sessions
+from exploding the brain prompt.
+
 ## Security model
 
 The console inherits the SPEC §11 posture: authored machines are **confined to
 the workspace** (`--workspace`, default `./machines` — path-resolved, no
-traversal); running a machine whose states invoke host tools asks consent
-once per tool set (remembered per session); provider keys stay in the host
-environment. The console cannot edit files outside the workspace, run shell
-commands, or touch git — it is an operational surface, not an IDE (ADR 0015).
+traversal); running a machine whose states invoke host tools (including
+`search` if a machine uses it) asks consent once per tool set (remembered per
+session); provider keys stay in the host environment. The console cannot edit
+files outside the workspace, run shell commands, or touch git — it is an
+operational surface, not an IDE (ADR 0015).
 
 ## For other clients
 

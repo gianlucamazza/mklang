@@ -40,10 +40,11 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   same injection class as customer text. See `examples/research_web.mk` and
   ADR 0016.
 - **Watch for output cutoff.** When a produce hits max_tokens, the runtime sets
-  `truncated: true` on the trace step (ADR 0018). Default policy is `report`
-  (continue); use `--on-truncate halt` or `run(..., on_truncate="halt")` for
-  strict runs. Prefer raising tier `max_tokens` params over relying on auto-continue
-  (continue stitching is not the default).
+  `truncated: true` on the trace step and on live `state-done` events (ADR 0018).
+  Default policy is `report` (annotate and continue); use `--on-truncate halt`
+  or `run(..., on_truncate="halt")` (also on MCP/console) for strict runs.
+  Prefer raising tier `max_tokens` params over relying on auto-continue
+  (continue stitching is deferred, not the default).
 - **Bound growing blackboards (working memory vs archive).** Long `accumulate`
   / research loops explode prompts. Prefer an explicit **compress** generative
   state that rewrites a key shorter before the next loop — see

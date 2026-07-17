@@ -4,9 +4,10 @@ Status: Accepted (Layer 0–1; Layer 2 language faces deferred)
 
 ## Context
 
-The blackboard accumulates without bound. The judge CONTEXT blob was capped at
-`JUDGE_CONTEXT_CHARS` with a silent prefix slice. Formal dual-channel zones
-remain a non-goal for the current language line (SPEC §11).
+The blackboard accumulates without bound. Historically the judge CONTEXT blob
+was capped at `JUDGE_CONTEXT_CHARS` with a silent prefix slice (fixed: head+tail
+marker). Formal dual-channel zones remain a non-goal for the current language
+line (SPEC §11).
 
 ## Decision
 

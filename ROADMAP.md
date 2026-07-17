@@ -35,13 +35,18 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   testing with a scripted LLM, no API keys, sharing one matcher module
   (`scripttest.py`) with the conformance runner; static budget-feasibility check
   (`budget-infeasible`); dotted-segment lint on inline context maps (completes F7);
-  schema-copy identity test; ADR 0010 (LLM-assisted lint, Proposed).
+  schema-copy identity test; ADR 0010 (LLM-assisted lint, later Accepted).
 - **0.5.4 (release readiness):** reproducible GitHub Release → PyPI Trusted
   Publishing; clean-wheel smoke; DeepSeek + OpenAI blocking live matrix; optional
   provider report; enforceable gate-divergence thresholds.
-- **Live (2026-07-16):** DeepSeek + OpenAI smoke green. Anthropic unit-tested;
-  live blocked by account billing (key exists). Gate-divergence deepseek×openai
-  agreement **1.0** (3× each) on the synthetic harness.
+- **0.6.0:** language **0.3** (`parse: list`, raw whole-template `input:`);
+  MCP surface + discovery; machine stdlib (`std_*`); authoring guide.
+- **0.7.0:** console M1–M3; MCP live events (ADR 0019); web `search` (ADR 0016);
+  output anti-cutoff (ADR 0018); context Layer 0–1 (ADR 0017); `lint --llm`
+  (ADR 0010 Accepted).
+- **Live (2026-07-17, release 0.7.0):** DeepSeek + OpenAI smoke and gate
+  agreement green on the release matrix. Anthropic unit-tested; live may be
+  billing-blocked.
 
 ## Language
 

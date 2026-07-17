@@ -20,7 +20,7 @@ Start every file with the schema header — editors and agents get validation fo
 
 ```yaml
 # yaml-language-server: $schema=../schema/mklang.schema.json
-mklang: "0.2"
+mklang: "0.3" # language version (0.2 documents remain valid)
 machine: my_machine # identifier (snake_case)
 entry: first_state # where the run starts
 budget: 6 # max steps per run — shortest path + headroom (see below)
@@ -137,7 +137,9 @@ CoT, self-consistency, refine, ToT, debate, map-reduce and cascade ship as ready
 | Minimal single state                       | [`summarize_doc.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/summarize_doc.mk)       |
 | Branching FSM + real tools + scenario test | [`triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                     |
 | Reason/act/observe loop (`accumulate`)     | [`react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)                       |
-| Iterative loop with sufficiency gate       | [`research.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mk)                 |
+| Iterative loop (training knowledge only)   | [`research.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mk)                 |
+| Research + host `tool: search`             | [`research_web.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_web.mk)         |
+| Research + explicit notes compression      | [`research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk) |
 | Fan-out `sample` + reducer                 | [`self_consistency.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/self_consistency.mk) |
 | `over` + `call` orchestration              | [`map_reduce.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/map_reduce.mk)             |
 | Deterministic hook gates                   | [`hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)             |

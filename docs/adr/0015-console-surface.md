@@ -1,6 +1,6 @@
 # ADR 0015 — `mklang console`: an agent-first operational TUI whose brain is a machine
 
-Status: Accepted (M1 shipped; M2 authoring+sessions and M3 polish tracked in ROADMAP)
+Status: Accepted (M1–M3 shipped in package 0.7.0; see `docs/console.md`)
 
 ## Context
 
@@ -92,15 +92,17 @@ transcript (JSONL), checkpoints — and `--continue` reopens the last one.
 Headless testing uses Textual's Pilot plus the scripted LLM, so the console
 has the same no-key CI story as everything else.
 
-### Milestones
+### Milestones (all shipped, 0.7.0)
 
-1. **M1 — seam + skeleton:** `on_event` in the engine (unit-tested, offline);
-   Textual app with input → brain machine (pick/run tools only, no authoring),
-   live run tree, HITL broker, cost HUD.
-2. **M2 — authoring loop:** `write_machine`/`check_machine` repair cycle in
-   the brain, workspace, session persistence, `--agent` override.
-3. **M3 — polish:** slash commands, inspector pane, resume flows,
-   `agent.mk` scenario tests + a `lint --llm` pass on its own gates.
+1. **M1 — seam + skeleton:** `on_event` in the engine; Textual app with brain
+   machine, live run tree, HITL broker, cost HUD.
+2. **M2 — authoring loop:** `write_machine`/`check_machine` repair cycle,
+   workspace, session persistence, `--agent` / `--continue`.
+3. **M3 — polish:** slash commands, inspector pane, `/resume` of parked turns,
+   activity tree, `agent.mk` scenario tests.
+
+Follow-ups that are **not** console milestones: brain history windowing is
+documented under ADR 0017; MCP live events under ADR 0019.
 
 ## Consequences
 

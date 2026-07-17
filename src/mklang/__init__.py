@@ -1,4 +1,4 @@
-"""mklang — reference interpreter for the mklang language (core v0.2)."""
+"""mklang — reference interpreter for the mklang language (spec 0.3 / package 0.7)."""
 
 from .checkpoint import load_checkpoint, save_checkpoint
 from .model import Gate, Machine, State, parse_machine

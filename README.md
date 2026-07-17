@@ -83,8 +83,10 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   runtime config: the `tier → model` map for each provider
   ([schema](./config/runtime.schema.json)).
 - [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
-- [`docs/`](./docs) — [`patterns.md`](./docs/patterns.md) (recommended configs &
-  flows) and [`adr/`](./docs/adr) (design decisions); [`ROADMAP.md`](./ROADMAP.md).
+- [`docs/`](./docs) — [`patterns.md`](./docs/patterns.md),
+  [`authoring.md`](./docs/authoring.md), [`stdlib.md`](./docs/stdlib.md),
+  [`console.md`](./docs/console.md), and [`adr/`](./docs/adr); plus
+  [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
   - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
   - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
@@ -228,11 +230,14 @@ pip install 'mklang[mcp]'
 claude mcp add mklang -- mklang-mcp --config /abs/path/to/runtime.yaml
 ```
 
-The server exposes exactly two tools: `run` (machine as inline `.mk` source or a
-path; `inputs` merged into the context) and `resume` (opaque single-use handle +
-e.g. `{"human.reply": "…"}` for HITL). Suspended runs stay in an in-memory
-session store — the blackboard never touches the server's disk. Provider keys
-resolve server-side from the environment, never over the wire.
+The server exposes commissioning tools (`run` / `resume`), discovery
+(`list_machines` / `describe_machine`), and `check` (ADR 0011 + 0013). `run`
+accepts inline `.mk` source or a path, with `inputs` merged into the context;
+`resume` takes an opaque handle or checkpoint file (e.g.
+`{"human.reply": "…"}` for HITL). Live engine events stream as `mklang.event`
+logging notifications (ADR 0019). In-memory sessions hold suspensions unless
+you pass `checkpoint_path`. Provider keys resolve server-side from the
+environment, never over the wire.
 
 ## Console (interactive)
 
@@ -250,26 +255,24 @@ mklang console
 
 ## Status
 
-**Language v0.2 / package 0.5.4** — core complete: states + gates + prose, tiers,
-`reason` / `accumulate` / fan-out / `call` / `tool` states / code-hook gates;
-multi-provider interpreter with entry-point plugins (tools, hooks, providers);
-resumable checkpoints (`mklang resume`, ADR 0007); human-in-the-loop (`--hitl`,
-ADR 0008); `mklang check` / `lint` / **`test`** (scripted scenarios, no API keys);
-implementation-neutral **[conformance suite](./conformance/README.md)** (ADR 0009).
-Gate judging follows the state tier by default; see CHANGELOG 0.5.2 for the
-observable change and 0.5.3 for authoring tooling.
+**Language v0.3 / package 0.7.0** — core complete: states + gates + prose, tiers,
+`reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
+gates; multi-provider interpreter with entry-point plugins (tools, hooks,
+providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
+(`--llm` optional) / **`test`**; [conformance suite](./conformance/README.md);
+machine **stdlib** (`std_*`); **MCP** host; **console** TUI (M1–M3); structured
+web `search` (offline stub by default); output anti-cutoff + context budgets
+(ADR 0016–0019). Gate judging follows the state tier by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green (2026-07-16), including
-  examples on the current OpenAI tier map (`fast: gpt-5.4-mini`,
-  `balanced`/`reasoning: gpt-5.5` — latest chat-completions models on this account;
-  `gpt-5.5-pro` is Responses-API only and not mapped). Anthropic unit-tested;
-  live blocked by provider billing. Gate-divergence (deepseek×openai): **agreement 1.0**
-  — see [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
+- **Live:** DeepSeek (default) and **OpenAI** green (release matrix 0.7.0),
+  including gate-divergence agreement **1.0** on the synthetic harness — see
+  [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
+  Anthropic unit-tested; live may be billing-blocked.
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
-- **Open:** Anthropic live once the account has credit; ADR 0010 (LLM lint)
-  when ready.
+- **Open / later:** Anthropic live when the account has credit; `on_truncate=continue`
+  stitching; `std_research` / language-level context zones (ROADMAP).
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 

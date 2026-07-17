@@ -40,7 +40,7 @@ runs a machine and reduces each run to a **gate-trace signature** (`state|gate|g
 then computes agreement across runs/providers. Today it varies the *provider*; the
 same reducer can vary the *synthetic state output* against one machine.
 
-## Decision (proposed — not implemented in 0.5.x)
+## Decision
 
 Add an **opt-in** `mklang lint --llm` that measures gate-selection stability:
 
@@ -100,18 +100,16 @@ Orthogonal, and must not be confused:
 One pins semantics of the runtime; the other probes the quality of a specific
 `.mk`'s prose. Neither substitutes for the other.
 
-## Why out of 0.5.x
+## Why it was out of 0.5.x (shipped later, Accepted)
 
-- 0.5.x's throughline is **rigor without a key**: conformance, static lint,
-  scripted `mklang test` (R3-1) — everything a contributor can run offline in CI.
-  A live-LLM lint breaks that property and needs a different support contract
-  (keys, cost caps, flaky-result triage).
-- The gate-divergence experiment it builds on is still a **scaffold** (ROADMAP:
-  agreement rates not yet measured live). Ambiguity-stability numbers are only
-  meaningful once single-machine divergence is characterized, so this ADR waits
-  on that data.
-- It is additive and opt-in: shipping it later changes no existing behavior and
-  needs no language change (spec stays 0.2).
+- 0.5.x's throughline was **rigor without a key**: conformance, static lint,
+  scripted `mklang test` — everything a contributor can run offline in CI. A
+  live-LLM lint needed a different support contract (keys, cost caps,
+  flaky-result triage).
+- It shipped as **opt-in** `mklang lint --llm` once gate-divergence was
+  measured live and the console/authoring surfaces needed prose-quality
+  probes. Additive: no language change; never a `--strict` or offline CI
+  gate.
 
 ## Consequences
 
