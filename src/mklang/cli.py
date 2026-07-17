@@ -163,6 +163,17 @@ def cmd_resume(args) -> int:
 def cmd_lint(args) -> int:
     from .lint import lint_machine
 
+    llm = prov = None
+    if args.llm:
+        from .config import load_provider
+
+        prov = load_provider(args.config, args.provider)
+        llm = _build_llm(prov)
+        print(
+            f"# --llm probe: provider={prov.name} · advisory only, non-deterministic "
+            f"(ADR 0010) — never a --strict error source",
+            file=sys.stderr,
+        )
     ok = True
     findings_total = 0
     for path in args.machines:
@@ -182,6 +193,19 @@ def cmd_lint(args) -> int:
             print(f"{path}: error: {e}")
         for f in findings:
             print(f"{path}: lint: {f}")
+        if llm is not None and not errors:
+            from .llmlint import llm_lint_machine
+
+            for f in llm_lint_machine(
+                machine,
+                llm,
+                prov.tiers,
+                prov.judge_override(),
+                samples=args.llm_samples,
+                repeats=args.llm_repeats,
+                tier_params=prov.params,
+            ):
+                print(f"{path}: llm: {f}")  # advisory: exempt from --strict on purpose
         if errors:
             ok = False
         elif not findings:
@@ -371,7 +395,33 @@ def main(argv: list[str] | None = None) -> int:
 
     li = sub.add_parser("lint", help="check + static analysis (dead gates, unread outputs, typos)")
     li.add_argument("machines", nargs="+")
-    li.add_argument("--strict", action="store_true", help="exit 1 when lint findings exist")
+    li.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 1 when static lint findings exist (--llm findings stay advisory)",
+    )
+    li.add_argument(
+        "--llm",
+        action="store_true",
+        help="probe prose-gate ambiguity with a live judge (ADR 0010) — "
+        "costs real tokens; advisory, non-deterministic",
+    )
+    li.add_argument("--config", default="config/runtime.example.yaml")
+    li.add_argument("--provider", default=None, help="override the config's `active` provider")
+    li.add_argument(
+        "--llm-samples",
+        type=int,
+        default=5,
+        metavar="K",
+        help="synthetic outputs per multi-gate state (default 5)",
+    )
+    li.add_argument(
+        "--llm-repeats",
+        type=int,
+        default=3,
+        metavar="R",
+        help="judge repeats per synthetic output (default 3)",
+    )
     li.set_defaults(fn=cmd_lint)
 
     t = sub.add_parser(

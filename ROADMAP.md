@@ -81,12 +81,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   machine (tier-following judges). Dated row in
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
   Re-run when model IDs or judge defaults change; Anthropic still billing-blocked.
-- **[later] LLM-assisted lint** (`mklang lint --llm`, design in
-  [ADR 0010](./docs/adr/0010-llm-assisted-lint.md), Proposed) — opt-in, reuses the
-  gate-divergence reducer to flag ambiguous / overlapping prose `when` conditions,
-  the authoring failure invisible to every static layer. Out of 0.5.x (breaks the
-  offline-CI, no-key property). First live agreement numbers exist; design still
-  needs acceptance before code.
+- **Shipped:** LLM-assisted lint (`mklang lint --llm`,
+  [ADR 0010](./docs/adr/0010-llm-assisted-lint.md), Accepted) — opt-in probe of
+  ambiguous / overlapping prose `when` conditions with the real gate judge
+  (K synthetic outputs × R judge repeats per multi-gate state). Advisory only:
+  never a `--strict` error source, never in the offline CI path.
 - **Shipped (partial multi-provider live, 2026-07-16):** DeepSeek + **OpenAI**
   live smoke green (`MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=…`). **Anthropic** adapter
   remains unit-tested; live e2e blocked by **account billing/credits**, not by a

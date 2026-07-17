@@ -1,6 +1,6 @@
 # ADR 0010 — LLM-assisted lint (`mklang lint --llm`)
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 

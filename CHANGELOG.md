@@ -10,6 +10,17 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.6.0`).
 
+## [Unreleased]
+
+### Added
+
+- **LLM-assisted lint** (`mklang lint --llm`, ADR 0010 now Accepted): for every
+  state with two or more prose gates, synthesize K borderline outputs and ask
+  the real gate judge R times each; report instability (one output, different
+  gates) and overlap (two conditions claiming the same output) as advisory
+  `llm:` findings. Costs real tokens (opt-in); non-deterministic by design, so
+  findings are a signal — `--strict` ignores them and CI never runs them.
+
 ## [0.6.0] — 2026-07-17
 
 The language moves to **0.3** (additive; every 0.2 document remains valid) and
