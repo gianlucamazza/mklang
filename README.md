@@ -15,22 +15,28 @@ mklang : LangGraph  ::  a declarative spec : Python code
 
 ## See it in action
 
-| CLI: check, lint, and run | Console: interactive run |
-| --- | --- |
-| [![Live mklang CLI demo](./docs/assets/demos/cli.gif)](./docs/demos.md#cli-check-lint-run) | [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) |
+| CLI: check, lint, and run                                                                  | Console: self-consistency fan-out                                                                       | Agent: free-language chained flows                                                                               |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [![Live mklang CLI demo](./docs/assets/demos/cli.gif)](./docs/demos.md#cli-check-lint-run) | [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) | [![Live mklang agent demo](./docs/assets/demos/agent.gif)](./docs/demos.md#agent-natural-language-commissioning) |
 
-Both recordings run the real surfaces against DeepSeek. See the
+| HITL: suspend and resume                                                                          | Search: live web tool                                                                                             | Tests: no API key                                                                                           |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [![Live mklang HITL demo](./docs/assets/demos/hitl.gif)](./docs/demos.md#hitl-suspend-and-resume) | [![Live mklang search demo](./docs/assets/demos/search.gif)](./docs/demos.md#search-chained-states-with-live-web) | [![mklang scenario test demo](./docs/assets/demos/test.gif)](./docs/demos.md#tests-deterministic-scenarios) |
+
+All recordings run the real surfaces against DeepSeek — the agent and search
+demos also hit the live web — except the test demo, which is fully
+deterministic and needs no API key. See the
 [full WebM recordings, transcripts, and reproducibility notes](./docs/demos.md).
 
 ## The idea
 
 Each **state** has four faces:
 
-| Face        | Answers        | Example                                       | Ref. interpreter |
-| ----------- | -------------- | --------------------------------------------- | ---------------- |
-| `structure` | what shape?    | "The output is an email reply, max 150 words" | → **system**     |
-| `execution` | how to act?    | "Do not invent policies not in the KB facts"  | → **system**     |
-| `prompt`    | what to think? | "Write a reply to {{ticket.body}}…"           | → **user** (+ `{{…}}`) |
+| Face        | Answers        | Example                                       | Ref. interpreter        |
+| ----------- | -------------- | --------------------------------------------- | ----------------------- |
+| `structure` | what shape?    | "The output is an email reply, max 150 words" | → **system**            |
+| `execution` | how to act?    | "Do not invent policies not in the KB facts"  | → **system**            |
+| `prompt`    | what to think? | "Write a reply to {{ticket.body}}…"           | → **user** (+ `{{…}}`)  |
 | `gates`     | when to exit?  | see below                                     | separate **judge** call |
 
 Sticky policy goes in `execution`; turn data and `{{context}}` go in `prompt`.
