@@ -28,6 +28,8 @@ nav:
   - Home: index.md
   - Specification: SPEC.md
   - Patterns: patterns.md
+  - Authoring guide: authoring.md
+  - Machine stdlib: stdlib.md
   - Conformance: conformance.md
   - ADRs:
       - Capability tiers: adr/0001-capability-tiers.md
@@ -41,6 +43,9 @@ nav:
       - Conformance suite: adr/0009-conformance-suite.md
       - LLM-assisted lint: adr/0010-llm-assisted-lint.md
       - MCP server surface: adr/0011-mcp-server-surface.md
+      - Machine stdlib: adr/0012-machine-stdlib.md
+      - MCP surface completion: adr/0013-mcp-surface-completion.md
+      - Structured list outputs: adr/0014-structured-list-outputs.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md

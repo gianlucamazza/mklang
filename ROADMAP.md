@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.5.4**, language **0.2**) and where it can grow —
+Where mklang stands (package **0.6.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
@@ -114,10 +114,20 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped (0.4.0):** human-in-the-loop — `escalate` suspends (`--hitl`) and
   resumes on reply (`resume --set`), ADR 0008. A per-gate `hitl:` field is the
   natural [maybe] extension if run-level opt-in proves too coarse.
-- **[later] MCP server surface** (`mklang-mcp`, design in
-  [ADR 0011](./docs/adr/0011-mcp-server-surface.md), Proposed) — optional stdio
-  MCP host so agentic clients can commission a machine (`run`/`resume`) and get
-  `trace` + `usage` back, without embedding the library. Design only until
-  accepted; not in 0.5.x core install.
+- **Shipped:** MCP server surface (`mklang-mcp`, extra `mklang[mcp]`,
+  [ADR 0011](./docs/adr/0011-mcp-server-surface.md)) — optional stdio MCP host so
+  agentic clients can commission a machine (`run`/`resume`, inline source or path)
+  and get `trace` + `usage` back, without embedding the library. Suspended runs
+  hold their frames in an in-memory session store behind opaque single-use
+  handles; the core install stays offline with no `mcp` present.
+- **Shipped:** machine stdlib ([ADR 0012](./docs/adr/0012-machine-stdlib.md)) —
+  eight bundled general-purpose `std_*` architecture machines (CoT,
+  self-consistency, refine, ToT, debate, map-reduce, cascade, plan-execute), present in every
+  registry with user-wins precedence, runnable by name from CLI/MCP, extensible
+  via the `mklang.machines` entry-point group. Catalog: `docs/stdlib.md`.
+- **Shipped (0.3):** structured list outputs — `parse: list` deposits a parsed
+  JSON array and whole-template `input:` values pass raw across `call:`/`tool:`
+  ([ADR 0014](./docs/adr/0014-structured-list-outputs.md)); Plan-and-Execute
+  ships as `std_plan_execute`.
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.

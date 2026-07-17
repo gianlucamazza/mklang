@@ -6,9 +6,72 @@ All notable changes to mklang are documented here. The format follows
 **Two version lines** are tracked separately:
 
 - **Spec version** — the language, declared per-file via the `mklang:` field
-  (currently `"0.2"`).
+  (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.5.4`).
+  `pyproject.toml` (currently `0.6.0`).
+
+## [0.6.0] — 2026-07-17
+
+The language moves to **0.3** (additive; every 0.2 document remains valid) and
+the agent-facing surfaces land: MCP host, machine stdlib, discovery, authoring
+guide.
+
+### Added — language 0.3 (ADR 0014)
+
+- **`parse: list`** — a generative state can deposit a parsed JSON array
+  (markdown fences tolerated) instead of text; unparseable output halts cleanly
+  with `state-error: parse-list`. This makes Plan-and-Execute a pure machine.
+- **Raw whole-template `input:` resolution** — an `input:` value that is exactly
+  one `{{path}}` placeholder passes the raw context value (lists included)
+  across `call:`/`tool:` boundaries; mixed templates render as before.
+- Conformance cases `parse-list`, `parse-list-invalid`, `raw-input-passthrough`;
+  the JSON Schema (both copies) gains the `parse` enum; `check` warns when a 0.2
+  document uses the new face.
+
+### Added — surfaces
+
+- **MCP server surface** (ADR 0011, now Accepted). Optional stdio MCP host —
+  extra `mklang[mcp]`, console script `mklang-mcp` — exposing exactly two tools:
+  `run` (machine as inline `.mk` source or filesystem path, `inputs` merged into
+  the context, optional `cost_budget`/`hitl`) and `resume` (opaque single-use
+  checkpoint handle, HITL reply injection, new budget). Results return the same
+  `{status, error, result, usage, trace, at?}` shape the CLI prints. Suspended
+  runs hold their frames in a process-scoped in-memory session store; nothing is
+  written to disk. Core install is unaffected (`mcp` is not a core dependency).
+- **Public host seam** `mklang.host` — `prepare_path` / `prepare_source` (inline
+  source loading is new) / `build_output` / `set_path`, with structured
+  `PrepareError` instead of printed diagnostics. The CLI now wraps this seam, so
+  CLI and MCP semantics cannot drift.
+- **Agent authoring guide** (`docs/authoring.md`) — a compact recipe for writing
+  a correct `.mk` with the `check`/`lint` loop, distilled from SPEC with the real
+  validator messages.
+- **Machine stdlib** (ADR 0012). Eight general-purpose architecture machines
+  bundled with the package — `std_cot`, `std_self_consistency`, `std_refine`,
+  `std_tot`, `std_debate`, `std_map_reduce`, `std_cascade`,
+  `std_plan_execute` — uniform contract (`task` in, `answer` out), each with
+  scripted scenario tests. Present in every host registry with
+  user-always-wins precedence (stdlib ← `mklang.machines` entry-point plugins ←
+  siblings ← target, shadowing warned); runnable **by name** from CLI and MCP
+  (`mklang run std_cot --set task="…"`); inline MCP sources can `call: std_*`.
+  Run-by-name checkpoints record a null machine hash and resume cleanly.
+  Catalog in `docs/stdlib.md`.
+- **Discovery, check, durable resume** (ADR 0013). MCP tools `list_machines` /
+  `describe_machine` (what may be commissioned, with full contracts), `check`
+  (schema + semantics + lint as structured output, no provider needed), and
+  `checkpoint_path` on `run`/`resume` for cross-process durable suspensions —
+  `resume` accepts an in-memory handle or a checkpoint file, including files
+  from `mklang run --checkpoint`; inline sources persist via a new optional
+  `machine_source` envelope key. CLI gains the symmetric `mklang machines`
+  subcommand (JSON; `--dir` adds project machines).
+
+### Changed
+
+- CI runs the unit suite with the `mcp` extra (the MCP tests no longer skip
+  silently) and checks/lints the bundled stdlib alongside the examples.
+- Unknown run-by-name targets fail with the list of bundled machine names
+  instead of a raw errno message.
+- `# noqa` annotations removed across the codebase (the suppressed rule was
+  never enabled); explanatory comments remain.
 
 ## [0.5.4] — 2026-07-16
 
@@ -87,7 +150,7 @@ Second remediation pass. The language stays **0.2**; no `.mk` needs changes.
   (`fast`) model, silently deviating from SPEC §2.1. Gate judging now uses the
   state's own effective tier by default. **This changes which model judges your
   gates.** To restore the previous single-model behavior, set the provider
-  `judge:` key in the runtime config — it is now an explicit, opt-in *global*
+  `judge:` key in the runtime config — it is now an explicit, opt-in _global_
   override, no longer the default (it ships commented out in
   `config/runtime.example.yaml`). The chosen judge model is recorded in the trace
   as `judge_model` on every `gate_via: llm` step. Gate-divergence numbers
@@ -97,7 +160,7 @@ Second remediation pass. The language stays **0.2**; no `.mk` needs changes.
 ### Fixed
 
 - **Strict judge-reply parsing (F2).** The bare-number fallback no longer grabs
-  the *first* digit anywhere in the reply (a verbose judge's "Condition 1 fails…"
+  the _first_ digit anywhere in the reply (a verbose judge's "Condition 1 fails…"
   misread as choice 1). Parse order is now: strict JSON, then a whole-reply bare
   number, then the **last** number in the reply (models conclude with the answer).
   The last two are traced as `judge_parse` (anomaly-adjacent, not a fallback). The

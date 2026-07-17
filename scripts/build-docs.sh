@@ -10,6 +10,8 @@ mkdir -p site-src/adr
 cp README.md site-src/index.md
 cp SPEC.md ROADMAP.md CHANGELOG.md CONTRIBUTING.md site-src/
 cp docs/patterns.md site-src/
+cp docs/authoring.md site-src/
+cp docs/stdlib.md site-src/
 cp conformance/README.md site-src/conformance.md
 cp docs/adr/*.md site-src/adr/
 cp -r schema site-src/schema
@@ -41,6 +43,7 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./scripts/|($GH/blob/main/scripts/|g" \
 	-e "s|(\./src/mklang)|($GH/tree/main/src/mklang)|g" \
 	-e "s|(\./schema/|($GH/blob/main/schema/|g" \
+	-e "s|(\.\./schema/|($GH/blob/main/schema/|g" \
 	-e "s|(\./LICENSE)|($GH/blob/main/LICENSE)|g" \
 	-e "s|(\.\./README\.md)|(index.md)|g" \
 	-e "s|(\./ROADMAP\.md)|(ROADMAP.md)|g" \

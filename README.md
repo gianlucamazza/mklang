@@ -138,6 +138,17 @@ Every modern reasoning/agentic pattern maps onto the core (states + gates + pros
 tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
 guidance in [`docs/patterns.md`](./docs/patterns.md).
 
+Eight of these ship as **ready, general-purpose `std_*` machines** — parameterized
+by context, callable from your machines (`call: std_refine`), runnable by name:
+
+```bash
+mklang run std_self_consistency --set task="Estimate the risk of X"
+```
+
+See the [stdlib catalog](./docs/stdlib.md) (ADR 0012). The patterns that need host
+tools/hooks or static `call:` targets (ReAct, router, exact policy) stay as
+authored examples.
+
 | Architecture            | mklang constructs                                                |
 | ----------------------- | ---------------------------------------------------------------- |
 | Chain-of-Thought        | `reason: true`                                                   |
@@ -145,7 +156,7 @@ guidance in [`docs/patterns.md`](./docs/patterns.md).
 | Reflexion / self-refine | produce → self-judge gate → `repair`                             |
 | Self-consistency        | `sample: N` → reducer state (majority)                           |
 | Tree-of-Thought         | `sample: k` → score/select reducer → loop (depth via budget)     |
-| Plan-and-Execute        | planner (list) → `over: {{steps}}` → reducer                     |
+| Plan-and-Execute        | planner `parse: list` (0.3) → `over: {{steps}}` → reducer        |
 | Debate / ensemble       | `over: {{personas}}` → synthesizer                               |
 | Map-Reduce              | `over: {{chunks}}` → reducer                                     |
 | Router-of-experts       | classify → `call` specialists                                    |
@@ -188,7 +199,7 @@ deepseek` by default); the key comes from `.env`. Same machine, any provider.
 
 `mklang test` runs your machine against a script of named scenarios with a
 **scripted LLM** (produce texts, judge picks) and scripted tools/hooks — fully
-deterministic, no provider or key. It pins the paths you care about *before* you
+deterministic, no provider or key. It pins the paths you care about _before_ you
 spend a token on a live run.
 
 ```bash
@@ -202,6 +213,24 @@ Each scenario declares a scripted `llm:`/`tools:`/`hooks:` and an `expect:`
 format the [conformance suite](./conformance/README.md) uses. A mismatch prints a
 minimal diff (the first differing key, expected vs actual) and exits 1. See
 [`examples/triage.test.yaml`](./examples/triage.test.yaml).
+
+## MCP server (agentic hosts)
+
+Agent hosts that speak [MCP](https://modelcontextprotocol.io) (Claude Code and
+other clients) can **commission** a machine instead of embedding the library
+([ADR 0011](./docs/adr/0011-mcp-server-surface.md)): the host requests a run and
+gets back the result with full provenance (`trace` + `usage`).
+
+```bash
+pip install 'mklang[mcp]'
+claude mcp add mklang -- mklang-mcp --config /abs/path/to/runtime.yaml
+```
+
+The server exposes exactly two tools: `run` (machine as inline `.mk` source or a
+path; `inputs` merged into the context) and `resume` (opaque single-use handle +
+e.g. `{"human.reply": "…"}` for HITL). Suspended runs stay in an in-memory
+session store — the blackboard never touches the server's disk. Provider keys
+resolve server-side from the environment, never over the wire.
 
 ## Status
 
@@ -223,8 +252,8 @@ observable change and 0.5.3 for authoring tooling.
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
-- **Open:** Anthropic live once the account has credit; accept/implement ADR 0011
-  (MCP) and then ADR 0010 (LLM lint) when ready.
+- **Open:** Anthropic live once the account has credit; ADR 0010 (LLM lint)
+  when ready.
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 
