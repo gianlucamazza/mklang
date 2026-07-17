@@ -283,6 +283,19 @@ def cmd_machines(args) -> int:
     return 0
 
 
+def cmd_console(args) -> int:
+    """Launch the agent-first console TUI (ADR 0015; needs the [console] extra)."""
+    try:
+        from .console.app import main as console_main
+    except ImportError:
+        print(
+            "the console needs the `textual` package — install with: pip install 'mklang[console]'",
+            file=sys.stderr,
+        )
+        return 2
+    return console_main(args.config, args.provider, args.workspace, args.agent)
+
+
 def cmd_check(args) -> int:
     ok = True
     for path in args.machines:
@@ -374,6 +387,23 @@ def main(argv: list[str] | None = None) -> int:
     )
     s.add_argument("--force", action="store_true", help="resume even if the machine file changed")
     s.set_defaults(fn=cmd_resume)
+
+    co = sub.add_parser("console", help="agent-first console TUI (needs the [console] extra)")
+    co.add_argument("--config", default="config/runtime.example.yaml")
+    co.add_argument("--provider", default=None, help="override the config's `active` provider")
+    co.add_argument(
+        "--workspace",
+        default="./machines",
+        metavar="DIR",
+        help="where authored machines live; writes are confined here (default ./machines)",
+    )
+    co.add_argument(
+        "--agent",
+        default=None,
+        metavar="FILE.mk",
+        help="swap the console's brain with your own machine (same tool contract)",
+    )
+    co.set_defaults(fn=cmd_console)
 
     m = sub.add_parser("machines", help="list commissionable machines (stdlib, plugins) as JSON")
     m.add_argument(

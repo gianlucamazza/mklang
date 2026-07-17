@@ -34,6 +34,7 @@ Changelog = "https://github.com/gianlucamazza/mklang/blob/main/CHANGELOG.md"
 anthropic = ["anthropic>=0.40"]
 dev = ["pytest>=8", "ruff>=0.6"]
 mcp = ["mcp>=1.10"]
+console = ["textual>=0.80"]
 
 [project.scripts]
 mklang = "mklang.cli:main"
