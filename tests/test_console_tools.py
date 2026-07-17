@@ -1,0 +1,202 @@
+"""Console tools (ADR 0015 M1b): bridge-injected, workspace-confined, offline."""
+
+import json
+
+import pytest
+
+from mklang.console.tools import ConsoleTools
+from mklang.llm.base import Produced
+from mklang.llm.mock import MockLLM
+
+CONFIG = "config/runtime.example.yaml"
+
+HITL_SRC = """\
+mklang: "0.3"
+machine: approval
+entry: draft
+budget: 6
+result: final
+context:
+  request: ""
+states:
+  draft:
+    structure: a decision that grants the request
+    prompt: "grant: {{request}}"
+    output: draft
+    gates:
+      - when: the decision grants something
+        escalate: true
+        to: review
+      - when: otherwise
+        then: ok
+        to: END
+  review:
+    structure: the human decision applied
+    prompt: "human said {{human.reply}}"
+    output: final
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+
+TOOLY_SRC = """\
+mklang: "0.3"
+machine: tooly
+entry: c
+budget: 4
+result: out
+context:
+  expr: "1+1"
+states:
+  c:
+    tool: calc
+    input: { expression: "{{expr}}" }
+    output: out
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+
+
+class FakeBridge:
+    def __init__(self, reply="approved", yes=True):
+        self.events = []
+        self.questions = []
+        self.confirms = []
+        self.reply = reply
+        self.yes = yes
+
+    def emit(self, event):
+        self.events.append(event)
+
+    def ask(self, question):
+        self.questions.append(question)
+        return self.reply
+
+    def confirm(self, prompt):
+        self.confirms.append(prompt)
+        return self.yes
+
+
+def echo_llm(prov=None, judge=0):
+    return MockLLM(
+        produce_fn=lambda model, system, user, reason: Produced(text=user),
+        judge_fn=lambda *a: judge,
+    )
+
+
+@pytest.fixture
+def tools(tmp_path):
+    return ConsoleTools(
+        config=CONFIG,
+        provider=None,
+        bridge=FakeBridge(),
+        workspace=tmp_path / "ws",
+        build_llm=echo_llm,
+    )
+
+
+def test_tool_registry_names(tools):
+    assert set(tools.as_tool_registry()) == {
+        "list_machines",
+        "describe_machine",
+        "read_machine",
+        "check_machine",
+        "write_machine",
+        "run_machine",
+        "ask_user",
+    }
+
+
+def test_list_and_describe_include_workspace_machines(tools):
+    (tools.workspace / "approval.mk").write_text(HITL_SRC, encoding="utf-8")
+    listed = json.loads(tools.list_machines({}))
+    names = {m["name"] for m in listed["machines"]}
+    assert "std_cot" in names and "approval" in names
+    desc = json.loads(tools.describe_machine({"name": "approval"}))
+    assert desc["result"] == "final"
+    unknown = json.loads(tools.describe_machine({"name": "ghost"}))
+    assert "unknown machine" in unknown["error"]
+
+
+def test_write_machine_is_workspace_confined(tools):
+    refused = json.loads(tools.write_machine({"name": "../evil", "source": "x"}))
+    assert "escapes the workspace" in refused["error"]
+    assert not (tools.workspace.parent / "evil.mk").exists()
+
+    ok = json.loads(tools.write_machine({"name": "approval", "source": HITL_SRC}))
+    assert ok["written"] == "approval.mk"
+    assert ok["check"]["ok"] is True
+
+    tools.bridge.yes = False  # decline overwrite
+    declined = json.loads(tools.write_machine({"name": "approval", "source": "machine: x"}))
+    assert "declined" in declined["error"]
+    assert "approval" in (tools.workspace / "approval.mk").read_text()
+
+
+def test_check_machine_reports_errors(tools):
+    bad = json.loads(
+        tools.check_machine(
+            {
+                "source": "machine: x\nentry: gone\nbudget: 2\nstates:\n  s: {structure: s, prompt: p, output: o, gates: [{when: otherwise, then: ok, to: END}]}\n"
+            }
+        )
+    )
+    assert bad["ok"] is False
+    assert any("entry 'gone'" in e for e in bad["errors"])
+
+
+def test_run_machine_by_name_and_events_flow(tools):
+    out = json.loads(tools.run_machine({"target": "std_cot", "inputs": '{"task": "2+2?"}'}))
+    assert out["status"] == "done"
+    kinds = [e["type"] for e in tools.bridge.events]
+    assert "run-start" in kinds and "state-done" in kinds
+    assert all(e["run"] == "std_cot" for e in tools.bridge.events)
+
+
+def test_run_machine_hitl_brokered_to_bridge(tools):
+    (tools.workspace / "approval.mk").write_text(HITL_SRC, encoding="utf-8")
+    out = json.loads(tools.run_machine({"target": "approval", "inputs": '{"request": "refund"}'}))
+    assert out["status"] == "done"
+    assert "approved" in out["result"]
+    assert len(tools.bridge.questions) == 1
+    assert "escalated at review" in tools.bridge.questions[0]
+
+
+def test_run_machine_tool_consent(tools):
+    (tools.workspace / "tooly.mk").write_text(TOOLY_SRC, encoding="utf-8")
+    out = json.loads(tools.run_machine({"target": "tooly", "inputs": "{}"}))
+    assert out["status"] == "done"
+    assert any("calc" in c for c in tools.bridge.confirms)
+    # consent is remembered: a second run does not ask again
+    n = len(tools.bridge.confirms)
+    tools.run_machine({"target": "tooly", "inputs": "{}"})
+    assert len(tools.bridge.confirms) == n
+
+
+def test_run_machine_tool_consent_declined(tmp_path):
+    tools = ConsoleTools(
+        config=CONFIG,
+        provider=None,
+        bridge=FakeBridge(yes=False),
+        workspace=tmp_path / "ws",
+        build_llm=echo_llm,
+    )
+    (tools.workspace / "tooly.mk").write_text(TOOLY_SRC, encoding="utf-8")
+    out = json.loads(tools.run_machine({"target": "tooly", "inputs": "{}"}))
+    assert "declined" in out["error"]
+
+
+def test_run_machine_bad_inputs_and_unknown_target(tools):
+    assert (
+        "not valid JSON"
+        in json.loads(tools.run_machine({"target": "std_cot", "inputs": "{oops"}))["error"]
+    )
+    assert "unknown machine" in json.loads(tools.run_machine({"target": "nope"}))["error"]
+
+
+def test_ask_user_passthrough(tools):
+    assert tools.ask_user({"question": "which env?"}) == "approved"
+    assert tools.bridge.questions[-1] == "which env?"

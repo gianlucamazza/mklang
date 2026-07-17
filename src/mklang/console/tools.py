@@ -1,0 +1,219 @@
+"""Console host tools (ADR 0015): the brain machine's hands.
+
+Pure host callables on top of the host seam — no TUI import. The console
+injects a `Bridge` (emit / ask / confirm); tests inject a fake one, so the
+whole layer is verifiable offline. Per the engine's tool contract, every tool
+takes a dict of rendered string values and returns an observation string.
+
+Safety: `write_machine` is confined to the workspace directory (resolved-path
+prefix check); running a machine whose states invoke host tools requires an
+explicit one-time consent per tool set (SPEC §11 applies to the console too).
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Protocol
+
+from .. import host
+from ..config import load_provider
+from ..engine import run as run_machine_engine
+from ..registry import base_registry, load_registry
+
+
+class Bridge(Protocol):
+    """The UI seam. `emit` must be thread-safe; `ask`/`confirm` may block."""
+
+    def emit(self, event: dict) -> None: ...
+
+    def ask(self, question: str) -> str: ...
+
+    def confirm(self, prompt: str) -> bool: ...
+
+
+def _default_build_llm(prov):
+    from ..providers import build_llm
+
+    return build_llm(prov)
+
+
+def _obs(payload: dict) -> str:
+    return json.dumps(payload, ensure_ascii=False)
+
+
+@dataclass
+class ConsoleTools:
+    config: str
+    provider: str | None
+    bridge: Bridge
+    workspace: Path
+    default_cost_budget: int | None = None
+    build_llm: object = None
+    _consented: set = field(default_factory=set)
+
+    def __post_init__(self):
+        self.workspace = Path(self.workspace).resolve()
+        self.workspace.mkdir(parents=True, exist_ok=True)
+        self.prov = load_provider(self.config, self.provider)
+        self.llm = (self.build_llm or _default_build_llm)(self.prov)
+
+    # -- registry ----------------------------------------------------------
+
+    def _registry(self) -> dict:
+        return {**base_registry(), **load_registry(self.workspace, validate=False)}
+
+    def as_tool_registry(self) -> dict:
+        """The tool map handed to the brain machine's run(tools=...)."""
+        return {
+            "list_machines": self.list_machines,
+            "describe_machine": self.describe_machine,
+            "read_machine": self.read_machine,
+            "check_machine": self.check_machine,
+            "write_machine": self.write_machine,
+            "run_machine": self.run_machine,
+            "ask_user": self.ask_user,
+        }
+
+    # -- discovery ---------------------------------------------------------
+
+    def list_machines(self, _input: dict) -> str:
+        reg = self._registry()
+        rows = [
+            {
+                "name": name,
+                "result": m.result,
+                "budget": m.budget,
+                "context_keys": sorted(m.context),
+            }
+            for name, m in sorted(reg.items())
+        ]
+        return _obs({"machines": rows})
+
+    def describe_machine(self, input: dict) -> str:
+        name = (input.get("name") or "").strip()
+        reg = self._registry()
+        if name not in reg:
+            return _obs({"error": f"unknown machine '{name}'", "known": sorted(reg)})
+        return _obs(host.describe_machine(reg[name]))
+
+    def read_machine(self, input: dict) -> str:
+        name = (input.get("name") or "").strip()
+        path = self._workspace_path(name)
+        if path is not None and path.is_file():
+            return path.read_text(encoding="utf-8")
+        return _obs({"error": f"no machine file '{name}' in the workspace"})
+
+    # -- authoring ---------------------------------------------------------
+
+    def check_machine(self, input: dict) -> str:
+        source = input.get("source")
+        name = (input.get("name") or "").strip()
+        if source:
+            return _obs(host.check_machine(source=source))
+        path = self._workspace_path(name)
+        if path is None or not path.is_file():
+            return _obs({"error": f"no source given and no machine file '{name}'"})
+        return _obs(host.check_machine(path=str(path)))
+
+    def write_machine(self, input: dict) -> str:
+        name = (input.get("name") or "").strip()
+        source = input.get("source") or ""
+        path = self._workspace_path(name)
+        if path is None:
+            return _obs({"error": f"'{name}' escapes the workspace — write refused"})
+        if path.exists() and not self.bridge.confirm(f"overwrite {path.name} in the workspace?"):
+            return _obs({"error": "overwrite declined by the user"})
+        path.write_text(source, encoding="utf-8")
+        checked = host.check_machine(source=source)
+        return _obs({"written": path.name, "check": checked})
+
+    def _workspace_path(self, name: str) -> Path | None:
+        """Resolve a machine name/filename inside the workspace; None if it escapes."""
+        if not name:
+            return None
+        fname = name if name.endswith(".mk") else f"{name}.mk"
+        candidate = (self.workspace / fname).resolve()
+        if not candidate.is_relative_to(self.workspace):
+            return None
+        return candidate
+
+    # -- execution ---------------------------------------------------------
+
+    def run_machine(self, input: dict) -> str:
+        target = (input.get("target") or "").strip()
+        reg = self._registry()
+        machine = reg.get(target)
+        if machine is None:
+            return _obs({"error": f"unknown machine '{target}'", "known": sorted(reg)})
+        try:
+            inputs = json.loads(input.get("inputs") or "{}")
+        except ValueError as e:
+            return _obs({"error": f"inputs is not valid JSON: {e}"})
+        if not isinstance(inputs, dict):
+            return _obs({"error": "inputs must be a JSON object"})
+        used_tools = sorted({s.tool for s in machine.states.values() if s.kind == "tool"})
+        if used_tools and not set(used_tools) <= self._consented:
+            if not self.bridge.confirm(
+                f"machine '{target}' invokes host tools {used_tools} — run it?"
+            ):
+                return _obs({"error": "run declined by the user", "tools": used_tools})
+            self._consented.update(used_tools)
+        ctx = dict(machine.context)
+        for k, v in inputs.items():
+            host.set_path(ctx, k, v)
+        budget = input.get("cost_budget")
+        cost_budget = int(budget) if budget else self.default_cost_budget
+        from ..hooks import load_hook_registry
+        from ..tools import load_tool_registry
+
+        res = run_machine_engine(
+            machine,
+            ctx,
+            reg,
+            self.llm,
+            self.prov.tiers,
+            self.prov.judge_override(),
+            tier_params=self.prov.params,
+            cost_budget=cost_budget,
+            tools=load_tool_registry(),
+            hooks=load_hook_registry(),
+            suspendable=True,
+            escalate_suspend=True,
+            on_event=lambda e: self.bridge.emit({"run": target, **e}),
+        )
+        # HITL: broker every escalation to the human, then resume in place.
+        while res.status == "suspended" and res.error == "escalated":
+            last = res.trace[-1] if res.trace else {}
+            reply = self.bridge.ask(
+                f"'{target}' escalated at {res.at}: {last.get('gate', 'needs a decision')}\n"
+                f"last output: {last.get('output', '')}"
+            )
+            host.set_path(res.frames[-1]["ctx"], "human.reply", reply)
+            res = run_machine_engine(
+                machine,
+                dict(machine.context),
+                reg,
+                self.llm,
+                self.prov.tiers,
+                self.prov.judge_override(),
+                tier_params=self.prov.params,
+                cost_budget=cost_budget,
+                tools=load_tool_registry(),
+                hooks=load_hook_registry(),
+                suspendable=True,
+                escalate_suspend=True,
+                resume=res.frames,
+                on_event=lambda e: self.bridge.emit({"run": target, **e}),
+            )
+        out = host.build_output(res)
+        out["trace"] = f"{len(res.trace)} steps"  # observations stay compact
+        if isinstance(out.get("result"), str) and len(out["result"]) > 2000:
+            out["result"] = out["result"][:1999] + "…"
+        return _obs(out)
+
+    # -- human -------------------------------------------------------------
+
+    def ask_user(self, input: dict) -> str:
+        return self.bridge.ask(input.get("question") or "the machine needs your input")
