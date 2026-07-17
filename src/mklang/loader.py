@@ -106,12 +106,14 @@ def semantic_check(
     if machine.result and machine.result not in produced:
         warnings.append(f"result key '{machine.result}' is not produced by any state's output")
 
-    if machine.version and machine.version not in ("0.2", "0.2.0"):
-        msg = f'mklang version field is {machine.version!r}; this interpreter targets "0.2"'
+    if machine.version and machine.version not in ("0.2", "0.2.0", "0.3"):
+        msg = f'mklang version field is {machine.version!r}; this interpreter targets "0.2"/"0.3"'
         if strict:
             errors.append(f"version-unsupported: {msg}")
         else:
             warnings.append(msg)
+    if machine.version in ("0.2", "0.2.0") and any(s.parse for s in machine.states.values()):
+        warnings.append('`parse:` is a 0.3 face — declare mklang: "0.3"')
 
     # reachability of END from entry
     seen: set[str] = set()

@@ -72,13 +72,13 @@ def test_load_registry_skips_malformed_siblings(tmp_path):
 
 
 def test_unsupported_version_warns_then_errors_under_strict():
-    """`mklang: "0.3"` is a warning by default, a hard error under --strict (F6)."""
+    """An unknown `mklang:` version warns by default, errors under --strict (F6)."""
     m = mk(
         {
             "machine": "v",
             "entry": "a",
             "budget": 3,
-            "mklang": "0.3",
+            "mklang": "0.9",
             "states": {
                 "a": {
                     "structure": "x",

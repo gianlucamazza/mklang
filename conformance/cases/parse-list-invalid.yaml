@@ -1,0 +1,23 @@
+case: parse-list-invalid
+description: >
+  0.3 `parse: list` — output that is not a JSON array halts the state cleanly
+  (state-error), it does not crash or deposit garbage.
+machine:
+  mklang: "0.3"
+  machine: bad_plan
+  entry: plan
+  budget: 3
+  states:
+    plan:
+      structure: a JSON array
+      prompt: make a plan
+      parse: list
+      output: steps
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["step one, then step two"]
+expect:
+  status: halt
+  error_prefix: "state-error: parse-list"
+  at: plan

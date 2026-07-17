@@ -42,3 +42,23 @@ def render(text: str | None, ctx: dict) -> str:
         return fmt(v) if v is not None else ""
 
     return _PAT.sub(rep, text)
+
+
+_WHOLE = re.compile(r"^\s*\{\{\s*([\w.]+)\s*\}\}\s*$")
+
+
+def resolve(value, ctx: dict):
+    """Resolve an `input:` map value (SPEC §4.8/§4.9, 0.3).
+
+    A value that is exactly one `{{path}}` placeholder resolves to the RAW
+    context value — lists and dicts cross the call/tool boundary intact. Any
+    other string renders as prose; non-string YAML values pass through as-is."""
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        return value
+    m = _WHOLE.match(value)
+    if m:
+        v = lookup(ctx, m.group(1))
+        return "" if v is None else v
+    return render(value, ctx)

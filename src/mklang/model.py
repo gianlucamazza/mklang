@@ -29,6 +29,7 @@ class State:
     accumulate: bool = False
     sample: int | None = None
     over: str | None = None
+    parse: str | None = None  # "list": deposit a parsed JSON array, not text (0.3)
     # call / tool
     call: str | None = None
     tool: str | None = None
@@ -81,6 +82,7 @@ def parse_state(sid: str, d: dict) -> State:
         accumulate=bool(d.get("accumulate", False)),
         sample=d.get("sample"),
         over=d.get("over"),
+        parse=d.get("parse"),
         call=d.get("call"),
         tool=d.get("tool"),
         input=d.get("input"),

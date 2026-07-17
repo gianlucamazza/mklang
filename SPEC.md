@@ -1,6 +1,7 @@
 # mklang — Language Specification
 
-> Version **0.2**. Surface syntax: **YAML**. Runtime:
+> Version **0.3** (0.2 documents remain valid; 0.3 adds `parse: list` §4.10 and
+> raw whole-template `input:` resolution §4.8). Surface syntax: **YAML**. Runtime:
 > **language-agnostic** (a conformant runtime is any host with access to an LLM).
 
 ---
@@ -135,6 +136,7 @@ states: # map of <state-id> -> state definition
     accumulate?: <bool> # append to a list under `output` instead of overwriting (§4.6)
     sample?: <int> # fan-out: run N times → output is a list (§4.7)
     over?: "{{list}}" # fan-out: run once per item → output is a list (§4.7)
+    parse?: list # 0.3: deposit a parsed JSON array instead of text (§4.10)
     output: <key> # context key under which this state's output is stored
     gates: <list of gates>
   # (b) call state — runs another machine as a subroutine (§4.8):
@@ -176,6 +178,7 @@ Generative  ::= {
   accumulate : bool?           # append to `output` list instead of set (§4.6)
   sample     : int?            # fan-out: run N times (>= 2); output is a list (§4.7)
   over       : string?         # fan-out: "{{list}}"; run once per item (§4.7)
+  parse      : "list"?         # 0.3: parse the output as a JSON array (§4.10)
   output     : string          # context key where this state's output is stored
   gates      : Gate[]          # >= 1, the last one should be a catch-all
 }                              # sample XOR over
@@ -223,7 +226,7 @@ Reserved keys:
 - Top-level: `machine`, `entry`, `budget`, `default_tier`, `result`, `context`,
   `tools`, `hooks`, `states`, `mklang`.
 - Generative state: `structure`, `prompt`, `execution`, `tier`, `reason`,
-  `accumulate`, `sample`, `over`, `output`, `gates`.
+  `accumulate`, `sample`, `over`, `parse`, `output`, `gates`.
 - Call state: `call`, `input`, `tier`, `sample`, `over`, `accumulate`, `output`,
   `gates`.
 - Tool state: `tool`, `input`, `sample`, `over`, `accumulate`, `output`, `gates`.
@@ -375,7 +378,10 @@ vote: # reducer (ordinary state)
 A **call state** has no `prompt`/`structure`; instead `call: <machine-name>` runs
 another machine as a subroutine. `input` maps parent-context values into the
 sub-machine's initial context; the sub-run's result is deposited under this state's
-`output`. Sub-machines make machines **composable** — orchestrator-worker,
+`output`. Input **values** resolve as follows (0.3): a value that is exactly one
+`{{path}}` placeholder passes the **raw** context value — lists and dicts cross the
+boundary intact; any other string renders as prose (`{{…}}` substituted, lists
+formatted as numbered text). The same rule applies to tool `input:` (§4.9). Sub-machines make machines **composable** — orchestrator-worker,
 router-of-experts, recursion, and heterogeneous plan-execute all fall out of it.
 Combined with fan-out (`over` + `call`) it becomes one agent per item.
 
@@ -424,6 +430,31 @@ a `tool` state that references an undeclared name; the actual binding stays
 host-side. A tool state does not call the LLM, so it consumes no tier and no tokens.
 
 ---
+
+### 4.10 `parse` — structured list output (optional, 0.3)
+
+`parse: list` on a generative state makes the runtime parse the produced text as
+a **JSON array** (markdown code fences are tolerated) and deposit the resulting
+**real list** under `output`, instead of the raw text. This is what lets a
+planner state feed a downstream `over:` — Plan-and-Execute becomes a pure
+machine (§10). If the text is not a JSON array the state **halts** the run with
+`state-error: parse-list …` (it never deposits garbage); prompt for the array
+shape explicitly in `structure`. Documents using `parse:` should declare
+`mklang: "0.3"` (a 0.2 document using it draws a warning from `check`).
+
+```yaml
+plan:
+  structure: a JSON array of short step strings, nothing else
+  prompt: "Break the task into steps: {{task}}"
+  parse: list
+  output: steps
+  gates: [{ when: otherwise, then: ok, to: execute }]
+execute:
+  over: "{{steps}}"
+  prompt: "Do this step: {{item}}"
+  output: results
+  gates: [{ when: otherwise, then: ok, to: combine }]
+```
 
 ## 5. Gates = transitions
 
@@ -626,7 +657,7 @@ possible. Guards:
 
   This means the budget doubles as a **volume cap** on fan-out, not just a loop
   guard: a map-reduce whose `over` list has 30 items needs `budget ≥ 30 + machine
-  overhead`, or it halts before the reducer runs. Size `budget` against the expected
+overhead`, or it halts before the reducer runs. Size `budget` against the expected
   data cardinality, or bound the list before the fan-out. _Worked example:_ entry
   `pre` (1 step) → `map` over a 3-item list (charges 3, total 4) with `budget: 3`
   halts `budget-exhausted` before the post-map state — proving the fan-out charged 3
@@ -644,6 +675,7 @@ possible. Guards:
   bound (a machine that passes it can still exhaust its budget on a wide fan-out).
   This is host pre-validation, not run semantics: the interpreter's runtime halt is
   unchanged.
+
 - **Per-gate repair budget** (`repair: N`): how many times that gate may
   self-correct. Exhausted → the gate is skipped and evaluation proceeds.
 - **Call-depth cap** (`MAX_CALL_DEPTH`, runtime): bounds recursion so a machine that
@@ -758,7 +790,7 @@ prose + tiers + §4.5–§4.8). This table is the map; skeletons follow.
 | Reflexion/self-refine | produce → self-judge gate → `repair` (optionally a `critic` state)       |
 | Self-consistency      | `sample: N` → reducer state (majority)                                   |
 | Tree-of-Thought       | `sample: k` → score/select reducer → loop-back gate (depth via `budget`) |
-| Plan-and-Execute      | planner (list `steps`) → `over: {{steps}}` → reducer                     |
+| Plan-and-Execute      | planner `parse: list` (§4.10) → `over: {{steps}}` → reducer              |
 | Debate / ensemble     | `over: {{personas}}` (or `sample`) → synthesizer state                   |
 | Map-Reduce            | `over: {{chunks}}` → reducer                                             |
 | Router-of-experts     | classify → branch to specialist `call` sub-machines                      |
@@ -874,12 +906,12 @@ language contract; silent omission would be worse than incomplete mitigation.
 
 ### Trust boundary
 
-| Source | Trust | How it enters the machine |
-| ------ | ----- | ------------------------- |
-| Author `.mk` prose | Trusted (author) | structure, prompt, execution, `when` |
-| Host tools / hooks | Trusted (host code) | `tool:` / `hook:` registries |
+| Source                                  | Trust               | How it enters the machine                |
+| --------------------------------------- | ------------------- | ---------------------------------------- |
+| Author `.mk` prose                      | Trusted (author)    | structure, prompt, execution, `when`     |
+| Host tools / hooks                      | Trusted (host code) | `tool:` / `hook:` registries             |
 | Blackboard / `--set` / resume injection | **Often untrusted** | `{{path}}` interpolation + judge CONTEXT |
-| LLM produce / judge | Untrusted oracle | generation + transition choice |
+| LLM produce / judge                     | Untrusted oracle    | generation + transition choice           |
 
 ### Attack surface (known, **not fully mitigated** in v0.2)
 
@@ -928,4 +960,3 @@ language contract; silent omission would be worse than incomplete mitigation.
 
 Sandboxed tool brokers, signed context zones, automatic wrapping of untrusted
 fields, cryptographic attestation of traces, and formal non-interference proofs.
-

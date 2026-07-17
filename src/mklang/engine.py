@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 
 from .checkpoint import decode_repair, make_frame
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
-from .interpolate import fmt, lookup, render
+from .interpolate import fmt, lookup, render, resolve
 from .model import Gate, Machine, State
 
 MAX_CALL_DEPTH = 8
@@ -187,7 +187,7 @@ def _exec_one(
 ):
     """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out) tokens)."""
     if state.kind == "call":
-        sub_input = {k: render(v, ctx) for k, v in (state.input or {}).items()}
+        sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
         sub_machine = deps.registry.get(state.call)
         if sub_machine is None:
             raise KeyError(f"call: unknown machine {state.call!r}")
@@ -215,7 +215,7 @@ def _exec_one(
             raise CallFailed(sub.error or "sub-halted", sub.trace, tin, tout)
         return sub.result, sub.trace, None, (tin, tout)
     if state.kind == "tool":
-        tool_input = {k: render(v, ctx) for k, v in (state.input or {}).items()}
+        tool_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
         fn = deps.tools.get(state.tool)
         if fn is None:
             raise KeyError(f"tool: unknown tool {state.tool!r} (register it via run(tools=...))")
@@ -228,7 +228,30 @@ def _exec_one(
     p = deps.llm.produce(
         model, _system(state), user, reason=state.reason, temperature=temperature, params=params
     )
-    return p.text, None, p.reasoning, (p.input_tokens, p.output_tokens)
+    out = _parse_list(p.text) if state.parse == "list" else p.text
+    return out, None, p.reasoning, (p.input_tokens, p.output_tokens)
+
+
+def _parse_list(text: str) -> list:
+    """`parse: list` (SPEC §4.10, 0.3): the produced text must be a JSON array
+    (markdown fences tolerated); anything else halts the state (`state-error`)."""
+    import json
+
+    body = text.strip()
+    if body.startswith("```"):
+        body = body.strip("`")
+        first_nl = body.find("\n")
+        body = body[first_nl + 1 :] if first_nl != -1 else body
+        body = body.strip()
+    try:
+        value = json.loads(body)
+    except ValueError as e:
+        raise ValueError(f"parse-list: output is not valid JSON ({e})") from e
+    if not isinstance(value, list):
+        raise ValueError(
+            f"parse-list: output is JSON but not an array (got {type(value).__name__})"
+        )
+    return value
 
 
 def _safe_exec(state, ctx, deps, machine, depth):
@@ -242,7 +265,7 @@ def _safe_exec(state, ctx, deps, machine, depth):
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
         return (f"[branch-error: {e.error}]", e.sub_trace, None, (e.input_tokens, e.output_tokens))
-    except Exception as e:  # noqa: BLE001 — isolate the branch
+    except Exception as e:  # isolate the branch
         return (f"[branch-error: {e}]", None, None, (0, 0))
 
 
@@ -410,7 +433,7 @@ def run(
         if S.is_fanout:
             try:
                 branches = _branch_contexts(S, ctx)
-            except Exception as e:  # noqa: BLE001 — bad over path / type
+            except Exception as e:  # bad over path / type
                 return RunResult(
                     "halt",
                     trace,
@@ -481,7 +504,7 @@ def run(
                 return RunResult(
                     "halt", trace, ctx, error=f"provider-error: {e}", at=state_id, usage=usage()
                 )
-            except Exception as e:  # noqa: BLE001 — surface as a clean halt, not a traceback
+            except Exception as e:  # surface as a clean halt, not a traceback
                 return RunResult(
                     "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
                 )
@@ -546,7 +569,7 @@ def run(
             return RunResult(
                 "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
             )
-        except Exception as e:  # noqa: BLE001 — missing hook / host error
+        except Exception as e:  # missing hook / host error
             return RunResult(
                 "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
             )

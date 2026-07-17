@@ -1,0 +1,37 @@
+case: parse-list
+description: >
+  0.3 `parse: list` — the produced text is parsed as a JSON array and deposited
+  as a real list, which a downstream `over:` fans out over (Plan-and-Execute).
+machine:
+  mklang: "0.3"
+  machine: plan_exec
+  entry: plan
+  budget: 8
+  states:
+    plan:
+      structure: a JSON array of step strings
+      prompt: make a plan
+      parse: list
+      output: steps
+      gates:
+        - { when: otherwise, then: ok, to: exec }
+    exec:
+      over: "{{steps}}"
+      structure: s
+      prompt: "do {{item}}"
+      output: results
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "make a plan": '["a", "b"]'
+    "do a": "done a"
+    "do b": "done b"
+expect:
+  status: done
+  context:
+    steps: ["a", "b"]
+    results: ["done a", "done b"]
+  trace:
+    - { state: plan, policy: ok, to: exec }
+    - { state: exec, policy: ok, to: END }

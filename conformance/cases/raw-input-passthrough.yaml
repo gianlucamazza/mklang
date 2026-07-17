@@ -1,0 +1,46 @@
+case: raw-input-passthrough
+description: >
+  0.3 input resolution — an `input:` value that is exactly one {{path}}
+  placeholder passes the RAW context value (here a list) into the callee, so
+  the callee's `over:` can fan out over it. Mixed templates still render text.
+machine:
+  mklang: "0.3"
+  machine: parent
+  entry: c1
+  budget: 5
+  context:
+    items: ["x", "y"]
+  states:
+    c1:
+      call: child
+      input:
+        items: "{{items}}"
+      output: out
+      gates:
+        - { when: otherwise, then: ok, to: END }
+registry:
+  child:
+    mklang: "0.3"
+    machine: child
+    entry: m
+    budget: 5
+    result: res
+    states:
+      m:
+        over: "{{items}}"
+        structure: s
+        prompt: "work {{item}}"
+        output: res
+        gates:
+          - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "work x": "wx"
+    "work y": "wy"
+expect:
+  status: done
+  result: ["wx", "wy"]
+  context:
+    out: ["wx", "wy"]
+  trace:
+    - { state: c1, policy: ok, to: END }
