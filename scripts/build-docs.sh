@@ -12,6 +12,7 @@ cp SPEC.md ROADMAP.md CHANGELOG.md CONTRIBUTING.md site-src/
 cp docs/patterns.md site-src/
 cp docs/authoring.md site-src/
 cp docs/stdlib.md site-src/
+cp docs/console.md site-src/
 cp conformance/README.md site-src/conformance.md
 cp docs/adr/*.md site-src/adr/
 cp -r schema site-src/schema

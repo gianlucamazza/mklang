@@ -14,6 +14,35 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Console M2+M3** (ADR 0015). The brain authors machines (AUTHOR action:
+  write → validate → repair through the decide loop, workspace-confined);
+  persistent sessions under `~/.mklang/console/sessions/` with `--continue` /
+  `--session` (history, spend, tool consents, streaming transcript);
+  budget-exhausted turns become a confirm-or-park UI moment, `/resume`
+  finishes parked turns. Full UI: conversation pane + live activity tree
+  (nested commissioned runs, fan-out branches) + F2 inspector
+  (context/trace/session) + slash commands (`/machines /run /check /read
+  /budget /session`). Docs: `docs/console.md`.
+- **Live engine events on the MCP transport** (ADR 0019): `run`/`resume`
+  stream the `on_event` sequence as `mklang.event` logging notifications —
+  any MCP client renders run progress; external console clients need no
+  engine work.
+
+- **Output anti-cutoff (ADR 0018 Proposed, partial).** `Produced` carries
+  `truncated` / `finish_reason`; adapters set them from length/max_tokens stops.
+  Trace steps and `state-done` events annotate `truncated`. Policy `report`|`halt`
+  on CLI (`--on-truncate`), MCP, console, and scripttest `run: { on_truncate }`.
+  Truncated `parse: list` → `parse-list-truncated`. Auto-continue stitching deferred.
+
+- **Web search tool (ADR 0016 Proposed, partial).** Builtin `search` returns a
+  structured JSON observation; offline stub by default. Opt-in backends via
+  `configure_search` / `MKLANG_SEARCH_BACKEND=fake|tavily`. Example + scenario
+  tests: `examples/research_web.mk`.
+
+- **Context rendering (ADR 0017 Proposed, partial).** Judge CONTEXT uses
+  head+tail with `…[context_truncated]…` (`llm/context_view.py`). Produce-prompt
+  budgets and console history window remain open.
+
 - **Console surface, M1** (`mklang console`, ADR 0015 Accepted; extra
   `mklang[console]`, Textual). Agent-first TUI whose brain is the bundled —
   and `--agent`-swappable — `agent.mk` machine (decide → discover / run /

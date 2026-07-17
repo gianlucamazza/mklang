@@ -30,6 +30,7 @@ nav:
   - Patterns: patterns.md
   - Authoring guide: authoring.md
   - Machine stdlib: stdlib.md
+  - Console: console.md
   - Conformance: conformance.md
   - ADRs:
       - Capability tiers: adr/0001-capability-tiers.md
