@@ -2,6 +2,10 @@
 
 from io import StringIO
 
+import pytest
+
+pytest.importorskip("rich")
+
 from rich.console import Console, Group
 from rich.markdown import Markdown
 from rich.text import Text

@@ -8,9 +8,12 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.8.1`).
+  `pyproject.toml` (currently `0.8.2`).
 
-## [Unreleased]
+## [0.8.2] — 2026-07-17
+
+Package patch (language stays **0.3**). Documentation growth (best practices
+§12–§13) plus a console glyph fix and a CI test guard.
 
 ### Added
 
@@ -22,6 +25,9 @@ All notable changes to mklang are documented here. The format follows
 
 - **Console activity tree double expand icon.** Run rows no longer prefix `▶ `
   in the label — Textual Tree already draws the ▶/▼ toggle.
+- **CI: console render tests skip without `rich`.** `test_console_render.py`
+  now uses `pytest.importorskip("rich")` like the other console tests, so the
+  no-console-extra CI matrix collects cleanly.
 
 ## [0.8.1] — 2026-07-17
 
