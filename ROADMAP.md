@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.8.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.8.1**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.8.0)
+## Where we are (language 0.3 / package 0.8.1)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -47,6 +47,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.8.0:** host tool stub architecture (ADR 0020); console observation honesty
   for truncation; `context.today` host convention; search recency fields; best
   practices guide; OpenAI-compat default `max_tokens=4096`.
+- **0.8.1:** host `context.now`; console chrome/content Markdown rendering;
+  sectioned produce system (`llm/prompts.py`) + BP §3; agent sticky policy in
+  `execution`.
 - **Live (2026-07-17, release 0.7.0 matrix):** DeepSeek + OpenAI smoke and gate
   agreement green. Anthropic unit-tested; live may be billing-blocked.
   Re-verify on the 0.8.0 release workflow.
@@ -159,6 +162,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   — agent-first Textual TUI; authoring loop; sessions/`--continue`; activity
   tree + inspector; slash commands + `/resume`; brain history windowed for
   prompts (ADR 0017).
+- **Shipped (package polish):** console **conversation rendering** — agent
+  replies as CommonMark; slash/JSON/YAML fenced; user text and activity-tree
+  labels/previews as plain styled `Text` (no Rich-markup injection of untrusted
+  content). Docs: [console](./docs/console.md#conversation-rendering),
+  [best practices](./docs/best-practices.md) anti-pattern #12.
 - **Shipped:** live engine events on the MCP transport
   ([ADR 0019](./docs/adr/0019-mcp-live-events.md)) — `run`/`resume` stream the
   `on_event` sequence as `mklang.event` logging notifications; any MCP client
@@ -167,3 +175,16 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   separate project speaking MCP; needs nothing new server-side (ADR 0019).
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.
+
+## Near-term after 0.8.1
+
+Elevate **one** host/stdlib item per package release (layer discipline: no
+language 0.4 without ADR + conformance):
+
+- **[next] `std_research`** — search → ground pattern as stdlib machine
+  (discoverable from console/MCP); dogfood `today` + `tool: search`.
+- **[later] `std_compress`** — promote `research_compress.mk` into stdlib.
+- **[later] `runtime.yaml` tools block** (ADR 0016) — declarative host bindings.
+- **[later] Truncation `continue` stitching** (ADR 0018).
+
+Defer: context Layer 2 zones/pin, external console client, OTel, LangGraph.

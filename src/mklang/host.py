@@ -213,14 +213,19 @@ def build_output(res: RunResult) -> dict:
 RESULT_OBS_CHARS = 2000
 
 
-def inject_host_defaults(ctx: dict, *, today: str | None = None) -> dict:
+def inject_host_defaults(
+    ctx: dict, *, today: str | None = None, now: str | None = None
+) -> dict:
     """Fill host-convention keys **only when the machine declared them**.
 
     Convention (no language change): if the blackboard already has a top-level
-    ``today`` key (from ``context:`` in the ``.mk``) and its value is still
-    empty/None after user inputs, set it to an ISO calendar date
-    (``YYYY-MM-DD``). Never invents undeclared keys — keeps check/lint and
-    document purity intact.
+    key (from ``context:`` in the ``.mk``) and its value is still empty/None
+    after user inputs, fill it from the host clock. Never invents undeclared
+    keys — keeps check/lint and document purity intact.
+
+    * ``today`` — ISO calendar date (``YYYY-MM-DD``).
+    * ``now`` — local wall-clock ISO datetime with offset
+      (``YYYY-MM-DDTHH:MM:SS±HH:MM``), for questions like "what time is it?".
     """
     if "today" in ctx:
         cur = ctx.get("today")
@@ -228,6 +233,16 @@ def inject_host_defaults(ctx: dict, *, today: str | None = None) -> dict:
             from datetime import date
 
             ctx["today"] = today if today is not None else date.today().isoformat()
+    if "now" in ctx:
+        cur = ctx.get("now")
+        if cur is None or cur == "":
+            from datetime import datetime
+
+            ctx["now"] = (
+                now
+                if now is not None
+                else datetime.now().astimezone().isoformat(timespec="seconds")
+            )
     return ctx
 
 

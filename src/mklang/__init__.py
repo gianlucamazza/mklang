@@ -1,10 +1,10 @@
-"""mklang — reference interpreter for the mklang language (spec 0.3 / package 0.7)."""
+"""mklang — reference interpreter for the mklang language (spec 0.3 / package 0.8)."""
 
 from .checkpoint import load_checkpoint, save_checkpoint
 from .model import Gate, Machine, State, parse_machine
 from .engine import RunResult, run
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 __all__ = [
     "Gate",
     "Machine",

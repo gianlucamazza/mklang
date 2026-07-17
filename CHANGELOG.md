@@ -8,9 +8,37 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.8.0`).
+  `pyproject.toml` (currently `0.8.1`).
 
 ## [Unreleased]
+
+## [0.8.1] — 2026-07-17
+
+Package patch (language stays **0.3**). Console rendering safety, host wall-clock,
+and produce system-prompt assembly — surface/host polish only.
+
+### Added
+
+- **Host clock convention `context.now`.** When a machine declares top-level
+  `now` and it is still empty after inputs, CLI / MCP / console fill a local
+  ISO datetime with offset (same opt-in pattern as `today`). Console
+  `agent.mk` declares `now` and is instructed to REPLY wall-clock questions
+  from the host values (no AUTHOR for the clock alone).
+- **Produce system prompt assembly** (`llm/prompts.py`): sectioned system
+  message from `structure` + `execution`; documented as Best practices §3
+  (system vs user). Console `agent.mk` puts sticky policy in `execution` and
+  turn data in `prompt`.
+
+### Changed
+
+- **Console conversation rendering (chrome vs content).** Agent replies render
+  as CommonMark in the log; user/HITL text and slash observations stay plain or
+  fenced (`json` / `yaml`). Activity tree turn titles, machine names, and
+  output previews use plain styled `Text` (no Rich-markup injection). Helpers
+  live in `console/render.py`; log uses `markup=False`.
+- **Docs:** SPEC §4–§6 non-normative notes (produce system/user assembly, host
+  clocks); Best practices §3; authoring faces table; console brain prompt
+  assembly; README faces/status; ADR 0016 `now` checklist.
 
 ## [0.8.0] — 2026-07-17
 

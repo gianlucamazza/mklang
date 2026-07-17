@@ -150,6 +150,7 @@ def test_inject_host_defaults_today_only_when_declared():
     bare = {"q": "x"}
     host.inject_host_defaults(bare)
     assert "today" not in bare
+    assert "now" not in bare
 
     empty = {"today": "", "q": "x"}
     host.inject_host_defaults(empty, today="2026-07-17")
@@ -158,6 +159,29 @@ def test_inject_host_defaults_today_only_when_declared():
     kept = {"today": "2099-01-01"}
     host.inject_host_defaults(kept, today="2026-07-17")
     assert kept["today"] == "2099-01-01"  # user/host override wins
+
+
+def test_inject_host_defaults_now_only_when_declared():
+    bare = {"q": "x"}
+    host.inject_host_defaults(bare)
+    assert "now" not in bare
+
+    empty = {"now": "", "today": ""}
+    host.inject_host_defaults(
+        empty, today="2026-07-17", now="2026-07-17T14:32:05+02:00"
+    )
+    assert empty["today"] == "2026-07-17"
+    assert empty["now"] == "2026-07-17T14:32:05+02:00"
+
+    kept = {"now": "fixed-clock"}
+    host.inject_host_defaults(kept, now="2026-07-17T14:32:05+02:00")
+    assert kept["now"] == "fixed-clock"
+
+    live = {"now": ""}
+    host.inject_host_defaults(live)
+    # Local ISO with seconds and a timezone offset designator.
+    assert "T" in live["now"]
+    assert len(live["now"]) >= len("2026-07-17T00:00:00+00:00")
 
 
 def test_compact_run_observation_honesty():

@@ -29,6 +29,8 @@ provider-native tool-calling or browser automation.
 4. **No language change.** Example: `examples/research_web.mk` (+ scenario test).
    Time-sensitive machines declare `context.today: ""`; hosts fill empty
    declared `today` with the ISO date (host convention, not a SPEC face).
+   Wall-clock machines may also declare `context.now: ""` for a local ISO
+   datetime fill (same inject path; not a search concern).
 5. **Threat model.** Search observations are **untrusted context** (SPEC §11).
 
 ## Checklist
@@ -41,6 +43,7 @@ provider-native tool-calling or browser automation.
 | SPEC / patterns note | **done** |
 | Optional `days` / `topic` / `published_date` | **done** |
 | Host `context.today` convention + research patterns | **done** |
+| Host `context.now` (wall-clock local ISO datetime) | **done** (same inject path; not search-specific) |
 | `runtime.yaml` tools.search block | deferred |
 | Console-specific consent copy for search | deferred (generic tool consent covers it) |
 | stdlib `std_research` | deferred |

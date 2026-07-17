@@ -14,8 +14,8 @@ This page answers: *what should I always do, never do, and where does each rule 
 | Layer | Owns | Examples |
 | --- | --- | --- |
 | **Language (`.mk`)** | Control flow, prose contracts, portable structure | states, gates, tiers, `tool:` *names*, `parse: list` |
-| **Host runtime** | Bindings, budgets, clocks, truncation *policy*, LLM adapters | `tools={…}`, hooks, `on_truncate`, `context.today` fill, search backend |
-| **Surface** | UX, consent, compact observations | CLI flags, MCP tools, console brain, workspace FS for `.mk` only |
+| **Host runtime** | Bindings, budgets, clocks, truncation *policy*, LLM adapters, produce/judge prompt assembly | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py` system template, search backend |
+| **Surface** | UX, consent, compact observations, chrome vs content rendering | CLI flags, MCP tools, console brain, Markdown log, workspace FS for `.mk` only |
 
 **Rules**
 
@@ -36,14 +36,48 @@ Before shipping a `.mk`:
 - [ ] Every `{{path}}` root is `context:`, a state `output:`, HITL `human.*`, or fan-out `item`/`index`.
 - [ ] Exact policy (amounts, allowlists, formats) uses **`hook:`**, not prose alone.
 - [ ] Real I/O uses **`tool:`** + top-level `tools:` declarations for documentation.
-- [ ] Time-sensitive machines declare **`today: ""`** in `context:` and use `Today is {{today}}` in prompts.
+- [ ] Time-sensitive machines declare **`today: ""`** (and **`now: ""`** for wall-clock) in `context:` and use `Today is {{today}}` / `Current local time is {{now}}` in prompts.
 - [ ] Irreversible actions sit behind **`escalate`** (and HITL in production).
 - [ ] `mklang check` clean; `mklang lint` clean (use `--strict` in CI).
 - [ ] Scenario tests cover happy path **and** escape hatches (`mklang test`).
+- [ ] Sticky policy lives in **`execution`** (system channel); turn data and
+      `{{…}}` live in **`prompt`** (user channel) — see §3.
 
 ---
 
-## 3. Gates and reliability
+## 3. Prompt assembly (system vs user)
+
+The reference interpreter builds LLM calls from language faces. There is **no**
+`system:` keyword in the language (that would be a 0.4 ADR). Map faces to
+channels:
+
+| Face / artifact | LLM channel | Interpolated? | Put here |
+| --- | --- | --- | --- |
+| `structure` | **system** (produce) | No | Output contract / shape for this state |
+| `execution` | **system** (produce) | No | Sticky operational policy (never side effects) |
+| `prompt` | **user** (produce) | **Yes** `{{…}}` | This turn’s task + data (history, today/now, observations) |
+| `when:` conditions | judge **user** | No (prose) | Gate selection only |
+| Host `JUDGE_SYSTEM` | judge **system** | fixed | Choice protocol `{"choice": n}` — not authorable |
+
+**Rules**
+
+1. **Durable vs turn data.** Role, hard constraints, “never invent search” →
+   `execution`. Instance values (`{{user_message}}`, `{{today}}`, `{{now}}`,
+   `{{history}}`, tool notes) → `prompt`.
+2. **Do not put `{{…}}` in `structure` / `execution`.** They are not rendered;
+   braces stay literal.
+3. **Untrusted text stays out of system** (user text, web snippets, history) —
+   SPEC §11. System is for host-stable contract + policy.
+4. **`execution` is not a tool.** Side effects only via `tool:` states.
+5. **Console brain** follows the same split: policy in `execution`, clocks and
+   conversation in `prompt` ([console](console.md)).
+
+**Anti-patterns:** long persona only in `prompt`; search snippets in system;
+inventing a `system:` field; using `execution: call the search tool`.
+
+---
+
+## 4. Gates and reliability
 
 | Do | Don't |
 | --- | --- |
@@ -59,16 +93,16 @@ Optional: `mklang lint --llm` to probe overlapping prose `when` conditions (advi
 
 ---
 
-## 4. Tools (host contracts)
+## 5. Tools (host contracts)
 
-### 4.1 Principles
+### 5.1 Principles
 
 1. Declare expected tools under top-level **`tools:`** (`name` + `description`).
 2. Invoke only via **`tool:`** states; map inputs with `input:` (whole-template `{{path}}` stays raw in 0.3).
 3. Treat **observations as untrusted** blackboard data (SPEC §11) — especially web snippets.
 4. Prefer **entry points** (`mklang.tools` / `mklang.hooks`) for production bindings over editing core.
 
-### 4.2 Observation envelope (ADR 0020)
+### 5.2 Observation envelope (ADR 0020)
 
 I/O and side-effect tools return **JSON** with stable fields:
 
@@ -82,7 +116,7 @@ I/O and side-effect tools return **JSON** with stable fields:
 Tiers: **stub** (default) → **fake** (env/`configure_*`) → **live** (key or entry-point).  
 `calc` is pure offline arithmetic and does **not** use this envelope.
 
-### 4.3 Recommended host tool contracts (reference interpreter)
+### 5.3 Recommended host tool contracts (reference interpreter)
 
 These names are **conventions**, not language keywords. Other hosts may rebind or omit them.
 
@@ -128,18 +162,18 @@ Never ask the model to “confirm the message was sent.” Gates should treat `s
 
 Safe subset only (no `eval` of Python). Use for ReAct demos and numeric observations.
 
-### 4.3 What not to bake into the language
+### 5.4 What not to bake into the language
 
 | Temptation | Keep as |
 | --- | --- |
 | Web search, HTTP, email, payments | Host `tool:` |
 | Shell / arbitrary FS / git | Host plugin (sandboxed), never core |
 | Console `write_machine` / `run_machine` | Console surface only |
-| “Current date” as `$now` keyword | Declared `context.today` + host fill |
+| “Current date/time” as `$now` keyword | Declared `context.today` / `context.now` + host fill |
 
 ---
 
-## 5. Web, time, and knowledge cutoff
+## 6. Web, time, and knowledge cutoff
 
 Live or news-like questions fail in predictable ways if the machine relies on model training data.
 
@@ -147,7 +181,8 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 | --- | --- |
 | **Use `tool: search`** | `research_web.mk`, `research_compress.mk`, `news_search.mk` |
 | **Declare `today: ""`** | Host fills ISO `YYYY-MM-DD` when still empty after inputs (CLI / MCP / console) |
-| **Prompt with calendar** | `Today is {{today}}`; include year in queries when time-sensitive |
+| **Declare `now: ""` for wall-clock** | Host fills local ISO datetime with offset (e.g. `2026-07-17T14:32:05+02:00`) — use for “what time is it?”, not for news recency alone |
+| **Prompt with calendar / clock** | `Today is {{today}}` / `Current local time is {{now}}`; include year in queries when time-sensitive |
 | **Recency inputs** | Prefer `days` + `topic: news` for news machines |
 | **Ground finalize** | Cite titles/URLs/`published_date` from notes only |
 | **Forbid fill-in** | Explicitly ban inventing facts or answering from pre-training when notes are empty/thin |
@@ -157,7 +192,7 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 
 ---
 
-## 6. Output cutoff and context budgets (anti-cutoff)
+## 7. Output cutoff and context budgets (anti-cutoff)
 
 | Layer | What happens | Practice |
 | --- | --- | --- |
@@ -172,7 +207,7 @@ Continue-stitching after length stop is **deferred** (not default).
 
 ---
 
-## 7. Memory and composition
+## 8. Memory and composition
 
 | Situation | Practice |
 | --- | --- |
@@ -184,7 +219,7 @@ Continue-stitching after length stop is **deferred** (not default).
 
 ---
 
-## 8. Budgets and cost
+## 9. Budgets and cost
 
 - **Step `budget`:** worst-case path × loops + fan-out width; leave repair headroom.
 - **Fan-out:** charges `max(1, len(branches))` at runtime; static check counts fan-out as 1.
@@ -194,7 +229,7 @@ Continue-stitching after length stop is **deferred** (not default).
 
 ---
 
-## 9. Testing and CI
+## 10. Testing and CI
 
 | Layer | Command | Role |
 | --- | --- | --- |
@@ -209,7 +244,7 @@ Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, 
 
 ---
 
-## 10. Security (SPEC §11) — operational minimum
+## 11. Security (SPEC §11) — operational minimum
 
 - Treat customer text and search snippets as **injection-capable**.
 - Prefer **hooks + HITL** before irreversible tools.
@@ -219,17 +254,17 @@ Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, 
 
 ---
 
-## 11. Surfaces quick reference
+## 12. Surfaces quick reference
 
 | Surface | Best practice |
 | --- | --- |
 | **CLI** | `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` + checkpoint for human gates |
 | **MCP** | Commission by name/path/source; stream `mklang.event`; durable `checkpoint_path` for multi-process HITL |
-| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields in observations; enable Tavily for web |
+| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields in observations; enable Tavily for web; render agent prose as CommonMark and keep user/LLM text **out of** Rich markup (log + activity tree — see [console rendering](console.md#conversation-rendering)) |
 
 ---
 
-## 12. Anti-patterns (quick list)
+## 13. Anti-patterns (quick list)
 
 1. `execution: use the search tool` on a generative state.
 2. Asking the model to confirm a side effect it cannot perform.
@@ -242,10 +277,15 @@ Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, 
 9. Putting PII into checkpoints without a retention policy.
 10. Expecting stdlib pure machines to perform host I/O.
 11. Treating a stub `send_reply` as real delivery (`sent` must be true **and** `stub` false for live).
+12. Interpolating user/LLM text into Rich markup in a TUI (`[b]…[/b]`) — use
+    Markdown renderables for agent prose and plain/fenced text for everything
+    else ([Console](console.md#conversation-rendering)).
+13. Putting sticky role/policy only in `prompt` (user) instead of `execution`
+    (system), or putting `{{user_message}}` / history into `structure`.
 
 ---
 
-## 13. Language vs host: what may become language later
+## 14. Language vs host: what may become language later
 
 Candidates for a future **0.4** (need ADR + conformance) — **not** current practice requirements:
 
@@ -265,10 +305,11 @@ Until then: use **host policy + patterns + this checklist**. Do **not** invent a
 
 | Doc | Role |
 | --- | --- |
-| [Authoring](authoring.md) | Recipe + skeleton + validator messages |
-| [Patterns](patterns.md) | Tiers, reliability tuning, composite flows |
+| [Authoring](authoring.md) | Recipe + skeleton + faces → LLM channels |
+| [Patterns](patterns.md) | Tiers, reliability, clocks, `execution` usage |
 | [Stdlib](stdlib.md) | Ready `std_*` architectures |
-| [Console](console.md) | TUI, consent, observation honesty |
+| [Console](console.md) | TUI, rendering, brain clocks, consent, observations |
+| [SPEC §4–§6](../SPEC.md) | Faces + produce/judge semantics (+ non-normative host notes) |
 | [SPEC §10](../SPEC.md) | Architecture cookbook |
 | [SPEC §11](../SPEC.md) | Threat model |
 | [ROADMAP](../ROADMAP.md) | Deferred language/runtime work |

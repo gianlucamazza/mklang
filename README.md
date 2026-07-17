@@ -17,12 +17,15 @@ mklang : LangGraph  ::  a declarative spec : Python code
 
 Each **state** has four faces:
 
-| Face        | Answers        | Example                                       |
-| ----------- | -------------- | --------------------------------------------- |
-| `structure` | what shape?    | "The output is an email reply, max 150 words" |
-| `prompt`    | what to think? | "Write a reply to {{ticket.body}}…"           |
-| `execution` | how to act?    | "Do not invent policies not in the KB facts"  |
-| `gates`     | when to exit?  | see below                                     |
+| Face        | Answers        | Example                                       | Ref. interpreter |
+| ----------- | -------------- | --------------------------------------------- | ---------------- |
+| `structure` | what shape?    | "The output is an email reply, max 150 words" | → **system**     |
+| `execution` | how to act?    | "Do not invent policies not in the KB facts"  | → **system**     |
+| `prompt`    | what to think? | "Write a reply to {{ticket.body}}…"           | → **user** (+ `{{…}}`) |
+| `gates`     | when to exit?  | see below                                     | separate **judge** call |
+
+Sticky policy goes in `execution`; turn data and `{{context}}` go in `prompt`.
+There is no `system:` keyword — see [Best practices §3](./docs/best-practices.md).
 
 Real side effects (search, send, calc) are **`tool:` states** — host callables,
 not prose in `execution`. See [`examples/react.mk`](./examples/react.mk) and
@@ -247,7 +250,9 @@ what you want, the console's agent authors or picks a machine, commissions it,
 and streams the run state-by-state — escalations and tool consent come back to
 you inline. The agent itself **is** a machine
 ([`agent.mk`](./src/mklang/data/console/agent.mk)) — read it, lint it, swap it
-with `--agent your_brain.mk` (ADR 0015).
+with `--agent your_brain.mk` (ADR 0015). Agent replies render as Markdown; the
+brain declares host clocks `today` / `now` for wall-clock questions. Details:
+[`docs/console.md`](./docs/console.md).
 
 ```bash
 pip install 'mklang[console]'
@@ -256,16 +261,18 @@ mklang console
 
 ## Status
 
-**Language v0.3 / package 0.8.0** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 0.8.1** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
 (`--llm` optional) / **`test`**; [conformance suite](./conformance/README.md);
 machine **stdlib** (`std_*`); **MCP** host; **console** TUI (M1–M3); structured
 web `search` (offline stub by default); host tool stub architecture for
-`search` / `search_kb` / `send_reply` (ADR 0020); `context.today` convention;
-output anti-cutoff + context budgets (ADR 0016–0019); [best practices](./docs/best-practices.md).
-Gate judging follows the state tier by default.
+`search` / `search_kb` / `send_reply` (ADR 0020); host clock conventions
+`context.today` / `context.now`; sectioned produce system prompts from
+`structure`+`execution`; output anti-cutoff + context budgets (ADR 0016–0019);
+[best practices](./docs/best-practices.md). Gate judging follows the state tier
+by default.
 
 - **Live:** DeepSeek (default) and **OpenAI** green (release matrix 0.7.0; re-run
   on 0.8.0 publish), including gate-divergence agreement **1.0** on the synthetic

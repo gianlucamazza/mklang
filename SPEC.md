@@ -252,18 +252,22 @@ richer reasoning: `reason` (§4.5), `accumulate` (§4.6), fan-out (§4.7), `call
 Describes **what the state reads** from context and **what shape** the output takes.
 No type system: it is prose, the LLM interprets it. The output is stored in the
 context under the key named by the state's `output` field, not by the prose.
+Prose may _name_ context keys; the reference interpreter does **not** interpolate
+`structure` (live values belong in `prompt`, §4.2).
 
 ```yaml
 structure: >
-  Reads {{ticket.body}}. The output is an email reply to the customer, courteous
-  tone, max 150 words, that resolves or forwards the request.
+  Reads the ticket body from context. The output is an email reply to the
+  customer, courteous tone, max 150 words, that resolves or forwards the request.
 output: draft # stored in context as {{draft}}
 ```
 
 ### 4.2 `prompt` — the task (prose, interpolatable)
 
 The instruction given to the LLM to _produce_ the output. Supports `{{key}}` /
-`{{key.subfield}}` interpolation resolved against the current context.
+`{{key.subfield}}` interpolation resolved against the current context. This is
+the only generative face the reference interpreter **interpolates** — put live
+blackboard values and turn-specific task text here.
 
 ```yaml
 prompt: |
@@ -273,14 +277,15 @@ prompt: |
 
 ### 4.3 `execution` — the operational policy (prose, optional)
 
-Constraints on _how_ the state acts, distinct from the task content: allowed tools
-and their limits, behavioral guardrails, permitted side-effects. Tools are
-described in prose; it is the host that makes them available at runtime (the spec
-stays agnostic on how).
+Constraints on _how_ the state acts, distinct from the task content: behavioral
+guardrails, honesty rules, what this generative state must **not** do. The host
+makes tools available only via **`tool:` states** (§4.9); generative `execution`
+cannot invoke host callables. Describe tool policy in prose only as guardrails
+for authors/hosts, not as a substitute for `tool:`.
 
 ```yaml
 execution: |
-  You may consult the `search_kb` tool at most 2 times.
+  Do not invent policies that are not in the KB facts.
   Do not contact the customer in this state: here you only draft.
 ```
 
@@ -645,6 +650,17 @@ Notes:
 - `guidance=S.structure` / `policy=S.execution` are surrounding instructions to
   generation, not formal constraints. Generative `execution` cannot invoke host
   tools; only `tool:` states call host callables.
+- **Produce messages (reference interpreter, non-normative):** the host builds a
+  **system** message from `structure` + `execution` (sectioned contract + policy)
+  and a **user** message from the interpolated `prompt` (+ repair feedback).
+  `structure` / `execution` are **not** interpolated. Gate judging uses a fixed
+  host system role plus a user payload of OUTPUT / CONTEXT / CONDITIONS — not
+  the produce system template. Authoring guidance:
+  [docs/best-practices.md](./docs/best-practices.md) §3.
+- **Host clock keys (reference interpreter, non-normative):** if the machine
+  declares empty top-level context keys `today` and/or `now`, hosts MAY fill
+  them when still empty after inputs — `today` as ISO date `YYYY-MM-DD`, `now`
+  as local ISO datetime with offset. Hosts MUST NOT invent undeclared keys.
 - **Produce temperatures (reference interpreter, non-normative):** default
   `temperature=0.4` for ordinary produce, `0.8` when the state uses `sample`
   (diversity). Per-state portable knobs are out of core (§9). Hosts MAY override

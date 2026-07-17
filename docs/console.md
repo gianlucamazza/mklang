@@ -36,6 +36,26 @@ an output preview leaf. The token HUD and the input line sit below. `F2`
 toggles the inspector (last run's blackboard, trace, session facts); `ctrl+l`
 clears the conversation.
 
+## Conversation rendering
+
+The log and activity tree separate **UI chrome** from **untrusted content**
+(user text, agent prose, tool observations, event previews) — same discipline as
+[best practices](best-practices.md) (surface layer, no Rich-markup interpolation
+of model/user text):
+
+| Channel | How it is shown |
+| --- | --- |
+| Agent reply (`status=done`) | CommonMark via Rich (`**bold**`, lists, fenced code, links) |
+| User / HITL answers | Plain text (no Rich markup interpretation) |
+| Slash results (`/run`, `/check`) | Fenced `json` (not full-document Markdown) |
+| `/read` machine source | Fenced `yaml` |
+| Labels (`you:`, `agent:`, errors) | Rich markup **only** for internal chrome strings |
+| Activity tree (turn title, machine, state, **output preview**) | Plain `Text` segments with fixed styles — previews are **not** Markdown |
+
+Session history and the JSONL transcript stay **plain text** for audit; only the
+display path renders Markdown. Square brackets in model output (`array[0]`,
+`[b]…[/b]`) are not treated as Rich tags on either the log or the tree.
+
 ## The agent
 
 One user turn = one run of `agent.mk` (ReAct-shaped): `decide` routes between
@@ -47,6 +67,20 @@ prompts and turn-budget exhaustion all come back to you through the input line.
 Swap the brain with `--agent your_brain.mk` — any machine honoring the same
 tool contract (`list_machines`, `describe_machine`, `read_machine`,
 `check_machine`, `write_machine`, `run_machine`, `ask_user`).
+
+### Brain prompt assembly
+
+Generative states on the brain follow the host mapping
+([Best practices §3](best-practices.md)):
+
+| Face | Role for the console agent |
+| --- | --- |
+| `structure` | Output shape of this step (e.g. one-line DISCOVER/RUN/…, final reply) |
+| `execution` | Sticky policy (no fake web search, truncation honesty, clock REPLY rules) |
+| `prompt` | Turn data only: `{{today}}` / `{{now}}`, `{{history}}`, `{{user_message}}`, `{{observation}}` |
+
+Wall-clock questions (“che ore sono?”) use host-filled `now` via **REPLY** — the
+brain must not AUTHOR a machine solely to read the clock.
 
 ## Slash commands (bypass the agent)
 
@@ -113,7 +147,9 @@ instructed not to invent the missing tail of a truncated result, and not to
 answer live-web questions from training knowledge alone.
 
 Time-sensitive workspace machines should declare `context.today: ""`; the host
-fills today's ISO date before the run (same convention as CLI/MCP).
+fills today's ISO date before the run (same convention as CLI/MCP). Wall-clock
+questions need `context.now: ""` (local ISO datetime). The bundled brain already
+declares both — see [Brain prompt assembly](#brain-prompt-assembly).
 
 ## Security model
 

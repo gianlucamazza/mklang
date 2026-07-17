@@ -47,12 +47,23 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   Use `tool: search` (see `examples/research_web.mk`, `machines/news_search.mk`).
   Optional tool inputs: `days`, `topic` (`news`|`general`); results may include
   `published_date`. Snippets are **untrusted** (SPEC §11).
-- **Host clock convention (`today`).** Declare `today: ""` in `context:` when the
-  machine is time-sensitive. CLI / MCP / console fill an empty declared `today`
-  with the host ISO date (`YYYY-MM-DD`) — they never invent undeclared keys.
-  Prompts should say `Today is {{today}}`, prefer recent sources, and **forbid
-  filling gaps with pre-training knowledge** older than that date. This is host
-  convention + authoring discipline, not a language primitive.
+- **`execution` for sticky policy.** The reference interpreter puts `structure` +
+  `execution` on the **system** channel and `prompt` on **user**. Prefer
+  durable guardrails in `execution` (no inventing search, honesty on truncation)
+  and keep `{{…}}` data in `prompt` ([Best practices §3](best-practices.md)).
+- **Host clock convention (`today` / `now`).** Declare empty keys in `context:`;
+  CLI / MCP / console fill them only when declared — they never invent
+  undeclared keys. This is host convention + authoring discipline, not a
+  language primitive.
+
+  | Key | Fill | Use for |
+  | --- | --- | --- |
+  | `today: ""` | ISO date `YYYY-MM-DD` | News/recency, knowledge-cutoff framing |
+  | `now: ""` | Local ISO datetime with offset | Wall-clock (“what time is it?”) |
+
+  Prompts should say `Today is {{today}}` / `Current local time is {{now}}`,
+  prefer recent sources, and **forbid filling gaps with pre-training knowledge**
+  older than that date.
 - **Watch for output cutoff.** When a produce hits max_tokens, the runtime sets
   `truncated: true` on the trace step and on live `state-done` events (ADR 0018).
   Default policy is `report` (annotate and continue); use `--on-truncate halt`
@@ -185,7 +196,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 | --- | --- |
 | Gates, tiers, `tool:` / `hook:` *names* | Tool/hook *implementations*, API keys |
 | `parse: list`, compress *states* | `on_truncate` default, search backend |
-| Declared `context.today: ""` | Filling `today` with the calendar date |
+| Declared `context.today: ""` / `now: ""` | Filling `today` (date) / `now` (local datetime) |
 | Scenario tests next to the machine | Console consent, MCP sessions, bash/FS plugins |
 
 See [Best practices §1 and §13](best-practices.md) for the full layer map and what

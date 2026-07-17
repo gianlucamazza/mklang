@@ -54,12 +54,10 @@ def _judge_model_for(state: State, machine: Machine, deps: "_Ctx") -> str:
 
 
 def _system(state: State) -> str:
-    return (
-        "You are executing ONE state of an mklang state machine.\n"
-        f"OUTPUT SHAPE (structure): {state.structure}\n"
-        f"OPERATIONAL POLICY (execution): {state.execution or 'none'}\n"
-        "Return ONLY the described output — no preamble, no explanation."
-    )
+    """Produce system message: structure + execution (see ``llm.prompts``)."""
+    from .llm.prompts import build_produce_system
+
+    return build_produce_system(state)
 
 
 @dataclass

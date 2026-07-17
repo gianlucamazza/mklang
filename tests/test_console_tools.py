@@ -312,3 +312,29 @@ states:
     assert out["status"] == "done"
     # echo_llm returns the user prompt, which interpolates today
     assert "today is 20" in out["result"]  # ISO year prefix
+
+
+def test_run_machine_injects_declared_now(tools):
+    src = """\
+mklang: "0.3"
+machine: clocked
+entry: a
+budget: 4
+result: out
+context:
+  now: ""
+states:
+  a:
+    structure: the time
+    prompt: "now is {{now}}"
+    output: out
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+    (tools.workspace / "clocked.mk").write_text(src, encoding="utf-8")
+    out = json.loads(tools.run_machine({"target": "clocked", "inputs": "{}"}))
+    assert out["status"] == "done"
+    assert "now is 20" in out["result"]
+    assert "T" in out["result"]

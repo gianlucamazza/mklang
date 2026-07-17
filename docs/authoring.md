@@ -49,12 +49,15 @@ Required top-level keys: `machine`, `entry`, `budget`, `states`. A state is
 
 Core (generative states — SPEC §4):
 
-| Face        | Answers        | Notes                                                |
-| ----------- | -------------- | ---------------------------------------------------- |
-| `structure` | what shape?    | prose contract for the output                        |
-| `prompt`    | what to think? | the task, with `{{context.key}}` interpolation       |
-| `execution` | how to act?    | optional operational policy — **never** side effects |
-| `gates`     | when to exit?  | the transition table (below)                         |
+| Face        | Answers        | LLM channel (ref. interpreter) | Notes |
+| ----------- | -------------- | ------------------------------ | ----- |
+| `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated |
+| `execution` | how to act?    | **system** (produce)           | sticky policy — **never** side effects; not interpolated |
+| `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation |
+| `gates`     | when to exit?  | judge (separate call)          | transition table (below) |
+
+Durable role/constraints → `structure` / `execution`. Turn data (`{{today}}`,
+history, user text) → `prompt` only. Details: [Best practices §3](best-practices.md).
 
 Optional faces — reach for them when the pattern calls for it:
 
@@ -103,17 +106,22 @@ charges one step per branch at runtime but counts as 1 at check time.
   (ADR 0003).
 - **No side effects in prose.** `execution` is policy, not action; anything that
   touches the world is a `tool:` state (and listed under top-level `tools:`).
+- **System vs user.** Sticky role/guardrails → `structure` / `execution` (system
+  channel in the reference interpreter). Turn data and all `{{…}}` → `prompt`
+  only (`structure`/`execution` are **not** interpolated).
 - Every `{{key}}` must resolve: from `context:`, a previous state's `output:`,
   `human.*` (HITL resume), or `item`/`index` inside a fan-out state.
 - `call:` targets must exist as sibling `.mk` files (same directory), a bundled
   `std_*` name, or an entry-point machine — an inline MCP `source` machine can
   `call: std_*` but not arbitrary siblings unless the host registry includes them.
 - **Time-sensitive / web machines:** declare `today: ""` in `context:`; the host
-  fills the ISO date when empty. Ground answers in `tool: search` notes, not
-  training knowledge ([Best practices §5](best-practices.md)).
+  fills the ISO date when empty. For wall-clock time declare `now: ""` (local
+  ISO datetime). Ground web answers in `tool: search` notes, not training
+  knowledge ([Best practices §6](best-practices.md)).
 - **Exact policy** (thresholds, allowlists) → `hook:` gates, not prose alone.
-- **Do not invent language syntax** outside the schema (no ad-hoc `$now`, inline
-  bash, or provider ids). Extend via host tools/hooks entry points instead.
+- **Do not invent language syntax** outside the schema (no ad-hoc `$now` keyword,
+  inline bash, or provider ids). Use declared `context.now` + host fill, or host
+  tools/hooks entry points.
 
 ## What the validators catch
 

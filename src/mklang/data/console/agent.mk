@@ -9,6 +9,9 @@
 # (list_machines / run_machine / ask_user, console-registered) is honored.
 # Contract: the console sets `user_message` and `history`; observations
 # accumulate under `observation`; the turn's answer lands in `reply`.
+#
+# Prompt assembly (reference interpreter): structure + execution → system;
+# prompt (with {{…}}) → user. Put sticky policy in execution; turn data in prompt.
 
 mklang: "0.3"
 machine: console_agent
@@ -44,6 +47,7 @@ context:
   history: "" # prior turns, supplied by the console session
   observation: [] # tool observations of THIS turn (accumulated)
   today: "" # host fills ISO date when empty
+  now: "" # host fills local ISO datetime when empty
 
 states:
   decide: # the ReAct "think" step
@@ -53,12 +57,22 @@ states:
       to pass; for CLARIFY the question to ask the user; for AUTHOR the full
       requirements of the machine to create; for REPLY the substance of the
       answer.
+    execution: |
+      You are the mklang console agent: satisfy the user by commissioning
+      machines (self-contained LLM state machines) and reporting honestly.
+      You cannot call the web yourself — only host tools inside a commissioned
+      machine can (especially tool: search). Never invent search results or
+      answer live-web questions from training knowledge alone.
+      Prefer existing stdlib/workspace machines over AUTHOR when one fits.
+      For wall-clock date/time questions, REPLY using the host today/now values
+      in the user message — do not AUTHOR a machine only for the clock, and do
+      not invent a time from training data.
+      If a tool returned search unbound, say how to enable it (TAVILY_API_KEY or
+      MKLANG_SEARCH_BACKEND). If an observation has truncated: true or
+      result_truncated: true, report the cutoff and do not invent the missing
+      part. No side effects in this generative state.
     prompt: |
-      You are the mklang console agent. Today is {{today}}.
-      You satisfy the user's request by commissioning machines (self-contained
-      LLM state machines) and reporting results honestly. You cannot call the
-      web yourself — only host tools inside a commissioned machine can
-      (especially tool: search).
+      Today is {{today}}. Current local time is {{now}} (host clock).
 
       Conversation so far: {{history}}
       User request: {{user_message}}
@@ -68,21 +82,15 @@ states:
       - DISCOVER — list the available machines (only if you don't already know
         a suitable one from the observations).
       - RUN — commission a machine now: name it and spell out its inputs.
-        Prefer an existing machine that already does the job (stdlib or
-        workspace). For live web/news/current-events, AUTHOR or RUN a machine
-        that uses the host tool `search` — never invent search results or
-        answer from training knowledge alone when the user needs the present.
+        For live web/news/current-events, AUTHOR or RUN a machine that uses
+        the host tool `search`.
       - CLARIFY — ask the human one precise question you cannot answer yourself.
       - AUTHOR — no existing machine covers the request: spell out the machine
         to create (purpose, inputs, states, when it should escalate). If a
         previous authoring attempt failed validation, restate the requirements
         including what to fix.
       - REPLY — the request is satisfied (or answerable directly): state the
-        substance of the final answer. If a tool returned
-        "no external search bound", say so clearly and how to enable search
-        (TAVILY_API_KEY or MKLANG_SEARCH_BACKEND). If an observation has
-        truncated: true or result_truncated: true, tell the user the answer
-        was cut off and do not invent the missing part.
+        substance of the final answer.
     tier: reasoning
     reason: true
     output: thought
@@ -119,6 +127,8 @@ states:
     structure: >
       A JSON object {"target": "<machine name>", "inputs": {<context key>:
       <value>, ...}} and nothing else. Values may be strings, numbers or lists.
+    execution: |
+      Output only the JSON object — no markdown fences, no commentary.
     prompt: |
       Turn this decision into the run request JSON:
       {{thought}}
@@ -155,6 +165,11 @@ states:
     structure: >
       A complete, valid .mk document and nothing else — no fences, no prose
       around it.
+    execution: |
+      Emit only the .mk source. Follow language 0.3 rules: never name a provider
+      or model (tier only); never put side effects in generative prose — real I/O
+      uses tool: states; time-sensitive machines declare today: "" and wall-clock
+      ones now: ""; every multi-gate state ends with when: otherwise last.
     prompt: |
       Author the machine described here:
       {{thought}}
@@ -166,11 +181,10 @@ states:
       - Top-level keys: mklang: "0.3", machine (snake_case name), entry,
         budget (shortest entry→END path + 2), optional default_tier / result /
         context, states. Optional top-level tools: list of {name, description}.
-      - A generative state has structure (output shape), prompt (which reads
-        context keys with the double-brace syntax), output (context key),
-        gates. Optional: tier (fast|balanced|reasoning), reason, accumulate,
-        sample: N, over (a double-brace reference to a context list),
-        parse: list (output becomes a JSON-parsed list).
+      - A generative state has structure (output shape → system channel),
+        execution (sticky policy → system), prompt (turn task + context
+        interpolation → user), output (context key), gates. Optional: tier,
+        reason, accumulate, sample: N, over, parse: list.
       - Host tools available in this console (use real `tool:` states for I/O):
         search (web — input query/max_results/days/topic, returns JSON results
         with optional published_date), calc (arithmetic expr), search_kb,
@@ -180,8 +194,10 @@ states:
         results. For news/research: plan_query → tool search → check/finalize
         (see research_web / research_compress / news_search patterns).
       - For time-sensitive machines declare `today: ""` in context: — the host
-        fills today's ISO date. Prompts should say "Today is {{today}}" and
-        forbid filling gaps with pre-training knowledge older than today.
+        fills today's ISO date. For wall-clock time declare `now: ""` (host
+        fills local ISO datetime). Prompts should say "Today is {{today}}" /
+        "Current time is {{now}}" and forbid filling gaps with pre-training
+        knowledge older than today.
       - Every gate is `when: <prose condition>` plus exactly one policy —
         `then: ok` / `repair: N` / `escalate: true` / `fail: true` — and
         `to: <state or END>` (fail has no to; escalate REQUIRES to:).
@@ -189,7 +205,6 @@ states:
         catch-all, last. Do not use `when: always`.
       - Declare a context default for every key the prompts read; `result`
         names a key some state outputs.
-      - Never name a provider or model (route by tier).
     tier: reasoning
     output: authored_source
     gates:
@@ -212,17 +227,19 @@ states:
     structure: >
       The final answer for the user: plain, complete, and honest about what was
       run and what it returned (or why nothing needed to run).
+    execution: |
+      Be honest: if search was unbound or empty, say so. If an observation has
+      truncated / result_truncated, say the output was cut off and do not invent
+      the rest. For wall-clock date/time, use the host today/now values from the
+      user message. For other live facts, ground only in tool observations —
+      not training knowledge older than today.
     prompt: |
-      Today is {{today}}.
+      Today is {{today}}. Current local time is {{now}}.
       User request: {{user_message}}
       Your decision: {{thought}}
       Observations this turn: {{observation}}
 
       Write the final reply to the user.
-      Be honest: if search was unbound or empty, say so. If an observation has
-      truncated / result_truncated, say the output was cut off and do not invent
-      the rest. For live facts, ground only in tool observations — not training
-      knowledge that stops at an older year than today.
     output: reply
     gates:
       - when: otherwise

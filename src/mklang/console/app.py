@@ -20,6 +20,7 @@ from ..checkpoint import save_checkpoint
 from ..engine import run as run_engine
 from ..loader import validate_dict
 from ..model import Machine, parse_machine
+from . import render as log_render
 from .tools import ConsoleTools
 
 
@@ -47,6 +48,7 @@ def build_app(
     session_id: str | None = None,
 ):
     """Construct the Textual app (imported lazily so the core stays TUI-free)."""
+    from rich.console import RenderableType
     from textual.app import App, ComposeResult
     from textual.containers import Horizontal, Vertical
     from textual.widgets import Footer, Header, Input, RichLog, Static
@@ -135,7 +137,9 @@ def build_app(
             yield Header()
             with Horizontal(id="body"):
                 with Vertical(id="main"):
-                    yield RichLog(id="log", wrap=True, markup=True)
+                    # markup=False: untrusted content never rides Rich tags via write(str).
+                    # Chrome uses Text.from_markup / Markdown renderables instead.
+                    yield RichLog(id="log", wrap=True, markup=False)
                     yield ActivityTree()
                     yield Static("", id="status")
                     yield Input(placeholder="what should happen? (ctrl+c quits)", id="prompt")
@@ -148,15 +152,17 @@ def build_app(
 
         def action_clear_log(self) -> None:
             self.query_one("#log", RichLog).clear()
+            self.log_history.clear()
 
         def on_mount(self) -> None:
-            self.log_line(
+            # Banner values are host-local (brain name, provider, paths, session id).
+            self.log_chrome(
                 f"[b]mklang console[/b] · brain={brain.name} · "
                 f"provider={self.tools.prov.name} · workspace={self.tools.workspace} · "
                 f"session={self.session.id}"
             )
             if self.history:
-                self.log_line(
+                self.log_chrome(
                     f"[dim]resumed session with {len(self.history)} chars of history[/dim]"
                 )
             self.update_status()
@@ -164,9 +170,40 @@ def build_app(
 
         # -- rendering -----------------------------------------------------
 
-        def log_line(self, text: str) -> None:
-            self.query_one("#log", RichLog).write(text)
-            self.log_history.append(text)
+        def log_write(self, renderable: RenderableType, mirror: str) -> None:
+            """Write a Rich renderable and append a plain-text mirror for tests."""
+            self.query_one("#log", RichLog).write(renderable)
+            self.log_history.append(mirror)
+
+        def log_chrome(self, markup: str) -> None:
+            """Internal-only Rich markup (no untrusted interpolation)."""
+            self.log_write(log_render.chrome(markup), markup)
+
+        def log_plain(self, body: str, *, label_markup: str, mirror_label: str) -> None:
+            """Chrome label + plain untrusted body."""
+            self.log_write(
+                log_render.labeled_plain(label_markup, body),
+                f"{mirror_label} {body}" if body else mirror_label,
+            )
+
+        def log_markdown(self, body: str, *, label_markup: str, mirror_label: str) -> None:
+            """Chrome label + CommonMark body (agent prose)."""
+            self.log_write(
+                log_render.labeled_markdown(label_markup, body),
+                f"{mirror_label} {body}" if body else mirror_label,
+            )
+
+        def log_fenced(
+            self, body: str, *, label_markup: str | None = None, mirror_label: str = "", lang: str = ""
+        ) -> None:
+            """Fenced code (JSON / machine source); optional chrome label."""
+            if label_markup:
+                self.log_write(
+                    log_render.labeled_fenced(label_markup, body, lang=lang),
+                    f"{mirror_label} {body}" if mirror_label else body,
+                )
+            else:
+                self.log_write(log_render.fenced(body, lang=lang), body)
 
         def update_status(self) -> None:
             self.query_one("#status", Static).update(
@@ -187,7 +224,8 @@ def build_app(
 
         def enter_answer_mode(self, question: str) -> None:
             self.answer_mode = True
-            self.log_line(f"[yellow]⏸ {question}[/yellow]")
+            # Question text is untrusted (brain / tool / HITL); keep it plain.
+            self.log_plain(question, label_markup="[yellow]⏸ [/yellow]", mirror_label="⏸")
             box = self.query_one("#prompt", Input)
             # Consent prompts include "type y"; keep a short generic placeholder.
             box.placeholder = "answer here, then Enter…"
@@ -201,7 +239,7 @@ def build_app(
             if self.answer_mode:
                 self.answer_mode = False
                 box.placeholder = "what should happen? (ctrl+c quits)"
-                self.log_line(f"[yellow]you:[/yellow] {text}")
+                self.log_plain(text, label_markup="[yellow]you:[/yellow] ", mirror_label="you:")
                 box.disabled = True
                 self.bridge.deliver(text)
                 return
@@ -210,7 +248,7 @@ def build_app(
             if text.startswith("/"):
                 self.handle_slash(text)
                 return
-            self.log_line(f"[b cyan]you:[/b cyan] {text}")
+            self.log_plain(text, label_markup="[b cyan]you:[/b cyan] ", mirror_label="you:")
             self.session.append({"t": "user", "text": text})
             self.query_one(ActivityTree).new_turn(text[:60])
             box.disabled = True
@@ -227,18 +265,24 @@ def build_app(
             parts = text.split()
             cmd, args = parts[0].lower(), parts[1:]
             if cmd == "/help":
-                self.log_line(
-                    "[dim]/machines · /run <name> [k=v…] · /check <name> · /read <name> · "
+                help_text = (
+                    "/machines · /run <name> [k=v…] · /check <name> · /read <name> · "
                     "/budget <n> · /resume [n] · /session · /quit — plain text goes to the "
-                    "agent; F2 inspector, ctrl+l clear[/dim]"
+                    "agent; F2 inspector, ctrl+l clear"
                 )
+                self.log_chrome(f"[dim]{help_text}[/dim]")
             elif cmd == "/machines":
                 rows = _json.loads(self.tools.list_machines({}))["machines"]
                 for r in rows:
-                    self.log_line(
-                        f"  [b]{r['name']}[/b] · result={r['result']} · "
-                        f"budget={r['budget']} · keys={', '.join(r['context_keys']) or '—'}"
+                    # Name/keys are host data but still not interpolated into markup tags.
+                    keys = ", ".join(r["context_keys"]) or "—"
+                    suffix = f" · result={r['result']} · budget={r['budget']} · keys={keys}"
+                    self.log_write(
+                        log_render.bold_name_line(r["name"], suffix),
+                        f"  {r['name']}{suffix}",
                     )
+                if not rows:
+                    self.log_chrome("[dim]no machines[/dim]")
             elif cmd == "/run" and args:
                 target = args[0]
                 inputs = {}
@@ -246,23 +290,29 @@ def build_app(
                     if "=" in kv:
                         k, v = kv.split("=", 1)
                         inputs[k] = _coerce(v)
-                self.log_line(f"[b cyan]/run[/b cyan] {target} {inputs or ''}")
+                self.log_plain(
+                    f"{target} {inputs or ''}".rstrip(),
+                    label_markup="[b cyan]/run[/b cyan] ",
+                    mirror_label="/run",
+                )
                 self.query_one(ActivityTree).new_turn(f"/run {target}")
                 self.query_one("#prompt", Input).disabled = True
                 self.run_worker(lambda: self.slash_run(target, inputs), thread=True, exclusive=True)
             elif cmd == "/check" and args:
                 verdict = _json.loads(self.tools.check_machine({"name": args[0]}))
-                self.log_line(_json.dumps(verdict, ensure_ascii=False, indent=2))
+                payload = _json.dumps(verdict, ensure_ascii=False, indent=2)
+                self.log_fenced(payload, lang="json")
             elif cmd == "/read" and args:
-                self.log_line(self.tools.read_machine({"name": args[0]}))
+                source = self.tools.read_machine({"name": args[0]})
+                self.log_fenced(source, lang="yaml")
             elif cmd == "/budget" and args:
                 try:
                     self.tools.default_cost_budget = int(args[0])
-                    self.log_line(f"[dim]default cost budget → {args[0]} tokens[/dim]")
+                    self.log_chrome(f"[dim]default cost budget → {args[0]} tokens[/dim]")
                 except ValueError:
-                    self.log_line("[red]/budget needs an integer[/red]")
+                    self.log_chrome("[red]/budget needs an integer[/red]")
             elif cmd == "/session":
-                self.log_line(
+                self.log_chrome(
                     f"[dim]session {self.session.id} · {self.session.dir} · "
                     f"tokens {self.spent_in}+{self.spent_out}[/dim]"
                 )
@@ -270,23 +320,26 @@ def build_app(
                 cks = sorted(self.session.checkpoints_dir.glob("*.json"))
                 if not args:
                     if not cks:
-                        self.log_line("[dim]no parked checkpoints in this session[/dim]")
+                        self.log_chrome("[dim]no parked checkpoints in this session[/dim]")
                     for i, ck in enumerate(cks):
-                        self.log_line(f"  [{i}] {ck.name}")
+                        self.log_plain(
+                            ck.name, label_markup=f"  [[{i}]] ", mirror_label=f"  [{i}]"
+                        )
                     return
                 try:
                     ck = load_checkpoint(cks[int(args[0])])
                 except (IndexError, ValueError, OSError) as e:
-                    self.log_line(f"[red]cannot resume: {e}[/red]")
+                    self.log_plain(str(e), label_markup="[red]cannot resume:[/red] ", mirror_label="cannot resume:")
                     return
-                self.log_line(f"[b cyan]/resume[/b cyan] {cks[int(args[0])].name}")
+                name = cks[int(args[0])].name
+                self.log_plain(name, label_markup="[b cyan]/resume[/b cyan] ", mirror_label="/resume")
                 self.query_one(ActivityTree).new_turn("/resume")
                 self.query_one("#prompt", Input).disabled = True
                 self.run_worker(lambda: self.slash_resume(ck), thread=True, exclusive=True)
             elif cmd == "/quit":
                 self.exit()
             else:
-                self.log_line(f"[red]unknown command {cmd} — try /help[/red]")
+                self.log_chrome(f"[red]unknown command {cmd} — try /help[/red]")
 
         def slash_run(self, target: str, inputs: dict) -> None:
             import json as _json
@@ -301,7 +354,13 @@ def build_app(
             self.call_from_thread(self.finish_turn, "(resumed turn)", res)
 
         def finish_slash(self, observation: str) -> None:
-            self.log_line(f"[b green]result:[/b green] {observation}")
+            # Observations are JSON envelopes — fence them, do not full-MD parse.
+            self.log_fenced(
+                observation,
+                label_markup="[b green]result:[/b green]",
+                mirror_label="result:",
+                lang="json",
+            )
             self.session.append({"t": "slash-result", "text": observation})
             self.session.save_state()
             box = self.query_one("#prompt", Input)
@@ -358,10 +417,16 @@ def build_app(
 
         def finish_turn(self, user_message: str, res) -> None:
             if res.status == "done":
-                self.log_line(f"[b green]agent:[/b green] {res.result}")
+                body = str(res.result or "")
+                self.log_markdown(body, label_markup="[b green]agent:[/b green]", mirror_label="agent:")
                 self.history += f"\nuser: {user_message}\nagent: {res.result}"
             else:
-                self.log_line(f"[b red]agent {res.status}:[/b red] {res.error} (at {res.at})")
+                detail = f"{res.error} (at {res.at})"
+                self.log_plain(
+                    detail,
+                    label_markup=f"[b red]agent {res.status}:[/b red] ",
+                    mirror_label=f"agent {res.status}:",
+                )
             self.session.append(
                 {"t": "agent", "status": res.status, "text": str(res.result or res.error)}
             )

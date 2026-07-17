@@ -70,11 +70,84 @@ def test_direct_reply_turn(tmp_path):
     asyncio.run(drive())
 
 
+def test_agent_reply_markdown_and_bracket_safety(tmp_path):
+    """Agent prose is mirrored as Markdown source; brackets must not break the log."""
+    reply = "Use **bold** and array[0]; ignore [b]injected[/b]."
+    llm = scripted_llm(
+        {"single next action": f"REPLY: {reply}", "final reply": reply},
+        [4],
+    )
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test() as pilot:
+            await pilot.click("#prompt")
+            await pilot.press(*"format me")
+            await pilot.press("enter")
+            await _wait_input_enabled(app, pilot)
+            assert f"agent: {reply}" in app.history
+            # Plain mirror keeps the source markdown (audit + tests), not Rich tags.
+            assert any("**bold**" in line and "array[0]" in line for line in app.log_history)
+            assert any("[b]injected[/b]" in line for line in app.log_history)
+
+    asyncio.run(drive())
+
+
 def all_labels(node):
     out = [str(node.label)]
     for child in node.children:
         out.extend(all_labels(child))
     return out
+
+
+def test_activity_tree_untrusted_labels_are_plain():
+    """User title and LLM preview must not be interpreted as Rich markup."""
+    from mklang.console.widgets import ActivityTree
+
+    tree = ActivityTree()
+    tree.new_turn("array[0] [b]injected[/b]")
+    assert "array[0]" in str(tree._turn_node.label)
+    assert "[b]injected[/b]" in str(tree._turn_node.label)
+
+    tree.feed(
+        {
+            "type": "run-start",
+            "machine": "weird[b]name",
+            "depth": 0,
+            "entry": "decide",
+        }
+    )
+    tree.feed(
+        {
+            "type": "state-start",
+            "machine": "weird[b]name",
+            "depth": 0,
+            "state": "decide",
+            "kind": "generative",
+            "tier": "reasoning",
+        }
+    )
+    tree.feed(
+        {
+            "type": "state-done",
+            "machine": "weird[b]name",
+            "depth": 0,
+            "state": "decide",
+            "policy": "ok",
+            "to": "reply",
+            "output": "see **bold** and [b]tag[/b]",
+        }
+    )
+    labels = all_labels(tree.root)
+    blob = "\n".join(labels)
+    assert "weird[b]name" in blob
+    assert "see **bold** and [b]tag[/b]" in blob
 
 
 def test_activity_tree_leaf_states_are_not_vacuously_expandable():

@@ -104,6 +104,12 @@ has the same no-key CI story as everything else.
 Follow-ups that are **not** console milestones: brain history windowing is
 documented under ADR 0017; MCP live events under ADR 0019.
 
+**Package polish (post-M3, no language change):** conversation log renders agent
+prose as CommonMark; untrusted text (user, LLM, previews) is never interpolated
+into Rich markup tags on the log or activity tree (`console/render.py`). See
+`docs/console.md` § Conversation rendering. Slash `/provider` from the UX sketch
+above was not shipped — use CLI `--provider` (or a later surface PR).
+
 ## Consequences
 
 - mklang gets its front door, and the front door is the thesis: the demo _is_

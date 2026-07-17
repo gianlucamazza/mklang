@@ -58,6 +58,8 @@ class LLM(Protocol):
         ...
 
 
+# Fixed judge role (host, not authorable). Separate from produce system built by
+# ``llm.prompts.build_produce_system`` from structure + execution.
 JUDGE_SYSTEM = (
     "You are the transition judge of a state machine. Given the state's OUTPUT and "
     "CONTEXT (and REASONING when present), return the NUMBER of the FIRST condition "

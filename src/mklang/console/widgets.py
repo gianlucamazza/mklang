@@ -2,6 +2,9 @@
 
 Both are fed from the main thread (the bridge marshals engine events with
 call_from_thread), so no locking is needed here.
+
+Tree labels use plain ``rich.text.Text`` segments (see ``render.tree_*``) so
+user text and LLM output previews never ride Rich markup interpolation.
 """
 
 from __future__ import annotations
@@ -9,6 +12,8 @@ from __future__ import annotations
 import json
 
 from textual.widgets import RichLog, Static, TabbedContent, TabPane, Tree
+
+from . import render as log_render
 
 
 class ActivityTree(Tree):
@@ -32,7 +37,7 @@ class ActivityTree(Tree):
         """One turn on display at a time — history lives in the transcript."""
         self.clear()
         self._reset_maps()
-        self._turn_node = self.root.add(f"[b]{title}[/b]", expand=True)
+        self._turn_node = self.root.add(log_render.tree_turn(title), expand=True)
 
     def _parent_for(self, e: dict):
         tag = e.get("run")
@@ -63,13 +68,17 @@ class ActivityTree(Tree):
             if parent is None:
                 return
             self._enable_expand(parent)
-            node = parent.add(f"▶ [b]{e['machine']}[/b]", expand=True, allow_expand=True)
+            node = parent.add(
+                log_render.tree_run(e.get("machine", "")),
+                expand=True,
+                allow_expand=True,
+            )
             self._run_nodes[(tag, depth)] = node
         elif kind == "state-start":
             parent = self._run_nodes.get((tag, depth)) or self._turn_node
             # Leaves until something nests under them (commissioned run / preview).
             node = parent.add(
-                f"◐ {e['state']} [dim]{e['kind']}·{e['tier']}[/dim]",
+                log_render.tree_state_start(e.get("state", ""), e.get("kind", ""), e.get("tier", "")),
                 expand=False,
                 allow_expand=False,
             )
@@ -80,21 +89,22 @@ class ActivityTree(Tree):
         elif kind == "state-done":
             node = self._state_nodes.get((tag, depth, e["state"]))
             if node is not None:
-                arrow = f"→ {e['to']}" if e.get("to") else f"({e.get('policy')})"
-                node.set_label(f"● {e['state']} [dim]{e.get('policy')}[/dim] {arrow}")
+                node.set_label(
+                    log_render.tree_state_done(e.get("state", ""), e.get("policy"), e.get("to"))
+                )
                 # Expandable only when there is something to show: nested run
                 # children already present, and/or an output preview leaf.
                 preview = e.get("output")
                 if preview:
                     self._enable_expand(node)
-                    node.add_leaf(f"[dim]{preview}[/dim]")
+                    node.add_leaf(log_render.tree_preview(preview))
                 elif node.children:
                     self._enable_expand(node)
         elif kind == "branch-done":
             node = self._state_nodes.get((tag, depth, e["state"]))
             if node is not None:
                 self._enable_expand(node)
-                node.add_leaf(f"· branch {e.get('index')}")
+                node.add_leaf(log_render.tree_branch(e.get("index")))
 
 
 class Inspector(TabbedContent):
