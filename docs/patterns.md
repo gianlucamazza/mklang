@@ -198,6 +198,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 | `parse: list`, compress *states* | `on_truncate` default, search backend |
 | Declared `context.today: ""` / `now: ""` | Filling `today` (date) / `now` (local datetime) |
 | Scenario tests next to the machine | Console consent, MCP sessions, bash/FS plugins |
+| Trace / live events / ops logs mixed | Keep channels separate ([Best practices §12](best-practices.md)) |
+| Generic read/write disk in core | Class-3 host tools with root + stub only ([§13](best-practices.md)) |
 
 See [Best practices §1 and §13](best-practices.md) for the full layer map and what
 may become language 0.4 later (not current syntax).

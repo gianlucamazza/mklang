@@ -79,6 +79,14 @@ def test_tree_turn_keeps_brackets_literal():
     assert "[b]injected[/b]" in label.plain
 
 
+def test_tree_run_has_no_expand_glyph():
+    """Textual Tree owns ▶/▼ toggles; run labels must not add a second ▶."""
+    label = r.tree_run("console_agent")
+    assert label.plain == "console_agent"
+    assert "▶" not in label.plain
+    assert "▼" not in label.plain
+
+
 def test_tree_preview_is_dim_plain_not_markup():
     label = r.tree_preview("**not md** and [b]x[/b]")
     assert "**not md**" in label.plain

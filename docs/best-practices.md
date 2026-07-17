@@ -14,8 +14,8 @@ This page answers: *what should I always do, never do, and where does each rule 
 | Layer | Owns | Examples |
 | --- | --- | --- |
 | **Language (`.mk`)** | Control flow, prose contracts, portable structure | states, gates, tiers, `tool:` *names*, `parse: list` |
-| **Host runtime** | Bindings, budgets, clocks, truncation *policy*, LLM adapters, produce/judge prompt assembly | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py` system template, search backend |
-| **Surface** | UX, consent, compact observations, chrome vs content rendering | CLI flags, MCP tools, console brain, Markdown log, workspace FS for `.mk` only |
+| **Host runtime** | Bindings, budgets, clocks, truncation *policy*, LLM adapters, produce/judge prompt assembly, **ops logging**, FS data roots for tools | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py`, process loggers, plugin FS tools |
+| **Surface** | UX, consent, compact observations, chrome vs content rendering, session audit | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, workspace **`.mk` only** |
 
 **Rules**
 
@@ -251,20 +251,99 @@ Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, 
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
 - Do not put secrets in `.mk` or context; keys stay in host env / `.env`.
 - Console: tool **consent** once per session; workspace confinement for authored `.mk` files.
+- Do not confuse **run trace / live events / ops logging** (§12) or turn arbitrary disk into a language feature (§13).
 
 ---
 
-## 12. Surfaces quick reference
+## 12. Observability: trace vs events vs process logging
+
+Three channels — do not merge them into one API.
+
+| Channel | Purpose | Consumer | Persistence |
+| --- | --- | --- | --- |
+| **Run trace** | Semantic record: state, gate, policy, tokens, `truncated` | Authors, tests, checkpoints | `RunResult.trace`, checkpoint JSON |
+| **Live events** | In-flight progress (`on_event`) | Console activity tree; MCP `mklang.event` (ADR 0019) | Ephemeral; console may append to `transcript.jsonl` |
+| **Process / ops logging** | Host diagnostics: adapter HTTP, retries, config, plugin errors | Operators, developers | stderr / host log file / future OTel |
+
+### Rules
+
+1. **Trace is the source of truth** for “what the machine did.” Events are a live
+   shadow of the same story, not a second semantic model (ADR 0019).
+2. **Ops logging is host-only** — never a face of the `.mk`, never deposited on
+   the blackboard as “memory,” never a gate condition.
+3. **No `tool: log` in core.** Business audit that must be a side effect is a
+   named host tool with ADR 0020 envelope + consent — not free-form logging.
+4. **Observer isolation.** A failing log sink or event listener must not abort
+   the run (same rule as `on_event` / MCP forwarder).
+5. **Secrets.** Never log API keys. Prefer no full produce/judge bodies at
+   default levels; DEBUG only when explicitly enabled.
+6. **Levels (when host logging exists).** `DEBUG` adapters/raw HTTP; `INFO`
+   coarse host lifecycle; `WARNING` stub tools, truncation, `judge_fallback`;
+   `ERROR` halts. Do **not** INFO-log every state (events already cover that).
+7. **Console separation.** Conversation pane ≠ ops log. UI stays Rich/Markdown;
+   diagnostics go to stderr or a host log path.
+8. **MCP.** Keep `mklang.event` for run vocabulary only. Host stack traces use a
+   different logger name (e.g. `mklang.host`), not the event stream.
+9. **OTel (optional, later).** Spans are a **projection** of the trace for
+   platforms; they do not replace `RunResult.trace` ([ROADMAP](../ROADMAP.md)).
+
+### Anti-patterns
+
+- `print()` in the engine; log-spam every token at INFO.
+- Putting log lines or file tails into context so gates “read the log.”
+- Overloading MCP logging notifications with host debug (breaks clients that
+  treat `mklang.event` as the run UI feed).
+
+---
+
+## 13. Filesystem: four classes, not one tool
+
+Generic bash/FS stay **out of core**. When you need disk, pick the class:
+
+| Class | Examples | Where it lives | Controls |
+| --- | --- | --- | --- |
+| **1. Host-owned paths** | `runtime.yaml`, checkpoints, console session dir | CLI / host config | Operator-chosen paths; checkpoint mode `0600` |
+| **2. Workspace authoring** | `write_machine` / `read_machine` (`.mk` only) | Console surface (ADR 0015) | Resolve under workspace; reject escape; confirm overwrite |
+| **3. Machine data I/O** | Read CSV, write a report | **Host tool** (`mklang.tools` entry point) | Root allowlist, size/type limits, stub\|fake\|live (ADR 0020), consent |
+| **4. Arbitrary FS / shell** | `rm`, bash, git | **Never core**; explicit sandboxed plugin | Default off; high friction |
+
+### Rules for class 3 (data tools)
+
+1. **Names only in the `.mk`** — `tool: read_doc`, not path syntax in the language.
+2. **Relative paths in tool input**; host joins to a configured **root** (`workspace`
+   or `data_root`). Refuse path escape after `resolve` (same idea as console
+   `_workspace_path`).
+3. **ADR 0020 envelope** — `{tool, stub, error, …}`; offline default **stub**.
+4. **File bodies are untrusted observations** (SPEC §11). Do not put them in the
+   produce **system** channel; treat like web snippets.
+5. **No recursive delete / shell in core.** Destructive ops only as explicit
+   plugins with strong confirmation.
+6. **Audit lightly** — log tool name + relative path + byte count at INFO; not
+   full file contents.
+7. **Console stays non-IDE** — do not register general FS tools on the default
+   brain; keep workspace **`.mk` only** unless the operator opts into plugins.
+
+### Anti-patterns
+
+- Language face `file:` / `$path` without ADR + conformance.
+- `execution: write the result to disk`.
+- Widening `write_machine` to arbitrary extensions/paths.
+- Using session/transcript directories as a machine “data lake.”
+- Absolute paths from the model without canonicalize + root check.
+
+---
+
+## 14. Surfaces quick reference
 
 | Surface | Best practice |
 | --- | --- |
-| **CLI** | `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` + checkpoint for human gates |
-| **MCP** | Commission by name/path/source; stream `mklang.event`; durable `checkpoint_path` for multi-process HITL |
-| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields in observations; enable Tavily for web; render agent prose as CommonMark and keep user/LLM text **out of** Rich markup (log + activity tree — see [console rendering](console.md#conversation-rendering)) |
+| **CLI** | `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` + checkpoint for human gates; ops log on stderr when enabled |
+| **MCP** | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL |
+| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mk` only** — no generic FS/bash |
 
 ---
 
-## 13. Anti-patterns (quick list)
+## 15. Anti-patterns (quick list)
 
 1. `execution: use the search tool` on a generative state.
 2. Asking the model to confirm a side effect it cannot perform.
@@ -282,10 +361,14 @@ Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, 
     else ([Console](console.md#conversation-rendering)).
 13. Putting sticky role/policy only in `prompt` (user) instead of `execution`
     (system), or putting `{{user_message}}` / history into `structure`.
+14. Mixing ops logging with run trace/events, or logging secrets/full prompts at
+    default levels (§12).
+15. Generic filesystem/bash in core, or treating console workspace as full disk
+    access (§13).
 
 ---
 
-## 14. Language vs host: what may become language later
+## 16. Language vs host: what may become language later
 
 Candidates for a future **0.4** (need ADR + conformance) — **not** current practice requirements:
 
@@ -308,8 +391,11 @@ Until then: use **host policy + patterns + this checklist**. Do **not** invent a
 | [Authoring](authoring.md) | Recipe + skeleton + faces → LLM channels |
 | [Patterns](patterns.md) | Tiers, reliability, clocks, `execution` usage |
 | [Stdlib](stdlib.md) | Ready `std_*` architectures |
-| [Console](console.md) | TUI, rendering, brain clocks, consent, observations |
+| [Console](console.md) | TUI, rendering, brain clocks, consent, workspace FS |
 | [SPEC §4–§6](../SPEC.md) | Faces + produce/judge semantics (+ non-normative host notes) |
-| [SPEC §10](../SPEC.md) | Architecture cookbook |
-| [SPEC §11](../SPEC.md) | Threat model |
-| [ROADMAP](../ROADMAP.md) | Deferred language/runtime work |
+| [SPEC §8](../SPEC.md) | Trace / observability |
+| [SPEC §11](../SPEC.md) | Threat model (injection, checkpoints at rest) |
+| [ADR 0015](adr/0015-console-surface.md) | Console scope (not an IDE) |
+| [ADR 0019](adr/0019-mcp-live-events.md) | `mklang.event` vs ops log |
+| [ADR 0020](adr/0020-host-tool-stub-architecture.md) | Tool envelope for I/O (incl. future FS tools) |
+| [ROADMAP](../ROADMAP.md) | OTel maybe; no bash/FS in core |

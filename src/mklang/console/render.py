@@ -68,7 +68,11 @@ def tree_turn(title: str) -> Text:
 
 
 def tree_run(machine: str) -> Text:
-    line = Text("▶ ")
+    """Run node label: machine name only.
+
+    Textual Tree already draws the expand toggle (▶/▼); do not prefix another ▶.
+    """
+    line = Text()
     line.append(machine or "", style="bold")
     return line
 

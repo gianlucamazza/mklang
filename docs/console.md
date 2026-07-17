@@ -17,11 +17,11 @@ mklang console                 # DeepSeek by default; --provider anthropic|opena
 ┌ mklang console ──────────────────────────────┬─ inspector (F2) ────────┐
 │ you: create a machine that triages my CSV    │ [Context|Trace|Session] │
 │ agent: created triage_csv.mk and ran it: …   │ …                       │
-│ ├ ▶ console_agent                            │                         │
+│ ▼ console_agent                              │                         │
 │ │  ● decide [ok] → author                    │                         │
 │ │  ● author [ok] → save                      │                         │
 │ │  ● save   [ok] → decide                    │                         │
-│ │  ● do_run ├ ▶ triage_csv …                 │                         │
+│ │  ● do_run ┬ ▼ triage_csv …                 │                         │
 ├──────────────────────────────────────────────┴─────────────────────────┤
 │ session tokens: 922+212 · provider deepseek · 20260717-104512-ab3f     │
 │ > _                                                                    │
@@ -29,8 +29,10 @@ mklang console                 # DeepSeek by default; --provider anthropic|opena
 ```
 
 Conversation on top, the live **activity tree** of the current turn beneath it
-(brain states under `▶ console_agent`, each commissioned run nested under the
-state that launched it, `call:` sub-runs by depth, fan-out branches as leaves).
+(brain states under `console_agent`; Textual draws a single expand toggle ▶/▼
+per expandable row — run labels are the machine name only). Each commissioned
+run nests under the state that launched it; `call:` sub-runs by depth; fan-out
+branches as leaves.
 State rows are **not** expandable unless they have content: a nested run and/or
 an output preview leaf. The token HUD and the input line sit below. `F2`
 toggles the inspector (last run's blackboard, trace, session facts); `ctrl+l`
@@ -159,9 +161,10 @@ traversal); running a machine whose states invoke host tools (including
 `search` if a machine uses it) asks consent once per tool set (remembered per
 session); provider keys stay in the host environment. The console cannot edit
 files outside the workspace, run shell commands, or touch git — it is an
-operational surface, not an IDE (ADR 0015). Generic bash/FS tools stay **out of
-core** (optional host plugins only). Full checklist:
-[Best practices](best-practices.md).
+operational surface, not an IDE (ADR 0015). Workspace FS is **class 2** (`.mk`
+authoring only); generic data FS / bash are **out of core** (host plugins only —
+[Best practices §13](best-practices.md)). Session `transcript.jsonl` is surface
+audit, not a substitute for host ops logging ([§12](best-practices.md)).
 
 ## For other clients
 

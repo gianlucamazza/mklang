@@ -12,6 +12,17 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Best practices §12–§13** — observability (trace vs live events vs process
+  logging) and filesystem taxonomy (host paths / workspace `.mk` / data tools /
+  no bash in core). Cross-links from console security and patterns.
+
+### Fixed
+
+- **Console activity tree double expand icon.** Run rows no longer prefix `▶ `
+  in the label — Textual Tree already draws the ▶/▼ toggle.
+
 ## [0.8.1] — 2026-07-17
 
 Package patch (language stays **0.3**). Console rendering safety, host wall-clock,

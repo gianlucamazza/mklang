@@ -174,7 +174,13 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **[maybe] External console client** — an OpenTUI/Ink-class front-end as a
   separate project speaking MCP; needs nothing new server-side (ADR 0019).
 - **[maybe] Interop** — LangGraph export/import.
-- **[maybe] Observability export** — OpenTelemetry spans from the trace.
+- **[maybe] Observability export** — OpenTelemetry spans from the trace
+  (projection of the run trace; process logging stays host-side — see
+  [best practices §12](./docs/best-practices.md)).
+- **[later] Process logging hygiene** — stdlib `logging` hierarchy +
+  `MKLANG_LOG_LEVEL` / CLI flag; never replace trace/events (BP §12).
+- **[later] FS data tools (plugins)** — class-3 read/write under a root with
+  ADR 0020 stub default; not console brain defaults; not language faces (BP §13).
 
 ## Near-term after 0.8.1
 
