@@ -47,6 +47,10 @@ nav:
       - MCP surface completion: adr/0013-mcp-surface-completion.md
       - Structured list outputs: adr/0014-structured-list-outputs.md
       - Console surface: adr/0015-console-surface.md
+      - Host web search tool: adr/0016-host-web-search-tool.md
+      - Context content management: adr/0017-context-content-management.md
+      - Output truncation anti-cutoff: adr/0018-output-truncation-anti-cutoff.md
+      - MCP live events: adr/0019-mcp-live-events.md
   - Roadmap: ROADMAP.md
   - Changelog: CHANGELOG.md
   - Contributing: CONTRIBUTING.md

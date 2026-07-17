@@ -108,6 +108,15 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Integrations & extensions
 
+- **[next] Web search host tool** ([ADR 0016](./docs/adr/0016-host-web-search-tool.md)) —
+  structured `search` observations; offline stub default; opt-in backends
+  (`MKLANG_SEARCH_BACKEND=fake|tavily`); example `examples/research_web.mk`.
+- **[next] Context rendering budgets** ([ADR 0017](./docs/adr/0017-context-content-management.md)) —
+  traced judge CONTEXT truncation; machine compress patterns next; language
+  zones deferred.
+- **[next] Output anti-cutoff** ([ADR 0018](./docs/adr/0018-output-truncation-anti-cutoff.md)) —
+  `Produced.truncated` + trace annotation; `--on-truncate report|halt`; continue
+  stitching deferred.
 - **Shipped:** tool plugin registry (`mklang.tools` entry points) and hook plugins
   (`mklang.hooks`); builtins remain available offline.
 - **Shipped (0.4.0):** human-in-the-loop — `escalate` suspends (`--hitl`) and
@@ -135,5 +144,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   and tool-consent brokered through the input line, workspace-confined writes.
   **[next]** M2 (authoring loop, sessions, `--continue`) and M3 (slash
   commands, inspector, resume flows) per the ADR.
+- **Shipped:** live engine events on the MCP transport
+  ([ADR 0019](./docs/adr/0019-mcp-live-events.md)) — `run`/`resume` stream the
+  `on_event` sequence as `mklang.event` logging notifications; any MCP client
+  can render run progress without touching the engine.
+- **[maybe] External console client** — an OpenTUI/Ink-class front-end as a
+  separate project speaking MCP; needs nothing new server-side (ADR 0019).
 - **[maybe] Interop** — LangGraph export/import.
 - **[maybe] Observability export** — OpenTelemetry spans from the trace.

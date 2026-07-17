@@ -234,6 +234,34 @@ def test_durable_resume_of_cli_checkpoint(monkeypatch, store, tmp_path):
     assert done["status"] == "done"
 
 
+def test_live_events_stream_as_logging_notifications(monkeypatch):
+    """ADR 0016: a run's engine events arrive as `mklang.event` log notifications."""
+    from mcp.shared.memory import create_connected_server_and_client_session as connect
+
+    monkeypatch.setattr(srv, "_build_llm", lambda prov: echo_llm())
+    server = srv.create_server()
+    events = []
+
+    async def on_log(params):
+        if params.logger == "mklang.event":
+            events.append(json.loads(params.data))
+
+    async def drive():
+        async with connect(server._mcp_server, logging_callback=on_log) as client:
+            res = await client.call_tool("run", {"path": "std_cot", "inputs": {"task": "2+2?"}})
+            body = res.structuredContent or json.loads(res.content[0].text)
+            if "status" not in body and "result" in body:
+                body = body["result"]
+            assert body["status"] == "done"
+
+    asyncio.run(drive())
+    kinds = [e["type"] for e in events]
+    assert kinds[0] == "run-start"
+    assert "state-start" in kinds and "state-done" in kinds
+    done = next(e for e in events if e["type"] == "state-done")
+    assert done["machine"] == "std_cot" and done["state"] == "solve"
+
+
 def test_protocol_smoke_inmemory():
     from mcp.shared.memory import create_connected_server_and_client_session as connect
 
