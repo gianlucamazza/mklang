@@ -82,8 +82,23 @@ def is_length_stop(reason: str | None) -> bool:
         return False
     return reason.lower() in LENGTH_FINISH_REASONS
 
+
 # Transient HTTP statuses worth retrying (rate limits, gateway, overload).
 TRANSIENT_STATUS = (408, 409, 429, 500, 502, 503, 504)
+
+# Connection-layer failures carry no HTTP status, so TRANSIENT_STATUS can't
+# catch them; matched by class name because both SDKs are imported lazily.
+_CONNECTION_ERROR_NAMES = frozenset({"APIConnectionError", "APITimeoutError"})
+
+
+def is_connection_error(e: Exception) -> bool:
+    """True for SDK connection-layer failures (DNS, refused, reset, timeout).
+
+    Both the OpenAI and Anthropic SDKs raise ``APIConnectionError`` (with
+    ``APITimeoutError`` as a subclass) when the network is down. These are as
+    transient as a 503 — a dropped link usually comes back — so providers retry
+    them with the same backoff instead of halting the run on the first blip."""
+    return any(c.__name__ in _CONNECTION_ERROR_NAMES for c in type(e).__mro__)
 
 
 def parse_choice(text: str, n: int) -> tuple[int | None, str | None]:

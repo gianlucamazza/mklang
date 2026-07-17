@@ -10,6 +10,23 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.8.2`).
 
+## [Unreleased]
+
+### Added
+
+- **ADR 0021 (proposed)** — filesystem layout, config resolution order, and
+  local installation (XDG user/system dirs, `mklang init`, packaging).
+
+### Fixed
+
+- **Connection errors now retry.** Provider `_create` loops treated only HTTP
+  `TRANSIENT_STATUS` as retryable; SDK connection failures carry no
+  `status_code`, so a network blip halted the run with `provider-error` on the
+  first try. `is_connection_error` (matched by class name — the SDKs are
+  lazy-imported) classifies `APIConnectionError` / `APITimeoutError` as
+  transient with the same exponential backoff, for both the Anthropic and
+  OpenAI-compat adapters.
+
 ## [0.8.2] — 2026-07-17
 
 Package patch (language stays **0.3**). Documentation growth (best practices

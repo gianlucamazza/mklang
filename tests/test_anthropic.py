@@ -164,3 +164,35 @@ def test_judge_oversized_choice_raises_not_clamped():
     llm = _adapter(text='{"choice": 9}')
     with pytest.raises(JudgeUnparseable):
         llm.judge("m", ["a", "b"], "out", {})
+
+
+def test_retries_connection_error_then_succeeds(monkeypatch):
+    """Network blips carry no status_code; they must retry like a 503."""
+
+    class APIConnectionError(Exception):
+        pass
+
+    def flaky(call, kwargs):
+        if call < 3:
+            raise APIConnectionError("Connection error.")
+        return _Msg()
+
+    monkeypatch.setattr("mklang.llm.anthropic.time.sleep", lambda *_: None)
+    llm = _adapter(side_effect=flaky)
+    p = llm.produce("claude-x", "sys", "hi")
+    assert p.text == "ok"
+    assert llm.client.messages.calls == 3
+
+
+def test_connection_error_exhausts_retries_to_provider_error(monkeypatch):
+    class APIConnectionError(Exception):
+        pass
+
+    def down(call, kwargs):
+        raise APIConnectionError("Connection error.")
+
+    monkeypatch.setattr("mklang.llm.anthropic.time.sleep", lambda *_: None)
+    llm = _adapter(side_effect=down)
+    with pytest.raises(ProviderError, match="Connection error"):
+        llm.produce("claude-x", "sys", "hi")
+    assert llm.client.messages.calls == 4  # initial call + max_retries

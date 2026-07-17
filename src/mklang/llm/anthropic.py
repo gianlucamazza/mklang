@@ -14,6 +14,7 @@ from .base import (
     JUDGE_SYSTEM,
     TRANSIENT_STATUS,
     Produced,
+    is_connection_error,
     is_length_stop,
     parse_choice,
 )
@@ -46,7 +47,8 @@ class AnthropicLLM:
                     raise RefusalError("the model declined this request") from e
                 status = getattr(e, "status_code", None)
                 msg = str(e).lower()
-                if status in TRANSIENT_STATUS and attempt < self.max_retries:
+                transient = status in TRANSIENT_STATUS or is_connection_error(e)
+                if transient and attempt < self.max_retries:
                     time.sleep(0.5 * 2**attempt)
                     attempt += 1
                     continue
