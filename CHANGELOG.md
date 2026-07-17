@@ -8,58 +8,34 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.6.0`).
+  `pyproject.toml` (currently `0.7.0`).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-17
+
+Package feature release (language stays **0.3**). Console becomes a full
+operational front door; host tools and runtime budgets close the agent loop.
+
 ### Added
 
-- **Console M2+M3** (ADR 0015). The brain authors machines (AUTHOR action:
-  write → validate → repair through the decide loop, workspace-confined);
-  persistent sessions under `~/.mklang/console/sessions/` with `--continue` /
-  `--session` (history, spend, tool consents, streaming transcript);
-  budget-exhausted turns become a confirm-or-park UI moment, `/resume`
-  finishes parked turns. Full UI: conversation pane + live activity tree
-  (nested commissioned runs, fan-out branches) + F2 inspector
-  (context/trace/session) + slash commands (`/machines /run /check /read
-  /budget /session`). Docs: `docs/console.md`.
-- **Live engine events on the MCP transport** (ADR 0019): `run`/`resume`
-  stream the `on_event` sequence as `mklang.event` logging notifications —
-  any MCP client renders run progress; external console clients need no
-  engine work.
-
-- **Output anti-cutoff (ADR 0018 Accepted).** `Produced` carries `truncated` /
-  `finish_reason`; adapters set them from length/max_tokens stops. Trace steps
-  and `state-done` events annotate `truncated`. Policy `report`|`halt` on CLI
-  (`--on-truncate`), MCP, console, and scripttest. Truncated `parse: list` →
-  `parse-list-truncated`. Auto-continue stitching deferred.
-
-- **Web search tool (ADR 0016 Accepted).** Builtin `search` returns a structured
-  JSON observation; offline stub by default. Opt-in backends via
-  `configure_search` / `MKLANG_SEARCH_BACKEND=fake|tavily`. Example + scenario
-  tests: `examples/research_web.mk`.
-
-- **Context management Layer 0–1 (ADR 0017 Accepted).** Judge CONTEXT head+tail
-  marker; produce-prompt per-value cap (`PROMPT_VALUE_CHARS` / `prompt_value_chars`);
-  console `history_for_brain` (prompt window, full audit kept); compress pattern
-  example `research_compress.mk`.
-
-- **Console surface, M1** (`mklang console`, ADR 0015 Accepted; extra
-  `mklang[console]`, Textual). Agent-first TUI whose brain is the bundled —
-  and `--agent`-swappable — `agent.mk` machine (decide → discover / run /
-  clarify / reply), with its hands as console-registered host tools. Live
-  state-by-state run tree via the new `engine.run(on_event=…)` observability
-  seam (thread-safe, observer-isolated, purely additive); HITL escalations and
-  tool-consent prompts brokered through the input line; authored machines
-  confined to the `--workspace` directory. Headless Pilot + scripted-LLM tests
-  keep the no-key CI story.
-
-- **LLM-assisted lint** (`mklang lint --llm`, ADR 0010 now Accepted): for every
-  state with two or more prose gates, synthesize K borderline outputs and ask
-  the real gate judge R times each; report instability (one output, different
-  gates) and overlap (two conditions claiming the same output) as advisory
-  `llm:` findings. Costs real tokens (opt-in); non-deterministic by design, so
-  findings are a signal — `--strict` ignores them and CI never runs them.
+- **Console M1–M3** (ADR 0015 Accepted). Agent-first Textual TUI
+  (`mklang[console]`) whose brain is the bundled, user-swappable `agent.mk`:
+  authoring loop (write → validate → repair), persistent sessions
+  (`--continue` / `--session`), budget-exhaustion park/`/resume`, live activity
+  tree, F2 inspector, slash commands. Docs: `docs/console.md`.
+- **Live engine events on the MCP transport** (ADR 0019): `run`/`resume` stream
+  `on_event` as `mklang.event` logging notifications.
+- **Web search tool** (ADR 0016 Accepted): structured JSON `search` observations;
+  offline stub by default; opt-in `fake`/`tavily` backends;
+  `examples/research_web.mk` + scenario tests.
+- **Output anti-cutoff** (ADR 0018 Accepted): `Produced.truncated` / `finish_reason`;
+  trace + events; `report`|`halt` on CLI (`--on-truncate`), MCP, console,
+  scripttest. Truncated `parse: list` → `parse-list-truncated`.
+- **Context management Layer 0–1** (ADR 0017 Accepted): judge CONTEXT head+tail
+  marker; produce-prompt per-value cap; console `history_for_brain`; compress
+  pattern `examples/research_compress.mk`.
+- **LLM-assisted lint** (`mklang lint --llm`, ADR 0010 Accepted): advisory only.
 
 ## [0.6.0] — 2026-07-17
 
