@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=../../../../schema/mklang.schema.json
+# std_self_consistency — sampled ensemble + majority vote (SPEC §4.7, §10)
+#
+# Flow: sample_answers (sample: 5, reason) → vote → {END | low_confidence → END}
+# Shows: fan-out sampling at the fast tier, a reasoning-tier reducer, and a
+# low-confidence escalation sink (mirrors examples/self_consistency.mk, domain-
+# free). Contract: set `task`; reads {{task}}, returns `answer`.
+
+mklang: "0.2"
+machine: std_self_consistency
+entry: sample_answers
+budget: 12 # sample charges 5 steps; happy path costs 6, escalation 7
+default_tier: balanced
+result: answer
+
+context:
+  task: "<the task>"
+
+states:
+  sample_answers:
+    structure: >
+      The output is one candidate answer to the task, stated plainly, with a
+      one-line justification.
+    prompt: |
+      You are branch {{index}} of an independent panel. Ignore what other
+      branches might say.
+      Answer the task independently, reasoning step by step:
+      {{task}}
+    reason: true # each branch's chain-of-thought is traced
+    sample: 5 # fan-out: 5 independent candidates → a list
+    tier: fast # high-volume branches — cheap tier, diversity from temperature + {{index}}
+    output: candidates
+    gates:
+      - when: otherwise
+        then: ok
+        to: vote
+
+  vote: # reducer (ordinary state) — collapses the list
+    structure: >
+      Reads {{candidates}}. The output is the single answer the majority
+      support, stated plainly.
+    prompt: |
+      Candidate answers:
+      {{candidates}}
+
+      Return the one answer most of them agree on. If there is no clear
+      majority, say so explicitly.
+    tier: reasoning
+    output: answer
+    gates:
+      - when: the candidates clearly lack a majority / consensus
+        escalate: true
+        to: low_confidence
+      - when: otherwise
+        then: ok
+        to: END
+
+  low_confidence: # escalation sink — degrade gracefully, never dead-end
+    structure: >
+      The output is the best-effort answer, explicitly flagged as low-confidence.
+    prompt: |
+      The candidates {{candidates}} lack consensus. Give the best-effort answer
+      to the task {{task}} and flag plainly that confidence is low.
+    tier: reasoning
+    output: answer
+    gates:
+      - when: otherwise
+        then: ok
+        to: END

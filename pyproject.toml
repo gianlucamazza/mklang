@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "0.5.4"
+version = "0.6.0"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,15 +33,19 @@ Changelog = "https://github.com/gianlucamazza/mklang/blob/main/CHANGELOG.md"
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.40"]
 dev = ["pytest>=8", "ruff>=0.6"]
+mcp = ["mcp>=1.10"]
 
 [project.scripts]
 mklang = "mklang.cli:main"
+mklang-mcp = "mklang.mcp.server:main"
 
-# Third parties register tools/hooks without patching core:
+# Third parties register tools/hooks/machines without patching core:
 #   [project.entry-points."mklang.tools"]
 #   my_tool = "mypkg.tools:my_tool"
 #   [project.entry-points."mklang.hooks"]
 #   my_hook = "mypkg.hooks:my_hook"
+#   [project.entry-points."mklang.machines"]      # a machine document (dict) or
+#   my_machine = "mypkg.machines:my_machine"      # a zero-arg factory returning one
 [project.entry-points."mklang.tools"]
 calc = "mklang.tools:calc"
 search = "mklang.tools:search"
@@ -67,6 +71,8 @@ packages = ["src/mklang"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/mklang/data/mklang.schema.json" = "mklang/data/mklang.schema.json"
+# data/stdlib/*.mk|*.test.yaml ride along with the package itself — hatchling
+# includes non-.py files under `packages`; forcing them here would duplicate.
 
 [tool.ruff]
 line-length = 100

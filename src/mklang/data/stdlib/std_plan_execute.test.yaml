@@ -1,0 +1,40 @@
+# Scenario tests for std_plan_execute.mk — run with:
+#   mklang test std_plan_execute.mk --script std_plan_execute.test.yaml
+#
+# plan is judged never (single otherwise gate); its produce must be a JSON
+# array (parse: list). execute fans out over the parsed steps → MAP-form
+# produce keyed on "step 0" / "step 1" (each appears only in its branch
+# prompt); combine's prompt alone contains "Assemble them".
+
+scenarios:
+  # Happy path: 2-step plan parsed to a real list, both steps executed,
+  # combine accepted (judge 0). Pins that context.steps is a LIST.
+  - name: plans-executes-combines
+    llm:
+      produce:
+        "ONLY the JSON array": '["research the options", "write the summary"]'
+        "step 0": "options researched"
+        "step 1": "summary written"
+        "Assemble them": "Options researched; summary written."
+      judge: [0]
+    expect:
+      status: done
+      result: "Options researched; summary written."
+      context:
+        steps: ["research the options", "write the summary"]
+        results: ["options researched", "summary written"]
+      trace:
+        - { state: plan, policy: ok, to: execute }
+        - { state: execute, policy: ok, to: combine }
+        - { state: combine, policy: ok, to: END }
+
+  # An unparseable plan halts cleanly at the plan state — the 0.3 parse
+  # contract: state-error, never a garbage deposit.
+  - name: unparseable-plan-halts
+    llm:
+      produce:
+        "ONLY the JSON array": "first do this, then do that"
+    expect:
+      status: halt
+      error_prefix: "state-error: parse-list"
+      at: plan

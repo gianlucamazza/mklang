@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=../../../../schema/mklang.schema.json
+# std_tot — tree-of-thought: propose k, select, deepen (SPEC §10: Tree-of-Thought)
+#
+# Flow: propose (sample: 3) → select → {finalize → END | loop back to propose}
+# Shows: {{index}}-driven branch diversity, a reasoning-tier select step that
+# carries the running best (plus what is still missing) forward under `best`,
+# and a budget-bounded refinement loop (research.mk-style loop-back gate: the
+# global budget forces termination — two full rounds fit).
+# Contract: set `task`; returns `answer`.
+
+mklang: "0.2"
+machine: std_tot
+entry: propose
+budget: 10 # one round = propose(3) + select(1); two rounds + finalize = 9
+default_tier: balanced
+result: answer
+
+context:
+  task: "<the task>"
+  best: "" # best candidate so far; empty on the first round
+
+states:
+  propose:
+    structure: >
+      The output is one complete candidate solution to the task, developed
+      along this branch's assigned angle.
+    prompt: |
+      Task: {{task}}
+      Best attempt so far (may be empty): {{best}}
+
+      You are exploring approach {{index}} of 3. Take a genuinely different
+      angle from the other approaches: approach 0 is the most direct route,
+      approach 1 reframes the problem, approach 2 stress-tests assumptions and
+      edge cases. If a best attempt exists, improve on it from your angle.
+    sample: 3
+    output: candidates
+    gates:
+      - when: otherwise
+        then: ok
+        to: select
+
+  select: # score/select reducer — the tree's frontier collapses to one node
+    structure: >
+      Reads {{task}}, {{candidates}} and {{best}}. The output is the strongest
+      solution (merged if that is strictly better) plus one final line
+      'Still missing: ...'.
+    prompt: |
+      Candidates this round:
+      {{candidates}}
+
+      Previous best: {{best}}
+
+      Select the strongest solution to the task {{task}}, merging candidates
+      only if the merge is strictly better, and end with exactly one line:
+      'Still missing: ...' (or 'Still missing: nothing').
+    tier: reasoning
+    reason: true
+    output: best # carried into the next propose round and into finalize
+    gates:
+      - when: the selected solution fully and correctly solves the task
+        then: ok
+        to: finalize
+      - when: something is still missing and another round of proposals could plausibly close the gap
+        then: ok
+        to: propose # deepen the tree; the global budget bounds the depth
+      - when: otherwise
+        then: ok
+        to: finalize # no productive round left — finish with the best we have
+
+  finalize:
+    structure: >
+      Reads {{task}} and {{best}}. The output is the final answer only, cleaned
+      of process notes.
+    prompt: |
+      Rewrite the best solution below as the definitive answer to the task
+      {{task}}, dropping the 'Still missing' line and any process remarks:
+      {{best}}
+    tier: reasoning
+    output: answer
+    gates:
+      - when: otherwise
+        then: ok
+        to: END

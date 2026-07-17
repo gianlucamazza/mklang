@@ -1,0 +1,37 @@
+# Scenario tests for std_cascade.mk — run with:
+#   mklang test std_cascade.mk --script std_cascade.test.yaml
+#
+# draft's judge batch is the single prose condition ("fully and correctly
+# answers"); `otherwise` never enters a batch. Judge 0 = condition true → END.
+# An OUT-OF-RANGE pick (1) is the supported way to script "condition false":
+# the engine soft-falls back to the `otherwise` gate, which escalates to the
+# reasoning-tier state. The path is linear, so `produce` uses the list form.
+
+scenarios:
+  # Happy path: the fast draft is confident and correct — one step, no
+  # reasoning-tier spend.
+  - name: fast-draft-suffices
+    llm:
+      produce: ["4. Confidence: high - simple arithmetic."]
+      judge: [0]
+    expect:
+      status: done
+      result: "4. Confidence: high - simple arithmetic."
+      trace:
+        - { state: draft, policy: ok, to: END }
+
+  # Cascade escalation: the draft is shaky (judge 1 → out of range → fallback
+  # to otherwise → escalate); deliberate redoes it at the reasoning tier and
+  # its output replaces `answer`.
+  - name: low-confidence-escalates
+    llm:
+      produce:
+        - "Maybe 12? Confidence: low - unsure about the edge case."
+        - "It is 14: careful case analysis shows the boundary is inclusive."
+      judge: [1]
+    expect:
+      status: done
+      result: "It is 14: careful case analysis shows the boundary is inclusive."
+      trace:
+        - { state: draft, policy: escalate, to: deliberate }
+        - { state: deliberate, policy: ok, to: END }

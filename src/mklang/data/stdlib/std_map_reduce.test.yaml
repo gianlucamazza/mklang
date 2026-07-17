@@ -1,0 +1,42 @@
+# Scenario tests for std_map_reduce.mk — run with:
+#   mklang test std_map_reduce.mk --script std_map_reduce.test.yaml
+#
+# Scenarios run on the machine's context defaults (the harness cannot override
+# context), so the map fans out over the two placeholder items — MAP-form
+# produce keyed on "<item 1>" / "<item 2>" (each appears only in its branch
+# prompt) and "Combine them as instructed" (reduce only). Scripted per-item
+# results avoid the map keys so the reduce prompt cannot mis-match.
+
+scenarios:
+  # Happy path: both items mapped (aligned list asserted), reduce accepted.
+  - name: maps-then-reduces
+    llm:
+      produce:
+        "<item 1>": "R1"
+        "<item 2>": "R2"
+        "Combine them as instructed": "R1 and R2, combined."
+      judge: [0]
+    expect:
+      status: done
+      result: "R1 and R2, combined."
+      context:
+        results: ["R1", "R2"]
+      trace:
+        - { state: map, policy: ok, to: reduce }
+        - { state: reduce, policy: ok, to: END }
+
+  # Coverage repair: the first reduction drops a result (judge 1 → repair with
+  # feedback), the rerun accounts for everything (judge 0).
+  - name: reduce-repairs-once
+    llm:
+      produce:
+        "<item 1>": "R1"
+        "<item 2>": "R2"
+        "Combine them as instructed": "R1 and R2, combined."
+      judge: [1, 0]
+    expect:
+      status: done
+      trace:
+        - { state: map, policy: ok, to: reduce }
+        - { state: reduce, policy: repair, to: reduce }
+        - { state: reduce, policy: ok, to: END }

@@ -1,0 +1,51 @@
+# Scenario tests for std_self_consistency.mk — run with:
+#   mklang test std_self_consistency.mk --script std_self_consistency.test.yaml
+#
+# The sample fan-out runs branches concurrently, so `produce` uses the MAP form:
+# each branch prompt contains its own "branch {{index}}" token. `vote` is the
+# only judged state; its batch is the single prose condition ("clearly lack a
+# majority") — `otherwise` is never part of a judge batch. Scripting an
+# OUT-OF-RANGE index (1 for a 1-condition batch) is the supported way to say
+# "that condition is false": the engine soft-falls back to `otherwise`
+# (trace annotation judge_fallback, ignored by the skeleton matcher).
+
+scenarios:
+  # Happy path: 4/5 branches agree; vote's lone prose condition is false
+  # (judge 1 = out of range → fall through to otherwise → END).
+  - name: majority-wins
+    llm:
+      produce:
+        "branch 0": "Paris. Capital of France."
+        "branch 1": "Paris. It is the seat of government."
+        "branch 2": "Paris. Well-known fact."
+        "branch 3": "Paris. Verified."
+        "branch 4": "Lyon. Second city mixup."
+        "most of them agree on": "Paris"
+      judge: [1]
+    expect:
+      status: done
+      result: "Paris"
+      trace:
+        - { state: sample_answers, policy: ok, to: vote }
+        - { state: vote, policy: ok, to: END }
+
+  # Escape hatch: five different answers → vote's condition is TRUE (judge 0)
+  # → escalate to the low_confidence sink, which flags and finishes.
+  - name: no-consensus-escalates
+    llm:
+      produce:
+        "branch 0": "Option A."
+        "branch 1": "Option B."
+        "branch 2": "Option C."
+        "branch 3": "Option D."
+        "branch 4": "Option E."
+        "most of them agree on": "No clear majority: the candidates all differ."
+        "flag plainly that confidence is low": "Best effort: Option A. Confidence is LOW - the panel did not agree."
+      judge: [0]
+    expect:
+      status: done
+      result: "Best effort: Option A. Confidence is LOW - the panel did not agree."
+      trace:
+        - { state: sample_answers, policy: ok, to: vote }
+        - { state: vote, policy: escalate, to: low_confidence }
+        - { state: low_confidence, policy: ok, to: END }

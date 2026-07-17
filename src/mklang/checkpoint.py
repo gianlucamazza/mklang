@@ -66,8 +66,13 @@ def make_frame(
     }
 
 
-def file_sha256(path: str | Path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def file_sha256(path: str | Path) -> str | None:
+    """None when `path` is not a file — a run-by-name machine (bundled stdlib)
+    has no file to pin; its integrity is versioned with the package instead."""
+    p = Path(path)
+    if not p.is_file():
+        return None
+    return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
 def save_checkpoint(
@@ -78,7 +83,10 @@ def save_checkpoint(
     frames: list[dict],
     cost_budget: int | None,
     hitl: bool = False,
+    machine_source: str | None = None,
 ) -> None:
+    """`machine_source` carries the inline `.mk` text for machines that have no
+    file (MCP inline commissions), so a cross-process resume can rebuild them."""
     from . import __version__  # runtime import: __init__ imports engine imports this module
 
     envelope = {
@@ -93,6 +101,8 @@ def save_checkpoint(
         "hitl": hitl,
         "frames": frames,
     }
+    if machine_source is not None:
+        envelope["machine_source"] = machine_source
     _write_private(path, json.dumps(envelope, ensure_ascii=False, indent=2))
 
 
@@ -109,4 +119,6 @@ def load_checkpoint(path: str | Path) -> dict:
 
 
 def verify_hash(ck: dict, machine_path: str | Path) -> bool:
+    if ck["machine_sha256"] is None:  # run-by-name checkpoint: nothing to pin
+        return True
     return file_sha256(machine_path) == ck["machine_sha256"]

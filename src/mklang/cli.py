@@ -7,11 +7,11 @@ import json
 import sys
 from pathlib import Path
 
+from . import host
 from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
-from .config import load_provider
 from .engine import run
-from .loader import check_tiers, load_machine, semantic_check
-from .registry import load_registry
+from .loader import load_machine, semantic_check
+from .registry import base_registry, load_registry
 
 
 def _build_llm(prov):
@@ -31,72 +31,35 @@ def _coerce(value: str):
 def _apply_sets(ctx: dict, sets: list[str]) -> dict:
     for kv in sets or []:
         key, value = kv.split("=", 1)
-        cur = ctx
-        parts = key.split(".")
-        for p in parts[:-1]:
-            nxt = cur.get(p)
-            if not isinstance(nxt, dict):
-                nxt = {}
-                cur[p] = nxt
-            cur = nxt
-        cur[parts[-1]] = _coerce(value)
+        host.set_path(ctx, key, _coerce(value))
     return ctx
 
 
 def _prepare(args, machine_path: str):
     """Shared run/resume setup. Returns (prov, llm, registry, machine, tools, hooks) or exit code."""
-    prov = load_provider(args.config, args.provider)
-    if not prov.api_key and prov.name != "local":
-        print(f"# warning: no API key for provider '{prov.name}' — set it in .env", file=sys.stderr)
-    llm = _build_llm(prov)
-    registry = load_registry(Path(machine_path).parent, validate=False)
     try:
-        machine = load_machine(machine_path)
-    except Exception as e:  # noqa: BLE001 — surface load/validation failure cleanly
-        print(f"{machine_path}: ERROR: {getattr(e, 'message', str(e))}", file=sys.stderr)
+        p = host.prepare_path(
+            args.config,
+            args.provider,
+            machine_path,
+            strict=getattr(args, "strict", False),
+            build_llm=_build_llm,
+        )
+    except host.PrepareError as err:
+        for w in err.warnings:
+            print(f"# warning: {w}", file=sys.stderr)
+        label = "ERROR" if err.kind == "load" else "error"
+        for e in err.errors:
+            print(f"{machine_path}: {label}: {e}", file=sys.stderr)
         return 2
-    registry[machine.name] = machine
-    errors, warnings = semantic_check(machine, registry, strict=getattr(args, "strict", False))
-    errors.extend(check_tiers(machine, prov.tiers))
-    for w in warnings:
+    for w in p.warnings:
         print(f"# warning: {w}", file=sys.stderr)
-    if errors:
-        for e in errors:
-            print(f"{machine_path}: error: {e}", file=sys.stderr)
-        return 2
-    from .hooks import load_hook_registry
-    from .tools import load_tool_registry
-
-    tools = load_tool_registry()
-    hooks = load_hook_registry()
-    for sid, s in machine.states.items():
-        if s.kind == "tool" and s.tool not in tools:
-            print(
-                f"# warning: state '{sid}' uses tool '{s.tool}' not in the registry "
-                f"{sorted(tools)} — the run halts if it is reached",
-                file=sys.stderr,
-            )
-        for g in s.gates:
-            if g.hook and g.hook not in hooks:
-                print(
-                    f"# warning: state '{sid}' uses hook '{g.hook}' not in the registry "
-                    f"{sorted(hooks)} — the run halts if it is reached",
-                    file=sys.stderr,
-                )
-    return prov, llm, registry, machine, tools, hooks
+    return p.prov, p.llm, p.registry, p.machine, p.tools, p.hooks
 
 
 def _emit(res, checkpoint_path, machine, machine_path, cost_budget, hitl=False) -> int:
     """Print the result JSON; write a checkpoint on suspension. Exit: 0 done, 3 suspended, 1 halt."""
-    out = {
-        "status": res.status,
-        "error": res.error,
-        "result": res.result,
-        "usage": res.usage,
-        "trace": res.trace,
-    }
-    if res.at is not None:
-        out["at"] = res.at
+    out = host.build_output(res)
     if res.status == "suspended":
         save_checkpoint(
             checkpoint_path, machine.name, machine_path, res.error, res.frames, cost_budget, hitl
@@ -203,10 +166,10 @@ def cmd_lint(args) -> int:
     ok = True
     findings_total = 0
     for path in args.machines:
-        registry = load_registry(Path(path).parent, validate=False)
+        registry = {**base_registry(), **load_registry(Path(path).parent, validate=False)}
         try:
             machine = load_machine(path)
-        except Exception as e:  # noqa: BLE001 — surface any load/validation failure
+        except Exception as e:  # surface any load/validation failure
             print(f"{path}: SCHEMA ERROR: {getattr(e, 'message', str(e))}")
             ok = False
             continue
@@ -234,10 +197,10 @@ def cmd_test(args) -> int:
 
     from .scripttest import match_expectation, run_scenario
 
-    registry = load_registry(Path(args.machine).parent, validate=False)
+    registry = {**base_registry(), **load_registry(Path(args.machine).parent, validate=False)}
     try:
         machine = load_machine(args.machine)
-    except Exception as e:  # noqa: BLE001 — surface any load/validation failure
+    except Exception as e:  # surface any load/validation failure
         print(f"{args.machine}: SCHEMA ERROR: {getattr(e, 'message', str(e))}", file=sys.stderr)
         return 2
     registry[machine.name] = machine
@@ -262,7 +225,7 @@ def cmd_test(args) -> int:
             continue
         try:
             result = run_scenario(machine, registry, sc)
-        except Exception as e:  # noqa: BLE001 — a scenario error is a failure, not a crash
+        except Exception as e:  # a scenario error is a failure, not a crash
             print(f"FAIL {name}: scenario raised {type(e).__name__}: {e}")
             all_pass = False
             continue
@@ -279,13 +242,30 @@ def cmd_test(args) -> int:
     return 0 if all_pass else 1
 
 
+def cmd_machines(args) -> int:
+    """List commissionable machines as JSON: bundled stdlib, plugins, and the
+    .mk files of a project directory (which shadow same-named bundled ones)."""
+    from .registry import load_stdlib_registry
+
+    stdlib = load_stdlib_registry()
+    reg = base_registry()
+    sources = {name: ("stdlib" if name in stdlib else "plugin") for name in reg}
+    if args.dir:
+        for name, m in load_registry(args.dir, validate=False).items():
+            reg[name] = m
+            sources[name] = "local"
+    out = [host.describe_machine(reg[name], sources[name]) for name in sorted(reg)]
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_check(args) -> int:
     ok = True
     for path in args.machines:
-        registry = load_registry(Path(path).parent, validate=False)
+        registry = {**base_registry(), **load_registry(Path(path).parent, validate=False)}
         try:
             machine = load_machine(path)
-        except Exception as e:  # noqa: BLE001 — surface any load/validation failure
+        except Exception as e:  # surface any load/validation failure
             msg = getattr(e, "message", str(e))
             print(f"{path}: SCHEMA ERROR: {msg}")
             ok = False
@@ -370,6 +350,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     s.add_argument("--force", action="store_true", help="resume even if the machine file changed")
     s.set_defaults(fn=cmd_resume)
+
+    m = sub.add_parser("machines", help="list commissionable machines (stdlib, plugins) as JSON")
+    m.add_argument(
+        "--dir",
+        default=None,
+        metavar="DIR",
+        help="also list the .mk machines of a project directory",
+    )
+    m.set_defaults(fn=cmd_machines)
 
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
     c.add_argument("machines", nargs="+")

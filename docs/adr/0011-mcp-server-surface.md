@@ -1,6 +1,6 @@
 # ADR 0011 — An MCP server surface: machines as commissioned sub-tasks
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 
@@ -15,12 +15,12 @@ They cannot embed a Python library — they speak MCP. Today such a host would h
 re-implement the CLI's wiring or shell out to the `mklang` script, neither of which is a
 first-class seam.
 
-This matters because a `.mk` is exactly the kind of work an LLM host should *not* do by
+This matters because a `.mk` is exactly the kind of work an LLM host should _not_ do by
 free-form reasoning inside its own context: a verifiable finite-state machine with an
 explicit `budget`, typed gates, and an auditable `trace`. The disciplined move is for the
-host to **commission** the machine and receive a result *with provenance* — the same
+host to **commission** the machine and receive a result _with provenance_ — the same
 inversion this project already commits to for reasoning (ADR 0005, reasoning first-class):
-the host does not *execute* the machine, it *requests* it and gets back a `RunResult`
+the host does not _execute_ the machine, it _requests_ it and gets back a `RunResult`
 carrying `trace` + `usage`. MCP is the missing transport for that request.
 
 Neither the ROADMAP nor SPEC reserved an MCP surface before this decision — a new
@@ -46,7 +46,7 @@ implementation change, not this ADR.
   path**; `inputs` (a dict merged onto `machine.context`, the wire form of `--set`);
   optional `cost_budget`, provider/config selection, and `hitl` flag. Returns the `_emit`
   shape as MCP **structured output** — `trace` passes through as nested JSON unchanged.
-  - *Inline source has no parent directory*, so the server **builds the `registry` in
+  - _Inline source has no parent directory_, so the server **builds the `registry` in
     memory** from the single supplied machine. A `call:` to a target that was not supplied
     surfaces cleanly as a `semantic_check` error (the same error the CLI would raise), not
     a crash. Path-loaded machines keep parent-directory sibling discovery
@@ -55,9 +55,9 @@ implementation change, not this ADR.
 - **Tool `resume`.** Takes an **opaque checkpoint handle** (not a file path), optional
   injected values (the HITL reply, e.g. `human.reply`, written into the innermost frame's
   context per ADR 0008), and an optional new budget. Returns the same `_emit` shape.
-  - *Deliberate divergence from the CLI's checkpoint model.* The CLI writes a `0600`
+  - _Deliberate divergence from the CLI's checkpoint model._ The CLI writes a `0600`
     plaintext checkpoint file holding the full blackboard (SPEC §11, checkpoint at rest).
-  A remote MCP host
+    A remote MCP host
     should not touch the server's filesystem, so on suspension the `run` tool returns
     `status: "suspended"` plus an **opaque handle** and holds the `frames` in a
     process-scoped **in-memory session store** — never written to disk unless explicitly
@@ -65,7 +65,7 @@ implementation change, not this ADR.
     persistence fallback; cross-process durability is a later extension.
 
 - **Above the interpreter, not a new semantics.** The MCP server is just another host
-  sitting *above* `engine.run`. It introduces no new authority and no logic the CLI and
+  sitting _above_ `engine.run`. It introduces no new authority and no logic the CLI and
   library do not already have — it is transport. Provider API keys resolve **server-side
   from the environment** (as in `_prepare`), never over the wire. Implementation may
   promote `_prepare`/`_emit` (or thin public wrappers) so the MCP module does not

@@ -1,0 +1,42 @@
+# Scenario tests for std_debate.mk — run with:
+#   mklang test std_debate.mk --script std_debate.test.yaml
+#
+# argue fans out over the three default personas concurrently → MAP-form
+# produce keyed on the persona word rendered into each branch prompt
+# ("advocate" / "skeptic" / "pragmatist"); the synthesizer prompt alone
+# contains "Synthesize the debate". Scripted position texts avoid every map
+# key so the reducer prompt (which interpolates them) cannot mis-match.
+
+scenarios:
+  # Happy path: three positions in, synthesis accepted (judge 0).
+  - name: synthesis-accepted
+    llm:
+      produce:
+        "advocate": "Position 1: go ahead - the upside dominates."
+        "skeptic": "Position 2: the failure modes are underpriced."
+        "pragmatist": "Position 3: a small pilot is the workable middle."
+        "Synthesize the debate": "Run a small pilot first: it keeps the upside while bounding the risks the second position raised."
+      judge: [0]
+    expect:
+      status: done
+      result: "Run a small pilot first: it keeps the upside while bounding the risks the second position raised."
+      trace:
+        - { state: argue, policy: ok, to: synthesize }
+        - { state: synthesize, policy: ok, to: END }
+
+  # Coverage repair: the first synthesis ignores a perspective (judge 1 →
+  # repair, feedback appended), the rerun passes (judge 0).
+  - name: synthesis-repairs-once
+    llm:
+      produce:
+        "advocate": "Position 1: go ahead."
+        "skeptic": "Position 2: too risky."
+        "pragmatist": "Position 3: pilot it."
+        "Synthesize the debate": "Pilot it: bounded risk, kept upside, and the objection about risk is answered by the small scope."
+      judge: [1, 0]
+    expect:
+      status: done
+      trace:
+        - { state: argue, policy: ok, to: synthesize }
+        - { state: synthesize, policy: repair, to: synthesize }
+        - { state: synthesize, policy: ok, to: END }

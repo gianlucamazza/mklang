@@ -1,0 +1,50 @@
+# Scenario tests for std_refine.mk — run with:
+#   mklang test std_refine.mk --script std_refine.test.yaml
+#
+# draft's judge batch is [satisfies-criteria, falls-short] while the repair
+# gate has budget; once both repairs burn, the repair gate drops out of the
+# batch and the stuck judge pick (last list element repeats) lands out of
+# range → soft-fallback to `otherwise` → escalate. The path is linear, so
+# `produce` uses the list form.
+
+scenarios:
+  # Happy path: first draft satisfies the criteria.
+  - name: accepted-first-try
+    llm:
+      produce: ["v1"]
+      judge: [0]
+    expect:
+      status: done
+      result: "v1"
+      trace:
+        - { state: draft, policy: ok, to: END }
+
+  # The repair loop fires once (judge 1 = falls short), then the revision
+  # passes (judge 0).
+  - name: repair-fires-then-accepted
+    llm:
+      produce: ["v1", "v2"]
+      judge: [1, 0]
+    expect:
+      status: done
+      result: "v2"
+      trace:
+        - { state: draft, policy: repair, to: draft }
+        - { state: draft, policy: ok, to: END }
+
+  # Repairs exhaust: judge sticks on "falls short" (the last pick repeats).
+  # Visits 1–2 fire repair (budget 2 → 0); on visit 3 the repair gate is
+  # ineligible, the batch shrinks to [satisfies] and the stuck pick 1 is out
+  # of range → fallback to otherwise → escalate → flag_unresolved → END.
+  - name: repairs-exhausted-escalates
+    llm:
+      produce: ["v1", "v2", "v3", "v3 - note: may still miss 'complete'."]
+      judge: [1]
+    expect:
+      status: done
+      result: "v3 - note: may still miss 'complete'."
+      trace:
+        - { state: draft, policy: repair, to: draft }
+        - { state: draft, policy: repair, to: draft }
+        - { state: draft, policy: escalate, to: flag_unresolved }
+        - { state: flag_unresolved, policy: ok, to: END }

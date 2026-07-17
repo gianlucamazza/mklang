@@ -1,0 +1,28 @@
+# Scenario tests for std_cot.mk — run with:
+#   mklang test std_cot.mk --script std_cot.test.yaml
+#
+# The single state has only an `otherwise` gate, so no judge is ever called;
+# both scenarios pin the produce → deposit → END path.
+
+scenarios:
+  # Happy path: one produce, answer deposited, END.
+  - name: answers-in-one-step
+    llm:
+      produce: ["42"]
+    expect:
+      status: done
+      result: "42"
+      trace:
+        - { state: solve, policy: ok, to: END }
+
+  # reason: true wiring — the scripted LLM returns reasoning "thought" when the
+  # engine asks for a chain; asserting it in the trace pins that solve actually
+  # requests reasoning (a regression here would drop the audit trail silently).
+  - name: reasoning-is-traced
+    llm:
+      produce: ["7"]
+    expect:
+      status: done
+      result: "7"
+      trace:
+        - { state: solve, reasoning: "thought", policy: ok, to: END }

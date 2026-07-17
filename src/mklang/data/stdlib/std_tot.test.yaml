@@ -1,0 +1,48 @@
+# Scenario tests for std_tot.mk — run with:
+#   mklang test std_tot.mk --script std_tot.test.yaml
+#
+# propose fans out 3 concurrent branches → MAP-form produce keyed on the
+# per-branch "approach {{index}} of 3" token. select is the only judged state;
+# its batch is [solves-fully, another-round-could-help]. finalize's prompt
+# carries the distinctive "definitive answer" token.
+
+scenarios:
+  # Happy path: the first round's best is accepted (judge 0) and finalized.
+  - name: accepted-first-round
+    llm:
+      produce:
+        "approach 0": "Route A: direct solution."
+        "approach 1": "Route B: reframed solution."
+        "approach 2": "Route C: edge-case-driven solution."
+        "Select the strongest": "Route A refined. Still missing: nothing."
+        "definitive answer": "Route A, final form."
+      judge: [0]
+    expect:
+      status: done
+      result: "Route A, final form."
+      trace:
+        - { state: propose, policy: ok, to: select }
+        - { state: select, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
+
+  # The loop: round 1's select asks for another round (judge 1 → back to
+  # propose, which now sees the carried `best`); round 2's select accepts
+  # (judge 0). Two full rounds + finalize = 9 steps, inside budget 10.
+  - name: loops-once-then-accepts
+    llm:
+      produce:
+        "approach 0": "Route A: direct solution."
+        "approach 1": "Route B: reframed solution."
+        "approach 2": "Route C: edge-case-driven solution."
+        "Select the strongest": "Route A refined. Still missing: nothing."
+        "definitive answer": "Route A, final form."
+      judge: [1, 0]
+    expect:
+      status: done
+      result: "Route A, final form."
+      trace:
+        - { state: propose, policy: ok, to: select }
+        - { state: select, policy: ok, to: propose }
+        - { state: propose, policy: ok, to: select }
+        - { state: select, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
