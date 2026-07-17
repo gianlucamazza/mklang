@@ -41,6 +41,7 @@ find site-src -maxdepth 2 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./config/|($GH/blob/main/config/|g" \
 	-e "s|(\./scripts/|($GH/blob/main/scripts/|g" \
 	-e "s|(\.\./scripts/|($GH/blob/main/scripts/|g" \
+	-e "s|(\./src/mklang/|($GH/blob/main/src/mklang/|g" \
 	-e "s|(\./src/mklang)|($GH/tree/main/src/mklang)|g" \
 	-e "s|(\./schema/|($GH/blob/main/schema/|g" \
 	-e "s|(\.\./schema/|($GH/blob/main/schema/|g" \
