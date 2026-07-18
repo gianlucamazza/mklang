@@ -15,7 +15,7 @@ optdepends=('python-textual: mklang console TUI'
             'python-argcomplete: shell completions')
 backup=(etc/mklang/runtime.yaml)
 source=("https://files.pythonhosted.org/packages/source/m/mklang/mklang-$pkgver.tar.gz")
-sha256sums=('40f8c99bd739442821022d727ee4c0b8d88649c726806b3b952a803ff186e341')
+sha256sums=('45a832c1f7da026d03865caf9d78e5245496c35739ff81ef37fa8411f624b3d9')
 
 build() {
   cd "mklang-$pkgver"
