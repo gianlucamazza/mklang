@@ -326,7 +326,7 @@ link here instead of maintaining a separate path policy.
 
 New console sessions always use
 `$XDG_STATE_HOME/mklang/console/sessions/<id>/`. The legacy
-`~/.mklang/console/sessions/` directory is read only as a migration fallback.
+`~/.mklang/console/sessions/` directory is read-only as a migration fallback.
 `mklang init --user` creates these roots and seeds the user `machines/` with a
 commented `hello.mk` sample plus its `hello.test.yaml` scenario (keyless first
 run via `mklang test`).
