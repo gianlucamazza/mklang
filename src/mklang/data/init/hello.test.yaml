@@ -1,0 +1,31 @@
+# Scenario tests for hello.mk — run with:
+#   mklang test machines/hello.mk --script machines/hello.test.yaml
+#
+# The LLM is scripted (no API key, fully deterministic): `produce` feeds the
+# state outputs in order, `judge` picks which prose gate fires (0 = "addresses
+# the task", 1 = "misses or only partially addresses").
+
+scenarios:
+  # Happy path: the first answer is accepted.
+  - name: accepted-first-try
+    llm:
+      produce: ["A state machine is a model of states and transitions."]
+      judge: [0]
+    expect:
+      status: done
+      result: "A state machine is a model of states and transitions."
+      trace:
+        - { state: respond, policy: ok, to: END }
+
+  # The repair loop fires once (judge 1 = falls short), then the revision
+  # passes (judge 0).
+  - name: repair-fires-then-accepted
+    llm:
+      produce: ["too vague", "A state machine is a model of states and transitions."]
+      judge: [1, 0]
+    expect:
+      status: done
+      result: "A state machine is a model of states and transitions."
+      trace:
+        - { state: respond, policy: repair, to: respond }
+        - { state: respond, policy: ok, to: END }

@@ -80,6 +80,22 @@ def bundled_env_example() -> Path:
     return Path(__file__).resolve().parents[2] / ".env.example"
 
 
+def bundled_sample_machine() -> Path:
+    """The hello-world machine `mklang init` scaffolds into machines/."""
+    packaged = files("mklang").joinpath("data/init/hello.mk")
+    if packaged.is_file():
+        return Path(str(packaged))
+    raise FileNotFoundError("the bundled sample machine is missing from this installation")
+
+
+def bundled_sample_test() -> Path:
+    """The scripted scenarios for the scaffolded sample machine (keyless first run)."""
+    packaged = files("mklang").joinpath("data/init/hello.test.yaml")
+    if packaged.is_file():
+        return Path(str(packaged))
+    raise FileNotFoundError("the bundled sample test script is missing from this installation")
+
+
 def resolve_config(explicit: str | Path | None = None, *, cwd: Path | None = None) -> Path:
     """Resolve runtime config using ADR 0021's stable precedence order."""
     if explicit:

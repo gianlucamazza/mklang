@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/gianlucamazza/mklang/main/schema/mklang.schema.json
+# hello — your first machine, scaffolded by `mklang init`.
+#
+# Flow: respond → {END | repair(1) → respond | otherwise → END}
+# Shows: a generative state whose exit is decided by an LLM-judged prose gate,
+# with a bounded repair loop and a guaranteed exit (the `otherwise` fallback
+# accepts the best attempt once the repair budget is spent).
+#
+# Try it without any API key (scripted LLM):
+#   mklang test machines/hello.mk --script machines/hello.test.yaml
+# Run it for real (needs a provider key in .env):
+#   mklang run machines/hello.mk --set task="explain what a state machine is"
+# Or open the console TUI — where mklang lives — and ask it to run hello:
+#   mklang console
+
+mklang: "0.2"
+machine: hello
+entry: respond
+budget: 4 # initial visit + 1 repair, with headroom
+default_tier: balanced
+result: answer
+
+context:
+  task: "<the task>"
+
+states:
+  respond:
+    structure: >
+      Reads {{task}}. The output is a short, direct answer to the task.
+    prompt: |
+      Task: {{task}}
+
+      Answer briefly and directly.
+    output: answer
+    gates:
+      - when: the answer addresses the task
+        then: ok
+        to: END
+      - when: the answer misses or only partially addresses the task
+        repair: 1 # one retry with the failed condition as feedback
+        to: respond
+      - when: otherwise # repair spent or judge undecided — accept the best attempt
+        then: ok
+        to: END

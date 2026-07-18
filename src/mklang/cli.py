@@ -1,3 +1,4 @@
+# PYTHON_ARGCOMPLETE_OK
 """`mklang` command-line interface: run and check machines."""
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import host
+from . import __version__, host
 from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
 from .engine import run
 from .loader import load_machine, semantic_check
@@ -244,6 +245,9 @@ def cmd_lint(args) -> int:
         from .config import load_provider
 
         prov = load_provider(args.config, args.provider)
+        missing = host.missing_key_message(prov)
+        if missing:
+            return _input_error(args, missing)
         llm = _build_llm(prov)
         print(
             f"# --llm probe: provider={prov.name} · advisory only, non-deterministic "
@@ -318,9 +322,7 @@ def cmd_test(args) -> int:
     try:
         machine = load_machine(args.machine)
     except Exception as e:  # surface any load/validation failure
-        return _input_error(
-            args, f"{args.machine}: schema error: {getattr(e, 'message', str(e))}"
-        )
+        return _input_error(args, f"{args.machine}: schema error: {getattr(e, 'message', str(e))}")
     registry[machine.name] = machine
 
     try:
@@ -395,7 +397,14 @@ def cmd_machines(args) -> int:
 
 def cmd_init(args) -> int:
     """Scaffold a project or user host without overwriting existing files."""
-    from .paths import bundled_config, bundled_config_schema, bundled_env_example, host_paths
+    from .paths import (
+        bundled_config,
+        bundled_config_schema,
+        bundled_env_example,
+        bundled_sample_machine,
+        bundled_sample_test,
+        host_paths,
+    )
 
     if args.user:
         root = host_paths().config
@@ -413,7 +422,12 @@ def cmd_init(args) -> int:
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
             created.append(str(directory))
-    templates = [(bundled_config(), config_target), (bundled_env_example(), env_target)]
+    templates = [
+        (bundled_config(), config_target),
+        (bundled_env_example(), env_target),
+        (bundled_sample_machine(), machines / "hello.mk"),
+        (bundled_sample_test(), machines / "hello.test.yaml"),
+    ]
     if not args.user:
         templates.append((bundled_config_schema(), config_target.parent / "runtime.schema.json"))
     for source, target in templates:
@@ -442,6 +456,13 @@ def cmd_console(args) -> int:
             "the console needs the `textual` package — install with: pip install 'mklang[console]'",
             file=sys.stderr,
         )
+        return 2
+    from .config import load_provider
+
+    missing = host.missing_key_message(load_provider(args.config, args.provider))
+    if missing:
+        # Fail before the TUI launches; otherwise the brain dies on its first turn.
+        print(missing, file=sys.stderr)
         return 2
     return console_main(
         args.config,
@@ -485,6 +506,22 @@ def cmd_check(args) -> int:
     return 0 if ok else 1
 
 
+def _getting_started() -> str:
+    """The bare-`mklang` nudge: a short map for a first-time user."""
+    return (
+        f"mklang {__version__} — declarative LLM state machines.\n"
+        "\n"
+        "Get started:\n"
+        "  mklang init          scaffold config, .env, and a sample machine\n"
+        "  mklang test machines/hello.mk --script machines/hello.test.yaml\n"
+        "                       run the sample's scripted scenarios (no API key)\n"
+        '  mklang run machines/hello.mk --set task="say hello"\n'
+        "  mklang console       interactive TUI (pip install 'mklang[console]')\n"
+        "\n"
+        "Run `mklang --help` for all commands."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     formatter = argparse.RawDescriptionHelpFormatter
     ap = argparse.ArgumentParser(
@@ -493,13 +530,14 @@ def main(argv: list[str] | None = None) -> int:
         epilog=(
             "Typical workflow:\n"
             "  mklang init\n"
-            "  mklang check machines/example.mk\n"
-            "  mklang lint --strict machines/example.mk\n"
-            "  mklang run machines/example.mk --set task=hello"
+            "  mklang test machines/hello.mk --script machines/hello.test.yaml\n"
+            "  mklang lint --strict machines/hello.mk\n"
+            "  mklang run machines/hello.mk --set task=hello"
         ),
         formatter_class=formatter,
     )
-    sub = ap.add_subparsers(dest="cmd", required=True)
+    ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    sub = ap.add_subparsers(dest="cmd", required=False)
 
     def presentation_args(parser, *, formats=("auto", "text", "json")):
         parser.add_argument(
@@ -695,7 +733,17 @@ def main(argv: list[str] | None = None) -> int:
     presentation_args(t)
     t.set_defaults(fn=cmd_test)
 
+    try:
+        import argcomplete
+    except ImportError:
+        pass
+    else:
+        argcomplete.autocomplete(ap)
+
     args = ap.parse_args(argv)
+    if getattr(args, "fn", None) is None:
+        print(_getting_started())
+        return 0
     try:
         return args.fn(args)
     except KeyboardInterrupt:

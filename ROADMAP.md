@@ -196,9 +196,12 @@ language 0.4 without ADR + conformance):
 
 - **[next] `std_research`** — search → ground pattern as stdlib machine
   (discoverable from console/MCP); dogfood `today` + `tool: search`.
-- **Shipped (ADR 0021 phases 1–2):** XDG user/system dirs, config resolution,
-  `mklang init`, state migration, and layered machine discovery. **[next]** phase 3
-  packaging: pipx install script, PKGBUILD, and optional user service.
+- **Shipped (ADR 0021 phases 1–3):** XDG user/system dirs, config resolution,
+  `mklang init` (now seeding a `hello.mk` sample), state migration, layered
+  machine discovery, and phase 3 packaging: `scripts/install.sh` (pipx) and the
+  AUR recipe in `packaging/arch/`. The optional MCP user service is deferred —
+  the server is stdio-only, so there is nothing for a persistent unit to listen
+  on until a network transport lands.
 - **[later] `std_compress`** — promote `research_compress.mk` into stdlib.
 - **[later] `runtime.yaml` tools block** (ADR 0016) — declarative host bindings.
 - **[later] Truncation `continue` stitching** (ADR 0018).

@@ -21,7 +21,8 @@ from .registry import base_registry, load_registry
 
 
 class PrepareError(Exception):
-    """Preparation failed. `kind` is "load" (YAML/schema/IO) or "semantic"."""
+    """Preparation failed. `kind` is "load" (YAML/schema/IO), "semantic", or
+    "config" (host configuration, e.g. a missing provider API key)."""
 
     def __init__(
         self, errors: list[str], warnings: list[str] | None = None, kind: str = "semantic"
@@ -49,6 +50,21 @@ def _default_build_llm(prov):
     return build_llm(prov)
 
 
+def missing_key_message(prov: ProviderConfig) -> str | None:
+    """An actionable diagnostic when the provider has no API key; None when fine.
+
+    The `local` provider is exempt (local OpenAI-compatible servers rarely need
+    a key); for other keyless endpoints, set any placeholder value in .env.
+    """
+    if prov.api_key or prov.name == "local":
+        return None
+    var = prov.api_key_env or "its API key variable"
+    return (
+        f"no API key for provider '{prov.name}' — set {var} in .env "
+        f"(scaffolded by `mklang init`), or use --provider local"
+    )
+
+
 def _provider(
     config: str | None, provider: str | None, build_llm
 ) -> tuple[ProviderConfig, object, list[str]]:
@@ -56,11 +72,11 @@ def _provider(
         prov = load_provider(config, provider)
     except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
         raise PrepareError([str(exc)], kind="load") from exc
-    warnings = []
-    if not prov.api_key and prov.name != "local":
-        warnings.append(f"no API key for provider '{prov.name}' — set it in .env")
+    missing = missing_key_message(prov)
+    if missing:
+        raise PrepareError([missing], kind="config")
     llm = (build_llm or _default_build_llm)(prov)
-    return prov, llm, warnings
+    return prov, llm, []
 
 
 def _check(prov, machine, registry, strict, warnings: list[str]) -> tuple[dict, dict]:

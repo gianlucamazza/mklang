@@ -36,6 +36,7 @@ anthropic = ["anthropic>=0.40"]
 dev = ["pytest>=8", "ruff>=0.6"]
 mcp = ["mcp>=1.10"]
 console = ["textual>=0.80"]
+completions = ["argcomplete>=3"]
 
 [project.scripts]
 mklang = "mklang.cli:main"

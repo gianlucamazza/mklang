@@ -19,6 +19,12 @@ def _gate_divergence_module():
     return module
 
 
+def test_argcomplete_marker_is_in_the_entrypoint_head():
+    # argcomplete only scans the first 1024 bytes of the console-script module.
+    cli_path = ROOT / "src" / "mklang" / "cli.py"
+    assert b"PYTHON_ARGCOMPLETE_OK" in cli_path.read_bytes()[:1024]
+
+
 def test_package_versions_are_synchronized():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert project["project"]["version"] == mklang.__version__

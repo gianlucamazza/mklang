@@ -1,6 +1,6 @@
 # ADR 0021 — Filesystem layout, config resolution, and local installation
 
-Status: Accepted (phases 1–2 shipped; packaging phase 3 remains proposed)
+Status: Accepted (phases 1–3 shipped; the optional MCP user service is deferred)
 
 ## Context
 
@@ -48,8 +48,9 @@ host itself keeps config, machines, and state.
 
 6. **Packaging artifacts** (`packaging/`): a pipx-based `scripts/install.sh`
    (`pipx install 'mklang[console,mcp]'` + `mklang init --user`, with
-   `--uninstall`), an AUR `PKGBUILD` installing the system-level config and
-   machines, and an optional systemd _user_ unit for the MCP server.
+   `--uninstall`) and an AUR `PKGBUILD` installing the system-level config and
+   machines. The optional systemd _user_ unit for the MCP server is deferred
+   (see Rollout).
 
 ## Consequences
 
@@ -65,5 +66,9 @@ host itself keeps config, machines, and state.
 ## Rollout
 
 Phases 1–2 shipped: `paths.py`, config resolution, state migration,
-`mklang init`, machine search path, and discovery source labels. Phase 3 remains:
-install script, PKGBUILD, and systemd unit.
+`mklang init`, machine search path, and discovery source labels. Phase 3
+shipped: `scripts/install.sh` (pipx) and the AUR recipe in `packaging/arch/`.
+The optional systemd user unit is deferred: the MCP server is stdio-only —
+clients spawn it per session, so a persistent service has nothing to listen
+on; it becomes meaningful once the server grows a network transport
+(e.g. streamable HTTP).

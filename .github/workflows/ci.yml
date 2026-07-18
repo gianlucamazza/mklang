@@ -26,12 +26,16 @@ jobs:
           uv run --with check-jsonschema
           check-jsonschema --default-filetype yaml
           --schemafile config/runtime.schema.json config/runtime.example.yaml
-      - name: Semantic check + static analysis on examples and stdlib
+      - name: Semantic check + static analysis on examples, stdlib, and init sample
         run: |
-          uv run mklang check examples/*.mk src/mklang/data/stdlib/*.mk
-          uv run mklang lint --strict examples/*.mk src/mklang/data/stdlib/*.mk
+          uv run mklang check examples/*.mk src/mklang/data/stdlib/*.mk src/mklang/data/init/*.mk
+          uv run mklang lint --strict examples/*.mk src/mklang/data/stdlib/*.mk src/mklang/data/init/*.mk
       - name: Deterministic scenario tests (scripted LLM — no API keys)
-        run: uv run mklang test examples/triage.mk --script examples/triage.test.yaml
+        run: |
+          uv run mklang test examples/triage.mk --script examples/triage.test.yaml
+          uv run mklang test src/mklang/data/init/hello.mk --script src/mklang/data/init/hello.test.yaml
+      - name: Shellcheck the install script
+        run: shellcheck scripts/install.sh
       - name: Build sdist + wheel
         run: uv build
 

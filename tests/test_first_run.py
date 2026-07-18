@@ -1,0 +1,110 @@
+"""First-run experience: --version, bare invocation, init scaffolding, key gate."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+import mklang
+from mklang import cli, host
+from mklang.config import ProviderConfig
+
+
+CONFIG = "config/runtime.example.yaml"
+
+
+def test_version_flag(capsys):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--version"])
+    assert exc.value.code == 0
+    assert f"mklang {mklang.__version__}" in capsys.readouterr().out
+
+
+def test_bare_invocation_is_a_nudge(capsys):
+    assert cli.main([]) == 0
+    out = capsys.readouterr().out
+    assert "mklang init" in out and "console" in out
+    assert "usage:" not in out
+
+
+def test_unknown_subcommand_still_exits_2(capsys):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["bogus"])
+    assert exc.value.code == 2
+
+
+def test_init_scaffolds_project_with_sample(tmp_path, capsys):
+    target = tmp_path / "project"
+    assert cli.main(["init", "--dir", str(target), "--format", "json"]) == 0
+    first = json.loads(capsys.readouterr().out)
+    names = {item["name"]: item["status"] for item in first["items"]}
+    assert names[str(target / "machines" / "hello.mk")] == "ok"
+    assert names[str(target / "machines" / "hello.test.yaml")] == "ok"
+    sample = (target / "machines" / "hello.mk").read_text(encoding="utf-8")
+
+    assert cli.main(["init", "--dir", str(target), "--format", "json"]) == 0
+    second = json.loads(capsys.readouterr().out)
+    names = {item["name"]: item["status"] for item in second["items"]}
+    assert names[str(target / "machines" / "hello.mk")] == "exists"
+    assert (target / "machines" / "hello.mk").read_text(encoding="utf-8") == sample
+
+
+def test_init_user_mode_scaffolds_sample(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    assert cli.main(["init", "--user", "--format", "json"]) == 0
+    capsys.readouterr()
+    assert (tmp_path / "data" / "mklang" / "machines" / "hello.mk").is_file()
+    assert (tmp_path / "data" / "mklang" / "machines" / "hello.test.yaml").is_file()
+
+
+def test_init_sample_passes_its_own_scenarios(tmp_path, capsys):
+    target = tmp_path / "project"
+    assert cli.main(["init", "--dir", str(target)]) == 0
+    capsys.readouterr()
+    machine = str(target / "machines" / "hello.mk")
+    script = str(target / "machines" / "hello.test.yaml")
+    assert cli.main(["test", machine, "--script", script, "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True and payload["summary"]["failed"] == 0
+
+
+def _no_key(monkeypatch, tmp_path):
+    """A cwd with no .env and no key in the environment."""
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.chdir(tmp_path)
+
+
+def test_missing_key_fails_fast(tmp_path, monkeypatch, capsys):
+    _no_key(monkeypatch, tmp_path)
+    from mklang.paths import bundled_config
+
+    rc = cli.main(["run", "std_cot", "--config", str(bundled_config()), "--format", "json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 2 and payload["ok"] is False
+    diag = payload["diagnostics"][0]
+    assert diag["code"] == "prepare-config"
+    assert "DEEPSEEK_API_KEY" in diag["message"] and ".env" in diag["message"]
+
+
+def test_local_provider_is_exempt_from_the_key_gate():
+    prov = ProviderConfig(
+        name="local", tiers={"fast": "m"}, api_key="", api_key_env="LOCAL_API_KEY"
+    )
+    assert host.missing_key_message(prov) is None
+    keyed = ProviderConfig(name="openai", tiers={"fast": "m"}, api_key="sk-x")
+    assert host.missing_key_message(keyed) is None
+
+
+def test_console_missing_key_fails_fast(tmp_path, monkeypatch, capsys):
+    pytest.importorskip("textual")
+    _no_key(monkeypatch, tmp_path)
+    from mklang.paths import bundled_config
+
+    rc = cli.main(["console", "--config", str(bundled_config())])
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "DEEPSEEK_API_KEY" in captured.err
+    assert "Traceback" not in captured.out + captured.err
