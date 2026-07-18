@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Protocol
 
@@ -138,12 +139,23 @@ class LocalFSBackend:
         self.max_read_bytes = max_read_bytes
         self.max_write_bytes = max_write_bytes
 
+    def _confined(self, candidate: Path) -> bool:
+        """True when a RESOLVED path stays in the workspace and hits no dotfile.
+
+        The lexical checks in `_normalize_rel` gate the requested path; this
+        gates what it actually points at, so a visible symlink cannot smuggle
+        in `.env` or a target outside the root.
+        """
+        if not candidate.is_relative_to(self.root):
+            return False
+        return not any(part.startswith(".") for part in candidate.relative_to(self.root).parts)
+
     def _resolve(self, rel: str, *, allow_empty: bool = False) -> tuple[str, Path]:
         norm = _normalize_rel(rel, allow_empty=allow_empty)
         if not self.root.is_dir():
             raise FSError(f"workspace root is not a directory: {self.root}")
         candidate = (self.root / norm).resolve() if norm else self.root
-        if not candidate.is_relative_to(self.root):
+        if not self._confined(candidate):
             raise FSError(f"path escapes the workspace: {rel!r}")
         return norm, candidate
 
@@ -153,7 +165,7 @@ class LocalFSBackend:
             raise FSError(f"no such directory: {rel!r}")
         entries = []
         for child in sorted(target.iterdir(), key=lambda p: p.name):
-            if child.name.startswith("."):
+            if child.name.startswith(".") or not self._confined(child.resolve()):
                 continue
             if child.is_dir():
                 entries.append({"name": child.name, "kind": "dir"})
@@ -191,8 +203,10 @@ class LocalFSBackend:
             raise FSError(f"{norm!r} exists — pass overwrite: true")
         # Parents of a confined final path are confined by construction.
         target.parent.mkdir(parents=True, exist_ok=True)
-        tmp = target.with_name(f".{target.name}.tmp{os.getpid()}")
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        # mkstemp: unique name per call (concurrent same-target writes must
+        # not collide) and 0600 by default, like the checkpoint precedent.
+        fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.")
+        tmp = Path(tmp_name)
         try:
             with os.fdopen(fd, "wb") as fh:
                 fh.write(data)
