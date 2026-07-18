@@ -30,19 +30,32 @@ class ProviderConfig:
         return self.judge
 
 
+def load_env_files() -> tuple[str | None, str | None]:
+    """Load the layered .env files; return the (project, user) paths that loaded.
+
+    Layering is per key: real environment > project .env > user config .env.
+    load_dotenv never overrides keys that are already set, so loading the
+    project file first makes it win per key while the user file fills the gaps."""
+    from .paths import host_paths
+
+    project_env = find_dotenv(usecwd=True) or None
+    if project_env:
+        load_dotenv(project_env)
+    user_env = host_paths().user_env
+    if user_env.is_file():
+        load_dotenv(user_env)
+        return project_env, str(user_env)
+    return project_env, None
+
+
 def load_provider(config_path: str | Path | None, provider: str | None = None) -> ProviderConfig:
     """Load a provider block from the runtime YAML; resolve its key from the env.
 
     `.env` is loaded first (python-dotenv), so keys never live in the config file."""
-    from .paths import host_paths, resolve_config
+    from .paths import resolve_config
 
     resolved = resolve_config(config_path)
-    # Project .env wins naturally; the user config .env is a fallback.
-    project_env = find_dotenv(usecwd=True)
-    if project_env:
-        load_dotenv(project_env)
-    elif host_paths().user_env.is_file():
-        load_dotenv(host_paths().user_env)
+    load_env_files()
     try:
         cfg = yaml.safe_load(resolved.read_text(encoding="utf-8"))
     except OSError as exc:

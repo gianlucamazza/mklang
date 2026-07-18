@@ -8,7 +8,9 @@ import json
 import os
 import shutil
 import sys
+import time
 from pathlib import Path
+from uuid import uuid4
 
 from . import __version__, host
 from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
@@ -113,13 +115,21 @@ def _emit(
     return 3 if res.status == "suspended" else 1
 
 
+def _default_checkpoint(machine_path: str) -> Path:
+    """A fresh checkpoint path under the XDG state root (ADR 0023)."""
+    from .paths import host_paths
+
+    directory = host_paths().checkpoints
+    directory.mkdir(parents=True, exist_ok=True)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    return directory / f"{Path(machine_path).stem}-{stamp}-{uuid4().hex[:6]}.json"
+
+
 def cmd_run(args) -> int:
     if args.hitl and not args.checkpoint:
-        return _input_error(
-            args,
-            "--hitl requires --checkpoint (the suspension must land somewhere)",
-            hint="Add --checkpoint ck.json.",
-        )
+        # The suspension must land somewhere; without an explicit path it goes
+        # to the state root, and the suspension message prints where.
+        args.checkpoint = str(_default_checkpoint(args.machine))
     if args.max_tokens is not None and args.max_tokens <= 0:
         return _input_error(args, "--max-tokens must be a positive integer")
     prep = _prepare(args, args.machine)
@@ -428,8 +438,9 @@ def cmd_init(args) -> int:
         (bundled_sample_machine(), machines / "hello.mk"),
         (bundled_sample_test(), machines / "hello.test.yaml"),
     ]
-    if not args.user:
-        templates.append((bundled_config_schema(), config_target.parent / "runtime.schema.json"))
+    # Both modes get the schema next to runtime.yaml so the example's
+    # yaml-language-server header validates in either location.
+    templates.append((bundled_config_schema(), config_target.parent / "runtime.schema.json"))
     for source, target in templates:
         if target.exists():
             skipped.append(str(target))
@@ -445,6 +456,18 @@ def cmd_init(args) -> int:
     )
     emit_result(result, fmt=output_format(args.format), color=args.color)
     return 0
+
+
+def _resolve_workspace(workspace: str | None) -> str:
+    """Local ./machines when present, else the global XDG user machines root."""
+    if workspace is not None:
+        return workspace
+    local = Path("./machines")
+    if local.is_dir():
+        return str(local)
+    from .paths import host_paths
+
+    return str(host_paths().user_machines)
 
 
 def cmd_console(args) -> int:
@@ -467,11 +490,84 @@ def cmd_console(args) -> int:
     return console_main(
         args.config,
         args.provider,
-        args.workspace,
+        _resolve_workspace(args.workspace),
         args.agent,
         continue_session=args.continue_session,
         session_id=args.session,
     )
+
+
+def cmd_doctor(args) -> int:
+    """Diagnose the resolved setup: which layer wins for config, env, keys, machines."""
+    import yaml
+
+    from .config import load_env_files
+    from .paths import host_paths, machine_layers, resolve_config_with_layer
+    from .registry import load_stdlib_registry
+
+    hp = host_paths()
+    items: list[dict] = []
+    ok = True
+    resolved, layer = resolve_config_with_layer(args.config)
+    try:
+        cfg = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    except OSError as exc:
+        cfg, ok = None, False
+        items.append({"name": f"config {resolved}", "status": "error", "errors": [str(exc)]})
+    active = None
+    if cfg is not None:
+        if isinstance(cfg, dict) and isinstance(cfg.get("providers"), dict):
+            active = cfg.get("active")
+            items.append(
+                {"name": f"config {resolved} · layer={layer} · active={active}", "status": "ok"}
+            )
+        else:
+            ok = False
+            items.append(
+                {
+                    "name": f"config {resolved} · layer={layer}",
+                    "status": "error",
+                    "errors": ["must define `active` and `providers`"],
+                }
+            )
+    project_env, user_env = load_env_files()
+    items.append(
+        {
+            "name": f"env project={project_env or '-'} · user={user_env or '-'}",
+            "status": "ok",
+        }
+    )
+    if isinstance(cfg, dict) and isinstance(cfg.get("providers"), dict):
+        for pname, block in cfg["providers"].items():
+            env_var = (block or {}).get("api_key_env", "")
+            if not env_var or pname == "local":
+                # Same exemption as host.missing_key_message: local endpoints
+                # rarely need a key, so its absence is not a finding.
+                status, note = "ok", "optional"
+            elif os.environ.get(env_var):
+                status, note = "ok", "set"
+            else:
+                status, note = ("error", "missing") if pname == active else ("warning", "missing")
+                if pname == active:
+                    ok = False
+            items.append({"name": f"key {pname} · {env_var or '-'} · {note}", "status": status})
+    project_machines = Path("machines")
+    machine_roots = [("project", project_machines)] if project_machines.is_dir() else []
+    machine_roots += [(name, root) for name, root in reversed(machine_layers())]
+    for lname, root in machine_roots:
+        count = len(list(root.glob("*.mk"))) if root.is_dir() else 0
+        items.append({"name": f"machines {lname} {root} · {count} file", "status": "ok"})
+    items.append({"name": f"machines stdlib · {len(load_stdlib_registry())}", "status": "ok"})
+    items.append({"name": f"state sessions {hp.sessions}", "status": "ok"})
+    items.append({"name": f"state checkpoints {hp.checkpoints}", "status": "ok"})
+    result = CommandResult(
+        command="doctor",
+        ok=ok,
+        items=items,
+        summary={"layer": layer, "active": active or "-", "ok": ok},
+    )
+    emit_result(result, fmt=output_format(args.format), color=args.color)
+    return 0 if ok else 1
 
 
 def cmd_check(args) -> int:
@@ -517,6 +613,7 @@ def _getting_started() -> str:
         "                       run the sample's scripted scenarios (no API key)\n"
         '  mklang run machines/hello.mk --set task="say hello"\n'
         "  mklang console       interactive TUI (pip install 'mklang[console]')\n"
+        "  mklang doctor        check where config, keys, and machines resolve from\n"
         "\n"
         "Run `mklang --help` for all commands."
     )
@@ -574,7 +671,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument(
         "--hitl",
         action="store_true",
-        help="a fired escalate gate suspends for human review (requires --checkpoint); "
+        help="a fired escalate gate suspends for human review (checkpoint defaults "
+        "to the XDG state root when --checkpoint is omitted); "
         "reply via `mklang resume --set`",
     )
     r.add_argument(
@@ -638,9 +736,10 @@ def main(argv: list[str] | None = None) -> int:
     co.add_argument("--provider", default=None, help="override the config's `active` provider")
     co.add_argument(
         "--workspace",
-        default="./machines",
+        default=None,
         metavar="DIR",
-        help="where authored machines live; writes are confined here (default ./machines)",
+        help="where authored machines live; writes are confined here "
+        "(default: ./machines when present, else the XDG user machines dir)",
     )
     co.add_argument(
         "--agent",
@@ -676,6 +775,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     presentation_args(ini)
     ini.set_defaults(fn=cmd_init)
+
+    d = sub.add_parser(
+        "doctor", help="diagnose the resolved setup: config layer, env, keys, machine roots"
+    )
+    d.add_argument("--config", default=None, help="runtime config (auto-discovered when omitted)")
+    presentation_args(d)
+    d.set_defaults(fn=cmd_doctor)
 
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
     c.add_argument("machines", nargs="+")

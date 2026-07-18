@@ -131,11 +131,13 @@ def test_run_by_name_checkpoint_roundtrip(tmp_path, monkeypatch, capsys):
     assert rc == 0 and out["status"] == "done"
 
 
-def test_cli_machines_lists_stdlib(capsys, tmp_path):
+def test_cli_machines_lists_stdlib(capsys, tmp_path, monkeypatch):
     import json
 
     from mklang import cli
 
+    # Isolate from the host: a real user machines dir must not leak in.
+    monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
     assert cli.main(["machines"]) == 0
     out = json.loads(capsys.readouterr().out)
     names = {m["name"]: m for m in out}

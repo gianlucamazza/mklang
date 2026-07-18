@@ -66,7 +66,9 @@ def build_llm(prov):
     return mock_llm()
 
 
-def test_prepare_source_happy_path():
+def test_prepare_source_happy_path(tmp_path, monkeypatch):
+    # Isolate from the host: a real user machines dir must not leak in.
+    monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
     p = host.prepare_source(CONFIG, None, INLINE, build_llm=build_llm)
     assert p.machine.name == "inline"
     assert p.registry["inline"] is p.machine
@@ -167,9 +169,7 @@ def test_inject_host_defaults_now_only_when_declared():
     assert "now" not in bare
 
     empty = {"now": "", "today": ""}
-    host.inject_host_defaults(
-        empty, today="2026-07-17", now="2026-07-17T14:32:05+02:00"
-    )
+    host.inject_host_defaults(empty, today="2026-07-17", now="2026-07-17T14:32:05+02:00")
     assert empty["today"] == "2026-07-17"
     assert empty["now"] == "2026-07-17T14:32:05+02:00"
 

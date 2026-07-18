@@ -13,6 +13,7 @@ config discovery in [Installation](../guides/install.md).
 | [`test`](#test)         | run scenario tests against a machine with a scripted LLM (no API keys) |
 | [`machines`](#machines) | list commissionable machines (stdlib, plugins) as JSON                 |
 | [`init`](#init)         | scaffold project or user config without overwriting files              |
+| [`doctor`](#doctor)     | diagnose the resolved setup: config layer, env, keys, machine roots    |
 | [`console`](#console)   | agent-first console TUI (needs the `[console]` extra)                  |
 
 ## Global conventions
@@ -48,7 +49,10 @@ config discovery in [Installation](../guides/install.md).
 An explicit `--config` wins, followed by `MKLANG_CONFIG`, project config, user
 config, system config, and finally the read-only bundled example. Machine names
 resolve stdlib → plugins → system → user → project; `mklang machines` shows the
-winning source. Details: [Installation](../guides/install.md).
+winning source. `.env` layers per key: the real environment wins, then the
+project `.env`, then the user host `.env` fills the gaps (ADR 0023). `mklang
+doctor` shows which layer won for each surface. Details:
+[Installation](../guides/install.md).
 
 ## run
 
@@ -65,7 +69,7 @@ mklang run MACHINE [--set k.path=value]... [options]
 | `--provider NAME`            | override the config's `active` provider                                                                    |
 | `--max-tokens N`             | cost budget: halt once total tokens reach this                                                             |
 | `--checkpoint PATH`          | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11) |
-| `--hitl`                     | a fired escalate gate suspends for human review (requires `--checkpoint`)                                  |
+| `--hitl`                     | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)   |
 | `--strict`                   | refuse to run a document whose `mklang:` version is unsupported (default: warning)                         |
 | `--on-truncate report\|halt` | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)         |
 
@@ -158,6 +162,18 @@ Never overwrites existing files. Project mode creates `config/runtime.yaml`,
 keyless first run via `mklang test`; `--user` initializes the XDG user host
 instead ([Installation](../guides/install.md)).
 
+## doctor
+
+```bash
+mklang doctor [--config PATH]
+```
+
+Diagnoses the resolved setup without running anything: the winning config file
+and layer (project / user / system / bundled), which `.env` files loaded,
+per-provider key status (a missing key for the _active_ provider is an error;
+`local` is exempt), machine roots with counts, and the state paths. Exit 1 when
+the active provider cannot run (ADR 0023).
+
 ## console
 
 ```bash
@@ -165,8 +181,9 @@ mklang console [--workspace DIR] [--agent FILE.mk] [--continue | --session ID]
 ```
 
 The agent-first TUI (`pip install 'mklang[console]'`). `--workspace` confines
-machine writes (default `./machines`); `--agent` swaps the console's brain with
-your own machine; `--continue`/`--session` reopen sessions. Full guide:
+machine writes (default: `./machines` when present, else the XDG user machines
+dir); `--agent` swaps the console's brain with your own machine;
+`--continue`/`--session` reopen sessions. Full guide:
 [Console](../guides/console.md).
 
 ## mklang-mcp

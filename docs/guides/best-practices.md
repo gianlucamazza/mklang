@@ -330,10 +330,14 @@ New console sessions always use
 `mklang init --user` creates these roots and seeds the user `machines/` with a
 commented `hello.mk` sample plus its `hello.test.yaml` scenario (keyless first
 run via `mklang test`).
-`MKLANG_CONFIG_DIR` and `MKLANG_DATA_DIR` override the corresponding user roots;
-`MKLANG_CONFIG` selects one runtime config file directly. The implementation
-authority is `mklang.paths`; changes to it must update this table and the
-console guide in the same commit.
+Local vs global (ADR 0023): `runtime.yaml` resolves first-hit-wins
+(project → user → `/etc` → bundled) for every entry point, `mklang-mcp`
+included; `.env` layers per key — real environment > project `.env` > user
+`.env`; `mklang doctor` shows which layer won.
+`MKLANG_CONFIG_DIR`, `MKLANG_DATA_DIR`, and `MKLANG_STATE_DIR` override the
+corresponding user roots; `MKLANG_CONFIG` selects one runtime config file
+directly. The implementation authority is `mklang.paths`; changes to it must
+update this table and the console guide in the same commit.
 
 ### Rules for class 3 (data tools)
 
@@ -365,7 +369,7 @@ console guide in the same commit.
 
 | Surface     | Best practice                                                                                                                                                                                                                           |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CLI**     | `init` once, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` + checkpoint for human gates; ops log on stderr when enabled                                                                    |
+| **CLI**     | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` + checkpoint for human gates; ops log on stderr when enabled                                            |
 | **MCP**     | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL                                                                                                          |
 | **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mk` only** — no generic FS/bash |
 

@@ -38,7 +38,10 @@ from ..engine import run as run_machine
 from ..registry import base_registry, load_stdlib_registry
 from .sessions import Session, SessionStore
 
-DEFAULT_CONFIG = "config/runtime.example.yaml"
+# None means the full ADR 0021 chain (project > user > /etc > bundled) via
+# resolve_config — the same auto-discovery the CLI uses, so a server spawned
+# outside a checkout still finds the user host config.
+DEFAULT_CONFIG: str | None = None
 
 
 def _build_llm(prov):
@@ -356,7 +359,7 @@ def check_tool(source: str | None = None, path: str | None = None, strict: bool 
     return host.check_machine(source, path, strict=strict)
 
 
-def create_server(config: str = DEFAULT_CONFIG, provider: str | None = None):
+def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None):
     """Build the FastMCP server. Requires the `mcp` package (`pip install mklang[mcp]`)."""
     from mcp.server.fastmcp import FastMCP
 
@@ -472,7 +475,9 @@ def main(argv: list[str] | None = None) -> int:
         prog="mklang-mcp",
         description="mklang MCP stdio server: commission machines via run/resume (ADR 0011).",
     )
-    ap.add_argument("--config", default=DEFAULT_CONFIG, help="host runtime config (tier → model)")
+    ap.add_argument(
+        "--config", default=DEFAULT_CONFIG, help="runtime config (auto-discovered when omitted)"
+    )
     ap.add_argument("--provider", default=None, help="override the config's `active` provider")
     args = ap.parse_args(argv)
     try:
