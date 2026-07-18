@@ -92,6 +92,57 @@ def test_escapes_rejected_never_raise(local_root, path):
         assert obs["error"]
 
 
+def test_symlink_to_workspace_dotfile_refused(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / ".env").write_text("SECRET=1", encoding="utf-8")
+    try:
+        os.symlink(root / ".env", root / "link.md")
+    except (OSError, NotImplementedError, AttributeError):
+        pytest.skip("symlinks unavailable")
+    configure_fs(LocalFSBackend(root))
+    obs = J(read_file({"path": "link.md"}))
+    assert obs["error"] and obs["content"] == ""
+    listing = J(list_files({}))
+    assert [e["name"] for e in listing["entries"]] == []  # link hidden from listing too
+
+
+def test_list_omits_symlinks_that_leave_the_workspace(tmp_path):
+    outside = tmp_path / "outside.txt"
+    outside.write_text("secret", encoding="utf-8")
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "a.txt").write_text("ok", encoding="utf-8")
+    try:
+        os.symlink(outside, root / "leak.txt")
+    except (OSError, NotImplementedError, AttributeError):
+        pytest.skip("symlinks unavailable")
+    configure_fs(LocalFSBackend(root))
+    obs = J(list_files({}))
+    assert [e["name"] for e in obs["entries"]] == ["a.txt"]
+
+
+def test_concurrent_writes_to_same_target_do_not_collide(tmp_path):
+    import threading
+
+    configure_fs(LocalFSBackend(tmp_path))
+    allow_writes(True)
+    results = []
+
+    def worker(i):
+        results.append(J(write_file({"path": "r.md", "content": f"v{i}", "overwrite": True})))
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert all(r["written"] is True and r["error"] is None for r in results)
+    assert (tmp_path / "r.md").read_text(encoding="utf-8").startswith("v")
+    leftovers = [p.name for p in tmp_path.iterdir() if p.name != "r.md"]
+    assert leftovers == []
+
+
 def test_symlink_escape_refused(tmp_path):
     outside = tmp_path / "outside.txt"
     outside.write_text("secret", encoding="utf-8")

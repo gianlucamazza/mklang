@@ -52,11 +52,13 @@ explicit grant in headless surfaces.
 4. **Confinement and write policy.** Relative paths only; `..`, absolute
    paths, and dotfile segments are refused lexically; the final path is
    `resolve()`d and must stay `is_relative_to` the resolved root (the console
-   `_workspace_path` pattern — this also refuses symlinks whose target lands
-   outside). Writes: suffix allowlist of data formats (**no `.mk`** — that
-   stays with the console's `write_machine`), no delete tool, overwrite only
-   with `overwrite: true`, byte caps on read and write, atomic
-   `O_EXCL`+`os.replace` writes at mode 0600 (the checkpoint precedent),
+   `_workspace_path` pattern), and the **resolved** target is re-checked
+   against the dotfile policy — a visible symlink cannot smuggle in `.env` or
+   a target outside the root, and `list` omits such children. Writes: suffix
+   allowlist of data formats (**no `.mk`** — that stays with the console's
+   `write_machine`), no delete tool, overwrite only with `overwrite: true`,
+   byte caps on read and write, atomic unique-tempfile+`os.replace` writes at
+   mode 0600 (the checkpoint precedent),
    audit line at INFO (tool, relative path, byte count — never contents).
    TOCTOU races between check and open are out of scope, as for the console
    workspace. File bodies are untrusted observations (SPEC §11).
