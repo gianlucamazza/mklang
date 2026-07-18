@@ -28,3 +28,4 @@ change checklist in CONTRIBUTING says when to add one.
 | [0021](0021-filesystem-layout-local-install.md) | Filesystem layout, config resolution, and local installation              | Accepted (phases 1–3 shipped)          |
 | [0022](0022-cli-console-experience.md)          | Human-first CLI presentation and responsive console workspace             | Accepted                               |
 | [0023](0023-global-local-config-separation.md)  | Global vs local configuration separation                                  | Accepted                               |
+| [0024](0024-fs-data-tools.md)                   | Filesystem data tools with a coding-tool workspace model                  | Accepted                               |

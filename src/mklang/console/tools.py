@@ -206,6 +206,12 @@ class ConsoleTools:
             ):
                 return _obs({"error": "run declined by the user", "tools": used_tools})
             self._consented.update(used_tools)
+        if "write_file" in used_tools:
+            # Interactive consent above is the coding-tool write grant (ADR 0024);
+            # headless surfaces need --allow-write / MKLANG_FS_WRITE=1 instead.
+            from ..fs import allow_writes
+
+            allow_writes(True)
         ctx = dict(machine.context)
         for k, v in inputs.items():
             host.set_path(ctx, k, v)

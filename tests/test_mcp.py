@@ -16,6 +16,22 @@ from mklang.mcp.sessions import SessionStore
 DEFAULTS = {"config": "config/runtime.example.yaml", "provider": None}
 
 
+def test_main_binds_workspace_flags_before_serving(tmp_path, monkeypatch, capsys):
+    from mklang import fs
+
+    assert srv.main(["--workspace", str(tmp_path / "nope")]) == 2
+    assert "not a directory" in capsys.readouterr().err
+
+    def _no_server(*args, **kwargs):
+        raise ImportError  # stop before the blocking stdio loop
+
+    monkeypatch.setattr(srv, "create_server", _no_server)
+    assert srv.main(["--workspace", str(tmp_path), "--allow-write"]) == 2
+    backend = fs.current_fs_backend()
+    assert isinstance(backend, fs.LocalFSBackend) and backend.root == tmp_path.resolve()
+    assert fs.writes_allowed() is True
+
+
 def test_server_default_config_uses_the_resolution_chain():
     # None means load_provider walks the full ADR 0021 chain (project > user >
     # /etc > bundled) — the server must not pin the checkout-relative example.

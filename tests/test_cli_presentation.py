@@ -31,6 +31,35 @@ def test_invalid_set_is_a_clean_diagnostic(monkeypatch, capsys):
     assert payload["diagnostics"][0]["code"] == "invalid-input"
 
 
+def test_run_workspace_flags_bind_the_fs_tools(tmp_path, monkeypatch, capsys):
+    from mklang import fs
+    from mklang.llm.mock import MockLLM
+
+    monkeypatch.setattr(cli, "_build_llm", lambda provider: MockLLM())
+    rc = cli.main(["run", "std_cot", "--workspace", str(tmp_path / "nope"), "--format", "json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 2 and payload["diagnostics"][0]["code"] == "invalid-input"
+
+    rc = cli.main(
+        [
+            "run",
+            "std_cot",
+            "--set",
+            "task=hi",
+            "--workspace",
+            str(tmp_path),
+            "--allow-write",
+            "--format",
+            "json",
+        ]
+    )
+    capsys.readouterr()
+    assert rc == 0
+    backend = fs.current_fs_backend()
+    assert isinstance(backend, fs.LocalFSBackend) and backend.root == tmp_path.resolve()
+    assert fs.writes_allowed() is True
+
+
 def test_missing_console_session_does_not_dump_traceback(tmp_path, monkeypatch, capsys):
     import pytest
 

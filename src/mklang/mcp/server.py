@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover - exercised by the no-extra install
         pass
 
 
-from .. import host
+from .. import fs, host
 from ..checkpoint import load_checkpoint, save_checkpoint, verify_hash
 from ..engine import run as run_machine
 from ..registry import base_registry, load_stdlib_registry
@@ -479,7 +479,27 @@ def main(argv: list[str] | None = None) -> int:
         "--config", default=DEFAULT_CONFIG, help="runtime config (auto-discovered when omitted)"
     )
     ap.add_argument("--provider", default=None, help="override the config's `active` provider")
+    ap.add_argument(
+        "--workspace",
+        default=None,
+        metavar="DIR",
+        help="workspace root for the fs data tools (default: MKLANG_FS_ROOT or the server's "
+        "cwd — ADR 0024). The root is fixed by the operator at startup, never per call.",
+    )
+    ap.add_argument(
+        "--allow-write",
+        action="store_true",
+        help="grant write_file access to real disk under the workspace (default off)",
+    )
     args = ap.parse_args(argv)
+    if args.workspace:
+        root = Path(args.workspace).expanduser()
+        if not root.is_dir():
+            print(f"--workspace {args.workspace}: not a directory", file=sys.stderr)
+            return 2
+        fs.configure_fs(fs.LocalFSBackend(root))
+    if args.allow_write:
+        fs.allow_writes(True)
     try:
         server = create_server(args.config, args.provider)
     except ImportError:

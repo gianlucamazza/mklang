@@ -125,7 +125,24 @@ def _default_checkpoint(machine_path: str) -> Path:
     return directory / f"{Path(machine_path).stem}-{stamp}-{uuid4().hex[:6]}.json"
 
 
+def _bind_fs(args) -> str | None:
+    """Apply --workspace / --allow-write to the fs tools; error message on bad root."""
+    from .fs import LocalFSBackend, allow_writes, configure_fs
+
+    if getattr(args, "workspace", None):
+        root = Path(args.workspace).expanduser()
+        if not root.is_dir():
+            return f"--workspace {args.workspace}: not a directory"
+        configure_fs(LocalFSBackend(root))
+    if getattr(args, "allow_write", False):
+        allow_writes(True)
+    return None
+
+
 def cmd_run(args) -> int:
+    fs_err = _bind_fs(args)
+    if fs_err:
+        return _input_error(args, fs_err)
     if args.hitl and not args.checkpoint:
         # The suspension must land somewhere; without an explicit path it goes
         # to the state root, and the suspension message prints where.
@@ -602,6 +619,20 @@ def cmd_doctor(args) -> int:
     for tool, var in (("kb", "MKLANG_KB_BACKEND"), ("mail", "MKLANG_MAIL_BACKEND")):
         backend = (os.environ.get(var) or "").strip().lower() or "stub"
         items.append({"name": f"tools {tool} · backend={backend}", "status": "ok"})
+    from .fs import resolve_workspace, writes_allowed
+
+    fs_name = (os.environ.get("MKLANG_FS_BACKEND") or "").strip().lower()
+    if fs_name in ("stub", "none", "off"):
+        fs_desc, fs_status = "stub", "ok"
+    elif fs_name and fs_name != "local":
+        fs_desc, fs_status = f"{fs_name} (unknown — falls back to stub)", "warning"
+    else:
+        ws = resolve_workspace()
+        write = "on" if writes_allowed() else "off"
+        fs_status = "ok" if ws.is_dir() else "warning"
+        missing = "" if ws.is_dir() else " (missing)"
+        fs_desc = f"local · workspace={ws}{missing} · write={write}"
+    items.append({"name": f"tools fs · backend={fs_desc}", "status": fs_status})
     project_machines = Path("machines")
     machine_roots = [("project", project_machines)] if project_machines.is_dir() else []
     machine_roots += [(name, root) for name, root in reversed(machine_layers())]
@@ -731,6 +762,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="refuse to run a document whose mklang: version is unsupported "
         "(version-unsupported); default is a warning",
+    )
+    r.add_argument(
+        "--workspace",
+        default=None,
+        metavar="DIR",
+        help="workspace root for the fs data tools (default: MKLANG_FS_ROOT or the "
+        "current directory — ADR 0024)",
+    )
+    r.add_argument(
+        "--allow-write",
+        action="store_true",
+        help="grant write_file access to real disk under the workspace "
+        "(default off in headless runs; MKLANG_FS_WRITE=1 is the env equivalent)",
     )
     r.add_argument(
         "--on-truncate",

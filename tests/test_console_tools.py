@@ -218,6 +218,38 @@ def test_run_machine_tool_consent(tools):
     assert len(tools.bridge.confirms) == n
 
 
+WRITY_SRC = """\
+mklang: "0.3"
+machine: writy
+entry: w
+budget: 4
+result: out
+states:
+  w:
+    tool: write_file
+    input: { path: "report.md", content: "done" }
+    output: out
+    gates:
+      - when: otherwise
+        then: ok
+        to: END
+"""
+
+
+def test_run_machine_consent_grants_fs_writes(tools, tmp_path):
+    from mklang import fs
+
+    fs.configure_fs(fs.LocalFSBackend(tmp_path / "data"))
+    (tmp_path / "data").mkdir()
+    assert fs.writes_allowed() is False
+    (tools.workspace / "writy.mk").write_text(WRITY_SRC, encoding="utf-8")
+    out = json.loads(tools.run_machine({"target": "writy", "inputs": "{}"}))
+    assert out["status"] == "done"
+    assert any("write_file" in c for c in tools.bridge.confirms)
+    assert fs.writes_allowed() is True
+    assert (tmp_path / "data" / "report.md").read_text(encoding="utf-8") == "done"
+
+
 def test_run_machine_tool_consent_declined(tmp_path):
     tools = ConsoleTools(
         config=CONFIG,

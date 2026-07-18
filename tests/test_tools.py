@@ -137,6 +137,41 @@ def test_fanout_over_a_tool():
     assert r.trace[0]["branches"] == ["4", "10"]
 
 
+def test_fs_builtins_present_and_stub_by_default():
+    for name in ("list_files", "read_file", "write_file"):
+        assert name in BUILTINS
+    obs = json.loads(BUILTINS["read_file"]({"path": "x.txt"}))
+    assert obs["tool"] == "read_file" and obs["stub"] is True and obs["error"]
+
+
+def test_tool_state_deposits_fs_envelope(tmp_path):
+    from mklang.fs import LocalFSBackend, configure_fs
+
+    (tmp_path / "notes").mkdir()
+    (tmp_path / "notes" / "todo.md").write_text("# TODO\n", encoding="utf-8")
+    configure_fs(LocalFSBackend(tmp_path))
+    m = M(
+        {
+            "machine": "t",
+            "entry": "a",
+            "budget": 5,
+            "result": "o",
+            "states": {
+                "a": {
+                    "tool": "read_file",
+                    "input": {"path": "notes/todo.md"},
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    r = run(m, {}, {"t": m}, MockLLM(), TIERS, "m", tools=load_tool_registry())
+    assert r.status == "done"
+    obs = json.loads(r.result)
+    assert obs["tool"] == "read_file" and "TODO" in obs["content"]
+
+
 def test_load_tool_registry_merges_builtins_and_extra():
     reg = load_tool_registry(extra={"echo": lambda d: d.get("x", "")}, include_entry_points=False)
     assert set(BUILTINS) <= set(reg)

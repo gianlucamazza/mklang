@@ -193,8 +193,13 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   [best practices §12](./docs/guides/best-practices.md)).
 - **[later] Process logging hygiene** — stdlib `logging` hierarchy +
   `MKLANG_LOG_LEVEL` / CLI flag; never replace trace/events (BP §12).
-- **[later] FS data tools (plugins)** — class-3 read/write under a root with
-  ADR 0020 stub default; not console brain defaults; not language faces (BP §13).
+- **[shipped] FS data tools (ADR 0024)** — class-3 `list_files`/`read_file`/
+  `write_file` builtins with a coding-tool workspace model: live reads confined
+  to `--workspace`/`MKLANG_FS_ROOT`/cwd, grant-gated writes; not console brain
+  defaults; not language faces (BP §13).
+- **[maybe] FS multi-root and path rules** — `--add-dir`/`writable_roots`
+  analog and per-path allow/deny rules (`Read(...)`/`Edit(...)` syntax shared
+  by Claude Code and Grok); ADR 0024 defers both until a real use case appears.
 
 ## Near-term after 0.11.0
 
