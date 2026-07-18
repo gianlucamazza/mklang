@@ -12,6 +12,29 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+First-run experience (language stays **0.3**).
+
+### Added
+
+- [Getting started guide](./docs/guides/getting-started.md) — one linear
+  install → init → key → console path, first in the docs nav.
+- `mklang --version`, and a getting-started nudge (exit 0) on bare `mklang`
+  instead of a usage error.
+- `mklang init` seeds `machines/` with a commented `hello.mk` sample and its
+  `hello.test.yaml` scenario script (keyless first run via `mklang test`).
+- Upfront provider key gate: runs, the console, and `lint --llm` fail fast
+  with the exact `.env` variable to set instead of dying inside the provider
+  SDK (`local` stays exempt).
+- Shell completions via argcomplete (`[completions]` extra).
+- ADR 0021 phase 3 packaging: `scripts/install.sh` (pipx + `mklang init
+--user`, with `--uninstall`) and an Arch Linux recipe in `packaging/arch/`;
+  the optional MCP user service is deferred (stdio-only server).
+
+### Changed
+
+- README install/quickstart restructured: pipx path first, checkout/`uv`
+  workflow kept as the from-checkout section.
+
 ## [0.9.3] — 2026-07-17
 
 Documentation-alignment patch (language stays **0.3**).

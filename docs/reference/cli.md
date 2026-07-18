@@ -17,6 +17,8 @@ config discovery in [Installation](../guides/install.md).
 
 ## Global conventions
 
+- `mklang --version` prints the package version; bare `mklang` prints a short
+  getting-started map (exit 0) instead of a usage error.
 - `--format auto|text|json` — `auto` (default) renders a concise Rich view on a
   terminal and keeps stable JSON on piped stdout; `run`, `resume`, and
   `machines` are safe to pipe.
@@ -24,6 +26,12 @@ config discovery in [Installation](../guides/install.md).
   honored.
 - `MKLANG_DEBUG=1` — re-raise unexpected errors with a full traceback instead
   of the one-line diagnostic.
+- A missing provider API key fails fast with a diagnostic naming the exact
+  variable to set in `.env` (the `local` provider is exempt); commands that
+  never call a provider (`check`, `lint` without `--llm`, `test`, `machines`,
+  `init`) are unaffected.
+- Shell completions ship as the `[completions]` extra (argcomplete) —
+  activation per shell in [Installation](../guides/install.md#shell-completions).
 
 ### Exit codes
 
@@ -145,8 +153,10 @@ mklang init [--user] [--dir DIR]
 ```
 
 Never overwrites existing files. Project mode creates `config/runtime.yaml`,
-`config/runtime.schema.json`, `machines/`, and `.env`; `--user` initializes the
-XDG user host instead ([Installation](../guides/install.md)).
+`config/runtime.schema.json`, `.env`, and `machines/` seeded with a commented
+`hello.mk` sample plus its `hello.test.yaml` scenario script — an immediate,
+keyless first run via `mklang test`; `--user` initializes the XDG user host
+instead ([Installation](../guides/install.md)).
 
 ## console
 

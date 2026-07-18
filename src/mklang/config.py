@@ -15,6 +15,7 @@ class ProviderConfig:
     name: str
     tiers: dict[str, str]  # fast/balanced/reasoning -> model id
     api_key: str = ""
+    api_key_env: str = ""  # the env var the key is read from, for diagnostics
     base_url: str | None = None
     judge: str | None = None
     params: dict = field(default_factory=dict)
@@ -57,6 +58,7 @@ def load_provider(config_path: str | Path | None, provider: str | None = None) -
         name=name,
         tiers=p["tiers"],
         api_key=api_key,
+        api_key_env=p.get("api_key_env", ""),
         base_url=p.get("base_url"),
         judge=p.get("judge"),
         params=p.get("params", {}) or {},

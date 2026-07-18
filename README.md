@@ -193,16 +193,29 @@ authored examples.
 ## Install
 
 ```bash
-pip install mklang
+pipx install 'mklang[console,mcp]'   # or: pip install 'mklang[console,mcp]'
+mklang init --user                   # scaffold config, .env, and a sample machine
+# set DEEPSEEK_API_KEY (or another provider key) in ~/.config/mklang/.env, then:
+mklang console
 ```
+
+The full walk-through — including a first run that needs **no API key** — is the
+[Getting started guide](./docs/guides/getting-started.md). A one-shot
+[`scripts/install.sh`](./scripts/install.sh) and an Arch Linux
+[PKGBUILD](https://github.com/gianlucamazza/mklang/tree/main/packaging/arch)
+are also available.
 
 Editor validation for `.mk` files works out of the box via the JSON Schema —
 point yaml-language-server at
 `https://raw.githubusercontent.com/gianlucamazza/mklang/main/schema/mklang.schema.json`.
 
-## Quickstart (reference interpreter)
+## Quickstart (from a checkout)
+
+Working on mklang itself, or preferring the repo? Clone it and drive everything
+through [uv](https://docs.astral.sh/uv/) — no install step needed:
 
 ```bash
+git clone https://github.com/gianlucamazza/mklang && cd mklang
 cp .env.example .env            # set DEEPSEEK_API_KEY=… (or another provider key)
 uv run mklang check examples/self_consistency.mk
 uv run mklang lint examples/self_consistency.mk   # + static analysis
@@ -219,10 +232,10 @@ uv run mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
 uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
-For an installed package outside this repository, `mklang init` (project) or
-`mklang init --user` (XDG host) scaffold config without overwriting files — see
-the [installation guide](./docs/guides/install.md). Every command, flag, and
-exit code: [CLI reference](./docs/reference/cli.md).
+For an installed package outside this repository, follow the
+[Getting started guide](./docs/guides/getting-started.md); host layout details
+are in the [installation guide](./docs/guides/install.md). Every command, flag,
+and exit code: [CLI reference](./docs/reference/cli.md).
 
 The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
 deepseek` by default); the key comes from `.env`. Same machine, any provider.
