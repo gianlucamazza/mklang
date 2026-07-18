@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.10.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.11.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.10.0)
+## Where we are (language 0.3 / package 0.11.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -61,6 +61,10 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.10.0:** first-run experience (ADR 0021 phase 3) — `mklang init` seeding
   `hello.mk`, provider key gate, shell completions, `scripts/install.sh` (pipx),
   the Arch/AUR recipe, and a lean sdist.
+- **0.11.0:** global/local config separation (ADR 0023) — per-key `.env`
+  layering, `mklang-mcp` config auto-discovery, XDG fallbacks for workspace and
+  HITL checkpoints, `mklang doctor`, dead `run:` block and legacy `~/.mklang`
+  fallback removed.
 - **Live (2026-07-18, release 0.10.0 matrix):** DeepSeek + OpenAI smoke and gate
   agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
 
@@ -192,7 +196,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **[later] FS data tools (plugins)** — class-3 read/write under a root with
   ADR 0020 stub default; not console brain defaults; not language faces (BP §13).
 
-## Near-term after 0.10.0
+## Near-term after 0.11.0
 
 Elevate **one** host/stdlib item per package release (layer discipline: no
 language 0.4 without ADR + conformance):
