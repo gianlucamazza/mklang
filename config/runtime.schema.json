@@ -16,15 +16,6 @@
       "minProperties": 1,
       "description": "Map of provider-name -> provider config.",
       "additionalProperties": { "$ref": "#/$defs/provider" }
-    },
-    "run": {
-      "type": "object",
-      "description": "Global run defaults (not model selection).",
-      "additionalProperties": false,
-      "properties": {
-        "max_repair_per_gate": { "type": "integer", "minimum": 0 },
-        "trace": { "type": "boolean" }
-      }
     }
   },
   "$defs": {

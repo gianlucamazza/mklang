@@ -324,9 +324,8 @@ link here instead of maintaining a separate path policy.
 | State  | `$XDG_STATE_HOME/mklang` (default `~/.local/state/mklang`) | `console/sessions/<id>/` and checkpoints |
 | System | `/etc/mklang`, `/usr/share/mklang/machines`                | system config and machines               |
 
-New console sessions always use
-`$XDG_STATE_HOME/mklang/console/sessions/<id>/`. The legacy
-`~/.mklang/console/sessions/` directory is read-only as a migration fallback.
+Console sessions always live under
+`$XDG_STATE_HOME/mklang/console/sessions/<id>/`.
 `mklang init --user` creates these roots and seeds the user `machines/` with a
 commented `hello.mk` sample plus its `hello.test.yaml` scenario (keyless first
 run via `mklang test`).

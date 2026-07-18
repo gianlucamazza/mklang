@@ -136,21 +136,9 @@ def build_app(
                 cancel_requested=self.cancel_event.is_set,
             )
             if session_id:
-                target = base / session_id
-                if not target.is_dir() and session_base is None:
-                    from ..paths import legacy_sessions
-
-                    legacy = legacy_sessions() / session_id
-                    if legacy.is_dir():
-                        target = legacy
-                self.session = Session.load(target)
+                self.session = Session.load(base / session_id)
             elif continue_session:
-                self.session = Session.latest(base)
-                if self.session is None and session_base is None:
-                    from ..paths import legacy_sessions
-
-                    self.session = Session.latest(legacy_sessions())
-                self.session = self.session or Session.create(
+                self.session = Session.latest(base) or Session.create(
                     base, workspace=str(self.tools.workspace), brain=brain.name
                 )
             else:
