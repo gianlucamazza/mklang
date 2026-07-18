@@ -25,5 +25,6 @@ change checklist in CONTRIBUTING says when to add one.
 | [0018](0018-output-truncation-anti-cutoff.md)   | Output truncation detection and host recovery policies                    | Accepted (continue deferred)           |
 | [0019](0019-mcp-live-events.md)                 | Live engine events on the MCP transport                                   | Accepted                               |
 | [0020](0020-host-tool-stub-architecture.md)     | Host tool stub architecture                                               | Accepted                               |
-| [0021](0021-filesystem-layout-local-install.md) | Filesystem layout, config resolution, and local installation              | Accepted (phases 1–2 shipped)          |
+| [0021](0021-filesystem-layout-local-install.md) | Filesystem layout, config resolution, and local installation              | Accepted (phases 1–3 shipped)          |
 | [0022](0022-cli-console-experience.md)          | Human-first CLI presentation and responsive console workspace             | Accepted                               |
+| [0023](0023-global-local-config-separation.md)  | Global vs local configuration separation                                  | Accepted                               |

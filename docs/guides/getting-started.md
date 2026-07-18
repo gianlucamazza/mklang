@@ -95,6 +95,8 @@ gate, with a bounded repair loop.
 
 ## Next steps
 
+- **Check your setup at any time:** `mklang doctor` — which config file and
+  layer won, which `.env` files loaded, key status per provider, machine roots.
 - **Run stdlib machines by name, no file needed:**
   `mklang run std_self_consistency --set task="What is the capital of Australia?"`
   — see the [machine stdlib](../reference/stdlib.md).

@@ -30,6 +30,10 @@ class HostPaths:
     def sessions(self) -> Path:
         return self.state / "console" / "sessions"
 
+    @property
+    def checkpoints(self) -> Path:
+        return self.state / "checkpoints"
+
 
 def host_paths() -> HostPaths:
     home = Path.home()
@@ -98,22 +102,33 @@ def bundled_sample_test() -> Path:
 
 def resolve_config(explicit: str | Path | None = None, *, cwd: Path | None = None) -> Path:
     """Resolve runtime config using ADR 0021's stable precedence order."""
+    return resolve_config_with_layer(explicit, cwd=cwd)[0]
+
+
+def resolve_config_with_layer(
+    explicit: str | Path | None = None, *, cwd: Path | None = None
+) -> tuple[Path, str]:
+    """Like resolve_config, but also name the layer that won.
+
+    Layers: explicit > env > project (local) > user (global) > system > bundled."""
     if explicit:
-        return Path(explicit).expanduser()
+        return Path(explicit).expanduser(), "explicit"
     env = os.environ.get("MKLANG_CONFIG")
     if env:
-        return Path(env).expanduser()
+        return Path(env).expanduser(), "env"
     here = cwd or Path.cwd()
-    for candidate in (
-        here / "config" / "runtime.yaml",
-        host_paths().user_config,
-        Path("/etc/mklang/runtime.yaml"),
+    for candidate, layer in (
+        (here / "config" / "runtime.yaml", "project"),
+        (host_paths().user_config, "user"),
+        (Path("/etc/mklang/runtime.yaml"), "system"),
     ):
         if candidate.is_file():
-            return candidate
+            return candidate, layer
     # Preserve the checkout experience while also working from an installed wheel.
     checkout_example = here / "config" / "runtime.example.yaml"
-    return checkout_example if checkout_example.is_file() else bundled_config()
+    if checkout_example.is_file():
+        return checkout_example, "bundled"
+    return bundled_config(), "bundled"
 
 
 def machine_layers() -> list[tuple[str, Path]]:

@@ -30,10 +30,13 @@ its `hello.test.yaml` scenario script), and `.env`. User mode uses XDG roots:
 `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and `XDG_STATE_HOME` are honored. Tests and
 sandboxes can use `MKLANG_CONFIG_DIR`, `MKLANG_DATA_DIR`, and `MKLANG_STATE_DIR`.
 An explicit `--config` wins, followed by `MKLANG_CONFIG`, project config, user
-config, system config, and finally the read-only bundled example.
+config, system config, and finally the read-only bundled example — the same
+chain for the CLI, the console, and `mklang-mcp`. `.env` layers per key:
+real environment > project `.env` > user `.env` (ADR 0023).
 
 Machine precedence is stdlib → plugins → system → user → project. Use
-`mklang machines` to see the winning source.
+`mklang machines` to see the winning source, and `mklang doctor` to see every
+resolved layer (config, env, keys, machine roots, state paths) at once.
 
 ## Arch Linux
 

@@ -1,11 +1,14 @@
-"""ADR 0021 host paths, config discovery, init, and machine layering."""
+"""ADR 0021/0023 host paths, config discovery, env layering, init, machine layering."""
 
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 
 from mklang import cli
-from mklang.paths import host_paths, resolve_config
+from mklang.config import load_env_files
+from mklang.paths import host_paths, resolve_config, resolve_config_with_layer
 from mklang.registry import registry_with_sources
 
 
@@ -52,6 +55,68 @@ def test_init_is_idempotent_and_never_overwrites(tmp_path, capsys):
     second = json.loads(capsys.readouterr().out)
     assert second["summary"]["unchanged"] >= 2
     assert (target / "config/runtime.yaml").read_text(encoding="utf-8") == original
+
+
+def test_resolve_config_names_the_winning_layer(tmp_path, monkeypatch):
+    monkeypatch.setenv("MKLANG_CONFIG_DIR", str(tmp_path / "userconf"))
+    monkeypatch.delenv("MKLANG_CONFIG", raising=False)
+    project = tmp_path / "project"
+    project.mkdir()
+    assert resolve_config_with_layer(cwd=project)[1] == "bundled"
+    user = tmp_path / "userconf"
+    user.mkdir()
+    (user / "runtime.yaml").write_text("active: u\nproviders: {}\n", encoding="utf-8")
+    assert resolve_config_with_layer(cwd=project) == (user / "runtime.yaml", "user")
+    (project / "config").mkdir()
+    (project / "config" / "runtime.yaml").write_text("active: p\nproviders: {}\n", encoding="utf-8")
+    assert resolve_config_with_layer(cwd=project)[1] == "project"
+    monkeypatch.setenv("MKLANG_CONFIG", str(user / "runtime.yaml"))
+    assert resolve_config_with_layer(cwd=project)[1] == "env"
+    assert resolve_config_with_layer("x.yaml", cwd=project)[1] == "explicit"
+
+
+def test_user_env_fills_gaps_behind_the_project_env(tmp_path, monkeypatch):
+    # Layering is per key: the project .env wins where both define a key,
+    # the user .env fills what the project one lacks.
+    monkeypatch.setattr(os, "environ", dict(os.environ))
+    monkeypatch.setenv("MKLANG_CONFIG_DIR", str(tmp_path / "userconf"))
+    userconf = tmp_path / "userconf"
+    userconf.mkdir()
+    (userconf / ".env").write_text(
+        "MK_TEST_SHARED=user\nMK_TEST_USER_ONLY=user\n", encoding="utf-8"
+    )
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / ".env").write_text("MK_TEST_SHARED=project\n", encoding="utf-8")
+    monkeypatch.chdir(project)
+    for var in ("MK_TEST_SHARED", "MK_TEST_USER_ONLY"):
+        monkeypatch.delenv(var, raising=False)
+    loaded_project, loaded_user = load_env_files()
+    assert loaded_project and loaded_project.endswith(".env")
+    assert loaded_user == str(userconf / ".env")
+    assert os.environ["MK_TEST_SHARED"] == "project"
+    assert os.environ["MK_TEST_USER_ONLY"] == "user"
+
+
+def test_console_workspace_prefers_local_then_user_machines(tmp_path, monkeypatch):
+    monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
+    cwd = tmp_path / "somewhere"
+    cwd.mkdir()
+    monkeypatch.chdir(cwd)
+    assert cli._resolve_workspace(None) == str(tmp_path / "data" / "machines")
+    (cwd / "machines").mkdir()
+    assert cli._resolve_workspace(None) == str(Path("./machines"))
+    assert cli._resolve_workspace("custom/dir") == "custom/dir"
+
+
+def test_hitl_default_checkpoint_lands_in_the_state_root(tmp_path, monkeypatch):
+    monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
+    first = cli._default_checkpoint("machines/hello.mk")
+    second = cli._default_checkpoint("machines/hello.mk")
+    assert first.parent == tmp_path / "state" / "checkpoints"
+    assert first.parent.is_dir()
+    assert first.name.startswith("hello-") and first.suffix == ".json"
+    assert first != second  # unique per invocation
 
 
 def test_user_machine_precedes_system_and_project_precedes_user(tmp_path, monkeypatch):

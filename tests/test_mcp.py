@@ -15,6 +15,13 @@ from mklang.mcp.sessions import SessionStore
 
 DEFAULTS = {"config": "config/runtime.example.yaml", "provider": None}
 
+
+def test_server_default_config_uses_the_resolution_chain():
+    # None means load_provider walks the full ADR 0021 chain (project > user >
+    # /etc > bundled) — the server must not pin the checkout-relative example.
+    assert srv.DEFAULT_CONFIG is None
+
+
 HITL = """\
 machine: h
 entry: draft
@@ -199,7 +206,9 @@ def test_run_by_path_examples(monkeypatch, store):
     assert out["status"] == "done"
 
 
-def test_list_and_describe_machines():
+def test_list_and_describe_machines(tmp_path, monkeypatch):
+    # Isolate from the host: a real user/system machines dir must not leak in.
+    monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
     out = srv.list_machines_tool()
     names = [m["name"] for m in out["machines"]]
     assert "std_cot" in names and all(m["source"] == "stdlib" for m in out["machines"])

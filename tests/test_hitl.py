@@ -1,6 +1,7 @@
 """Human-in-the-loop: escalate gates that suspend and resume on reply (ADR 0008)."""
 
 import json
+from pathlib import Path
 
 from mklang import cli
 from mklang.checkpoint import load_checkpoint
@@ -195,10 +196,20 @@ states:
 """
 
 
-def test_cli_hitl_requires_checkpoint(tmp_path):
+def test_cli_hitl_defaults_the_checkpoint_to_the_state_root(tmp_path, monkeypatch, capsys):
+    # ADR 0023: --hitl without --checkpoint suspends into the XDG state root.
+    monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
     mk = tmp_path / "h.mk"
     mk.write_text(MK, encoding="utf-8")
-    assert cli.main(["run", str(mk), "--hitl"]) == 2
+    monkeypatch.setattr(cli, "_build_llm", lambda prov: echo_llm())
+
+    rc = cli.main(["run", str(mk), "--hitl"])
+    assert rc == 3
+    out = json.loads(capsys.readouterr().out)
+    ck = Path(out["checkpoint"])
+    assert ck.parent == tmp_path / "state" / "checkpoints" and ck.is_file()
+    env = load_checkpoint(ck)
+    assert env["reason"] == "escalated" and env["hitl"] is True
 
 
 def test_cli_hitl_round_trip(tmp_path, monkeypatch, capsys):

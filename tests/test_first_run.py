@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 import pytest
 
@@ -58,6 +59,9 @@ def test_init_user_mode_scaffolds_sample(tmp_path, monkeypatch, capsys):
     capsys.readouterr()
     assert (tmp_path / "data" / "mklang" / "machines" / "hello.mk").is_file()
     assert (tmp_path / "data" / "mklang" / "machines" / "hello.test.yaml").is_file()
+    # The schema lands next to runtime.yaml so its yaml-language-server
+    # header validates in the user host too.
+    assert (tmp_path / "config" / "mklang" / "runtime.schema.json").is_file()
 
 
 def test_init_sample_passes_its_own_scenarios(tmp_path, capsys):
@@ -72,8 +76,11 @@ def test_init_sample_passes_its_own_scenarios(tmp_path, capsys):
 
 
 def _no_key(monkeypatch, tmp_path):
-    """A cwd with no .env and no key in the environment."""
+    """A cwd with no .env, no user-host .env, and no key in the environment."""
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    # Point the user host at an empty dir so the host machine's real
+    # ~/.config/mklang/.env can never leak into the gate under test.
+    monkeypatch.setenv("MKLANG_CONFIG_DIR", str(tmp_path / "no-user-config"))
     monkeypatch.chdir(tmp_path)
 
 
@@ -96,6 +103,61 @@ def test_local_provider_is_exempt_from_the_key_gate():
     assert host.missing_key_message(prov) is None
     keyed = ProviderConfig(name="openai", tiers={"fast": "m"}, api_key="sk-x")
     assert host.missing_key_message(keyed) is None
+
+
+def _doctor_host(tmp_path, monkeypatch, key_env="MK_TEST_DOCTOR_KEY"):
+    """An isolated user host whose active provider reads key_env."""
+    # A throwaway copy of the environment: load_dotenv writes stay test-local.
+    monkeypatch.setattr(os, "environ", dict(os.environ))
+    monkeypatch.setenv("MKLANG_CONFIG_DIR", str(tmp_path / "conf"))
+    monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.delenv(key_env, raising=False)
+    conf = tmp_path / "conf"
+    conf.mkdir()
+    conf.joinpath("runtime.yaml").write_text(
+        "active: fake\n"
+        "providers:\n"
+        "  fake:\n"
+        f"    api_key_env: {key_env}\n"
+        "    tiers: {fast: m, balanced: m, reasoning: m}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+
+def test_doctor_flags_the_missing_active_key(tmp_path, monkeypatch, capsys):
+    _doctor_host(tmp_path, monkeypatch)
+    assert cli.main(["doctor", "--format", "json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False and payload["summary"]["layer"] == "user"
+    names = [item["name"] for item in payload["items"]]
+    assert any(name.startswith("key fake") and "missing" in name for name in names)
+
+
+def test_doctor_rejects_an_empty_or_invalid_config(tmp_path, monkeypatch, capsys):
+    _doctor_host(tmp_path, monkeypatch)
+    conf = tmp_path / "conf" / "runtime.yaml"
+    conf.write_text("", encoding="utf-8")
+    assert cli.main(["doctor", "--format", "json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    conf.write_text("active: ghost\nproviders: {}\n", encoding="utf-8")
+    assert cli.main(["doctor", "--format", "json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert any("active" in e for i in payload["items"] for e in i.get("errors", []))
+
+
+def test_doctor_passes_when_the_active_key_is_set(tmp_path, monkeypatch, capsys):
+    _doctor_host(tmp_path, monkeypatch)
+    monkeypatch.setenv("MK_TEST_DOCTOR_KEY", "x")
+    assert cli.main(["doctor", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True and payload["summary"]["active"] == "fake"
+    names = [item["name"] for item in payload["items"]]
+    assert any(name.startswith("config ") and "layer=user" in name for name in names)
+    assert any(name.startswith("state checkpoints") for name in names)
 
 
 def test_console_missing_key_fails_fast(tmp_path, monkeypatch, capsys):

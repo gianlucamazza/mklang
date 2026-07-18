@@ -268,8 +268,12 @@ gets back the result with full provenance (`trace` + `usage`).
 
 ```bash
 pip install 'mklang[mcp]'
-claude mcp add mklang -- mklang-mcp --config /abs/path/to/runtime.yaml
+claude mcp add mklang -- mklang-mcp
 ```
+
+The server auto-discovers config and keys through the same chain as the CLI
+(project → user host → `/etc/mklang` → bundled example, ADR 0023); pass
+`--config` only to pin a specific file.
 
 The server exposes commissioning tools (`run` / `resume`), discovery
 (`list_machines` / `describe_machine`), and `check` (ADR 0011 + 0013). `run`

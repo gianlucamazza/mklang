@@ -10,6 +10,35 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.10.0`).
 
+## [Unreleased]
+
+Global vs local configuration separation
+([ADR 0023](./docs/adr/0023-global-local-config-separation.md)) — language
+stays **0.3**.
+
+### Added
+
+- `mklang doctor` — diagnose the resolved setup: winning config file and layer
+  (project / user / system / bundled), which `.env` files loaded, per-provider
+  key status (active-provider gaps are errors, `local` exempt), machine roots
+  with counts, and the state paths. Exit 1 when the active provider cannot run.
+- `mklang init --user` now also copies `runtime.schema.json` next to the user
+  `runtime.yaml` (parity with project mode; editor validation works in both).
+- `run --hitl` without `--checkpoint` suspends into
+  `$XDG_STATE_HOME/mklang/checkpoints/` instead of erroring; the suspension
+  message prints the generated path.
+
+### Changed
+
+- `.env` now layers **per key**: real environment > project `.env` > user
+  `~/.config/mklang/.env`. Previously any project `.env` hid the user file
+  entirely, even for keys it did not define.
+- `mklang-mcp` resolves its config through the same chain as the CLI
+  (project → user → `/etc` → bundled) instead of pinning the checkout-relative
+  bundled example — MCP clients no longer need an explicit `--config`.
+- The console workspace defaults to `./machines` only when it exists, falling
+  back to the XDG user machines dir seeded by `mklang init --user`.
+
 ## [0.10.0] — 2026-07-18
 
 First-run experience (language stays **0.3**).
