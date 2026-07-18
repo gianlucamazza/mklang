@@ -6,7 +6,9 @@ merges package builtins with third-party plugins discovered from the
 
 I/O tools (search, search_kb, send_reply) follow the **stub architecture**
 (ADR 0020): structured JSON observations with ``tool`` / ``stub`` / ``error``.
-``calc`` is a pure offline evaluator (not a network stub).
+``calc`` is a pure offline evaluator (not a network stub). Filesystem data
+tools (list_files, read_file, write_file) use the coding-tool workspace model
+(ADR 0024): live reads confined to a workspace root, grant-gated writes.
 """
 
 from __future__ import annotations
@@ -79,6 +81,35 @@ def search_kb(inp: dict) -> str:
     return _kb(inp)
 
 
+def list_files(inp: dict) -> str:
+    """List a workspace directory (ADR 0024).
+
+    Live by default under the resolved workspace (``MKLANG_FS_ROOT`` or cwd);
+    ``MKLANG_FS_BACKEND=stub`` forces the offline refusal tier.
+    """
+    from .fs import list_files as _list
+
+    return _list(inp)
+
+
+def read_file(inp: dict) -> str:
+    """Read a workspace file, size-capped (ADR 0024). Same tiers as list_files."""
+    from .fs import read_file as _read
+
+    return _read(inp)
+
+
+def write_file(inp: dict) -> str:
+    """Write a workspace file (ADR 0024).
+
+    Disk writes need an explicit grant: ``--allow-write`` / ``MKLANG_FS_WRITE=1``
+    / ``mklang.fs.allow_writes``. Overwrite requires ``overwrite: true``.
+    """
+    from .fs import write_file as _write
+
+    return _write(inp)
+
+
 def send_reply(inp: dict) -> str:
     """Customer-reply sender (ADR 0020).
 
@@ -95,6 +126,9 @@ BUILTINS: dict[str, ToolFn] = {
     "search": search,
     "search_kb": search_kb,
     "send_reply": send_reply,
+    "list_files": list_files,
+    "read_file": read_file,
+    "write_file": write_file,
 }
 
 ENTRY_POINT_GROUP = "mklang.tools"

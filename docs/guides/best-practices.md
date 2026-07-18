@@ -153,6 +153,19 @@ Replace with real RAG via entry points in production.
 
 Never ask the model to “confirm the message was sent.” Gates should treat `sent: false` as no delivery.
 
+#### `list_files` / `read_file` / `write_file` (ADR 0024)
+
+|             |                                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Input**   | `list_files`: `path?` · `read_file`: `path`, `max_bytes?` · `write_file`: `path`, `content`, `overwrite?`                             |
+| **Output**  | JSON: `{tool, stub, error, path, …}` — `entries/count/truncated`, `content/bytes/truncated`, `bytes/written/existed`                  |
+| **Default** | **Live reads** confined to the workspace (`MKLANG_FS_ROOT` or cwd); writes refused without a grant                                    |
+| **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` · Offline: `MKLANG_FS_BACKEND=stub` |
+
+Relative paths only; `..`, absolute paths, and dotfiles are refused; writes are
+capped, suffix-allowlisted (never `.mk`), atomic, mode 0600. See §13 for the
+class model and rules.
+
 #### `calc`
 
 |            |                                                      |
@@ -304,12 +317,12 @@ Three channels — do not merge them into one API.
 
 Generic bash/FS stay **out of core**. When you need disk, pick the class:
 
-| Class                       | Examples                                         | Where it lives                             | Controls                                                               |
-| --------------------------- | ------------------------------------------------ | ------------------------------------------ | ---------------------------------------------------------------------- |
-| **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir | CLI / host config                          | Operator-chosen paths; checkpoint mode `0600`                          |
-| **2. Workspace authoring**  | `write_machine` / `read_machine` (`.mk` only)    | Console surface (ADR 0015)                 | Resolve under workspace; reject escape; confirm overwrite              |
-| **3. Machine data I/O**     | Read CSV, write a report                         | **Host tool** (`mklang.tools` entry point) | Root allowlist, size/type limits, stub\|fake\|live (ADR 0020), consent |
-| **4. Arbitrary FS / shell** | `rm`, bash, git                                  | **Never core**; explicit sandboxed plugin  | Default off; high friction                                             |
+| Class                       | Examples                                         | Where it lives                            | Controls                                                              |
+| --------------------------- | ------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
+| **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir | CLI / host config                         | Operator-chosen paths; checkpoint mode `0600`                         |
+| **2. Workspace authoring**  | `write_machine` / `read_machine` (`.mk` only)    | Console surface (ADR 0015)                | Resolve under workspace; reject escape; confirm overwrite             |
+| **3. Machine data I/O**     | Read CSV, write a report                         | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch |
+| **4. Arbitrary FS / shell** | `rm`, bash, git                                  | **Never core**; explicit sandboxed plugin | Default off; high friction                                            |
 
 ### Current host layout (documentation SSOT)
 
@@ -340,11 +353,18 @@ update this table and the console guide in the same commit.
 
 ### Rules for class 3 (data tools)
 
-1. **Names only in the `.mk`** — `tool: read_doc`, not path syntax in the language.
-2. **Relative paths in tool input**; host joins to a configured **root** (`workspace`
-   or `data_root`). Refuse path escape after `resolve` (same idea as console
-   `_workspace_path`).
-3. **ADR 0020 envelope** — `{tool, stub, error, …}`; offline default **stub**.
+Implemented by `mklang.fs` (`list_files` / `read_file` / `write_file`, §5.3;
+ADR 0024). The reference posture is the coding-tool workspace model: reads are
+live by default under `--workspace` / `MKLANG_FS_ROOT` / cwd, disk writes need
+an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
+
+1. **Names only in the `.mk`** — `tool: read_file`, not path syntax in the language.
+2. **Relative paths in tool input**; host joins to the configured **workspace**
+   root. Refuse path escape after `resolve` (same idea as console
+   `_workspace_path`); `..`, absolute paths, and dotfile segments never resolve.
+3. **ADR 0020 envelope** — `{tool, stub, error, …}`; `MKLANG_FS_BACKEND=stub`
+   forces the offline refusal tier (reads default to live per ADR 0024 — the
+   one sanctioned amendment to stub-by-default).
 4. **File bodies are untrusted observations** (SPEC §11). Do not put them in the
    produce **system** channel; treat like web snippets.
 5. **No recursive delete / shell in core.** Destructive ops only as explicit
@@ -353,6 +373,25 @@ update this table and the console guide in the same commit.
    full file contents.
 7. **Console stays non-IDE** — do not register general FS tools on the default
    brain; keep workspace **`.mk` only** unless the operator opts into plugins.
+
+### Memory & planning mapping
+
+The class model gives machines the same memory layering native coding agents
+use — each level has exactly one home:
+
+| Agent memory level                        | mklang home                                                       | Class |
+| ----------------------------------------- | ----------------------------------------------------------------- | ----- |
+| Working memory (in-run)                   | Blackboard `context` + `accumulate` (SPEC §4.6) — never on disk   | —     |
+| Session state / resume                    | Checkpoints (`0600`) and console `state.json` — outside workspace | 1     |
+| Project memory (`AGENTS.md`, `CLAUDE.md`) | Non-dotted files in the workspace, read via `read_file`           | 3     |
+| Plans / reports the machine produces      | `write_file` under the workspace, behind the write grant          | 3     |
+| Global config / memory hierarchy          | XDG roots + precedence (ADR 0021/0023)                            | 1     |
+
+For machine authors: keep durable machine memory in non-dotted data files in
+the workspace (e.g. `memory/notes.md`); update it with read → `write_file`
+`overwrite: true`. Host state (checkpoints, sessions) is unreachable from
+class-3 tools by construction — the dotfile ban makes the "data lake"
+anti-pattern below structural, not just conventional.
 
 ### Anti-patterns
 

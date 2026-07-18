@@ -8,6 +8,21 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def offline_fs(monkeypatch):
+    """Keep the suite hermetic: fs tools default to stub unless a test opts in.
+
+    Tests exercising local disk bind LocalFSBackend(tmp_path) via configure_fs
+    (which wins over the env tier) and reset it here on teardown.
+    """
+    from mklang import fs
+
+    monkeypatch.setenv("MKLANG_FS_BACKEND", "stub")
+    yield
+    fs.configure_fs(None)
+    fs.allow_writes(None)
+
+
+@pytest.fixture(autouse=True)
 def fake_provider_key(monkeypatch):
     """Give mocked-LLM tests a placeholder key so the upfront key gate stays quiet.
 
