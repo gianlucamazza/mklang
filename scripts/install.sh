@@ -91,7 +91,23 @@ else
 	pipx install "mklang[$EXTRAS]"
 fi
 
-mklang init --user
+# A freshly configured pipx bin dir may not be on PATH in this shell yet.
+mklang_bin="$(command -v mklang || true)"
+if [ -z "$mklang_bin" ]; then
+	pipx_bin_dir="$(pipx environment --value PIPX_BIN_DIR 2>/dev/null || echo "$HOME/.local/bin")"
+	mklang_bin="$pipx_bin_dir/mklang"
+fi
+if [ ! -x "$mklang_bin" ]; then
+	echo "mklang was installed but its binary is not on PATH — run \`pipx ensurepath\`," >&2
+	echo "open a new shell, then run \`mklang init --user\` yourself." >&2
+	exit 2
+fi
+
+"$mklang_bin" init --user
+
+if ! command -v mklang >/dev/null 2>&1; then
+	echo "note: $(dirname "$mklang_bin") is not on PATH yet — run \`pipx ensurepath\` and open a new shell."
+fi
 
 config_dir="${MKLANG_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/mklang}"
 data_dir="${MKLANG_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mklang}"

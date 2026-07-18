@@ -48,8 +48,9 @@ host itself keeps config, machines, and state.
 
 6. **Packaging artifacts** (`packaging/`): a pipx-based `scripts/install.sh`
    (`pipx install 'mklang[console,mcp]'` + `mklang init --user`, with
-   `--uninstall`), an AUR `PKGBUILD` installing the system-level config and
-   machines, and an optional systemd _user_ unit for the MCP server.
+   `--uninstall`) and an AUR `PKGBUILD` installing the system-level config and
+   machines. The optional systemd _user_ unit for the MCP server is deferred
+   (see Rollout).
 
 ## Consequences
 

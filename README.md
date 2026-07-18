@@ -195,7 +195,7 @@ authored examples.
 ```bash
 pipx install 'mklang[console,mcp]'   # or: pip install 'mklang[console,mcp]'
 mklang init --user                   # scaffold config, .env, and a sample machine
-# set DEEPSEEK_API_KEY (or another provider key) in ~/.config/mklang/.env, then:
+# set DEEPSEEK_API_KEY (or another provider key) in the .env that init reported, then:
 mklang console
 ```
 
