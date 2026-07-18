@@ -41,30 +41,10 @@ nav:
       - CLI: cli.md
       - Machine stdlib: stdlib.md
       - Interpreter architecture: architecture.md
-  - Decisions (ADRs):
-      - Index: adr/README.md
-      - Capability tiers: adr/0001-capability-tiers.md
-      - Fan-out LLM reducer: adr/0002-fanout-llm-reducer.md
-      - Provider-agnostic: adr/0003-provider-agnostic.md
-      - LLM-as-runtime gates: adr/0004-llm-as-runtime-gates.md
-      - Reasoning first-class: adr/0005-reasoning-first-class.md
-      - Code-hook gates: adr/0006-code-hook-gates.md
-      - Resumable checkpoints: adr/0007-resumable-checkpoints.md
-      - HITL escalate suspend: adr/0008-hitl-escalate-suspend.md
-      - Conformance suite: adr/0009-conformance-suite.md
-      - LLM-assisted lint: adr/0010-llm-assisted-lint.md
-      - MCP server surface: adr/0011-mcp-server-surface.md
-      - Machine stdlib: adr/0012-machine-stdlib.md
-      - MCP surface completion: adr/0013-mcp-surface-completion.md
-      - Structured list outputs: adr/0014-structured-list-outputs.md
-      - Console surface: adr/0015-console-surface.md
-      - Host web search tool: adr/0016-host-web-search-tool.md
-      - Context content management: adr/0017-context-content-management.md
-      - Output truncation anti-cutoff: adr/0018-output-truncation-anti-cutoff.md
-      - MCP live events: adr/0019-mcp-live-events.md
-      - Host tool stub architecture: adr/0020-host-tool-stub-architecture.md
-      - Filesystem layout: adr/0021-filesystem-layout-local-install.md
-      - CLI and console experience: adr/0022-cli-console-experience.md
+  # Individual ADRs stay published at /adr/NNNN-*/ but out of the nav:
+  # the index table is the entry point, so the sidebar doesn't grow with
+  # every new decision.
+  - Decisions (ADRs): adr/README.md
   - Research:
       - Gate divergence: experiments/gate-divergence.md
   - Project:
