@@ -135,6 +135,20 @@ def test_doctor_flags_the_missing_active_key(tmp_path, monkeypatch, capsys):
     assert any(name.startswith("key fake") and "missing" in name for name in names)
 
 
+def test_doctor_rejects_an_empty_or_invalid_config(tmp_path, monkeypatch, capsys):
+    _doctor_host(tmp_path, monkeypatch)
+    conf = tmp_path / "conf" / "runtime.yaml"
+    conf.write_text("", encoding="utf-8")
+    assert cli.main(["doctor", "--format", "json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    conf.write_text("active: ghost\nproviders: {}\n", encoding="utf-8")
+    assert cli.main(["doctor", "--format", "json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert any("active" in e for i in payload["items"] for e in i.get("errors", []))
+
+
 def test_doctor_passes_when_the_active_key_is_set(tmp_path, monkeypatch, capsys):
     _doctor_host(tmp_path, monkeypatch)
     monkeypatch.setenv("MK_TEST_DOCTOR_KEY", "x")

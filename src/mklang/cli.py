@@ -501,7 +501,7 @@ def cmd_doctor(args) -> int:
     """Diagnose the resolved setup: which layer wins for config, env, keys, machines."""
     import yaml
 
-    from .config import load_env_files
+    from .config import ProviderConfig, load_env_files
     from .paths import host_paths, machine_layers, resolve_config_with_layer
     from .registry import load_stdlib_registry
 
@@ -509,17 +509,26 @@ def cmd_doctor(args) -> int:
     items: list[dict] = []
     ok = True
     resolved, layer = resolve_config_with_layer(args.config)
+    cfg = None
     try:
         cfg = yaml.safe_load(resolved.read_text(encoding="utf-8"))
-    except OSError as exc:
-        cfg, ok = None, False
-        items.append({"name": f"config {resolved}", "status": "error", "errors": [str(exc)]})
-    active = None
-    if cfg is not None:
-        if isinstance(cfg, dict) and isinstance(cfg.get("providers"), dict):
-            active = cfg.get("active")
+    except (OSError, yaml.YAMLError) as exc:
+        ok = False
+        items.append(
+            {"name": f"config {resolved} · layer={layer}", "status": "error", "errors": [str(exc)]}
+        )
+    else:
+        valid = (
+            isinstance(cfg, dict)
+            and isinstance(cfg.get("providers"), dict)
+            and cfg.get("active") in cfg["providers"]
+        )
+        if valid:
             items.append(
-                {"name": f"config {resolved} · layer={layer} · active={active}", "status": "ok"}
+                {
+                    "name": f"config {resolved} · layer={layer} · active={cfg['active']}",
+                    "status": "ok",
+                }
             )
         else:
             ok = False
@@ -527,9 +536,11 @@ def cmd_doctor(args) -> int:
                 {
                     "name": f"config {resolved} · layer={layer}",
                     "status": "error",
-                    "errors": ["must define `active` and `providers`"],
+                    "errors": ["must define `providers` and an `active` provider among them"],
                 }
             )
+            cfg = None
+    active = cfg["active"] if cfg else None
     project_env, user_env = load_env_files()
     items.append(
         {
@@ -537,17 +548,22 @@ def cmd_doctor(args) -> int:
             "status": "ok",
         }
     )
-    if isinstance(cfg, dict) and isinstance(cfg.get("providers"), dict):
+    if cfg:
         for pname, block in cfg["providers"].items():
             env_var = (block or {}).get("api_key_env", "")
-            if not env_var or pname == "local":
-                # Same exemption as host.missing_key_message: local endpoints
-                # rarely need a key, so its absence is not a finding.
-                status, note = "ok", "optional"
-            elif os.environ.get(env_var):
-                status, note = "ok", "set"
+            # The run-time readiness contract, not a reimplementation of it.
+            prov = ProviderConfig(
+                name=pname,
+                tiers={},
+                api_key=os.environ.get(env_var, "") if env_var else "",
+                api_key_env=env_var,
+            )
+            if host.missing_key_message(prov) is None:
+                note = "set" if prov.api_key else "optional"
+                status = "ok"
             else:
-                status, note = ("error", "missing") if pname == active else ("warning", "missing")
+                note = "missing"
+                status = "error" if pname == active else "warning"
                 if pname == active:
                     ok = False
             items.append({"name": f"key {pname} · {env_var or '-'} · {note}", "status": status})

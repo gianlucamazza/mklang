@@ -121,8 +121,8 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-18T10:09:11.408064+00:00",
-  "generated_from": "d79ecb681782285f3c092513584e7d5fc209db93",
+  "generated_at": "2026-07-18T10:10:28.643273+00:00",
+  "generated_from": "c618f50f53f716386ec0f1f2a7883a8f0f58be73",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
@@ -148,7 +148,7 @@
       "examples/triage.test.yaml": "9e7a316ec06c0d7583d1cc684a493cc6b62f2809ff0ea034eb36e7c37c7e03b3",
       "scripts/demo_assets.py": "820617f4e60e5bc3ba601fd189a562c07fa5b17629fb68fb44e76fcc39227854",
       "src/mklang/checkpoint.py": "0d8ce83556916ea966eeb6244301ab68c970267cc9646714e32f74d54d9a3e4e",
-      "src/mklang/cli.py": "7266ef7e9bdf2373ed77044de121c71b323c8dec8e87761fac1a6ffc4f1cf0e7",
+      "src/mklang/cli.py": "8834dfe33b30a4ac9b589ed1966597ca827f9909b208de697df4ebf761505459",
       "src/mklang/config.py": "f47cb34c9d2a8b7499f5a7c150b0b120dc302b8c399b04d7ad2d5c0a800f4c76",
       "src/mklang/console/__init__.py": "dad58b3e68833660f6565d992d9eed87320b1216c137f657d122624e8af5d63a",
       "src/mklang/console/app.py": "34d5da5a941afcb2d05d2df6e2d8b25b5f7f382b032f33a5ec796f0ed141bd7d",
@@ -173,7 +173,7 @@
       "src/mklang/search.py": "f9d9554d52507b8831ccdaade4aa083eb9bb646a6befa3a8c2a39c8c312738ea",
       "src/mklang/tools.py": "5eba3359dddf7c4c433dd5bb68e28b6c66bcc43eb006d9c4ab9afa114987676c"
     },
-    "sha256": "cbd9258ad382801b7a62a09949b5f0da6e8c8dbd28e1ce6a3a1b13cf64d6a77c"
+    "sha256": "59409c5698279e31a0fe5372c6bdae2192b26fbcf45e3bd2e448f742156566eb"
   },
   "toolchain": {
     "font": {
