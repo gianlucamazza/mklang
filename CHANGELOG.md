@@ -8,9 +8,9 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.10.0`).
+  `pyproject.toml` (currently `0.11.0`).
 
-## [Unreleased]
+## [0.11.0] — 2026-07-18
 
 Global vs local configuration separation
 ([ADR 0023](./docs/adr/0023-global-local-config-separation.md)) — language
