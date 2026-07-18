@@ -18,7 +18,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Gate judging follows the state's tier by default** (SPEC §2.1): a `reasoning`
   state's high-stakes gates (refund thresholds, legal matters, human escalation) are
   judged by the reasoning model, not silently downgraded. The `judge:` config key is
-  an **opt-in global override** that forces one model for *all* gate judging — a
+  an **opt-in global override** that forces one model for _all_ gate judging — a
   cost/latency optimization that also downgrades your most critical gates, so reach
   for it only when your gates really are uniform, cheap classifications.
 - **Speculative cascade** beats a flat `reasoning` machine on cost: draft at `fast`,
@@ -56,14 +56,15 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   undeclared keys. This is host convention + authoring discipline, not a
   language primitive.
 
-  | Key | Fill | Use for |
-  | --- | --- | --- |
-  | `today: ""` | ISO date `YYYY-MM-DD` | News/recency, knowledge-cutoff framing |
-  | `now: ""` | Local ISO datetime with offset | Wall-clock (“what time is it?”) |
+  | Key         | Fill                           | Use for                                |
+  | ----------- | ------------------------------ | -------------------------------------- |
+  | `today: ""` | ISO date `YYYY-MM-DD`          | News/recency, knowledge-cutoff framing |
+  | `now: ""`   | Local ISO datetime with offset | Wall-clock (“what time is it?”)        |
 
   Prompts should say `Today is {{today}}` / `Current local time is {{now}}`,
   prefer recent sources, and **forbid filling gaps with pre-training knowledge**
   older than that date.
+
 - **Watch for output cutoff.** When a produce hits max_tokens, the runtime sets
   `truncated: true` on the trace step and on live `state-done` events (ADR 0018).
   Default policy is `report` (annotate and continue); use `--on-truncate halt`
@@ -103,7 +104,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   `escalate`/`fail` gate prevents an endless self-correction loop.
 - **Give escalation a safe sink.** Route hard cases to a terminal `human_review`
   state rather than failing — it's a graceful degrade, not a crash. With
-  `--checkpoint --hitl` the run actually **pauses** on a fired escalate and
+  `--hitl` the run actually **pauses** on a fired escalate (checkpoint under
+  `$XDG_STATE_HOME/mklang/checkpoints/`, or wherever `--checkpoint` points) and
   `mklang resume --set human.reply="…"` feeds the decision to the handler
   (ADR 0008).
 - **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
@@ -135,7 +137,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   provider, no API key, fully deterministic. Each scenario is a named case in the
   conformance format (`llm`/`tools`/`hooks`/`run` + `expect`), and the runner
   shares its matcher with the [conformance suite](../../conformance/README.md), so a
-  green scenario means the *interpreter* would route your machine exactly that way.
+  green scenario means the _interpreter_ would route your machine exactly that way.
 - **Cover both the happy path and the escape hatches.** The value is in the
   branches you hope never fire: the escalate-to-human path, the repair loop giving
   up, the empty-tool-result fallback. Script the judge pick that steers into each
@@ -192,14 +194,14 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 ## Layer boundaries (quick)
 
-| Put in the `.mk` | Keep on the host / surface |
-| --- | --- |
-| Gates, tiers, `tool:` / `hook:` *names* | Tool/hook *implementations*, API keys |
-| `parse: list`, compress *states* | `on_truncate` default, search backend |
-| Declared `context.today: ""` / `now: ""` | Filling `today` (date) / `now` (local datetime) |
-| Scenario tests next to the machine | Console consent, MCP sessions, bash/FS plugins |
-| Trace / live events / ops logs mixed | Keep channels separate ([Best practices §12](best-practices.md)) |
-| Generic read/write disk in core | Class-3 host tools with root + stub only ([§13](best-practices.md)) |
+| Put in the `.mk`                         | Keep on the host / surface                                          |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| Gates, tiers, `tool:` / `hook:` _names_  | Tool/hook _implementations_, API keys                               |
+| `parse: list`, compress _states_         | `on_truncate` default, search backend                               |
+| Declared `context.today: ""` / `now: ""` | Filling `today` (date) / `now` (local datetime)                     |
+| Scenario tests next to the machine       | Console consent, MCP sessions, bash/FS plugins                      |
+| Trace / live events / ops logs mixed     | Keep channels separate ([Best practices §12](best-practices.md))    |
+| Generic read/write disk in core          | Class-3 host tools with root + stub only ([§13](best-practices.md)) |
 
 See [Best practices §1 and §13](best-practices.md) for the full layer map and what
 may become language 0.4 later (not current syntax).

@@ -170,8 +170,8 @@ declares both — see [Brain prompt assembly](#brain-prompt-assembly).
 ## Security model
 
 The console inherits the SPEC §11 posture: authored machines are **confined to
-the workspace** (`--workspace`, default `./machines` — path-resolved, no
-traversal); running a machine whose states invoke host tools (including
+the workspace** (`--workspace`, default `./machines` when present, else the
+XDG user machines dir — path-resolved, no traversal); running a machine whose states invoke host tools (including
 `search` if a machine uses it) asks consent once per tool set (remembered per
 session); provider keys stay in the host environment. The console cannot edit
 files outside the workspace, run shell commands, or touch git — it is an

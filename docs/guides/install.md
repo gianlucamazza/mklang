@@ -23,7 +23,7 @@ its `hello.test.yaml` scenario script), and `.env`. User mode uses XDG roots:
 
 | Data                                        | Default                           |
 | ------------------------------------------- | --------------------------------- |
-| runtime config and `.env`                   | `~/.config/mklang/`               |
+| runtime config, its schema, and `.env`      | `~/.config/mklang/`               |
 | user machines (incl. the `hello.mk` sample) | `~/.local/share/mklang/machines/` |
 | console sessions/checkpoints                | `~/.local/state/mklang/`          |
 
