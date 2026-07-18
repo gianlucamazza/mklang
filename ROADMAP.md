@@ -61,7 +61,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.10.0:** first-run experience (ADR 0021 phase 3) — `mklang init` seeding
   `hello.mk`, provider key gate, shell completions, `scripts/install.sh` (pipx),
   the Arch/AUR recipe, and a lean sdist.
-- **Live (2026-07-17, release 0.9.2 matrix):** DeepSeek + OpenAI smoke and gate
+- **Live (2026-07-18, release 0.10.0 matrix):** DeepSeek + OpenAI smoke and gate
   agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
 
 ## Language
@@ -205,6 +205,10 @@ language 0.4 without ADR + conformance):
   AUR recipe in `packaging/arch/`. The optional MCP user service is deferred —
   the server is stdio-only, so there is nothing for a persistent unit to listen
   on until a network transport lands.
+- **Shipped (ADR 0023):** global/local config separation — per-key `.env`
+  layering, `mklang-mcp` config auto-discovery, workspace and HITL-checkpoint
+  XDG fallbacks, `mklang doctor`, and the removal of the dead `run:` block and
+  the legacy `~/.mklang` sessions fallback.
 - **[later] `std_compress`** — promote `research_compress.mk` into stdlib.
 - **[later] `runtime.yaml` tools block** (ADR 0016) — declarative host bindings.
 - **[later] Truncation `continue` stitching** (ADR 0018).

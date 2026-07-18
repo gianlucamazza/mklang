@@ -306,7 +306,7 @@ mklang console
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
-(`--llm` optional) / **`test`**; [conformance suite](./conformance/README.md);
+(`--llm` optional) / **`test`** / **`doctor`**; [conformance suite](./conformance/README.md);
 machine **stdlib** (`std_*`); **MCP** host; **console** TUI (M1–M3); structured
 web `search` (offline stub by default); host tool stub architecture for
 `search` / `search_kb` / `send_reply` (ADR 0020); host clock conventions
@@ -315,7 +315,7 @@ web `search` (offline stub by default); host tool stub architecture for
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green in the latest (0.9.3) release matrix,
+- **Live:** DeepSeek (default) and **OpenAI** green in the latest (0.10.0) release matrix,
   including gate-divergence agreement **1.0** on the synthetic
   harness — see
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).

@@ -35,7 +35,7 @@ This scaffolds the XDG user host, never overwriting existing files:
 
 | What                                                | Where                             |
 | --------------------------------------------------- | --------------------------------- |
-| runtime config + `.env`                             | `~/.config/mklang/`               |
+| runtime config, its schema, + `.env`                | `~/.config/mklang/`               |
 | your machines, incl. a scaffolded `hello.mk` sample | `~/.local/share/mklang/machines/` |
 | console sessions, checkpoints                       | `~/.local/state/mklang/`          |
 
