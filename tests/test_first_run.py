@@ -149,6 +149,34 @@ def test_doctor_rejects_an_empty_or_invalid_config(tmp_path, monkeypatch, capsys
     assert any("active" in e for i in payload["items"] for e in i.get("errors", []))
 
 
+def test_doctor_flags_stale_config_keys_via_the_schema(tmp_path, monkeypatch, capsys):
+    _doctor_host(tmp_path, monkeypatch)
+    monkeypatch.setenv("MK_TEST_DOCTOR_KEY", "x")
+    conf = tmp_path / "conf" / "runtime.yaml"
+    # A config seeded from an older example still carrying the removed run: block.
+    conf.write_text(conf.read_text(encoding="utf-8") + "run:\n  trace: true\n", encoding="utf-8")
+    assert cli.main(["doctor", "--format", "json"]) == 0  # warning, not a failure
+    payload = json.loads(capsys.readouterr().out)
+    schema_items = [i for i in payload["items"] if i["name"].startswith("schema ")]
+    assert schema_items and any("run" in w for w in schema_items[0]["warnings"])
+
+
+def test_doctor_reports_tool_backends(tmp_path, monkeypatch, capsys):
+    _doctor_host(tmp_path, monkeypatch)
+    monkeypatch.setenv("MK_TEST_DOCTOR_KEY", "x")
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.delenv("MKLANG_SEARCH_BACKEND", raising=False)
+    assert cli.main(["doctor", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    names = [i["name"] for i in payload["items"]]
+    assert any(n == "tools search · backend=stub" for n in names)
+    monkeypatch.setenv("MKLANG_SEARCH_BACKEND", "tavily")
+    assert cli.main(["doctor", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    tavily = [i for i in payload["items"] if i["name"].startswith("tools search")]
+    assert tavily[0]["status"] == "warning"  # tavily forced without its key
+
+
 def test_doctor_passes_when_the_active_key_is_set(tmp_path, monkeypatch, capsys):
     _doctor_host(tmp_path, monkeypatch)
     monkeypatch.setenv("MK_TEST_DOCTOR_KEY", "x")

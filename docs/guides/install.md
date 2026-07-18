@@ -27,12 +27,29 @@ its `hello.test.yaml` scenario script), and `.env`. User mode uses XDG roots:
 | user machines (incl. the `hello.mk` sample) | `~/.local/share/mklang/machines/` |
 | console sessions/checkpoints                | `~/.local/state/mklang/`          |
 
-`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and `XDG_STATE_HOME` are honored. Tests and
-sandboxes can use `MKLANG_CONFIG_DIR`, `MKLANG_DATA_DIR`, and `MKLANG_STATE_DIR`.
+`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and `XDG_STATE_HOME` are honored.
 An explicit `--config` wins, followed by `MKLANG_CONFIG`, project config, user
 config, system config, and finally the read-only bundled example — the same
 chain for the CLI, the console, and `mklang-mcp`. `.env` layers per key:
 real environment > project `.env` > user `.env` (ADR 0023).
+
+### Environment variables
+
+One reference for every `MKLANG_*` variable the runtime reads:
+
+| Variable                                                     | Effect                                                           |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `MKLANG_CONFIG`                                              | select one runtime config file directly (beats discovery)        |
+| `MKLANG_CONFIG_DIR` / `MKLANG_DATA_DIR` / `MKLANG_STATE_DIR` | override the user roots (tests, sandboxes)                       |
+| `MKLANG_DEBUG=1`                                             | re-raise unexpected errors with a full traceback                 |
+| `MKLANG_SEARCH_BACKEND=stub\|fake\|tavily`                   | bind the `search` tool (unset: Tavily when `TAVILY_API_KEY` set) |
+| `MKLANG_KB_BACKEND=stub\|fake`                               | bind the `search_kb` tool                                        |
+| `MKLANG_MAIL_BACKEND=fake`                                   | bind the `send_reply` tool                                       |
+| `MKLANG_LIVE=1`                                              | opt into the live provider test suite (development only)         |
+
+Provider API keys are named per provider by `api_key_env` in `runtime.yaml`
+(e.g. `DEEPSEEK_API_KEY`) and read from the environment or the layered `.env`
+files — never from the config file itself.
 
 Machine precedence is stdlib → plugins → system → user → project. Use
 `mklang machines` to see the winning source, and `mklang doctor` to see every

@@ -137,7 +137,3 @@ def machine_layers() -> list[tuple[str, Path]]:
         ("system", Path("/usr/share/mklang/machines")),
         ("user", host_paths().user_machines),
     ]
-
-
-def legacy_sessions() -> Path:
-    return Path.home() / ".mklang" / "console" / "sessions"

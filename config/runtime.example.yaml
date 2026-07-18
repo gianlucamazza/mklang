@@ -138,8 +138,3 @@ providers:
       balanced: qwen3:32b
       reasoning: deepseek-r1:70b # a reasoning-tuned local model
     # judge: qwen3:8b # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
-
-# Global run defaults applied by the runtime (not model selection).
-run:
-  max_repair_per_gate: 2 # cap when a gate's repair budget is unspecified
-  trace: true # emit the run trace (SPEC.md §8)

@@ -19,9 +19,11 @@ stays **0.3**.
 ### Added
 
 - `mklang doctor` — diagnose the resolved setup: winning config file and layer
-  (project / user / system / bundled), which `.env` files loaded, per-provider
-  key status (active-provider gaps are errors, `local` exempt), machine roots
-  with counts, and the state paths. Exit 1 when the active provider cannot run.
+  (project / user / system / bundled), schema validation of the resolved config
+  (stale keys surface as warnings), which `.env` files loaded, per-provider
+  key status (active-provider gaps are errors, `local` exempt), tool backends
+  (`search`/`kb`/`mail`), machine roots with counts, and the state paths.
+  Exit 1 when the active provider cannot run.
 - `mklang init --user` now also copies `runtime.schema.json` next to the user
   `runtime.yaml` (parity with project mode; editor validation works in both).
 - `run --hitl` without `--checkpoint` suspends into
@@ -38,6 +40,15 @@ stays **0.3**.
   bundled example — MCP clients no longer need an explicit `--config`.
 - The console workspace defaults to `./machines` only when it exists, falling
   back to the XDG user machines dir seeded by `mklang init --user`.
+
+### Removed
+
+- The dead `run:` block (`max_repair_per_gate`, `trace`) from the example
+  config and its schema: the runtime never read it — repair budgets live in
+  each gate (`repair: N`, SPEC §7) and the trace is always part of the run
+  result. `mklang doctor` flags it as a stale key in existing configs.
+- The legacy `~/.mklang/console/sessions` read fallback: sessions live only
+  under the XDG state root (ADR 0021's migration window is over).
 
 ## [0.10.0] — 2026-07-18
 

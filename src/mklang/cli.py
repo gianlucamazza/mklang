@@ -499,10 +499,16 @@ def cmd_console(args) -> int:
 
 def cmd_doctor(args) -> int:
     """Diagnose the resolved setup: which layer wins for config, env, keys, machines."""
+    import jsonschema
     import yaml
 
     from .config import ProviderConfig, load_env_files
-    from .paths import host_paths, machine_layers, resolve_config_with_layer
+    from .paths import (
+        bundled_config_schema,
+        host_paths,
+        machine_layers,
+        resolve_config_with_layer,
+    )
     from .registry import load_stdlib_registry
 
     hp = host_paths()
@@ -540,6 +546,20 @@ def cmd_doctor(args) -> int:
                 }
             )
             cfg = None
+    if cfg:
+        schema = json.loads(bundled_config_schema().read_text(encoding="utf-8"))
+        violations = [
+            f"{'/'.join(str(p) for p in err.path) or '<root>'}: {err.message}"
+            for err in jsonschema.Draft7Validator(schema).iter_errors(cfg)
+        ]
+        if violations:
+            items.append(
+                {
+                    "name": f"schema {resolved.name} · {len(violations)} finding(s)",
+                    "status": "warning",
+                    "warnings": violations,
+                }
+            )
     active = cfg["active"] if cfg else None
     project_env, user_env = load_env_files()
     items.append(
@@ -567,6 +587,21 @@ def cmd_doctor(args) -> int:
                 if pname == active:
                     ok = False
             items.append({"name": f"key {pname} · {env_var or '-'} · {note}", "status": status})
+    name = (os.environ.get("MKLANG_SEARCH_BACKEND") or "").strip().lower()
+    if not name:
+        search_backend = "tavily" if os.environ.get("TAVILY_API_KEY") else "stub"
+    elif name in ("stub", "none", "off"):
+        search_backend = "stub"
+    else:
+        search_backend = name
+    search_status = "ok"
+    if search_backend == "tavily" and not os.environ.get("TAVILY_API_KEY"):
+        search_status = "warning"
+        search_backend += " · TAVILY_API_KEY missing"
+    items.append({"name": f"tools search · backend={search_backend}", "status": search_status})
+    for tool, var in (("kb", "MKLANG_KB_BACKEND"), ("mail", "MKLANG_MAIL_BACKEND")):
+        backend = (os.environ.get(var) or "").strip().lower() or "stub"
+        items.append({"name": f"tools {tool} · backend={backend}", "status": "ok"})
     project_machines = Path("machines")
     machine_roots = [("project", project_machines)] if project_machines.is_dir() else []
     machine_roots += [(name, root) for name, root in reversed(machine_layers())]
