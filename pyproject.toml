@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "0.9.3"
+version = "0.10.0"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -68,6 +68,18 @@ auto_approve_ok = "mklang.hooks:auto_approve_ok"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+# Keep the sdist lean: the PKGBUILD builds from it and needs src/, config/,
+# examples/, tests/ and the top-level metadata — not media assets or site output.
+exclude = [
+  "/.claude",
+  "/.github",
+  "/demos",
+  "/dist",
+  "/site",
+  "/docs/assets/demos",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mklang"]

@@ -30,6 +30,14 @@ def test_package_versions_are_synchronized():
     assert project["project"]["version"] == mklang.__version__
 
 
+def test_pkgbuild_version_is_synchronized():
+    # Nothing else pins the Arch recipe to the package version; sha256sums is
+    # excluded because it can only follow the published PyPI sdist digest
+    # (packaging/arch/README.md release checklist).
+    pkgbuild = (ROOT / "packaging" / "arch" / "PKGBUILD").read_text(encoding="utf-8")
+    assert f"pkgver={mklang.__version__}\n" in pkgbuild
+
+
 def test_current_version_docs_are_synchronized():
     version = mklang.__version__
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")

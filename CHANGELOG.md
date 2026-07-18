@@ -8,9 +8,9 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.9.3`).
+  `pyproject.toml` (currently `0.10.0`).
 
-## [Unreleased]
+## [0.10.0] — 2026-07-18
 
 First-run experience (language stays **0.3**).
 
@@ -34,6 +34,8 @@ First-run experience (language stays **0.3**).
 
 - README install/quickstart restructured: pipx path first, checkout/`uv`
   workflow kept as the from-checkout section.
+- Lean sdist: exclude media assets, `site/`, `demos/`, `dist/`, and `.github/`
+  from the source distribution (the AUR recipe builds from it).
 
 ## [0.9.3] — 2026-07-17
 
