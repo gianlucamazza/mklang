@@ -49,16 +49,17 @@ the `mklang.machines` entry-point group.
 
 Uniform contract: input `task` (string), result `answer`.
 
-| machine                | architecture            | flow                                                                 | extra context (defaults)                    | budget | tiers                        |
-| ---------------------- | ----------------------- | -------------------------------------------------------------------- | ------------------------------------------- | ------ | ---------------------------- |
-| `std_cot`              | Chain-of-Thought        | solve (traced reasoning) → END                                       | —                                           | 3      | balanced                     |
-| `std_self_consistency` | Self-consistency        | 5 sampled answers → majority vote → END, or low-confidence flag      | —                                           | 12     | fast → reasoning             |
-| `std_refine`           | Reflexion / self-refine | draft → judged vs criteria → repair ×2 → END, or flagged best-effort | `criteria` ("clear, correct, and complete") | 6      | balanced                     |
-| `std_tot`              | Tree-of-Thought         | 3 angled proposals → select best → deepen or finalize                | `best` (internal carry, "")                 | 10     | balanced → reasoning         |
-| `std_debate`           | Debate / ensemble       | one argument per persona → synthesis with coverage repair            | `personas` (3 generic debaters, list)       | 12     | fast → reasoning             |
-| `std_map_reduce`       | Map-Reduce              | apply `item_task` to each item → reduce with `reduce_task`           | `items` (list), `item_task`, `reduce_task`  | 20     | fast → reasoning             |
-| `std_cascade`          | Speculative cascade     | fast draft → confident? END : redo at reasoning tier                 | —                                           | 4      | fast → reasoning             |
-| `std_plan_execute`     | Plan-and-Execute        | plan (`parse: list`, 0.3) → execute each step → combine              | —                                           | 16     | reasoning → fast → reasoning |
+| machine                | architecture            | flow                                                                       | extra context (defaults)                                     | budget | tiers                        |
+| ---------------------- | ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | ---------------------------- |
+| `std_cot`              | Chain-of-Thought        | solve (traced reasoning) → END                                             | —                                                            | 3      | balanced                     |
+| `std_self_consistency` | Self-consistency        | 5 sampled answers → majority vote → END, or low-confidence flag            | —                                                            | 12     | fast → reasoning             |
+| `std_refine`           | Reflexion / self-refine | draft → judged vs criteria → repair ×2 → END, or flagged best-effort       | `criteria` ("clear, correct, and complete")                  | 6      | balanced                     |
+| `std_tot`              | Tree-of-Thought         | 3 angled proposals → select best → deepen or finalize                      | `best` (internal carry, "")                                  | 10     | balanced → reasoning         |
+| `std_debate`           | Debate / ensemble       | one argument per persona → synthesis with coverage repair                  | `personas` (3 generic debaters, list)                        | 12     | fast → reasoning             |
+| `std_map_reduce`       | Map-Reduce              | apply `item_task` to each item → reduce with `reduce_task`                 | `items` (list), `item_task`, `reduce_task`                   | 20     | fast → reasoning             |
+| `std_cascade`          | Speculative cascade     | fast draft → confident? END : redo at reasoning tier                       | —                                                            | 4      | fast → reasoning             |
+| `std_plan_execute`     | Plan-and-Execute        | plan (`parse: list`, 0.3) → execute each step → combine                    | —                                                            | 16     | reasoning → fast → reasoning |
+| `std_research`         | Search → ground         | plan_query → search (accumulate) → check → {loop \| finalize \| no_search} | `today` (host-fills ISO date, ""), `notes` (accumulator, []) | 14     | fast → reasoning             |
 
 Notes:
 
@@ -68,14 +69,19 @@ Notes:
 - Every machine ships a `*.test.yaml` next to it — scripted scenarios you can
   run offline: `mklang test <path>/std_refine.mk --script <path>/std_refine.test.yaml`.
   The test suite pins all of them in CI.
+- `std_research` is the one machine that uses a `tool:` state — the bundled
+  host `search` tool (ADR 0016), which every mklang install ships. It grounds
+  the answer only in search observations; with no backend bound
+  (`TAVILY_API_KEY` unset) it says so honestly instead of answering from
+  training knowledge.
 
 ## Not in the stdlib, and why
 
-| pattern            | blocker                                                                                                                                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ReAct              | needs host `tool:`s — tool names are static, so the host must author the machine around its own tools ([`examples/react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)) |
-| Router-of-experts  | routes to domain `call:` targets, which are static — see [`examples/triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                                              |
-| Exact policy gates | needs host `hook:`s — see [`examples/hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                     |
+| pattern            | blocker                                                                                                                                                                                                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ReAct              | needs arbitrary host `tool:`s — tool names are static, so the host must author the machine around its own tools ([`examples/react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)); `std_research` gets in only because `search` is bundled |
+| Router-of-experts  | routes to domain `call:` targets, which are static — see [`examples/triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                                                                                                                 |
+| Exact policy gates | needs host `hook:`s — see [`examples/hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                                                                                        |
 
 These stay as documented patterns: the [cookbook](../../SPEC.md) has the skeletons,
 the [authoring guide](../guides/authoring.md) the recipe, and

@@ -206,8 +206,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 Elevate **one** host/stdlib item per package release (layer discipline: no
 language 0.4 without ADR + conformance):
 
-- **[next] `std_research`** — search → ground pattern as stdlib machine
-  (discoverable from console/MCP); dogfood `today` + `tool: search`.
+- **[shipped] `std_research`** — search → ground pattern as a stdlib machine
+  (discoverable from console/MCP); dogfoods `today` + the bundled `tool: search`,
+  with an honest no-backend state instead of answering from training knowledge.
 - **Shipped (ADR 0021 phases 1–3):** XDG user/system dirs, config resolution,
   `mklang init` (now seeding a `hello.mk` sample), state migration, layered
   machine discovery, and phase 3 packaging: `scripts/install.sh` (pipx) and the
