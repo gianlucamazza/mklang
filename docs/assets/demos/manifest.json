@@ -121,14 +121,14 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-18T12:50:38.036860+00:00",
-  "generated_from": "72582694d6a3ef1d83ef6f62e2a51e2eeac90ce3",
+  "generated_at": "2026-07-22T23:03:16.465538+00:00",
+  "generated_from": "b844183a20d49039d920a41fe272dae5bcf3e9ab",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
     "reasoning": "deepseek-reasoner"
   },
-  "package_version": "0.11.0",
+  "package_version": "0.12.0",
   "provider": "deepseek",
   "schema": 2,
   "source": {
@@ -148,7 +148,7 @@
       "examples/triage.test.yaml": "9e7a316ec06c0d7583d1cc684a493cc6b62f2809ff0ea034eb36e7c37c7e03b3",
       "scripts/demo_assets.py": "820617f4e60e5bc3ba601fd189a562c07fa5b17629fb68fb44e76fcc39227854",
       "src/mklang/checkpoint.py": "0d8ce83556916ea966eeb6244301ab68c970267cc9646714e32f74d54d9a3e4e",
-      "src/mklang/cli.py": "845a9903cf7b33f2f6b69e9f2cb8d3946f7de41435f35486912cb9271b60e260",
+      "src/mklang/cli.py": "371679c105d828185dd6018bbaecae0bd167f2fde8d54a13316ece47d8267ea3",
       "src/mklang/config.py": "f47cb34c9d2a8b7499f5a7c150b0b120dc302b8c399b04d7ad2d5c0a800f4c76",
       "src/mklang/console/__init__.py": "dad58b3e68833660f6565d992d9eed87320b1216c137f657d122624e8af5d63a",
       "src/mklang/console/app.py": "dc9efdff36c541824371ded62d0ae0aa5a3c538315b7b9102dbccfabcf48fb26",
@@ -168,12 +168,12 @@
       "src/mklang/llm/openai_compat.py": "31a8636b61c7199c69a97fb3f268b6f5bad68b3e4ad6031f6bd4ef8c3e6a6257",
       "src/mklang/llm/prompts.py": "bc02ffc60021d3d89ae1bc3e8d1083330b849151450faa3d0ac2ef9f90377a11",
       "src/mklang/presentation.py": "812a1c363ace95f5bc5778615ffd36ecf681ce33adf78c41857ee984c6e9b012",
-      "src/mklang/providers.py": "512c75ca22ffa02ed03116fed81a44682f3e1b39805405a8bb4a0fca7564be7d",
+      "src/mklang/providers.py": "79b2f4041429e9c5d5beda81063e3c88d0033fa68dc6eb2cab892ffc8300f0c4",
       "src/mklang/scripttest.py": "da5e5d96da90eee313a3003b16cb50c15420910bf7c6b93342f311efafad4053",
       "src/mklang/search.py": "f9d9554d52507b8831ccdaade4aa083eb9bb646a6befa3a8c2a39c8c312738ea",
-      "src/mklang/tools.py": "3fb26e21b40f43979c7528e039d36a1b9ceb11d38f96f21996c33ffe9814c5d2"
+      "src/mklang/tools.py": "265e1210645ce9e0ba544a12010a4a084d3428407bfb641d82fbfaf28025473a"
     },
-    "sha256": "30ef35b069f81f4ce7acf8a70cc1085f0e9f02ea68b96e4b3db7014c98ffceeb"
+    "sha256": "968800ec783ba5c8340564724573eb75e28b7be63ae22af11eb45152da949d7d"
   },
   "toolchain": {
     "font": {

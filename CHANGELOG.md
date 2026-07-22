@@ -10,6 +10,29 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.12.0`).
 
+## [Unreleased]
+
+### Added
+
+- Process logging hygiene (best practices §12): the host now logs on the
+  `mklang.*` logger hierarchy to stderr — `--log-level` on every CLI
+  subcommand and `mklang-mcp`, or `MKLANG_LOG_LEVEL` (flag wins; default
+  `warning`, format `LEVEL name: message`, no timestamps). Host logs never
+  ride MCP logging notifications.
+
+### Changed
+
+- Plugin/stdlib load failures (machines, hooks, providers, tools) and the
+  resume ops advisories (`--force` hash divergence, non-increasing cost
+  budget) are `WARNING mklang.<module>: …` log lines instead of ad-hoc
+  `# warning:` stderr prints. Message bodies are unchanged.
+
+### Fixed
+
+- The fs data tools' "INFO audit line" (0.12.0) was never visible: no
+  handler existed, so INFO records were dropped. The audit lines are now
+  real — run with `--log-level info` to see them.
+
 ## [0.12.0] — 2026-07-23
 
 Filesystem data tools ([ADR 0024](./docs/adr/0024-fs-data-tools.md)) and the

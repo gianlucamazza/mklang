@@ -35,6 +35,7 @@ except ImportError:  # pragma: no cover - exercised by the no-extra install
 from .. import fs, host
 from ..checkpoint import load_checkpoint, save_checkpoint, verify_hash
 from ..engine import run as run_machine
+from ..logs import LEVELS, setup_process_logging
 from ..registry import base_registry, load_stdlib_registry
 from .sessions import Session, SessionStore
 
@@ -491,7 +492,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="grant write_file access to real disk under the workspace (default off)",
     )
+    ap.add_argument(
+        "--log-level",
+        choices=LEVELS,
+        default=None,
+        help="process log level on stderr (default: MKLANG_LOG_LEVEL or warning); "
+        "host logs never ride MCP logging notifications",
+    )
     args = ap.parse_args(argv)
+    setup_process_logging(args.log_level)
     if args.workspace:
         root = Path(args.workspace).expanduser()
         if not root.is_dir():

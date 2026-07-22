@@ -9,13 +9,15 @@ OpenAI-protocol provider (deepseek, openai, xai, mistral, openrouter, local, …
 
 from __future__ import annotations
 
-import sys
+import logging
 from collections.abc import Callable
 from importlib.metadata import entry_points
 
 from .config import ProviderConfig
 
 ENTRY_POINT_GROUP = "mklang.providers"
+
+_log = logging.getLogger("mklang.providers")
 
 ProviderFactory = Callable[[ProviderConfig], object]
 
@@ -39,20 +41,20 @@ BUILTINS: dict[str, ProviderFactory] = {"anthropic": anthropic}
 def load_entry_point_providers(group: str = ENTRY_POINT_GROUP) -> dict[str, ProviderFactory]:
     """Load third-party provider factories from packaging entry points.
 
-    Failures are skipped with a stderr warning so a broken plugin cannot sink the CLI.
+    Failures are skipped with a WARNING log line so a broken plugin cannot sink the CLI.
     """
     reg: dict[str, ProviderFactory] = {}
     try:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
     except Exception as e:
-        print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
+        _log.warning("could not read entry points (%s): %s", group, e)
         return reg
     for ep in selected:
         try:
             reg[ep.name] = ep.load()
         except Exception as e:
-            print(f"# warning: provider plugin '{ep.name}' failed to load: {e}", file=sys.stderr)
+            _log.warning("provider plugin %r failed to load: %s", ep.name, e)
     return reg
 
 

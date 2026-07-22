@@ -195,8 +195,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **[maybe] Observability export** — OpenTelemetry spans from the trace
   (projection of the run trace; process logging stays host-side — see
   [best practices §12](./docs/guides/best-practices.md)).
-- **[later] Process logging hygiene** — stdlib `logging` hierarchy +
-  `MKLANG_LOG_LEVEL` / CLI flag; never replace trace/events (BP §12).
+- **[shipped] Process logging hygiene** — `mklang.*` `logging` hierarchy on
+  stderr, `MKLANG_LOG_LEVEL` / `--log-level` (CLI and `mklang-mcp`); never
+  replaces trace/events (BP §12).
 - **[shipped] FS data tools (ADR 0024)** — class-3 `list_files`/`read_file`/
   `write_file` builtins with a coding-tool workspace model: live reads confined
   to `--workspace`/`MKLANG_FS_ROOT`/cwd, grant-gated writes; not console brain

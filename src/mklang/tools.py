@@ -14,8 +14,8 @@ tools (list_files, read_file, write_file) use the coding-tool workspace model
 from __future__ import annotations
 
 import ast
+import logging
 import operator
-import sys
 from collections.abc import Callable
 from importlib.metadata import entry_points
 
@@ -133,6 +133,8 @@ BUILTINS: dict[str, ToolFn] = {
 
 ENTRY_POINT_GROUP = "mklang.tools"
 
+_log = logging.getLogger("mklang.tools")
+
 
 def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
     """Load third-party tools from packaging entry points.
@@ -146,7 +148,7 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
     except Exception as e:
-        print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
+        _log.warning("could not read entry points (%s): %s", group, e)
         return reg
     for ep in selected:
         try:
@@ -155,7 +157,7 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
                 raise TypeError(f"{ep.name} is not callable")
             reg[ep.name] = obj  # type: ignore[assignment]
         except Exception as e:
-            print(f"# warning: tool plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
+            _log.warning("tool plugin %r failed to load: %s", ep.name, e)
     return reg
 
 

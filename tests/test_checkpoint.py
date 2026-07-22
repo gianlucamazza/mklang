@@ -321,7 +321,7 @@ def test_checkpoint_written_owner_only(tmp_path):
     assert stat.S_IMODE(os.stat(ck_path).st_mode) == 0o600
 
 
-def test_cli_resume_guards(tmp_path, capsys, monkeypatch):
+def test_cli_resume_guards(tmp_path, capsys, monkeypatch, caplog):
     mk = tmp_path / "demo.mk"
     mk.write_text(MK, encoding="utf-8")
     ck_path = tmp_path / "ck.json"
@@ -351,5 +351,10 @@ def test_cli_resume_guards(tmp_path, capsys, monkeypatch):
     assert "machine changed since checkpoint" in capsys.readouterr().err
 
     # --force gets past the hash check (stub _prepare to avoid provider/config setup)
+    # and the divergence lands on the mklang.cli logger, not stderr prints.
     monkeypatch.setattr(cli, "_prepare", lambda *a: 99)
-    assert cli.main(["resume", str(ck_path), "--force"]) == 99
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="mklang.cli"):
+        assert cli.main(["resume", str(ck_path), "--force"]) == 99
+    assert any("changed since checkpoint" in r.message for r in caplog.records)

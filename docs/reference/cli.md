@@ -27,6 +27,10 @@ config discovery in [Installation](../guides/install.md).
   honored.
 - `MKLANG_DEBUG=1` — re-raise unexpected errors with a full traceback instead
   of the one-line diagnostic.
+- `--log-level debug|info|warning|error` (or `MKLANG_LOG_LEVEL`; the flag wins) —
+  process log level for the `mklang.*` logger hierarchy on stderr
+  ([best practices §12](../guides/best-practices.md)). Default `warning`
+  keeps today's output; `info` reveals the fs data-tool audit lines.
 - A missing provider API key fails fast with a diagnostic naming the exact
   variable to set in `.env` (the `local` provider is exempt); commands that
   never call a provider (`check`, `lint` without `--llm`, `test`, `machines`,

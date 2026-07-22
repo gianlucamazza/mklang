@@ -294,9 +294,13 @@ Three channels — do not merge them into one API.
    the run (same rule as `on_event` / MCP forwarder).
 5. **Secrets.** Never log API keys. Prefer no full produce/judge bodies at
    default levels; DEBUG only when explicitly enabled.
-6. **Levels (when host logging exists).** `DEBUG` adapters/raw HTTP; `INFO`
-   coarse host lifecycle; `WARNING` stub tools, truncation, `judge_fallback`;
-   `ERROR` halts. Do **not** INFO-log every state (events already cover that).
+6. **Levels.** The host logs on the `mklang.*` hierarchy (`mklang.registry`,
+   `mklang.fs`, `mklang.cli`, …) to stderr — `--log-level` or
+   `MKLANG_LOG_LEVEL`, default `warning`, format `LEVEL name: message` (no
+   timestamps; journald/CI add their own). `DEBUG` adapters/raw HTTP; `INFO`
+   coarse host lifecycle (e.g. the fs audit lines); `WARNING` plugin-load
+   failures, stub tools, truncation, `judge_fallback`; `ERROR` halts. Do
+   **not** INFO-log every state (events already cover that).
 7. **Console separation.** Conversation pane ≠ ops log. UI stays Rich/Markdown;
    diagnostics go to stderr or a host log path.
 8. **MCP.** Keep `mklang.event` for run vocabulary only. Host stack traces use a

@@ -4,7 +4,7 @@ plus the bundled `std_*` stdlib and `mklang.machines` entry-point plugins."""
 from __future__ import annotations
 
 import functools
-import sys
+import logging
 from importlib.metadata import entry_points
 from pathlib import Path
 
@@ -14,6 +14,8 @@ from .loader import load_machine
 from .model import Machine, parse_machine
 
 ENTRY_POINT_GROUP = "mklang.machines"
+
+_log = logging.getLogger("mklang.registry")
 
 
 def load_registry(directory: str | Path, validate: bool = True) -> dict[str, Machine]:
@@ -47,7 +49,7 @@ def load_stdlib_registry() -> dict[str, Machine]:
         try:
             m = parse_machine(yaml.safe_load(e.read_text(encoding="utf-8")))
         except Exception as err:  # a broken stdlib file must not sink runs
-            print(f"# warning: stdlib machine {e.name!r} failed to load: {err}", file=sys.stderr)
+            _log.warning("stdlib machine %r failed to load: %s", e.name, err)
             continue
         reg[m.name] = m
     return reg
@@ -58,14 +60,14 @@ def load_entry_point_machines(group: str = ENTRY_POINT_GROUP) -> dict[str, Machi
 
     The loaded object must be a machine document (dict) or a zero-arg factory
     returning one; it is parsed with `parse_machine` and keyed by its `machine:`
-    name. Failures are skipped with a stderr warning so a broken plugin cannot
-    sink the CLI."""
+    name. Failures are skipped with a WARNING log line so a broken plugin
+    cannot sink the CLI."""
     reg: dict[str, Machine] = {}
     try:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
     except Exception as e:
-        print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
+        _log.warning("could not read entry points (%s): %s", group, e)
         return reg
     for ep in selected:
         try:
@@ -77,7 +79,7 @@ def load_entry_point_machines(group: str = ENTRY_POINT_GROUP) -> dict[str, Machi
             m = parse_machine(obj)
             reg[m.name] = m
         except Exception as e:
-            print(f"# warning: machine plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
+            _log.warning("machine plugin %r failed to load: %s", ep.name, e)
     return reg
 
 

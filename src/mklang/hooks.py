@@ -7,7 +7,7 @@ Optional `hook: <name>` on a gate evaluates the named predicate without the LLM
 
 from __future__ import annotations
 
-import sys
+import logging
 from collections.abc import Callable
 from importlib.metadata import entry_points
 from typing import Any
@@ -15,6 +15,8 @@ from typing import Any
 HookFn = Callable[[dict, Any], bool]
 
 ENTRY_POINT_GROUP = "mklang.hooks"
+
+_log = logging.getLogger("mklang.hooks")
 
 
 def always_true(_ctx: dict, _output: Any) -> bool:
@@ -59,7 +61,7 @@ def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
         eps = entry_points()
         selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
     except Exception as e:
-        print(f"# warning: could not read entry points ({group}): {e}", file=sys.stderr)
+        _log.warning("could not read entry points (%s): %s", group, e)
         return reg
     for ep in selected:
         try:
@@ -68,7 +70,7 @@ def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
                 raise TypeError(f"{ep.name} is not callable")
             reg[ep.name] = obj  # type: ignore[assignment]
         except Exception as e:
-            print(f"# warning: hook plugin {ep.name!r} failed to load: {e}", file=sys.stderr)
+            _log.warning("hook plugin %r failed to load: %s", ep.name, e)
     return reg
 
 
