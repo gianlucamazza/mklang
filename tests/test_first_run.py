@@ -169,8 +169,8 @@ def test_doctor_reports_tool_backends(tmp_path, monkeypatch, capsys):
     assert cli.main(["doctor", "--format", "json"]) == 0
     payload = json.loads(capsys.readouterr().out)
     names = [i["name"] for i in payload["items"]]
-    assert any(n == "tools search · backend=stub" for n in names)
-    assert any(n == "tools fs · backend=stub" for n in names)  # conftest pins stub
+    assert any(n == "tools search · backend=stub · source=default" for n in names)
+    assert any(n == "tools fs · backend=stub · source=env" for n in names)  # conftest pins stub
     monkeypatch.setenv("MKLANG_SEARCH_BACKEND", "tavily")
     assert cli.main(["doctor", "--format", "json"]) == 0
     payload = json.loads(capsys.readouterr().out)
@@ -184,6 +184,7 @@ def test_doctor_reports_tool_backends(tmp_path, monkeypatch, capsys):
     fs_line = [i for i in payload["items"] if i["name"].startswith("tools fs")][0]
     assert fs_line["status"] == "ok"
     assert f"workspace={tmp_path}" in fs_line["name"] and "write=off" in fs_line["name"]
+    assert "source=default" in fs_line["name"]
 
 
 def test_doctor_passes_when_the_active_key_is_set(tmp_path, monkeypatch, capsys):

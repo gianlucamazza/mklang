@@ -44,9 +44,36 @@ provider-native tool-calling or browser automation.
 | Optional `days` / `topic` / `published_date`        | **done**                                         |
 | Host `context.today` convention + research patterns | **done**                                         |
 | Host `context.now` (wall-clock local ISO datetime)  | **done** (same inject path; not search-specific) |
-| `runtime.yaml` tools.search block                   | deferred                                         |
+| `runtime.yaml` tools.search block                   | **done** (generalized `tools:` block, see below) |
 | Console-specific consent copy for search            | deferred (generic tool consent covers it)        |
 | stdlib `std_research`                               | shipped (search → ground stdlib machine)         |
+
+## The `tools:` block (shipped later, generalized)
+
+`runtime.yaml` may declare backend bindings for every builtin host tool, not
+just search:
+
+```yaml
+tools:
+  search: { backend: stub | fake | tavily }
+  kb: { backend: stub | fake }
+  mail: { backend: stub | fake }
+  fs: { backend: stub | local, workspace: <path>, write: true | false }
+```
+
+Precedence per knob, echoing ADR 0023's per-key layering:
+`configure_*()` programmatic binding > explicit `MKLANG_*` env var >
+`tools:` config > built-in default. The env var is the operator's
+per-invocation override; the config is the persistent host/project
+declaration. The `TAVILY_API_KEY` auto-select is part of the _default_ tier,
+so `tools.search.backend: stub` is a persistent off-switch. There is no
+`api_key` knob by design — secrets stay in the layered `.env` (ADR 0023).
+A project-layer `tools.fs.write: true` is a standing write grant checked in
+from a repo; equivalent exposure already existed via a project `.env`
+`MKLANG_FS_WRITE=1`, and `mklang doctor` prints every binding **with its
+deciding source** (`env` / `config` / `default`) so the grant is visible.
+`mklang test`/scripttest never loads a runtime config; scripted tools stay
+env-driven.
 
 ## Consequences
 

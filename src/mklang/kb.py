@@ -17,8 +17,7 @@ from .tool_obs import tool_obs
 _DEFAULT_FACTS = [
     "Warranty: 30-day return on unopened items with receipt.",
     "Billing: refunds over €50 require manager review.",
-    "Bugs: known issue tracker acknowledges intermittent login 5xx; "
-    "workaround is retry after 60s.",
+    "Bugs: known issue tracker acknowledges intermittent login 5xx; workaround is retry after 60s.",
 ]
 
 
@@ -61,11 +60,24 @@ def current_kb_backend() -> KBBackend | None:
     return _backend
 
 
-def _backend_from_env() -> KBBackend:
-    name = (os.environ.get("MKLANG_KB_BACKEND") or "").strip().lower()
+def resolve_backend_name(tc=None) -> tuple[str, str]:
+    """Backend name + source layer: env > ``tools.kb.backend`` config > stub."""
+    from .toolconfig import current_tools
+
+    env = (os.environ.get("MKLANG_KB_BACKEND") or "").strip().lower()
+    if env:
+        return ("fake" if env == "fake" else "stub"), "env"
+    tc = tc if tc is not None else current_tools()
+    if tc.kb_backend:
+        return ("fake" if tc.kb_backend.strip().lower() == "fake" else "stub"), "config"
+    return "stub", "default"
+
+
+def _backend_from_settings() -> KBBackend:
+    name, _source = resolve_backend_name()
     if name == "fake":
         return FakeKBBackend()
-    # stub / unset / unknown → default stub
+    # stub / unknown → default stub
     return StubKBBackend()
 
 
@@ -82,7 +94,7 @@ def search_kb(inp: dict) -> str:
             note="Host should bind a real RAG/KB tool for production.",
         )
 
-    backend = _backend if _backend is not None else _backend_from_env()
+    backend = _backend if _backend is not None else _backend_from_settings()
     try:
         facts = backend.lookup(query)
         if not isinstance(facts, list):

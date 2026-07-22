@@ -143,7 +143,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   Accepted) — structured `search` stub default; fake/tavily backends;
   optional `days`/`topic`/`published_date`; `research_web.mk` + scenario tests;
   host `context.today` convention for time-sensitive machines; `std_research`
-  shipped in 0.12.0. **[later]** `runtime.yaml` tools block.
+  shipped in 0.12.0; `runtime.yaml` `tools:` block shipped (env > config >
+  default, doctor reports the deciding source).
 - **Shipped — host tool stub architecture** ([ADR 0020](./docs/adr/0020-host-tool-stub-architecture.md))
   — uniform JSON envelope for I/O tools; `search_kb` / `send_reply` stub+fake
   backends; honest default `send_reply` (`sent: false`).
@@ -227,7 +228,9 @@ language 0.4 without ADR + conformance):
 - **[shipped] `std_compress`** — the compression pattern of
   `research_compress.mk` as a composable stdlib utility (call it mid-loop to
   rewrite an accumulator short), not a near-duplicate of `std_research`.
-- **[later] `runtime.yaml` tools block** (ADR 0016) — declarative host bindings.
+- **[shipped] `runtime.yaml` tools block** (ADR 0016) — declarative backend
+  bindings for search/kb/mail/fs; per-knob precedence env > config > default;
+  `mklang doctor` reports every binding with its deciding source.
 - **[later] Truncation `continue` stitching** (ADR 0018).
 
 Defer: context Layer 2 zones/pin, external console client, OTel, LangGraph.

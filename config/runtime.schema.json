@@ -16,9 +16,55 @@
       "minProperties": 1,
       "description": "Map of provider-name -> provider config.",
       "additionalProperties": { "$ref": "#/$defs/provider" }
-    }
+    },
+    "tools": { "$ref": "#/$defs/tools" }
   },
   "$defs": {
+    "tools": {
+      "type": "object",
+      "description": "Optional declarative backend bindings for the builtin host tools (ADR 0016). Precedence per knob: explicit MKLANG_* env var > this block > built-in default. Secrets never live here — TAVILY_API_KEY stays in the layered .env (ADR 0023).",
+      "additionalProperties": false,
+      "properties": {
+        "search": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "backend": {
+              "enum": ["stub", "fake", "tavily"],
+              "description": "stub = honest offline default; tavily needs TAVILY_API_KEY from .env. `stub` here is a persistent off-switch that beats the TAVILY_API_KEY auto-select."
+            }
+          }
+        },
+        "kb": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "backend": { "enum": ["stub", "fake"] } }
+        },
+        "mail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "backend": { "enum": ["stub", "fake"] } }
+        },
+        "fs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "backend": {
+              "enum": ["stub", "local"],
+              "description": "local = real disk under the workspace (ADR 0024 default); stub forces offline."
+            },
+            "workspace": {
+              "type": "string",
+              "description": "Workspace root when backend=local (default: MKLANG_FS_ROOT or the process cwd)."
+            },
+            "write": {
+              "type": "boolean",
+              "description": "Standing write grant for write_file (default false). A set MKLANG_FS_WRITE env var beats this either way; --allow-write beats everything."
+            }
+          }
+        }
+      }
+    },
     "tier_map": {
       "type": "object",
       "description": "Maps each capability tier to a concrete model id.",

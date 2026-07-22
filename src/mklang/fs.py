@@ -237,32 +237,72 @@ def allow_writes(enabled: bool | None) -> None:
     _writes_allowed = enabled
 
 
-def writes_allowed() -> bool:
+def writes_allowed_with_source(tc=None) -> tuple[bool, str]:
+    """Write grant + source: runtime grant > set env > config > off.
+
+    A *set, non-empty* ``MKLANG_FS_WRITE`` decides either way, so
+    ``MKLANG_FS_WRITE=0`` is an explicit off that beats a config
+    ``write: true``; unset falls through to ``tools.fs.write``."""
+    from .toolconfig import current_tools
+
     if _writes_allowed is not None:
-        return _writes_allowed
-    return (os.environ.get("MKLANG_FS_WRITE") or "").strip().lower() in ("1", "true", "yes", "on")
+        return _writes_allowed, "runtime"
+    env = (os.environ.get("MKLANG_FS_WRITE") or "").strip().lower()
+    if env:
+        return env in ("1", "true", "yes", "on"), "env"
+    tc = tc if tc is not None else current_tools()
+    if tc.fs_write is not None:
+        return tc.fs_write, "config"
+    return False, "default"
+
+
+def writes_allowed() -> bool:
+    return writes_allowed_with_source()[0]
+
+
+def resolve_workspace_with_source(tc=None) -> tuple[Path, str]:
+    """Workspace root + source: ``MKLANG_FS_ROOT`` > ``tools.fs.workspace`` > cwd."""
+    from .toolconfig import current_tools
+
+    root = (os.environ.get("MKLANG_FS_ROOT") or "").strip()
+    if root:
+        return Path(root).expanduser().resolve(), "env"
+    tc = tc if tc is not None else current_tools()
+    if tc.fs_workspace:
+        return Path(tc.fs_workspace).expanduser().resolve(), "config"
+    return Path.cwd(), "default"
 
 
 def resolve_workspace() -> Path:
-    """Workspace root: ``MKLANG_FS_ROOT`` if set, else the process cwd."""
-    root = (os.environ.get("MKLANG_FS_ROOT") or "").strip()
-    return Path(root).expanduser().resolve() if root else Path.cwd()
+    return resolve_workspace_with_source()[0]
 
 
-def _backend_from_env() -> FSBackend:
-    """Env tier selection (live-by-default per ADR 0024).
+def resolve_backend_name(tc=None) -> tuple[str, str]:
+    """Backend name + source: env > ``tools.fs.backend`` config > local (ADR 0024).
 
-    - ``MKLANG_FS_BACKEND=stub|none|off`` (or any unknown name) → offline stub
-    - ``local`` / unset → real disk under :func:`resolve_workspace`
-    """
-    name = (os.environ.get("MKLANG_FS_BACKEND") or "").strip().lower()
-    if name and name != "local":
-        return StubFSBackend()
-    return LocalFSBackend(resolve_workspace())
+    Unknown names degrade to ``stub`` — an unrecognized value must never
+    silently reach real disk."""
+    from .toolconfig import current_tools
+
+    env = (os.environ.get("MKLANG_FS_BACKEND") or "").strip().lower()
+    if env:
+        return ("local" if env == "local" else "stub"), "env"
+    tc = tc if tc is not None else current_tools()
+    if tc.fs_backend:
+        return ("local" if tc.fs_backend.strip().lower() == "local" else "stub"), "config"
+    return "local", "default"
+
+
+def _backend_from_settings() -> FSBackend:
+    """Lazy binding (live-by-default per ADR 0024): env > config > local."""
+    name, _source = resolve_backend_name()
+    if name == "local":
+        return LocalFSBackend(resolve_workspace())
+    return StubFSBackend()
 
 
 def _current() -> FSBackend:
-    return _backend if _backend is not None else _backend_from_env()
+    return _backend if _backend is not None else _backend_from_settings()
 
 
 def _is_stub(backend: FSBackend) -> bool:
