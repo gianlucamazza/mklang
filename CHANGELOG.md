@@ -8,12 +8,19 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.12.0`).
+  `pyproject.toml` (currently `0.13.0`).
 
-## [Unreleased]
+## [0.13.0] — 2026-07-23
+
+Declarative tool-backend bindings, process logging hygiene, and the
+`std_compress` stdlib machine — language stays **0.3**.
 
 ### Added
 
+- `std_compress` — composable working-memory compression in the stdlib
+  (ADR 0017 Layer 1): one judge-verified compress state (repair ×1) any
+  machine can `call:` mid-loop to rewrite an accumulator short. Contract:
+  `task` + `notes` → `answer`; notes are marked untrusted in the prompt.
 - Optional `tools:` block in `runtime.yaml` (ADR 0016): declarative backend
   bindings for the builtin host tools — `tools.search.backend`
   (`stub|fake|tavily`), `tools.kb.backend`, `tools.mail.backend`, and
