@@ -71,9 +71,9 @@ Notes:
   The test suite pins all of them in CI.
 - `std_research` is the one machine that uses a `tool:` state — the bundled
   host `search` tool (ADR 0016), which every mklang install ships. It grounds
-  the answer only in search observations; with no backend bound
-  (`TAVILY_API_KEY` unset) it says so honestly instead of answering from
-  training knowledge.
+  the answer only in search observations; with no search backend bound
+  (no `TAVILY_API_KEY`, `MKLANG_SEARCH_BACKEND`, or programmatic binding)
+  it says so honestly instead of answering from training knowledge.
 
 ## Not in the stdlib, and why
 

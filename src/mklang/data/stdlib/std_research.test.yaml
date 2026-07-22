@@ -21,6 +21,10 @@ scenarios:
         - '{"tool":"search","stub":false,"error":null,"query":"mklang declarative state machines","results":[{"title":"mklang","url":"https://example.com/mklang","snippet":"YAML state machines driven by LLMs."}]}'
     expect:
       status: done
+      result: "mklang is a declarative language for LLM state machines (mklang, https://example.com/mklang)."
+      context:
+        notes:
+          - '{"tool":"search","stub":false,"error":null,"query":"mklang declarative state machines","results":[{"title":"mklang","url":"https://example.com/mklang","snippet":"YAML state machines driven by LLMs."}]}'
       trace:
         - { state: plan_query, policy: ok, to: search }
         - { state: search, policy: ok, to: check }
@@ -44,6 +48,11 @@ scenarios:
         - '{"tool":"search","stub":false,"error":null,"query":"second query","results":[{"title":"B","url":"https://b.example","snippet":"rest"}]}'
     expect:
       status: done
+      result: "Answer grounded in two search rounds (A https://a.example, B https://b.example)."
+      context:
+        notes:
+          - '{"tool":"search","stub":false,"error":null,"query":"first query","results":[{"title":"A","url":"https://a.example","snippet":"partial"}]}'
+          - '{"tool":"search","stub":false,"error":null,"query":"second query","results":[{"title":"B","url":"https://b.example","snippet":"rest"}]}'
       trace:
         - { state: plan_query, policy: ok, to: search }
         - { state: search, policy: ok, to: check }
@@ -68,6 +77,10 @@ scenarios:
         - '{"tool":"search","stub":true,"error":"no external search bound — set TAVILY_API_KEY (auto-enables Tavily) or MKLANG_SEARCH_BACKEND=fake|tavily","query":"any query","results":[]}'
     expect:
       status: done
+      result: "No web results were available; set TAVILY_API_KEY to enable Tavily search."
+      context:
+        notes:
+          - '{"tool":"search","stub":true,"error":"no external search bound — set TAVILY_API_KEY (auto-enables Tavily) or MKLANG_SEARCH_BACKEND=fake|tavily","query":"any query","results":[]}'
       trace:
         - { state: plan_query, policy: ok, to: search }
         - { state: search, policy: ok, to: check }
