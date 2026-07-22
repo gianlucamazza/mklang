@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.12.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.13.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.12.0)
+## Where we are (language 0.3 / package 0.13.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -68,6 +68,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.12.0:** class-3 fs data tools (ADR 0024) — `list_files`/`read_file`/
   `write_file` builtins with a coding-tool workspace model — and the
   `std_research` search → ground stdlib machine.
+- **0.13.0:** `runtime.yaml` `tools:` block (ADR 0016 completed), process
+  logging hygiene (`mklang.*` hierarchy, `--log-level`/`MKLANG_LOG_LEVEL`),
+  and the `std_compress` composable stdlib utility.
 - **Live (2026-07-22, release 0.12.0 matrix):** DeepSeek + OpenAI smoke and gate
   agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
 
@@ -207,7 +210,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   analog and per-path allow/deny rules (`Read(...)`/`Edit(...)` syntax shared
   by Claude Code and Grok); ADR 0024 defers both until a real use case appears.
 
-## Near-term after 0.12.0
+## Near-term after 0.13.0
 
 Elevate **one** host/stdlib item per package release (layer discipline: no
 language 0.4 without ADR + conformance):
