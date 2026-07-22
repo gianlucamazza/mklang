@@ -49,12 +49,12 @@ Required top-level keys: `machine`, `entry`, `budget`, `states`. A state is
 
 Core (generative states — SPEC §4):
 
-| Face        | Answers        | LLM channel (ref. interpreter) | Notes |
-| ----------- | -------------- | ------------------------------ | ----- |
-| `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated |
+| Face        | Answers        | LLM channel (ref. interpreter) | Notes                                                    |
+| ----------- | -------------- | ------------------------------ | -------------------------------------------------------- |
+| `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated                    |
 | `execution` | how to act?    | **system** (produce)           | sticky policy — **never** side effects; not interpolated |
-| `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation |
-| `gates`     | when to exit?  | judge (separate call)          | transition table (below) |
+| `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation             |
+| `gates`     | when to exit?  | judge (separate call)          | transition table (below)                                 |
 
 Durable role/constraints → `structure` / `execution`. Turn data (`{{today}}`,
 history, user text) → `prompt` only. Details: [Best practices §3](best-practices.md).
@@ -148,19 +148,19 @@ Before writing a generic architecture yourself, check the [machine stdlib](../re
 CoT, self-consistency, refine, ToT, debate, map-reduce and cascade ship as ready
 `std_*` machines you can `call:` or run by name.
 
-| Pattern                                    | Example                                                                                                 |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| Minimal single state                       | [`summarize_doc.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/summarize_doc.mk)       |
-| Branching FSM + real tools + scenario test | [`triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                     |
-| Reason/act/observe loop (`accumulate`)     | [`react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)                       |
-| Iterative loop (training knowledge only)   | [`research.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mk)                 |
-| Research + host `tool: search`             | [`research_web.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_web.mk)         |
-| Research + explicit notes compression      | [`research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk) |
-| News brief + `today` + search recency      | [`news_search.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/news_search.mk) (+ `.test.yaml`) |
-| Fan-out `sample` + reducer                 | [`self_consistency.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/self_consistency.mk) |
-| `over` + `call` orchestration              | [`map_reduce.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/map_reduce.mk)             |
-| Deterministic hook gates                   | [`hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)             |
-| Divergent terminals + `fail`               | [`expense_approval.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/expense_approval.mk) |
+| Pattern                                    | Example                                                                                                                                                        |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Minimal single state                       | [`summarize_doc.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/summarize_doc.mk)                                                              |
+| Branching FSM + real tools + scenario test | [`triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                                                                            |
+| Reason/act/observe loop (`accumulate`)     | [`react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)                                                                              |
+| Iterative loop (training knowledge only)   | [`research.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mk)                                                                        |
+| Research + host `tool: search`             | [`research_web.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_web.mk); ready-made: `std_research` ([stdlib](../reference/stdlib.md)) |
+| Research + explicit notes compression      | [`research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk)                                                      |
+| News brief + `today` + search recency      | [`news_search.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/news_search.mk) (+ `.test.yaml`)                                                 |
+| Fan-out `sample` + reducer                 | [`self_consistency.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/self_consistency.mk)                                                        |
+| `over` + `call` orchestration              | [`map_reduce.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/map_reduce.mk)                                                                    |
+| Deterministic hook gates                   | [`hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                    |
+| Divergent terminals + `fail`               | [`expense_approval.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/expense_approval.mk)                                                        |
 
 ## Pre-flight (copy this)
 

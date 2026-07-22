@@ -137,6 +137,7 @@ generative prose that pretends to search). Host binding:
 | unset key + unset backend    | Structured stub: `"no external search bound…"` |
 
 Example workspace machine: `machines/news_search.mk` (topic → search → brief).
+The stdlib `std_research` (search → ground) is always runnable by name.
 Pattern references: `examples/research_web.mk`, `examples/research_compress.mk`.
 
 **Tool consent is not an error.** The first time a machine uses host tools

@@ -44,7 +44,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   structured stub until a backend is bound. **`TAVILY_API_KEY` alone auto-enables
   Tavily**; or set `MKLANG_SEARCH_BACKEND=fake|tavily|stub`. Never put "search
   the web" only in generative `prompt`/`execution` — the model will invent hits.
-  Use `tool: search` (see `examples/research_web.mk`, `machines/news_search.mk`).
+  Use `tool: search` — ready-made as the `std_research` stdlib machine, or see
+  `examples/research_web.mk`, `machines/news_search.mk`.
   Optional tool inputs: `days`, `topic` (`news`|`general`); results may include
   `published_date`. Snippets are **untrusted** (SPEC §11).
 - **`execution` for sticky policy.** The reference interpreter puts `structure` +
