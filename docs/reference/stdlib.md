@@ -49,17 +49,18 @@ the `mklang.machines` entry-point group.
 
 Uniform contract: input `task` (string), result `answer`.
 
-| machine                | architecture            | flow                                                                       | extra context (defaults)                                     | budget | tiers                        |
-| ---------------------- | ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | ---------------------------- |
-| `std_cot`              | Chain-of-Thought        | solve (traced reasoning) → END                                             | —                                                            | 3      | balanced                     |
-| `std_self_consistency` | Self-consistency        | 5 sampled answers → majority vote → END, or low-confidence flag            | —                                                            | 12     | fast → reasoning             |
-| `std_refine`           | Reflexion / self-refine | draft → judged vs criteria → repair ×2 → END, or flagged best-effort       | `criteria` ("clear, correct, and complete")                  | 6      | balanced                     |
-| `std_tot`              | Tree-of-Thought         | 3 angled proposals → select best → deepen or finalize                      | `best` (internal carry, "")                                  | 10     | balanced → reasoning         |
-| `std_debate`           | Debate / ensemble       | one argument per persona → synthesis with coverage repair                  | `personas` (3 generic debaters, list)                        | 12     | fast → reasoning             |
-| `std_map_reduce`       | Map-Reduce              | apply `item_task` to each item → reduce with `reduce_task`                 | `items` (list), `item_task`, `reduce_task`                   | 20     | fast → reasoning             |
-| `std_cascade`          | Speculative cascade     | fast draft → confident? END : redo at reasoning tier                       | —                                                            | 4      | fast → reasoning             |
-| `std_plan_execute`     | Plan-and-Execute        | plan (`parse: list`, 0.3) → execute each step → combine                    | —                                                            | 16     | reasoning → fast → reasoning |
-| `std_research`         | Search → ground         | plan_query → search (accumulate) → check → {loop \| finalize \| no_search} | `today` (host-fills ISO date, ""), `notes` (accumulator, []) | 14     | fast → reasoning             |
+| machine                | architecture               | flow                                                                       | extra context (defaults)                                     | budget | tiers                        |
+| ---------------------- | -------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | ---------------------------- |
+| `std_cot`              | Chain-of-Thought           | solve (traced reasoning) → END                                             | —                                                            | 3      | balanced                     |
+| `std_self_consistency` | Self-consistency           | 5 sampled answers → majority vote → END, or low-confidence flag            | —                                                            | 12     | fast → reasoning             |
+| `std_refine`           | Reflexion / self-refine    | draft → judged vs criteria → repair ×2 → END, or flagged best-effort       | `criteria` ("clear, correct, and complete")                  | 6      | balanced                     |
+| `std_tot`              | Tree-of-Thought            | 3 angled proposals → select best → deepen or finalize                      | `best` (internal carry, "")                                  | 10     | balanced → reasoning         |
+| `std_debate`           | Debate / ensemble          | one argument per persona → synthesis with coverage repair                  | `personas` (3 generic debaters, list)                        | 12     | fast → reasoning             |
+| `std_map_reduce`       | Map-Reduce                 | apply `item_task` to each item → reduce with `reduce_task`                 | `items` (list), `item_task`, `reduce_task`                   | 20     | fast → reasoning             |
+| `std_cascade`          | Speculative cascade        | fast draft → confident? END : redo at reasoning tier                       | —                                                            | 4      | fast → reasoning             |
+| `std_plan_execute`     | Plan-and-Execute           | plan (`parse: list`, 0.3) → execute each step → combine                    | —                                                            | 16     | reasoning → fast → reasoning |
+| `std_research`         | Search → ground            | plan_query → search (accumulate) → check → {loop \| finalize \| no_search} | `today` (host-fills ISO date, ""), `notes` (accumulator, []) | 14     | fast → reasoning             |
+| `std_compress`         | Working-memory compression | compress (judge-verified, repair ×1) → END                                 | `notes` (the memory to compress, list or text)               | 4      | balanced                     |
 
 Notes:
 
@@ -69,6 +70,12 @@ Notes:
 - Every machine ships a `*.test.yaml` next to it — scripted scenarios you can
   run offline: `mklang test <path>/std_refine.mk --script <path>/std_refine.test.yaml`.
   The test suite pins all of them in CI.
+- `std_compress` is built to be **called mid-loop** by other machines
+  (ADR 0017 Layer 1): a state like
+  `{call: std_compress, input: {task: "{{task}}", notes: "{{notes}}"}, output: notes}`
+  rewrites an accumulator short before the next round — see
+  [`examples/research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk)
+  for the inline version of the same pattern.
 - `std_research` is the one machine that uses a `tool:` state — the bundled
   host `search` tool (ADR 0016), which every mklang install ships. It grounds
   the answer only in search observations; with no search backend bound

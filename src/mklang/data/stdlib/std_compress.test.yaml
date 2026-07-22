@@ -1,0 +1,46 @@
+# Scenario tests for std_compress.mk — run with:
+#   mklang test std_compress.mk --script std_compress.test.yaml
+#
+# compress's judge batch is [preserves-facts, dropped-or-invented] while the
+# repair gate has budget; once the single repair burns, the repair gate drops
+# out of the batch and a stuck judge pick lands out of range → soft-fallback
+# to `otherwise` → END (best-effort compression, honestly surfaced).
+
+scenarios:
+  # Happy path: the first compression preserves everything.
+  - name: compresses-in-one-pass
+    llm:
+      produce: ["- mklang: declarative LLM state machines\n- spec 0.3, package 0.12.0"]
+      judge: [0]
+    expect:
+      status: done
+      result: "- mklang: declarative LLM state machines\n- spec 0.3, package 0.12.0"
+      trace:
+        - { state: compress, policy: ok, to: END }
+
+  # The repair fires once (judge 1 = dropped essentials), the revision passes.
+  - name: repair-recovers-dropped-fact
+    llm:
+      produce: ["- only one fact", "- fact one\n- fact two (recovered)"]
+      judge: [1, 0]
+    expect:
+      status: done
+      result: "- fact one\n- fact two (recovered)"
+      trace:
+        - { state: compress, policy: repair, to: compress }
+        - { state: compress, policy: ok, to: END }
+
+  # Repair exhausts: the judge sticks on "dropped" (last pick repeats). Visit 1
+  # fires repair (budget 1 → 0); on visit 2 the repair gate is ineligible, the
+  # batch shrinks to [preserves] and the stuck pick 1 is out of range →
+  # fallback to otherwise → END with the best-effort compression.
+  - name: repair-exhausts-best-effort
+    llm:
+      produce: ["- lossy v1", "- lossy v2"]
+      judge: [1]
+    expect:
+      status: done
+      result: "- lossy v2"
+      trace:
+        - { state: compress, policy: repair, to: compress }
+        - { state: compress, policy: ok, to: END }

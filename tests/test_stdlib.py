@@ -19,6 +19,7 @@ STDLIB_DIR = Path(__file__).resolve().parents[1] / "src" / "mklang" / "data" / "
 STDLIB_FILES = sorted(STDLIB_DIR.glob("*.mk"))
 EXPECTED = {
     "std_cascade",
+    "std_compress",
     "std_cot",
     "std_debate",
     "std_map_reduce",

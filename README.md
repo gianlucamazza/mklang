@@ -165,7 +165,7 @@ Every modern reasoning/agentic pattern maps onto the core (states + gates + pros
 tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
 guidance in [`docs/guides/patterns.md`](./docs/guides/patterns.md).
 
-Nine of these ship as **ready, general-purpose `std_*` machines** — parameterized
+Ten of these ship as **ready, general-purpose `std_*` machines** — parameterized
 by context, callable from your machines (`call: std_refine`), runnable by name:
 
 ```bash

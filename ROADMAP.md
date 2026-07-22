@@ -68,7 +68,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.12.0:** class-3 fs data tools (ADR 0024) — `list_files`/`read_file`/
   `write_file` builtins with a coding-tool workspace model — and the
   `std_research` search → ground stdlib machine.
-- **Live (2026-07-18, release 0.10.0 matrix):** DeepSeek + OpenAI smoke and gate
+- **Live (2026-07-22, release 0.12.0 matrix):** DeepSeek + OpenAI smoke and gate
   agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
 
 ## Language
@@ -142,8 +142,8 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped — web search host tool** ([ADR 0016](./docs/adr/0016-host-web-search-tool.md)
   Accepted) — structured `search` stub default; fake/tavily backends;
   optional `days`/`topic`/`published_date`; `research_web.mk` + scenario tests;
-  host `context.today` convention for time-sensitive machines. **[later]**
-  `runtime.yaml` tools block, `std_research`.
+  host `context.today` convention for time-sensitive machines; `std_research`
+  shipped in 0.12.0. **[later]** `runtime.yaml` tools block.
 - **Shipped — host tool stub architecture** ([ADR 0020](./docs/adr/0020-host-tool-stub-architecture.md))
   — uniform JSON envelope for I/O tools; `search_kb` / `send_reply` stub+fake
   backends; honest default `send_reply` (`sent: false`).
@@ -166,8 +166,9 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   hold their frames in an in-memory session store behind opaque single-use
   handles; the core install stays offline with no `mcp` present.
 - **Shipped:** machine stdlib ([ADR 0012](./docs/adr/0012-machine-stdlib.md)) —
-  eight bundled general-purpose `std_*` architecture machines (CoT,
-  self-consistency, refine, ToT, debate, map-reduce, cascade, plan-execute), present in every
+  ten bundled general-purpose `std_*` architecture machines (CoT,
+  self-consistency, refine, ToT, debate, map-reduce, cascade, plan-execute,
+  research, compress), present in every
   registry with user-wins precedence, runnable by name from CLI/MCP, extensible
   via the `mklang.machines` entry-point group. Catalog: `docs/reference/stdlib.md`.
 - **Shipped (0.3):** structured list outputs — `parse: list` deposits a parsed
@@ -222,7 +223,9 @@ language 0.4 without ADR + conformance):
   layering, `mklang-mcp` config auto-discovery, workspace and HITL-checkpoint
   XDG fallbacks, `mklang doctor`, and the removal of the dead `run:` block and
   the legacy `~/.mklang` sessions fallback.
-- **[later] `std_compress`** — promote `research_compress.mk` into stdlib.
+- **[shipped] `std_compress`** — the compression pattern of
+  `research_compress.mk` as a composable stdlib utility (call it mid-loop to
+  rewrite an accumulator short), not a near-duplicate of `std_research`.
 - **[later] `runtime.yaml` tools block** (ADR 0016) — declarative host bindings.
 - **[later] Truncation `continue` stitching** (ADR 0018).
 
