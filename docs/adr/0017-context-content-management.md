@@ -21,14 +21,15 @@ Stratify; implement bottom-up:
 
 ## Checklist
 
-| Item | Status |
-|---|---|
-| Judge CONTEXT head+tail marker | **done** (`llm/context_view.py`) |
-| SPEC §5 wording | **done** |
-| Produce-prompt char budget | **done** (`interpolate.PROMPT_VALUE_CHARS`, `run(prompt_value_chars=…)`) |
-| Console history window | **done** (`history_for_brain`, prompt-only; full audit kept) |
-| Compress pattern example | **done** (`examples/research_compress.mk` + scenario test) |
-| `std_compress` / language faces | deferred |
+| Item                           | Status                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| Judge CONTEXT head+tail marker | **done** (`llm/context_view.py`)                                         |
+| SPEC §5 wording                | **done**                                                                 |
+| Produce-prompt char budget     | **done** (`interpolate.PROMPT_VALUE_CHARS`, `run(prompt_value_chars=…)`) |
+| Console history window         | **done** (`history_for_brain`, prompt-only; full audit kept)             |
+| Compress pattern example       | **done** (`examples/research_compress.mk` + scenario test)               |
+| `std_compress`                 | shipped (composable stdlib compression utility)                          |
+| language faces (Layer 2)       | deferred                                                                 |
 
 ## Consequences
 
