@@ -129,7 +129,7 @@ These names are **conventions**, not language keywords. Other hosts may rebind o
 | **Default** | Stub unbound (`error` explains how to enable)                                      |
 | **Enable**  | `TAVILY_API_KEY` (auto) or `MKLANG_SEARCH_BACKEND=fake\|tavily\|stub`              |
 
-**Practice:** plan → `tool: search` → check sufficiency → finalize grounded **only** in notes. Never “search the web” only in prose.
+**Practice:** plan → `tool: search` → check sufficiency → finalize grounded **only** in notes. Never “search the web” only in prose. This exact pattern ships ready-made as the [`std_research`](../reference/stdlib.md) stdlib machine — reach for it before authoring your own.
 
 #### `search_kb` (ADR 0020)
 
@@ -192,7 +192,7 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 
 | Practice                             | Detail                                                                                                                                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use `tool: search`**               | `research_web.mk`, `research_compress.mk`, `news_search.mk`                                                                           |
+| **Use `tool: search`**               | `std_research` (stdlib, run by name), `research_web.mk`, `research_compress.mk`, `news_search.mk`                                     |
 | **Declare `today: ""`**              | Host fills ISO `YYYY-MM-DD` when still empty after inputs (CLI / MCP / console)                                                       |
 | **Declare `now: ""` for wall-clock** | Host fills local ISO datetime with offset (e.g. `2026-07-17T14:32:05+02:00`) — use for “what time is it?”, not for news recency alone |
 | **Prompt with calendar / clock**     | `Today is {{today}}` / `Current local time is {{now}}`; include year in queries when time-sensitive                                   |

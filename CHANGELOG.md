@@ -8,7 +8,34 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.11.0`).
+  `pyproject.toml` (currently `0.12.0`).
+
+## [0.12.0] — 2026-07-23
+
+Filesystem data tools ([ADR 0024](./docs/adr/0024-fs-data-tools.md)) and the
+`std_research` stdlib machine — language stays **0.3**.
+
+### Added
+
+- `list_files` / `read_file` / `write_file` builtin host tools (`mklang.fs`)
+  with a coding-tool workspace model: reads live by default, confined to a
+  workspace resolved as `--workspace` > `MKLANG_FS_ROOT` > cwd; disk writes
+  need an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console
+  consent). Relative paths only, dotfile and escape refusal after resolve
+  (re-checked on the resolved target, so symlinks cannot smuggle targets in
+  or out), size caps, data-suffix allowlist (never `.mk`), atomic 0600
+  writes via unique tempfiles, INFO audit line. `MKLANG_FS_BACKEND=stub` is
+  the offline off-switch.
+- `mklang run` and `mklang-mcp` gain `--workspace` / `--allow-write`;
+  `mklang doctor` reports the resolved workspace and write grant; the
+  console asks consent once per session for writes.
+- `std_research` — search → ground stdlib machine over the bundled
+  [ADR 0016](./docs/adr/0016-host-web-search-tool.md) `search` tool:
+  `plan_query → search (accumulate) → check → {loop | finalize | no_search}`.
+  Answers only from search observations (prompts mark them as untrusted
+  content), with a grounding repair gate at reasoning tier and an honest
+  `no_search` state when no backend is bound; dogfoods host-filled
+  `context.today`. Ships scripted scenarios like the rest of the stdlib.
 
 ## [0.11.0] — 2026-07-18
 
