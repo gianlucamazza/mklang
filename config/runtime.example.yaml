@@ -138,3 +138,19 @@ providers:
       balanced: qwen3:32b
       reasoning: deepseek-r1:70b # a reasoning-tuned local model
     # judge: qwen3:8b # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
+
+# --- Tool backends (optional; ADR 0016) -------------------------------------
+# Declarative bindings for the builtin host tools. Precedence per knob:
+# explicit MKLANG_* env var > this block > built-in default. Secrets never
+# live here: TAVILY_API_KEY stays in the layered .env (ADR 0023).
+# tools:
+#   search:
+#     backend: tavily # stub | fake | tavily (stub here beats the TAVILY_API_KEY auto-select)
+#   kb:
+#     backend: stub # stub | fake
+#   mail:
+#     backend: stub # stub | fake
+#   fs:
+#     backend: local # stub | local (real disk under the workspace, ADR 0024)
+#     workspace: ./data # default: MKLANG_FS_ROOT or the process cwd
+#     write: false # standing write grant; --allow-write / MKLANG_FS_WRITE beat it

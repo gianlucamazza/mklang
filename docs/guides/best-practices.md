@@ -127,7 +127,7 @@ These names are **conventions**, not language keywords. Other hosts may rebind o
 | **Input**   | `query` (required), `max_results?` (1–10), `days?`, `topic?` (`news` \| `general`) |
 | **Output**  | JSON: `{tool, stub, error, query, results:[{title,url,snippet,published_date?}]}`  |
 | **Default** | Stub unbound (`error` explains how to enable)                                      |
-| **Enable**  | `TAVILY_API_KEY` (auto) or `MKLANG_SEARCH_BACKEND=fake\|tavily\|stub`              |
+| **Enable**  | `TAVILY_API_KEY` (auto), `MKLANG_SEARCH_BACKEND=fake\|tavily\|stub`, or `runtime.yaml` `tools.search.backend` (env wins) |
 
 **Practice:** plan → `tool: search` → check sufficiency → finalize grounded **only** in notes. Never “search the web” only in prose. This exact pattern ships ready-made as the [`std_research`](../reference/stdlib.md) stdlib machine — reach for it before authoring your own.
 
@@ -138,7 +138,7 @@ These names are **conventions**, not language keywords. Other hosts may rebind o
 | **Input**   | `query` (or `q`)                                           |
 | **Output**  | JSON: `{tool, stub, error, query, facts: [str, …], note?}` |
 | **Default** | Demo policy facts, always `stub: true`                     |
-| **Fake**    | `MKLANG_KB_BACKEND=fake` or `mklang.kb.configure_kb`       |
+| **Fake**    | `MKLANG_KB_BACKEND=fake`, `tools.kb.backend: fake`, or `mklang.kb.configure_kb` |
 
 Replace with real RAG via entry points in production.
 
@@ -149,7 +149,7 @@ Replace with real RAG via entry points in production.
 | **Input**        | `body` (or `draft`), `to?`                                                                          |
 | **Output**       | JSON: `{tool, stub, sent, recorded, delivery, to, chars, preview, error, note?}`                    |
 | **Default stub** | `sent: false`, `delivery: "stub"` — **does not** claim real mail left the host                      |
-| **Fake**         | `MKLANG_MAIL_BACKEND=fake` → in-memory outbox, `delivery: "fake"`, `sent: true`, still `stub: true` |
+| **Fake**         | `MKLANG_MAIL_BACKEND=fake` (or `tools.mail.backend: fake`) → in-memory outbox, `delivery: "fake"`, `sent: true`, still `stub: true` |
 
 Never ask the model to “confirm the message was sent.” Gates should treat `sent: false` as no delivery.
 
@@ -160,7 +160,7 @@ Never ask the model to “confirm the message was sent.” Gates should treat `s
 | **Input**   | `list_files`: `path?` · `read_file`: `path`, `max_bytes?` · `write_file`: `path`, `content`, `overwrite?`                             |
 | **Output**  | JSON: `{tool, stub, error, path, …}` — `entries/count/truncated`, `content/bytes/truncated`, `bytes/written/existed`                  |
 | **Default** | **Live reads** confined to the workspace (`MKLANG_FS_ROOT` or cwd); writes refused without a grant                                    |
-| **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` · Offline: `MKLANG_FS_BACKEND=stub` |
+| **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` / `tools.fs.write` · Offline: `MKLANG_FS_BACKEND=stub` or `tools.fs.backend: stub` |
 
 Relative paths only; `..`, absolute paths, and dotfiles are refused; writes are
 capped, suffix-allowlisted (never `.mk`), atomic, mode 0600. See §13 for the

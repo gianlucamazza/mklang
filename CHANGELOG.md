@@ -14,6 +14,18 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- Optional `tools:` block in `runtime.yaml` (ADR 0016): declarative backend
+  bindings for the builtin host tools — `tools.search.backend`
+  (`stub|fake|tavily`), `tools.kb.backend`, `tools.mail.backend`, and
+  `tools.fs.{backend, workspace, write}`. Precedence per knob: programmatic
+  `configure_*()` > explicit `MKLANG_*` env var > config > built-in default
+  (so `tools.search.backend: stub` is a persistent off-switch that beats the
+  `TAVILY_API_KEY` auto-select). No `api_key` knob by design — secrets stay
+  in the layered `.env` (ADR 0023).
+- `mklang doctor` reports each tool backend **with its deciding source**
+  (`env` / `config` / `default`) through the same resolvers the runtime
+  uses, instead of re-deriving state from the environment.
+
 - Process logging hygiene (best practices §12): the host now logs on the
   `mklang.*` logger hierarchy to stderr — `--log-level` on every CLI
   subcommand and `mklang-mcp`, or `MKLANG_LOG_LEVEL` (flag wins; default
@@ -22,6 +34,10 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
+- A _set_ `MKLANG_FS_WRITE` now decides the write grant either way:
+  `MKLANG_FS_WRITE=0` is an explicit off that beats a config
+  `tools.fs.write: true` (previously a falsy value was indistinguishable
+  from unset). `--allow-write` still beats everything.
 - Plugin/stdlib load failures (machines, hooks, providers, tools) and the
   resume ops advisories (`--force` hash divergence, non-increasing cost
   budget) are `WARNING mklang.<module>: …` log lines instead of ad-hoc

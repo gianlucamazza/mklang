@@ -12,9 +12,12 @@ import os
 import urllib.error
 import urllib.request
 from collections.abc import Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .tool_obs import tool_obs
+
+if TYPE_CHECKING:
+    from .toolconfig import ToolsConfig
 
 SearchFn = Callable[[dict], str]
 
@@ -171,25 +174,36 @@ def current_backend() -> SearchBackend | None:
     return _backend
 
 
-def _backend_from_env() -> SearchBackend | None:
-    """Lazy env binding for the search tool.
+def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
+    """Resolve the backend name and its source layer (shared with doctor).
 
-    - ``MKLANG_SEARCH_BACKEND=stub|none|off`` → force offline stub
-    - ``fake`` / ``tavily`` → that backend (tavily needs ``TAVILY_API_KEY``)
-    - unset: if ``TAVILY_API_KEY`` is present, auto-select Tavily; otherwise stub
+    Precedence (ADR 0016/0023): explicit ``MKLANG_SEARCH_BACKEND`` env >
+    ``tools.search.backend`` config > default (auto-Tavily when
+    ``TAVILY_API_KEY`` is present, else stub). ``none``/``off`` and unknown
+    names degrade to ``stub`` like they always did.
     """
-    name = (os.environ.get("MKLANG_SEARCH_BACKEND") or "").strip().lower()
-    if name in ("stub", "none", "off"):
-        return None
+    from .toolconfig import current_tools
+
+    env = (os.environ.get("MKLANG_SEARCH_BACKEND") or "").strip().lower()
+    if env:
+        return (env if env in ("fake", "tavily") else "stub"), "env"
+    tc = tc if tc is not None else current_tools()
+    if tc.search_backend:
+        name = tc.search_backend.strip().lower()
+        return (name if name in ("fake", "tavily") else "stub"), "config"
+    if os.environ.get("TAVILY_API_KEY"):
+        return "tavily", "default"
+    return "stub", "default"
+
+
+def _backend_from_settings() -> SearchBackend | None:
+    """Lazy binding: build the resolved backend (env > config > default)."""
+    name, _source = resolve_backend_name()
     if name == "fake":
         return FakeSearchBackend()
-    if name == "tavily" or (not name and os.environ.get("TAVILY_API_KEY")):
+    if name == "tavily":
         key = os.environ.get("TAVILY_API_KEY") or ""
-        if not key:
-            return None
-        return TavilySearchBackend(key)
-    if name:
-        return None
+        return TavilySearchBackend(key) if key else None
     return None
 
 
@@ -212,7 +226,7 @@ def search(inp: dict) -> str:
             return _obs(query, [], error="days must be an integer", stub=True)
     topic = str(inp.get("topic") or "").strip() or None
 
-    backend = _backend if _backend is not None else _backend_from_env()
+    backend = _backend if _backend is not None else _backend_from_settings()
     if backend is None:
         how = (
             "no external search bound — set TAVILY_API_KEY (auto-enables Tavily) "

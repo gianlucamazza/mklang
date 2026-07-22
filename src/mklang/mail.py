@@ -77,8 +77,21 @@ def current_mail_backend() -> MailBackend | None:
     return _backend
 
 
-def _backend_from_env() -> MailBackend:
-    name = (os.environ.get("MKLANG_MAIL_BACKEND") or "").strip().lower()
+def resolve_backend_name(tc=None) -> tuple[str, str]:
+    """Backend name + source layer: env > ``tools.mail.backend`` config > stub."""
+    from .toolconfig import current_tools
+
+    env = (os.environ.get("MKLANG_MAIL_BACKEND") or "").strip().lower()
+    if env:
+        return ("fake" if env == "fake" else "stub"), "env"
+    tc = tc if tc is not None else current_tools()
+    if tc.mail_backend:
+        return ("fake" if tc.mail_backend.strip().lower() == "fake" else "stub"), "config"
+    return "stub", "default"
+
+
+def _backend_from_settings() -> MailBackend:
+    name, _source = resolve_backend_name()
     if name == "fake":
         return FakeMailBackend()
     return StubMailBackend()
@@ -102,7 +115,7 @@ def send_reply(inp: dict) -> str:
             delivery="stub",
         )
 
-    backend = _backend if _backend is not None else _backend_from_env()
+    backend = _backend if _backend is not None else _backend_from_settings()
     preview = _preview(body)
     try:
         meta = backend.send(to=to, body=body)

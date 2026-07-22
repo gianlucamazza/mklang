@@ -608,34 +608,42 @@ def cmd_doctor(args) -> int:
                 if pname == active:
                     ok = False
             items.append({"name": f"key {pname} · {env_var or '-'} · {note}", "status": status})
-    name = (os.environ.get("MKLANG_SEARCH_BACKEND") or "").strip().lower()
-    if not name:
-        search_backend = "tavily" if os.environ.get("TAVILY_API_KEY") else "stub"
-    elif name in ("stub", "none", "off"):
-        search_backend = "stub"
-    else:
-        search_backend = name
+    # Tool backends through the shared resolvers (ADR 0016) — the doctor
+    # reports what the runtime would actually bind, plus the deciding layer.
+    from . import fs, kb, mail, search
+    from .toolconfig import parse_tools_block
+
+    tc = parse_tools_block(cfg or {})
+    search_backend, search_src = search.resolve_backend_name(tc)
     search_status = "ok"
     if search_backend == "tavily" and not os.environ.get("TAVILY_API_KEY"):
         search_status = "warning"
         search_backend += " · TAVILY_API_KEY missing"
-    items.append({"name": f"tools search · backend={search_backend}", "status": search_status})
-    for tool, var in (("kb", "MKLANG_KB_BACKEND"), ("mail", "MKLANG_MAIL_BACKEND")):
-        backend = (os.environ.get(var) or "").strip().lower() or "stub"
-        items.append({"name": f"tools {tool} · backend={backend}", "status": "ok"})
-    from .fs import resolve_workspace, writes_allowed
-
-    fs_name = (os.environ.get("MKLANG_FS_BACKEND") or "").strip().lower()
-    if fs_name in ("stub", "none", "off"):
-        fs_desc, fs_status = "stub", "ok"
-    elif fs_name and fs_name != "local":
-        fs_desc, fs_status = f"{fs_name} (unknown — falls back to stub)", "warning"
+    items.append(
+        {
+            "name": f"tools search · backend={search_backend} · source={search_src}",
+            "status": search_status,
+        }
+    )
+    for tool, mod in (("kb", kb), ("mail", mail)):
+        backend, src = mod.resolve_backend_name(tc)
+        items.append({"name": f"tools {tool} · backend={backend} · source={src}", "status": "ok"})
+    fs_backend, fs_src = fs.resolve_backend_name(tc)
+    fs_env_raw = (os.environ.get("MKLANG_FS_BACKEND") or "").strip().lower()
+    if fs_backend == "stub":
+        unknown = ""
+        if fs_src == "env" and fs_env_raw not in ("stub", "none", "off"):
+            unknown = f" ({fs_env_raw!r} unknown — falls back to stub)"
+        fs_desc, fs_status = f"stub · source={fs_src}{unknown}", "warning" if unknown else "ok"
     else:
-        ws = resolve_workspace()
-        write = "on" if writes_allowed() else "off"
+        ws, ws_src = fs.resolve_workspace_with_source(tc)
+        write, write_src = fs.writes_allowed_with_source(tc)
         fs_status = "ok" if ws.is_dir() else "warning"
         missing = "" if ws.is_dir() else " (missing)"
-        fs_desc = f"local · workspace={ws}{missing} · write={write}"
+        fs_desc = (
+            f"local · source={fs_src} · workspace={ws}{missing} ({ws_src}) · "
+            f"write={'on' if write else 'off'} ({write_src})"
+        )
     items.append({"name": f"tools fs · backend={fs_desc}", "status": fs_status})
     project_machines = Path("machines")
     machine_roots = [("project", project_machines)] if project_machines.is_dir() else []

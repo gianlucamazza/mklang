@@ -67,6 +67,11 @@ def load_provider(config_path: str | Path | None, provider: str | None = None) -
         raise ValueError(f"provider {name!r} not in {resolved}")
     p = cfg["providers"][name]
     api_key = os.environ.get(p.get("api_key_env", ""), "")
+    # Publish the optional `tools:` block process-wide (ADR 0016): every
+    # executing surface passes through here before any tool runs.
+    from .toolconfig import configure_tools, parse_tools_block
+
+    configure_tools(parse_tools_block(cfg))
     return ProviderConfig(
         name=name,
         tiers=p["tiers"],
