@@ -26,10 +26,16 @@ def test_main_binds_workspace_flags_before_serving(tmp_path, monkeypatch, capsys
         raise ImportError  # stop before the blocking stdio loop
 
     monkeypatch.setattr(srv, "create_server", _no_server)
-    assert srv.main(["--workspace", str(tmp_path), "--allow-write"]) == 2
+    assert srv.main(["--workspace", str(tmp_path), "--allow-write", "--log-level", "debug"]) == 2
     backend = fs.current_fs_backend()
     assert isinstance(backend, fs.LocalFSBackend) and backend.root == tmp_path.resolve()
     assert fs.writes_allowed() is True
+    import logging
+
+    from mklang.logs import setup_process_logging
+
+    assert logging.getLogger("mklang").getEffectiveLevel() == logging.DEBUG
+    setup_process_logging(None)  # restore the suite default
 
 
 def test_server_default_config_uses_the_resolution_chain():

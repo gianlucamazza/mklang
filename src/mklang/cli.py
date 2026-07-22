@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import shutil
 import sys
@@ -16,6 +17,7 @@ from . import __version__, host
 from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
 from .engine import run
 from .loader import load_machine, semantic_check
+from .logs import LEVELS, setup_process_logging
 from .registry import base_registry, load_registry
 from .presentation import (
     CommandResult,
@@ -26,6 +28,9 @@ from .presentation import (
     emit_run_text,
     output_format,
 )
+
+
+_log = logging.getLogger("mklang.cli")
 
 
 def _build_llm(prov):
@@ -206,9 +211,7 @@ def cmd_resume(args) -> int:
                 f"{machine_path}: machine changed since checkpoint (sha256 mismatch)",
                 hint="Use --force to resume anyway only after reviewing the change.",
             )
-        print(
-            f"# warning: {machine_path} changed since checkpoint — resuming anyway", file=sys.stderr
-        )
+        _log.warning("%s changed since checkpoint — resuming anyway", machine_path)
     prep = _prepare(args, machine_path)
     if isinstance(prep, int):
         return prep
@@ -217,10 +220,11 @@ def cmd_resume(args) -> int:
     if ck.get("reason") == "cost-exhausted" and cost_budget is not None:
         old = ck.get("cost_budget")
         if old is not None and cost_budget <= old:
-            print(
-                f"# warning: cost budget {cost_budget} is not above the exhausted "
-                f"{old} — the run will suspend again immediately",
-                file=sys.stderr,
+            _log.warning(
+                "cost budget %s is not above the exhausted %s — the run will "
+                "suspend again immediately",
+                cost_budget,
+                old,
             )
     out_path = args.checkpoint_out or args.checkpoint
     hitl = ck.get("hitl", False) or args.hitl
@@ -718,6 +722,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = ap.add_subparsers(dest="cmd", required=False)
 
+    def logging_args(parser):
+        parser.add_argument(
+            "--log-level",
+            choices=LEVELS,
+            default=None,
+            help="process log level on stderr (default: MKLANG_LOG_LEVEL or warning)",
+        )
+
     def presentation_args(parser, *, formats=("auto", "text", "json")):
         parser.add_argument(
             "--format",
@@ -784,6 +796,7 @@ def main(argv: list[str] | None = None) -> int:
         "or halt with state-error: output-truncated (halt) — ADR 0018",
     )
     presentation_args(r)
+    logging_args(r)
     r.set_defaults(fn=cmd_run)
 
     s = sub.add_parser("resume", help="resume a suspended run from a checkpoint")
@@ -824,6 +837,7 @@ def main(argv: list[str] | None = None) -> int:
         help="produce truncation policy on resume (same as run; ADR 0018)",
     )
     presentation_args(s)
+    logging_args(s)
     s.set_defaults(fn=cmd_resume)
 
     co = sub.add_parser("console", help="agent-first console TUI (needs the [console] extra)")
@@ -859,6 +873,7 @@ def main(argv: list[str] | None = None) -> int:
         help="also list the .mk machines of a project directory",
     )
     presentation_args(m)
+    logging_args(m)
     m.set_defaults(fn=cmd_machines)
 
     ini = sub.add_parser("init", help="scaffold project or user config without overwriting files")
@@ -869,6 +884,7 @@ def main(argv: list[str] | None = None) -> int:
         "--dir", default=".", metavar="DIR", help="project root (default: current directory)"
     )
     presentation_args(ini)
+    logging_args(ini)
     ini.set_defaults(fn=cmd_init)
 
     d = sub.add_parser(
@@ -876,6 +892,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     d.add_argument("--config", default=None, help="runtime config (auto-discovered when omitted)")
     presentation_args(d)
+    logging_args(d)
     d.set_defaults(fn=cmd_doctor)
 
     c = sub.add_parser("check", help="validate machines (schema + semantics)")
@@ -886,6 +903,7 @@ def main(argv: list[str] | None = None) -> int:
         help="treat an unsupported mklang: version as an error (version-unsupported)",
     )
     presentation_args(c)
+    logging_args(c)
     c.set_defaults(fn=cmd_check)
 
     li = sub.add_parser("lint", help="check + static analysis (dead gates, unread outputs, typos)")
@@ -918,6 +936,7 @@ def main(argv: list[str] | None = None) -> int:
         help="judge repeats per synthetic output (default 3)",
     )
     presentation_args(li)
+    logging_args(li)
     li.set_defaults(fn=cmd_lint)
 
     t = sub.add_parser(
@@ -932,6 +951,7 @@ def main(argv: list[str] | None = None) -> int:
         help="a .test.yaml of named scenarios (scripted llm/tools/hooks + expect)",
     )
     presentation_args(t)
+    logging_args(t)
     t.set_defaults(fn=cmd_test)
 
     try:
@@ -942,6 +962,7 @@ def main(argv: list[str] | None = None) -> int:
         argcomplete.autocomplete(ap)
 
     args = ap.parse_args(argv)
+    setup_process_logging(getattr(args, "log_level", None))
     if getattr(args, "fn", None) is None:
         print(_getting_started())
         return 0
