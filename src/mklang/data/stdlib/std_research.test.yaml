@@ -1,0 +1,88 @@
+# Scenario tests for std_research.mk — run with:
+#   mklang test std_research.mk --script std_research.test.yaml
+#
+# Search is scripted (no network). Judge picks are indices into each state's
+# fused prose-gate batch in visit order.
+# check batch: 0=sufficient, 1=empty/unbound, 2=missing; finalize: 0=grounded,
+# 1=invents.
+
+scenarios:
+  # One search round yields usable notes → finalize (grounded) → END.
+  # plan_query → search → check(0) → finalize(0) → END.
+  - name: single-round-grounded
+    llm:
+      produce:
+        - "mklang declarative state machines"
+        - "verdict: notes cover the question"
+        - "mklang is a declarative language for LLM state machines (mklang, https://example.com/mklang)."
+      judge: [0, 0]
+    tools:
+      search:
+        - '{"tool":"search","stub":false,"error":null,"query":"mklang declarative state machines","results":[{"title":"mklang","url":"https://example.com/mklang","snippet":"YAML state machines driven by LLMs."}]}'
+    expect:
+      status: done
+      result: "mklang is a declarative language for LLM state machines (mklang, https://example.com/mklang)."
+      context:
+        notes:
+          - '{"tool":"search","stub":false,"error":null,"query":"mklang declarative state machines","results":[{"title":"mklang","url":"https://example.com/mklang","snippet":"YAML state machines driven by LLMs."}]}'
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check }
+        - { state: check, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
+
+  # First check loops for another search; second check finalizes.
+  # plan → search → check(2=missing) → plan → search → check(0) → finalize(0).
+  - name: two-round-then-finalize
+    llm:
+      produce:
+        - "first query"
+        - "verdict: still missing sources"
+        - "second query"
+        - "verdict: enough now"
+        - "Answer grounded in two search rounds (A https://a.example, B https://b.example)."
+      judge: [2, 0, 0]
+    tools:
+      search:
+        - '{"tool":"search","stub":false,"error":null,"query":"first query","results":[{"title":"A","url":"https://a.example","snippet":"partial"}]}'
+        - '{"tool":"search","stub":false,"error":null,"query":"second query","results":[{"title":"B","url":"https://b.example","snippet":"rest"}]}'
+    expect:
+      status: done
+      result: "Answer grounded in two search rounds (A https://a.example, B https://b.example)."
+      context:
+        notes:
+          - '{"tool":"search","stub":false,"error":null,"query":"first query","results":[{"title":"A","url":"https://a.example","snippet":"partial"}]}'
+          - '{"tool":"search","stub":false,"error":null,"query":"second query","results":[{"title":"B","url":"https://b.example","snippet":"rest"}]}'
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check }
+        - { state: check, policy: ok, to: plan_query }
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check }
+        - { state: check, policy: ok, to: finalize }
+        - { state: finalize, policy: ok, to: END }
+
+  # No backend bound: the stub observation routes to the honest-failure state —
+  # the machine explains instead of inventing from training knowledge.
+  # plan → search → check(1=unbound) → no_search → END.
+  - name: unbound-search-is-honest
+    llm:
+      produce:
+        - "any query"
+        - "verdict: search reported no external backend bound"
+        - "No web results were available; set TAVILY_API_KEY to enable Tavily search."
+      judge: [1]
+    tools:
+      search:
+        - '{"tool":"search","stub":true,"error":"no external search bound — set TAVILY_API_KEY (auto-enables Tavily) or MKLANG_SEARCH_BACKEND=fake|tavily","query":"any query","results":[]}'
+    expect:
+      status: done
+      result: "No web results were available; set TAVILY_API_KEY to enable Tavily search."
+      context:
+        notes:
+          - '{"tool":"search","stub":true,"error":"no external search bound — set TAVILY_API_KEY (auto-enables Tavily) or MKLANG_SEARCH_BACKEND=fake|tavily","query":"any query","results":[]}'
+      trace:
+        - { state: plan_query, policy: ok, to: search }
+        - { state: search, policy: ok, to: check }
+        - { state: check, policy: ok, to: no_search }
+        - { state: no_search, policy: ok, to: END }

@@ -1,6 +1,9 @@
 # ADR 0012 — A stdlib of general-purpose architecture machines
 
-Status: Accepted
+Status: Accepted (lineup since grown past the seven below: `std_plan_execute`
+once ADR 0014 / SPEC §4.8 whole-template lists lifted the planner constraint,
+`std_research` on the bundled ADR 0016 `search` tool — the catalog SSOT is
+[docs/reference/stdlib.md](../reference/stdlib.md))
 
 ## Context
 

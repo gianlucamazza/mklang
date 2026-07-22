@@ -24,6 +24,7 @@ EXPECTED = {
     "std_map_reduce",
     "std_plan_execute",
     "std_refine",
+    "std_research",
     "std_self_consistency",
     "std_tot",
 }

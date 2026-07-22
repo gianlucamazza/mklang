@@ -165,7 +165,7 @@ Every modern reasoning/agentic pattern maps onto the core (states + gates + pros
 tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
 guidance in [`docs/guides/patterns.md`](./docs/guides/patterns.md).
 
-Eight of these ship as **ready, general-purpose `std_*` machines** — parameterized
+Nine of these ship as **ready, general-purpose `std_*` machines** — parameterized
 by context, callable from your machines (`call: std_refine`), runnable by name:
 
 ```bash
@@ -324,7 +324,7 @@ by default.
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
 - **Open / later:** Anthropic live when the account has credit; `on_truncate=continue`
-  stitching; `std_research` / language-level context zones (ROADMAP).
+  stitching; language-level context zones (ROADMAP).
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 

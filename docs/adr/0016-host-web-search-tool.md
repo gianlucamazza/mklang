@@ -35,18 +35,18 @@ provider-native tool-calling or browser automation.
 
 ## Checklist
 
-| Item | Status |
-|---|---|
-| Structured stub default | **done** |
-| Fake + Tavily backends | **done** |
-| `research_web.mk` + scenario test | **done** |
-| SPEC / patterns note | **done** |
-| Optional `days` / `topic` / `published_date` | **done** |
-| Host `context.today` convention + research patterns | **done** |
-| Host `context.now` (wall-clock local ISO datetime) | **done** (same inject path; not search-specific) |
-| `runtime.yaml` tools.search block | deferred |
-| Console-specific consent copy for search | deferred (generic tool consent covers it) |
-| stdlib `std_research` | deferred |
+| Item                                                | Status                                           |
+| --------------------------------------------------- | ------------------------------------------------ |
+| Structured stub default                             | **done**                                         |
+| Fake + Tavily backends                              | **done**                                         |
+| `research_web.mk` + scenario test                   | **done**                                         |
+| SPEC / patterns note                                | **done**                                         |
+| Optional `days` / `topic` / `published_date`        | **done**                                         |
+| Host `context.today` convention + research patterns | **done**                                         |
+| Host `context.now` (wall-clock local ISO datetime)  | **done** (same inject path; not search-specific) |
+| `runtime.yaml` tools.search block                   | deferred                                         |
+| Console-specific consent copy for search            | deferred (generic tool consent covers it)        |
+| stdlib `std_research`                               | shipped (search → ground stdlib machine)         |
 
 ## Consequences
 
