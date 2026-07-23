@@ -71,6 +71,49 @@ def test_direct_reply_turn(tmp_path):
     asyncio.run(drive())
 
 
+def test_brain_turn_fences_the_user_message(tmp_path):
+    """ADR 0025 regression: the console brain runs through engine.run, so the
+    host-supplied `user_message` must reach the brain's produce prompt inside a
+    `<data-NONCE>` fence — the console needs no delimiting code of its own."""
+    import re
+
+    calls = []
+    seq = [4]
+
+    def produce_fn(model, system, user, reason):
+        calls.append(user)
+        if "single next action" in user:
+            return Produced(text="REPLY: it is 4.")
+        return Produced(text="4.")
+
+    def judge_fn(model, conditions, output, context, reasoning=None):
+        return seq.pop(0) if len(seq) > 1 else seq[0]
+
+    llm = MockLLM(produce_fn=produce_fn, judge_fn=judge_fn)
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: llm,
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        async with app.run_test() as pilot:
+            await pilot.click("#prompt")
+            await pilot.press(*"2+2?")
+            await pilot.press("enter")
+            await _wait_input_enabled(app, pilot)
+            fenced = [u for u in calls if re.search(r"<data-\w+>\n2\+2\?\n</data-\w+>", u)]
+            assert fenced, f"user_message never arrived fenced; prompts: {calls!r}"
+            # and never bare outside a fence in the same prompts
+            for u in fenced:
+                bare = re.sub(r"<data-(\w+)>\n.*?\n</data-\1>", "", u, flags=re.S)
+                assert "2+2?" not in bare
+
+    asyncio.run(drive())
+
+
 def test_agent_reply_markdown_and_bracket_safety(tmp_path):
     """Agent prose is mirrored as Markdown source; brackets must not break the log."""
     reply = "Use **bold** and array[0]; ignore [b]injected[/b]."

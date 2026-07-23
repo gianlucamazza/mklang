@@ -75,6 +75,10 @@ Recorded choices:
   carry fences and (produce-side) one extra system paragraph. Machines whose
   prompts only interpolate author literals are byte-identical.
 - Old checkpoints resume all-tainted — safe, at worst over-fenced.
-- Remaining `render()` callers outside the produce path (console `agent.mk`
-  brain prompts in `console/tools.py`, `llmlint.py` probes, `host.py`) are
-  not yet taint-aware — follow-up work, tracked in ROADMAP.
+- Follow-up audit (post-release): the console brain needs no delimiting code
+  of its own — it runs through `engine.run`, so `user_message`/`history` are
+  tainted by provenance and arrive fenced (regression test in
+  `tests/test_console_app.py`); `llmlint` synthesizes probe prompts from
+  author faces only (trusted); the remaining `render()` call in
+  `interpolate.resolve` feeds tool/`call` inputs, which must stay raw by
+  design. No further taint work pending.
