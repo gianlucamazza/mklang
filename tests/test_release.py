@@ -232,3 +232,60 @@ def test_optional_provider_divergence_does_not_block_core_gate():
         },
     ]
     assert _ci_errors(rows, ["deepseek", "openai"], 1, 1.0) == []
+
+
+def test_release_gate_per_machine_agreement_override():
+    """Control-flow machines can use a lower floor than the default 1.0."""
+    _ci_errors = _gate_divergence_module()._ci_errors
+
+    # Two machines, two providers, one repeat each — perfect agreement on easy,
+    # split signatures on escalate (rate 0.0 for the only cross-provider pair).
+    rows = []
+    for machine, sig in (("gate_divergence", "easy"), ("severity_escalate", "a")):
+        rows.append(
+            {
+                "provider": "deepseek",
+                "machine": machine,
+                "repeat": 0,
+                "skipped": False,
+                "status": "done",
+                "signature": sig,
+                "output_hash": sig,
+            }
+        )
+    rows.append(
+        {
+            "provider": "openai",
+            "machine": "gate_divergence",
+            "repeat": 0,
+            "skipped": False,
+            "status": "done",
+            "signature": "easy",
+            "output_hash": "easy",
+        }
+    )
+    rows.append(
+        {
+            "provider": "openai",
+            "machine": "severity_escalate",
+            "repeat": 0,
+            "skipped": False,
+            "status": "done",
+            "signature": "b",  # disagrees with deepseek
+            "output_hash": "b",
+        }
+    )
+    # Default floor 1.0 fails escalate
+    errs = _ci_errors(rows, ["deepseek", "openai"], 1, 1.0)
+    assert any("severity_escalate" in e for e in errs)
+    # Override floor 0.0 accepts total disagreement on escalate; easy still 1.0
+    assert (
+        _ci_errors(
+            rows,
+            ["deepseek", "openai"],
+            1,
+            1.0,
+            min_agreement_by_machine={"severity_escalate": 0.0},
+        )
+        == []
+    )

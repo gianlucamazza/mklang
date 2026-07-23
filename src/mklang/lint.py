@@ -108,6 +108,7 @@ def lint_machine(machine: Machine) -> list[str]:
     """Return advisory findings (never errors — those belong to semantic_check)."""
     findings: list[str] = []
     refs = _referenced_roots(machine)
+    escalate_states: list[str] = []
 
     for sid, s in machine.states.items():
         # Dead gates: `otherwise` always fires when reached, so anything after it is unreachable.
@@ -117,6 +118,8 @@ def lint_machine(machine: Machine) -> list[str]:
                     f"{sid}: {len(s.gates) - 1 - i} gate(s) after 'otherwise' can never fire"
                 )
                 break
+            if g.kind == "escalate":
+                escalate_states.append(sid)
         # Repair-only states are a guaranteed no-gate-matched halt once budgets exhaust.
         if s.gates and all(g.kind == "repair" for g in s.gates):
             findings.append(
@@ -135,6 +138,24 @@ def lint_machine(machine: Machine) -> list[str]:
                 "(no template references it, no prose gate judges it, "
                 "and it is not the machine result)"
             )
+
+    # One advisory per machine: prose escalate is control-flow-critical and
+    # non-deterministic under repeats (gate-divergence 2026-07-24:
+    # severity_escalate agreement 0.667). Prefer --hitl or code-hook gates on
+    # production page/approve paths (SPEC §11) — not a hard error (tier-cascade
+    # escalate to a stronger state is a valid pattern).
+    if escalate_states:
+        where = ", ".join(dict.fromkeys(escalate_states))  # preserve order, uniq
+        # Prefixed "note:" so `lint --strict` still fails only on structural smells
+        # (dead gates, repair-only, unresolved templates) — escalate is intentional
+        # for tier-cascade (SPEC §10) as well as HITL. Production hosts still need
+        # --hitl / hooks on page/approve paths (SPEC §11).
+        findings.append(
+            f"note: machine uses escalate on [{where}]: prose escalate is "
+            "non-deterministic under provider/repeats — for production control-flow "
+            "prefer --hitl or a code-hook gate (SPEC §11); "
+            "see docs/experiments/gate-divergence.md"
+        )
 
     findings.extend(_unresolved_interpolation(machine))
     return findings

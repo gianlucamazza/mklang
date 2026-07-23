@@ -868,12 +868,18 @@ measurement**. The [stability & deprecation policy](./docs/guides/stability.md)
 
 - **Cross-provider gate agreement** — syntactic portability of the document does
   **not** imply identical gate traces across providers; it is measurable, not
-  guaranteed. The four-machine divergence suite measures **1.0** agreement across
-  DeepSeek + OpenAI today
-  ([docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md));
-  Anthropic remains billing-blocked, and high-stakes prose gates still need hooks /
-  HITL (§11). The measurement is evidence, not a portability guarantee — the caveat
-  stands.
+  guaranteed. Dated runs live in
+  [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md):
+  - **2026-07-23** four-machine suite (DeepSeek + OpenAI ×3): **1.0 agreement per
+    machine** (24/24 done).
+  - **2026-07-24** (package 1.0.1) same suite: pooled **0.917**; three machines
+    still **1.0**, but **`severity_escalate` at 0.667** (one DeepSeek repeat took
+    `otherwise→auto` instead of page-human). The **release gate** still uses the
+    single easy multi-way machine at min-agreement **1.0** and includes
+    `severity_escalate` with a lower per-machine floor (see `release.yml`).
+  - Anthropic remains un-run live (no key in maintainer env / CI secrets as of
+    that date). High-stakes prose gates still need hooks / HITL (§11). The
+    measurement is evidence, not a portability guarantee — the caveat stands.
 
 ---
 

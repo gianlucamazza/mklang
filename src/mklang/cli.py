@@ -327,6 +327,9 @@ def cmd_lint(args: argparse.Namespace) -> int:
         errors, warnings = semantic_check(machine, registry, strict=args.strict)
         findings = lint_machine(machine)
         findings_total += len(findings)
+        # `note:` findings stay advisory under --strict (escalate policy); structural
+        # smells (dead gates, repair-only, unresolved templates) still fail --strict.
+        strict_hits = sum(1 for f in findings if not str(f).startswith("note:"))
         item["warnings"].extend(warnings)
         item["errors"].extend(errors)
         item["findings"].extend(findings)
@@ -348,17 +351,17 @@ def cmd_lint(args: argparse.Namespace) -> int:
             item["status"] = "error"
         elif findings:
             item["status"] = "warning"
+        if args.strict and strict_hits:
+            ok = False
         items.append(item)
     result = CommandResult(
         command="lint",
-        ok=ok and not (args.strict and findings_total),
+        ok=ok,
         items=items,
         summary={"files": len(items), "findings": findings_total},
     )
     emit_result(result, fmt=output_format(args.format), color=args.color)
-    if not ok:
-        return 1
-    return 1 if (args.strict and findings_total) else 0
+    return 0 if ok else 1
 
 
 def cmd_test(args: argparse.Namespace) -> int:

@@ -41,8 +41,8 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-23T22:58:59.978865+00:00",
-  "generated_from": "0cb91989d13c92fa027374e3eb247dd8959951a7",
+  "generated_at": "2026-07-23T23:14:05.067004+00:00",
+  "generated_from": "397d5ef8a545285ce26b8183adc7cf2e1d213cfd",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
@@ -60,7 +60,7 @@
       "examples/news_search.mkl": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mkl": "31bb5f23e36b45a3aa9619579456255ab4c10aaeb72b812fffc288b8a93ce14d",
       "scripts/demo_assets.py": "88a02323eacb0e4731237aa7bf53d130dbaff146a22ee5fa312d32235caaf6e1",
-      "src/mklang/cli.py": "2ce35af804764486bbd8146a812a45f73b2e01aef59aa2c8462fb8d17dea23c3",
+      "src/mklang/cli.py": "c56dd29181aba7a0015e11181aef71b834fac946da76c296997b1eac4e735f3e",
       "src/mklang/config.py": "7517bccf43fecf9af064b035d8f09d97bcc7d603bc344726021666bbeca85aa9",
       "src/mklang/console/__init__.py": "89e07bbecf189192a684db26463237ecdc31a4cca146e68c5374029450d0ac2c",
       "src/mklang/console/app.py": "e7268f44c1247752c679003f3cf6ec255d806bf325f7b0806fe1228e96812062",
@@ -69,7 +69,7 @@
       "src/mklang/console/session.py": "4256bff6cf503c37eff8b56a2e8bc62b60003dfb67a3b94ea6f4d2b9df9edc49",
       "src/mklang/console/tools.py": "ed4602851bacaeb63869834d418e96469cc009c2d8c648bccc12087628e51398",
       "src/mklang/console/widgets.py": "c3702b34eab2d342e1e1d8c8cfa7bf4b74441d9ce2d21aa00e4b8829e2714a82",
-      "src/mklang/data/console/agent.mkl": "9e20add1b5222a388de53b8ffdb2eec841a5de85d257accbd4100e0f71c7515e",
+      "src/mklang/data/console/agent.mkl": "f87b6ff1f4f72df2e3be5928274f4536b969faf3f78bbb4c9fa7c202481688f0",
       "src/mklang/engine.py": "9e209d4dac7ee11a64a14b4ff445d504ec51358e57167cfc370cf864e709699e",
       "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
       "src/mklang/llm/anthropic.py": "948f8bcdbd1e18ea5e3823368bd9b58b5d960212646c72fc4c460e2c54ffc91b",
@@ -83,7 +83,7 @@
       "src/mklang/search.py": "c6e110f4e4590e461b45353d72c6db4a612d1f6966cbf593ece7020af775ace4",
       "src/mklang/tools.py": "83dadd2f68b04a9d821b21b48471cab5f260a0c1ff7e9c26135680855d8a7b03"
     },
-    "sha256": "509e3778b5783dbf8a58b5cc852aa5fdb6591b1953d368890c471732110360bf"
+    "sha256": "1ecdd316f08911bc3308b0a27114d0de3cd9cd1cb37ac77c6e6dc52d2a8ba9c4"
   },
   "toolchain": {
     "font": {

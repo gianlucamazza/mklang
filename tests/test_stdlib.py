@@ -45,13 +45,19 @@ def test_stdlib_lineup_and_registry_load():
 
 @pytest.mark.parametrize("path", STDLIB_FILES, ids=lambda p: p.stem)
 def test_stdlib_machine_is_clean(path):
-    """Schema-valid, zero semantic errors AND warnings, zero lint findings."""
+    """Schema-valid, zero semantic errors/warnings, zero structural lint findings.
+
+    Advisory `note:` findings (e.g. escalate policy) are allowed — they do not
+    fail `lint --strict` and document SPEC §11 guidance without blocking the
+    stdlib patterns that intentionally use escalate (cascade, refine, …).
+    """
     doc = yaml.safe_load(path.read_text(encoding="utf-8"))
     validate_dict(doc)
     reg = load_stdlib_registry()
     errors, warnings = semantic_check(reg[path.stem], reg, strict=True)
     assert errors == [] and warnings == []
-    assert lint_machine(reg[path.stem]) == []
+    structural = [f for f in lint_machine(reg[path.stem]) if not f.startswith("note:")]
+    assert structural == []
 
 
 @pytest.mark.parametrize("path", STDLIB_FILES, ids=lambda p: p.stem)

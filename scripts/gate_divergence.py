@@ -340,15 +340,40 @@ def _summary(rows: list[dict], names: list[str]) -> dict:
     }
 
 
+def _parse_agreement_overrides(raw: str) -> dict[str, float]:
+    """Parse `machine=0.5,other=1.0` into a per-machine agreement floor map."""
+    out: dict[str, float] = {}
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "=" not in part:
+            raise ValueError(f"expected machine=rate, got {part!r}")
+        name, rate_s = part.split("=", 1)
+        name = name.strip()
+        rate = float(rate_s.strip())
+        if not 0 <= rate <= 1:
+            raise ValueError(f"rate for {name!r} must be in [0, 1], got {rate}")
+        out[name] = rate
+    return out
+
+
 def _ci_errors(
-    rows: list[dict], required: list[str], repeats: int, min_agreement: float | None
+    rows: list[dict],
+    required: list[str],
+    repeats: int,
+    min_agreement: float | None,
+    min_agreement_by_machine: dict[str, float] | None = None,
 ) -> list[str]:
     """Return release-gate failures without hiding unavailable or failed providers.
 
     With `repeats` runs per (provider, machine), a required provider must have
     `repeats * n_machines` successful rows; the agreement floor is enforced
-    per-machine so no single machine can hide behind a high pooled average."""
+    per-machine so no single machine can hide behind a high pooled average.
+    `min_agreement_by_machine` overrides the global floor for named machines
+    (control-flow-critical shapes like ``severity_escalate``)."""
     errors: list[str] = []
+    overrides = min_agreement_by_machine or {}
     # Count only machines that actually ran. Skipped-provider rows carry no
     # `machine` field (see `_run_once`), so a naive distinct-count over all rows
     # would include `None` and inflate `repeats * n_machines` — failing the
@@ -370,16 +395,17 @@ def _ci_errors(
         if failed:
             errors.append(f"required provider {name!r}: {len(failed)} run(s) failed")
 
-    if min_agreement is None:
+    if min_agreement is None and not overrides:
         return errors
     agreement_rows = [r for r in rows if not required or r.get("provider") in required]
     for machine, stats in _machine_rates(agreement_rows).items():
         rate = stats["signature_agreement_rate"]
-        if rate is None or rate < min_agreement:
+        floor = overrides.get(machine, min_agreement)
+        if floor is None:
+            continue
+        if rate is None or rate < floor:
             label = "" if machine == "default" else f" [{machine}]"
-            errors.append(
-                f"signature agreement {rate!r}{label} is below required {min_agreement:.3f}"
-            )
+            errors.append(f"signature agreement {rate!r}{label} is below required {floor:.3f}")
     return errors
 
 
@@ -407,7 +433,13 @@ def main(argv: list[str] | None = None) -> int:
         "--min-agreement",
         type=float,
         default=None,
-        help="minimum pairwise signature agreement in [0, 1] (release gate)",
+        help="default minimum pairwise signature agreement in [0, 1] (release gate)",
+    )
+    p.add_argument(
+        "--min-agreement-by-machine",
+        default="",
+        help="per-machine floors as name=rate pairs (override --min-agreement), e.g. "
+        "severity_escalate=0.5 — control-flow-critical shapes need a floor, not silence",
     )
     p.add_argument(
         "--judge-tier",
@@ -429,6 +461,10 @@ def main(argv: list[str] | None = None) -> int:
         p.error("--repeats must be at least 1")
     if args.min_agreement is not None and not 0 <= args.min_agreement <= 1:
         p.error("--min-agreement must be between 0 and 1")
+    try:
+        agreement_overrides = _parse_agreement_overrides(args.min_agreement_by_machine)
+    except ValueError as e:
+        p.error(f"--min-agreement-by-machine: {e}")
 
     if args.machines.strip() == "all":
         machine_names = list(MACHINES)
@@ -476,7 +512,13 @@ def main(argv: list[str] | None = None) -> int:
                         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     summary = _summary(rows, names)
-    errors = _ci_errors(rows, required, args.repeats, args.min_agreement)
+    errors = _ci_errors(
+        rows,
+        required,
+        args.repeats,
+        args.min_agreement,
+        min_agreement_by_machine=agreement_overrides or None,
+    )
     summary["gate_errors"] = errors
     rendered = json.dumps(summary, indent=2, ensure_ascii=False)
     print(rendered)

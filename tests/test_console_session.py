@@ -119,8 +119,12 @@ def test_budget_exhaustion_parks_a_checkpoint_on_decline(tmp_path):
 
 
 def park_then_reply_llm():
-    """Loops on DISCOVER until the judge script flips to REPLY (post-resume)."""
-    judges = [0] * 8 + [4]
+    """Loops on DISCOVER until the judge script flips to REPLY (post-resume).
+
+    Sized against agent.mkl's shared turn budget (24): each DISCOVER cycle costs
+    ~2 steps (decide + tool), so ~12 cycles exhaust the budget and park.
+    """
+    judges = [0] * 12 + [4]
 
     def produce_fn(model, system, user, reason):
         if "final reply" in user:

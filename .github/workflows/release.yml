@@ -73,13 +73,18 @@ jobs:
       - name: Required OpenAI smoke
         run: MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=openai uv run --all-extras pytest -q tests/test_live.py
       - name: Cross-provider gate agreement
+        # Easy multi-way routing must stay perfect (1.0). Control-flow escalate
+        # is measured too — floor 0.5 so total chaos fails while the observed
+        # 0.667 contestability (2026-07-24) does not block every release.
         run: |
           mkdir -p live-results
           uv run --all-extras python scripts/gate_divergence.py \
+            --machines gate_divergence,severity_escalate \
             --providers deepseek,openai,anthropic,google,openrouter,xai,mistral \
             --repeats 3 \
             --require-providers deepseek,openai \
             --min-agreement 1.0 \
+            --min-agreement-by-machine severity_escalate=0.5 \
             --jsonl live-results/runs.jsonl \
             --summary-json live-results/summary.json
       - uses: actions/upload-artifact@v7

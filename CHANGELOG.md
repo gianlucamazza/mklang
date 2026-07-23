@@ -14,7 +14,20 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Release gate** now measures `severity_escalate` alongside `gate_divergence`,
+  with a per-machine agreement floor (`--min-agreement-by-machine`) so the
+  control-flow-critical path cannot stay unmeasured.
+- **`lint` note** on machines that use `escalate` (advisory under `--strict`)
+  pointing at SPEC §11 / gate-divergence evidence.
+- Best-practices notes: escalate non-determinism, console vs MCP authoring
+  parity, authoring-turn budget.
+
 ### Changed
+
+- **SPEC §9** gate-agreement claim updated for the 2026-07-24 four-machine
+  re-run (`severity_escalate` 0.667; release-gate distinction).
+- **`agent.mkl` budget** 16 → 24 (shared headroom for up to two static authoring
+  repairs in a turn).
 
 ## [1.0.1] — 2026-07-24
 

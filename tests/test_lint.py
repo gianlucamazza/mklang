@@ -46,6 +46,23 @@ def test_repair_only_state():
     assert any("every gate is a repair" in f for f in lint_machine(m))
 
 
+def test_escalate_emits_note_not_structural():
+    m = M(
+        {
+            "a": state(
+                gates=[
+                    gate("needs a human", escalate=True, to="b"),
+                    gate("otherwise", then="ok", to="END"),
+                ]
+            ),
+            "b": state(),
+        }
+    )
+    findings = lint_machine(m)
+    notes = [f for f in findings if f.startswith("note:") and "escalate" in f]
+    assert notes, findings
+
+
 def test_unread_output_flagged_but_not_terminal_or_judged():
     m = M(
         {

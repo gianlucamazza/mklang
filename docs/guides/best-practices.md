@@ -279,6 +279,26 @@ for the behaviours the machine must exhibit and run it before trusting an author
 machine — treat "check-clean" as a precondition for testing, not a substitute for
 it.
 
+**Console vs MCP authoring.** The console can `write_machine` into a workspace
+(with human overwrite consent). MCP deliberately has **no persist tool** (ADR
+0011/0013) — headless hosts author and `run(source=…)` / `check(source=…)`
+inline, or pass an explicit `checkpoint_path`. Do not expect MCP to mirror the
+console's "save to disk → re-run by name" loop; that model needs the console (or
+a host that owns the filesystem).
+
+**Authoring-turn budget.** `agent.mkl` uses one shared step budget for
+discover/run/author/static-repair/reply (currently 24). There is no separate
+language-level repair pool: a turn that explores and then authors with multiple
+check failures can exhaust the budget. Prefer tight authoring contracts and a
+frozen scenario test over lengthening the loop indefinitely.
+
+**`escalate` is control-flow-critical.** Prose `escalate` gates are non-deterministic
+under provider and repeats (measured: `severity_escalate` agreement **0.667** on
+2026-07-24 — see gate-divergence experiment). For production page/approve/legal
+paths prefer **`--hitl`** or a **code-hook gate**; use prose escalate for soft
+routing (tier cascade) only when occasional mis-route is acceptable. `mklang lint`
+emits a `note:` on machines that use escalate (advisory even under `--strict`).
+
 ---
 
 ## 11. Security (SPEC §11) — operational minimum

@@ -16,7 +16,11 @@
 mklang: "0.3"
 machine: console_agent
 entry: decide
-budget: 16 # decide/action cycles incl. an authoring repair + the reply
+# Shared step budget for the whole turn: discover/run/clarify + author + up to
+# two static check repairs (write_machine → check only) + reply. There is no
+# separate language-level "repair budget" — headroom lives here. Authoring
+# check-fail rate measured ~28% after one repair (docs/experiments/authoring-blind-spot.md).
+budget: 24
 default_tier: balanced
 result: reply
 
