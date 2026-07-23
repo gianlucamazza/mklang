@@ -41,14 +41,14 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-23T23:14:05.067004+00:00",
-  "generated_from": "397d5ef8a545285ce26b8183adc7cf2e1d213cfd",
+  "generated_at": "2026-07-23T23:16:17.711680+00:00",
+  "generated_from": "6d5502117e5f3ee9c13e48bdcc9f1ff1e1b0bacf",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
     "reasoning": "deepseek-reasoner"
   },
-  "package_version": "1.0.1",
+  "package_version": "1.0.2",
   "provider": "deepseek",
   "schema": 2,
   "source": {
