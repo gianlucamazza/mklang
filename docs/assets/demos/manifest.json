@@ -41,14 +41,14 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-23T23:26:52.337223+00:00",
-  "generated_from": "6ce4be9802110e1eba33bd903a4da4bd6bfc40e6",
+  "generated_at": "2026-07-23T23:39:58.413217+00:00",
+  "generated_from": "31b264798bf7fa474030bdb5338b69d03d993838",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
     "reasoning": "deepseek-reasoner"
   },
-  "package_version": "1.0.3",
+  "package_version": "1.0.4",
   "provider": "deepseek",
   "schema": 2,
   "source": {
@@ -70,7 +70,7 @@
       "src/mklang/console/tools.py": "ed4602851bacaeb63869834d418e96469cc009c2d8c648bccc12087628e51398",
       "src/mklang/console/widgets.py": "c3702b34eab2d342e1e1d8c8cfa7bf4b74441d9ce2d21aa00e4b8829e2714a82",
       "src/mklang/data/console/agent.mkl": "f87b6ff1f4f72df2e3be5928274f4536b969faf3f78bbb4c9fa7c202481688f0",
-      "src/mklang/engine.py": "2513470a98c71f2ea3ea9ab913a8ed10343542a6af6e9ccbb7881f94a7a9c93a",
+      "src/mklang/engine.py": "64205a17e8b8c450f2894f598fdc31de27ca13368e99747e0abeb3367f55a640",
       "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
       "src/mklang/llm/anthropic.py": "948f8bcdbd1e18ea5e3823368bd9b58b5d960212646c72fc4c460e2c54ffc91b",
       "src/mklang/llm/base.py": "f64fdbf7057b672a7edc55b149583eed515229915ddc60b3bd71c187606415ea",
@@ -83,7 +83,7 @@
       "src/mklang/search.py": "c6e110f4e4590e461b45353d72c6db4a612d1f6966cbf593ece7020af775ace4",
       "src/mklang/tools.py": "83dadd2f68b04a9d821b21b48471cab5f260a0c1ff7e9c26135680855d8a7b03"
     },
-    "sha256": "15e589457002826e838fb68c1ecd5df19a53a318f00e0bd9d66d67f180f787a5"
+    "sha256": "4e44cd8622298da9a85b112faa8fa1f2536888d45425eb4ecfdbc6b30c7c2f0c"
   },
   "toolchain": {
     "font": {

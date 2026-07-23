@@ -16,6 +16,10 @@ from .model import Gate, Machine, State
 MAX_CALL_DEPTH = 8
 _OVER_VAR = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
 
+# (output, sub_trace|None, reasoning|None, (in,out), meta)
+ExecOut = tuple[object, list[dict] | None, str | None, tuple[int, int], dict]
+Eligible = list[tuple[int, Gate]]
+
 
 @dataclass
 class RunResult:
@@ -38,7 +42,7 @@ class _Suspend(Exception):
         self.frames = frames
 
 
-def _model_for(state: State, machine: Machine, tiers: dict) -> str:
+def _model_for(state: State, machine: Machine, tiers: dict[str, str]) -> str:
     tier = state.tier or machine.default_tier
     try:
         return tiers[tier]
@@ -46,7 +50,7 @@ def _model_for(state: State, machine: Machine, tiers: dict) -> str:
         raise KeyError(f"tier {tier!r} not configured (available: {sorted(tiers)})") from None
 
 
-def _judge_model_for(state: State, machine: Machine, deps: "_Ctx") -> str:
+def _judge_model_for(state: State, machine: Machine, deps: _Ctx) -> str:
     """Model that judges this state's gates (SPEC §2.1): the state's own tier by
     default, so a `reasoning` state's high-stakes gates are judged by the reasoning
     model — not silently downgraded. A configured `judge` override wins globally."""
@@ -67,7 +71,7 @@ class _Ctx:
     """Shared execution dependencies threaded through the run."""
 
     llm: LLM
-    tiers: dict
+    tiers: dict[str, str]
     # Global judge-model override (config `judge:`). None → judging follows each
     # state's tier (SPEC §2.1). See `_judge_model_for`.
     judge_override: str | None
@@ -101,7 +105,7 @@ class _Ctx:
     delimit: bool = True
 
 
-def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields: object) -> None:
+def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) -> None:
     if deps.on_event is None:
         return
     try:
@@ -126,8 +130,74 @@ def _call_hook(gate: Gate, ctx: dict, result: object, hooks: dict) -> bool:
     return bool(fn(ctx, result))
 
 
+def _collect_prose_batch(eligible: Eligible, start: int) -> list[tuple[int, Gate]]:
+    """Consecutive prose-only gates starting at ``start`` (stop at hook/otherwise)."""
+    batch: list[tuple[int, Gate]] = []
+    j = start
+    while j < len(eligible):
+        bj, bg = eligible[j]
+        if bg.hook and not _is_otherwise(bg):
+            break
+        if _is_otherwise(bg):
+            break
+        batch.append((bj, bg))
+        j += 1
+    return batch
+
+
+def _judge_prose_batch(
+    batch: list[tuple[int, Gate]],
+    eligible: Eligible,
+    start: int,
+    result: object,
+    ctx: dict,
+    deps: _Ctx,
+    judge_reasoning: str | None,
+    judge_model: str,
+    ann: dict,
+) -> tuple[int, Gate, dict]:
+    """Fused LLM judge over a prose batch; otherwise-fallback on JudgeUnparseable."""
+    try:
+        verdict = deps.llm.judge(
+            judge_model,
+            [g.when for _, g in batch],
+            fmt(result),
+            ctx,
+            reasoning=judge_reasoning,
+        )
+        # Adapters return the chosen index, optionally paired with the parse
+        # method ("json" / "bare" / "last-number"). Mock/scripted judges return
+        # a bare int (method unknown).
+        if isinstance(verdict, tuple):
+            local, parse_method = verdict
+        else:
+            local, parse_method = verdict, None
+        # Adapters must return an index in [0, len(batch)); do not clamp here —
+        # silent clamp would misroute with gate_via: llm and no anomaly flag.
+        if not isinstance(local, int) or local < 0 or local >= len(batch):
+            raise JudgeUnparseable(f"out-of-range choice {local!r} for n={len(batch)}")
+        gi, gate = batch[local]
+        ann["gate_via"] = "llm"
+        ann["judge_model"] = judge_model
+        # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
+        if parse_method and parse_method != "json":
+            ann["judge_parse"] = parse_method
+        return gi, gate, ann
+    except JudgeUnparseable as e:
+        ann["judge_fallback"] = True
+        ann["judge_raw"] = str(e)[:200]
+        # Prefer otherwise among the *full* remaining eligible list
+        rest = eligible[start:]
+        catch = _pick_otherwise(rest)
+        if catch is None:
+            raise
+        gi, gate = catch
+        ann["gate_via"] = "otherwise"
+        return gi, gate, ann
+
+
 def _select_gate(
-    eligible: list[tuple[int, Gate]],
+    eligible: Eligible,
     result: object,
     ctx: dict,
     deps: _Ctx,
@@ -153,122 +223,79 @@ def _select_gate(
         if _is_otherwise(gate):
             ann["gate_via"] = "otherwise"
             return gi, gate, ann
-        # Consecutive prose-only gates → one fused LLM judge call
-        batch: list[tuple[int, Gate]] = []
-        j = i
-        while j < len(eligible):
-            bj, bg = eligible[j]
-            if bg.hook and not _is_otherwise(bg):
-                break
-            if _is_otherwise(bg):
-                break
-            batch.append((bj, bg))
-            j += 1
+        batch = _collect_prose_batch(eligible, i)
         if not batch:
             i += 1
             continue
-        try:
-            verdict = deps.llm.judge(
-                judge_model,
-                [g.when for _, g in batch],
-                fmt(result),
-                ctx,
-                reasoning=judge_reasoning,
-            )
-            # Adapters return the chosen index, optionally paired with the parse
-            # method ("json" / "bare" / "last-number"). Mock/scripted judges return
-            # a bare int (method unknown).
-            if isinstance(verdict, tuple):
-                local, parse_method = verdict
-            else:
-                local, parse_method = verdict, None
-            # Adapters must return an index in [0, len(batch)); do not clamp here —
-            # silent clamp would misroute with gate_via: llm and no anomaly flag.
-            if not isinstance(local, int) or local < 0 or local >= len(batch):
-                raise JudgeUnparseable(f"out-of-range choice {local!r} for n={len(batch)}")
-            gi, gate = batch[local]
-            ann["gate_via"] = "llm"
-            ann["judge_model"] = judge_model
-            # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
-            if parse_method and parse_method != "json":
-                ann["judge_parse"] = parse_method
-            return gi, gate, ann
-        except JudgeUnparseable as e:
-            ann["judge_fallback"] = True
-            ann["judge_raw"] = str(e)[:200]
-            # Prefer otherwise among the *full* remaining eligible list
-            rest = eligible[i:]
-            catch = _pick_otherwise(rest)
-            if catch is None:
-                raise
-            gi, gate = catch
-            ann["gate_via"] = "otherwise"
-            return gi, gate, ann
+        return _judge_prose_batch(
+            batch, eligible, i, result, ctx, deps, judge_reasoning, judge_model, ann
+        )
     raise RuntimeError("no-gate-matched")
 
 
-def _exec_one(
+def _exec_call(
+    state: State,
+    ctx: dict,
+    deps: _Ctx,
+    machine: Machine,
+    depth: int,
+    resume: list[dict] | None,
+    tainted: set[str],
+) -> ExecOut:
+    sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
+    # An input key is trusted in the sub-run unless its value interpolates
+    # a tainted key here; the sub-run's own provenance rule handles the rest.
+    trusted_inputs = {k for k, v in (state.input or {}).items() if not _refs_tainted(v, tainted)}
+    sub_machine = deps.registry.get(state.call)
+    if sub_machine is None:
+        raise KeyError(f"call: unknown machine {state.call!r}")
+    sub = run(
+        sub_machine,
+        {**sub_machine.context, **sub_input},
+        deps.registry,
+        deps.llm,
+        deps.tiers,
+        deps.judge_override,
+        depth=depth + 1,
+        max_workers=deps.max_workers,
+        tier_params=deps.tier_params,
+        cost_budget=deps.cost_budget,
+        tools=deps.tools,
+        hooks=deps.hooks,
+        suspendable=deps.suspendable,
+        escalate_suspend=deps.escalate_suspend,
+        resume=resume,
+        on_event=deps.on_event,
+        on_truncate=deps.on_truncate,
+        prompt_value_chars=deps.prompt_value_chars,
+        cancel_requested=deps.cancel_requested,
+        delimit=deps.delimit,
+        trusted_keys=trusted_inputs,
+    )
+    u = sub.usage or {}
+    tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
+    if sub.status != "done":
+        # Parent must not continue as success with a missing/partial sub-result.
+        raise CallFailed(sub.error or "sub-halted", sub.trace, tin, tout)
+    return sub.result, sub.trace, None, (tin, tout), {}
+
+
+def _exec_tool(state: State, ctx: dict, deps: _Ctx) -> ExecOut:
+    tool_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
+    fn = deps.tools.get(state.tool)
+    if fn is None:
+        raise KeyError(f"tool: unknown tool {state.tool!r} (register it via run(tools=...))")
+    return str(fn(tool_input)), None, None, (0, 0), {}
+
+
+def _exec_produce(
     state: State,
     ctx: dict,
     feedback: str,
     deps: _Ctx,
     machine: Machine,
-    depth: int,
-    resume: list[dict] | None = None,
-    tainted: set[str] | None = None,
-) -> tuple[object, list[dict] | None, str | None, tuple[int, int], dict]:
-    """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
-
-    ``meta`` carries produce-side annotations (ADR 0018 truncation). Empty for
-    tool/call states.
-    """
-    empty_meta: dict = {}
-    tainted = tainted if tainted is not None else set()
-    if state.kind == "call":
-        sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
-        # An input key is trusted in the sub-run unless its value interpolates
-        # a tainted key here; the sub-run's own provenance rule handles the rest.
-        trusted_inputs = {
-            k for k, v in (state.input or {}).items() if not _refs_tainted(v, tainted)
-        }
-        sub_machine = deps.registry.get(state.call)
-        if sub_machine is None:
-            raise KeyError(f"call: unknown machine {state.call!r}")
-        sub = run(
-            sub_machine,
-            {**sub_machine.context, **sub_input},
-            deps.registry,
-            deps.llm,
-            deps.tiers,
-            deps.judge_override,
-            depth=depth + 1,
-            max_workers=deps.max_workers,
-            tier_params=deps.tier_params,
-            cost_budget=deps.cost_budget,
-            tools=deps.tools,
-            hooks=deps.hooks,
-            suspendable=deps.suspendable,
-            escalate_suspend=deps.escalate_suspend,
-            resume=resume,
-            on_event=deps.on_event,
-            on_truncate=deps.on_truncate,
-            prompt_value_chars=deps.prompt_value_chars,
-            cancel_requested=deps.cancel_requested,
-            delimit=deps.delimit,
-            trusted_keys=trusted_inputs,
-        )
-        u = sub.usage or {}
-        tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
-        if sub.status != "done":
-            # Parent must not continue as success with a missing/partial sub-result.
-            raise CallFailed(sub.error or "sub-halted", sub.trace, tin, tout)
-        return sub.result, sub.trace, None, (tin, tout), empty_meta
-    if state.kind == "tool":
-        tool_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
-        fn = deps.tools.get(state.tool)
-        if fn is None:
-            raise KeyError(f"tool: unknown tool {state.tool!r} (register it via run(tools=...))")
-        return str(fn(tool_input)), None, None, (0, 0), empty_meta
+    tainted: set[str],
+) -> ExecOut:
     tier = state.tier or machine.default_tier
     model = _model_for(state, machine, deps.tiers)
     params = deps.tier_params.get(tier)
@@ -303,6 +330,29 @@ def _exec_one(
     return out, None, p.reasoning, (p.input_tokens, p.output_tokens), meta
 
 
+def _exec_one(
+    state: State,
+    ctx: dict,
+    feedback: str,
+    deps: _Ctx,
+    machine: Machine,
+    depth: int,
+    resume: list[dict] | None = None,
+    tainted: set[str] | None = None,
+) -> ExecOut:
+    """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
+
+    ``meta`` carries produce-side annotations (ADR 0018 truncation). Empty for
+    tool/call states.
+    """
+    tainted = tainted if tainted is not None else set()
+    if state.kind == "call":
+        return _exec_call(state, ctx, deps, machine, depth, resume, tainted)
+    if state.kind == "tool":
+        return _exec_tool(state, ctx, deps)
+    return _exec_produce(state, ctx, feedback, deps, machine, tainted)
+
+
 def _parse_list(text: str) -> list:
     """`parse: list` (SPEC §4.10, 0.3): the produced text must be a JSON array
     (markdown fences tolerated); anything else halts the state (`state-error`)."""
@@ -325,7 +375,14 @@ def _parse_list(text: str) -> list:
     return value
 
 
-def _safe_exec(state, ctx, deps, machine, depth, tainted=None):
+def _safe_exec(
+    state: State,
+    ctx: dict,
+    deps: _Ctx,
+    machine: Machine,
+    depth: int,
+    tainted: set[str] | None = None,
+) -> ExecOut:
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
         # Branches never suspend: a budget-exhausted sub halts into a marker as
@@ -390,7 +447,7 @@ def _branch_contexts(state: State, ctx: dict) -> list[dict]:
     return out
 
 
-def _pick_otherwise(eligible: list[tuple[int, Gate]]) -> tuple[int, Gate] | None:
+def _pick_otherwise(eligible: Eligible) -> tuple[int, Gate] | None:
     for i, g in eligible:
         if g.when.strip().lower() == "otherwise":
             return i, g
@@ -451,6 +508,51 @@ def _apply_gate_transition(
     return to, feedback, None
 
 
+def _fanout_branch_taint(state: State, tainted: set[str]) -> set[str]:
+    branch_tainted = set(tainted)
+    if state.over:
+        m_over = _OVER_VAR.search(state.over)
+        if m_over and m_over.group(1).split(".")[0] in tainted:
+            branch_tainted.add("item")  # `index` stays trusted
+    return branch_tainted
+
+
+def _fanout_branch_previews(outs: list[ExecOut]) -> list[str]:
+    return [o[0] if isinstance(o[0], str) else fmt(o[0]) for o in outs]
+
+
+def _fanout_reasoning(state: State, outs: list[ExecOut], step_fields: dict) -> str | None:
+    if not state.reason:
+        return None
+    step_fields["reasonings"] = [o[2] for o in outs]
+    rs = [o[2] for o in outs if o[2]]
+    return "\n---\n".join(rs) if rs else None
+
+
+def _fanout_truncation(outs: list[ExecOut], step_fields: dict) -> None:
+    trunc_metas = [o[4] for o in outs if (o[4] or {}).get("truncated")]
+    if not trunc_metas:
+        return
+    step_fields["truncated"] = True
+    fr = trunc_metas[0].get("finish_reason")
+    if fr:
+        step_fields["finish_reason"] = fr
+
+
+def _reduce_fanout(state: State, outs: list[ExecOut]) -> tuple[object, str | None, int, int, dict]:
+    """Collapse branch ExecOuts into (result, judge_reasoning, step_in, step_out, fields)."""
+    result: object = [o[0] for o in outs]
+    step_fields: dict = {"branches": _fanout_branch_previews(outs)}
+    subs = [o[1] for o in outs if o[1] is not None]
+    if subs:
+        step_fields["sub_trace"] = subs
+    judge_reasoning = _fanout_reasoning(state, outs, step_fields)
+    step_in = sum(o[3][0] for o in outs)
+    step_out = sum(o[3][1] for o in outs)
+    _fanout_truncation(outs, step_fields)
+    return result, judge_reasoning, step_in, step_out, step_fields
+
+
 def _execute_fanout(
     state: State,
     state_id: str,
@@ -479,11 +581,7 @@ def _execute_fanout(
         )
     # Fan-out: step count is max(1, n_branches) — see SPEC fan-out charging.
     new_steps = steps + max(1, len(branches))
-    branch_tainted = set(tainted)
-    if state.over:
-        m_over = _OVER_VAR.search(state.over)
-        if m_over and m_over.group(1).split(".")[0] in tainted:
-            branch_tainted.add("item")  # `index` stays trusted
+    branch_tainted = _fanout_branch_taint(state, tainted)
     if branches:
         with ThreadPoolExecutor(max_workers=deps.max_workers) as ex:
             outs = list(
@@ -494,158 +592,164 @@ def _execute_fanout(
             )
     else:
         outs = []
-    result: object = [o[0] for o in outs]
-    step_fields: dict = {
-        "branches": [o[0] if isinstance(o[0], str) else fmt(o[0]) for o in outs],
-    }
-    subs = [o[1] for o in outs if o[1] is not None]
-    if subs:
-        step_fields["sub_trace"] = subs
-    judge_reasoning: str | None = None
-    if state.reason:
-        step_fields["reasonings"] = [o[2] for o in outs]
-        rs = [o[2] for o in outs if o[2]]
-        judge_reasoning = "\n---\n".join(rs) if rs else None
-    step_in = sum(o[3][0] for o in outs)
-    step_out = sum(o[3][1] for o in outs)
-    trunc_metas = [o[4] for o in outs if (o[4] or {}).get("truncated")]
-    if trunc_metas:
-        step_fields["truncated"] = True
-        fr = trunc_metas[0].get("finish_reason")
-        if fr:
-            step_fields["finish_reason"] = fr
+    result, judge_reasoning, step_in, step_out, step_fields = _reduce_fanout(state, outs)
     return result, judge_reasoning, step_in, step_out, new_steps, step_fields
 
 
-def _run_impl(
-    machine: Machine,
-    context: dict,
-    registry: dict,
-    llm: LLM,
-    tiers: dict,
-    judge: str | None = None,
-    depth: int = 0,
-    max_workers: int = 5,
-    tier_params: dict | None = None,
-    cost_budget: int | None = None,
-    tools: dict | None = None,
-    hooks: dict | None = None,
-    suspendable: bool = False,
-    escalate_suspend: bool = False,
-    resume: list[dict] | None = None,
-    on_event: Callable[[dict], None] | None = None,
-    on_truncate: str = "report",
-    prompt_value_chars: int | None = None,
-    cancel_requested: Callable[[], object] | None = None,
-    delimit: bool = True,
-    trusted_keys: set[str] | None = None,
-) -> RunResult:
-    if depth > MAX_CALL_DEPTH:
-        return RunResult("halt", [], dict(context), error="call-depth-exceeded")
-    if on_truncate not in ("report", "halt"):
-        raise ValueError(f"on_truncate must be 'report' or 'halt', got {on_truncate!r}")
-    deps = _Ctx(
-        llm,
-        tiers,
-        judge,
-        registry,
-        tier_params or {},
-        tools or {},
-        hooks or {},
-        max_workers,
-        cost_budget,
-        suspendable,
-        escalate_suspend,
-        on_event,
-        on_truncate,
-        prompt_value_chars,
-        cancel_requested,
-        delimit,
-    )
-    ctx = dict(context)
-    # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
-    # value is still the author's `.mkl` literal; host-supplied or host-overridden
-    # values are untrusted unless the embedder vouches via `trusted_keys`.
-    tainted = _initial_taint(machine, ctx, trusted_keys)
-    state_id = machine.entry
-    trace: list[dict] = []
-    steps = 0
-    total_in = total_out = 0
-    feedback = ""
-    repair_left: dict[tuple[str, int], int] = {}
-    deeper: list[dict] | None = None  # frames to hand down into a call on the first iteration
-    if resume:
+class _Runner:
+    """Mutable run state and the main loop (SPEC §6). Public API remains ``run``."""
+
+    def __init__(
+        self,
+        machine: Machine,
+        context: dict,
+        registry: dict,
+        llm: LLM,
+        tiers: dict[str, str],
+        judge: str | None = None,
+        depth: int = 0,
+        max_workers: int = 5,
+        tier_params: dict | None = None,
+        cost_budget: int | None = None,
+        tools: dict | None = None,
+        hooks: dict | None = None,
+        suspendable: bool = False,
+        escalate_suspend: bool = False,
+        resume: list[dict] | None = None,
+        on_event: Callable[[dict], None] | None = None,
+        on_truncate: str = "report",
+        prompt_value_chars: int | None = None,
+        cancel_requested: Callable[[], object] | None = None,
+        delimit: bool = True,
+        trusted_keys: set[str] | None = None,
+    ) -> None:
+        self.machine = machine
+        self.depth = depth
+        self.cost_budget = cost_budget
+        self.cancel_requested = cancel_requested
+        self._resume_arg = resume
+        # Annotated once so both the depth-exceeded early path and the normal path
+        # share the same attribute types (mypy no-redef / var-annotated).
+        self.ctx: dict = dict(context)
+        self.tainted: set[str] = set()
+        self.state_id: str = machine.entry
+        self.trace: list[dict] = []
+        self.steps: int = 0
+        self.total_in: int = 0
+        self.total_out: int = 0
+        self.feedback: str = ""
+        self.repair_left: dict[tuple[str, int], int] = {}
+        self.deeper: list[dict] | None = None
+        self._init_error: RunResult | None = None
+        # Preflight matches the historical _run_impl order: depth / on_truncate
+        # before building deps or applying a resume frame.
+        if depth > MAX_CALL_DEPTH:
+            self._init_error = RunResult("halt", [], dict(context), error="call-depth-exceeded")
+            self.deps = _Ctx(llm, tiers, judge, registry, {}, {}, {})
+            return
+        if on_truncate not in ("report", "halt"):
+            raise ValueError(f"on_truncate must be 'report' or 'halt', got {on_truncate!r}")
+        self.deps = _Ctx(
+            llm,
+            tiers,
+            judge,
+            registry,
+            tier_params or {},
+            tools or {},
+            hooks or {},
+            max_workers,
+            cost_budget,
+            suspendable,
+            escalate_suspend,
+            on_event,
+            on_truncate,
+            prompt_value_chars,
+            cancel_requested,
+            delimit,
+        )
+        # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
+        # value is still the author's `.mkl` literal; host-supplied or host-overridden
+        # values are untrusted unless the embedder vouches via `trusted_keys`.
+        self.tainted = _initial_taint(machine, self.ctx, trusted_keys)
+        if resume:
+            self._from_resume(resume, context)
+
+    def _from_resume(self, resume: list[dict], context: dict) -> None:
         frame = resume[0]
-        if frame.get("machine") != machine.name or frame.get("state") not in machine.states:
-            return RunResult(
+        if (
+            frame.get("machine") != self.machine.name
+            or frame.get("state") not in self.machine.states
+        ):
+            self._init_error = RunResult(
                 "halt",
                 [],
                 dict(context),
                 error=f"resume-mismatch: frame for {frame.get('machine')!r}"
-                f"/{frame.get('state')!r} does not fit machine {machine.name!r}",
+                f"/{frame.get('state')!r} does not fit machine {self.machine.name!r}",
             )
-        ctx = dict(frame["ctx"])
-        state_id = frame["state"]
-        trace = list(frame["trace"])
-        steps = frame["steps"]
-        total_in = frame["total_in"]
-        total_out = frame["total_out"]
-        feedback = frame["feedback"]
-        repair_left = decode_repair(frame["repair_left"])
+            return
+        self.ctx = dict(frame["ctx"])
+        self.state_id = frame["state"]
+        self.trace = list(frame["trace"])
+        self.steps = frame["steps"]
+        self.total_in = frame["total_in"]
+        self.total_out = frame["total_out"]
+        self.feedback = frame["feedback"]
+        self.repair_left = decode_repair(frame["repair_left"])
         # Frames without a taint record (pre-ADR 0025 checkpoints, or values
         # injected by `resume --set`) default to all-tainted — fail-safe.
-        tainted = set(frame.get("tainted", frame["ctx"].keys()))
-        deeper = list(resume[1:]) or None
+        self.tainted = set(frame.get("tainted", frame["ctx"].keys()))
+        self.deeper = list(resume[1:]) or None
 
-    def usage() -> dict:
-        return {"input_tokens": total_in, "output_tokens": total_out}
+    def _usage(self) -> dict:
+        return {"input_tokens": self.total_in, "output_tokens": self.total_out}
 
-    def spent() -> int:
-        return total_in + total_out
+    def _spent(self) -> int:
+        return self.total_in + self.total_out
 
-    def remaining_budget() -> int | None:
-        if cost_budget is None:
+    def _remaining_budget(self) -> int | None:
+        if self.cost_budget is None:
             return None
-        return max(0, cost_budget - spent())
+        return max(0, self.cost_budget - self._spent())
 
-    def snapshot(at_steps: int | None = None) -> dict:
+    def _snapshot(self, at_steps: int | None = None) -> dict:
         return make_frame(
-            machine.name,
-            state_id,
-            ctx,
-            steps if at_steps is None else at_steps,
-            total_in,
-            total_out,
-            feedback,
-            repair_left,
-            trace,
-            tainted,
+            self.machine.name,
+            self.state_id,
+            self.ctx,
+            self.steps if at_steps is None else at_steps,
+            self.total_in,
+            self.total_out,
+            self.feedback,
+            self.repair_left,
+            self.trace,
+            self.tainted,
         )
 
-    def suspended(reason: str) -> RunResult:
+    def _suspended(self, reason: str) -> RunResult:
         """Checkpoint this level; nested levels unwind via _Suspend, depth 0 returns."""
-        if depth:
-            raise _Suspend(reason, [snapshot()])
+        if self.depth:
+            raise _Suspend(reason, [self._snapshot()])
         return RunResult(
             "suspended",
-            trace,
-            ctx,
+            self.trace,
+            self.ctx,
             error=reason,
-            at=state_id,
-            usage=usage(),
-            frames=[snapshot()],
+            at=self.state_id,
+            usage=self._usage(),
+            frames=[self._snapshot()],
         )
 
-    def suspend_or_halt(reason: str) -> RunResult:
+    def _suspend_or_halt(self, reason: str) -> RunResult:
         """Loop-top budget exhaustion: checkpoint frames when suspendable, else halt."""
-        if deps.suspendable:
-            return suspended(reason)
-        return RunResult("halt", trace, ctx, error=reason, usage=usage())
+        if self.deps.suspendable:
+            return self._suspended(reason)
+        return RunResult("halt", self.trace, self.ctx, error=reason, usage=self._usage())
 
-    def record(step: dict) -> None:
+    def _record(self, step: dict) -> None:
         """Append to the trace and mirror it as a live event (ADR 0015)."""
-        trace.append(step)
-        fields = {
+        self.trace.append(step)
+        fields: dict = {
             "state": step["state"],
             "step": step.get("step"),
             "gate": step.get("gate"),
@@ -663,192 +767,265 @@ def _run_impl(
             fields["truncated"] = True
             if step.get("finish_reason"):
                 fields["finish_reason"] = step["finish_reason"]
-        _emit(deps, "state-done", machine.name, depth, **fields)
+        _emit(self.deps, "state-done", self.machine.name, self.depth, **fields)
 
-    _emit(deps, "run-start", machine.name, depth, entry=state_id, resumed=bool(resume))
-    while True:
-        if cancel_requested is not None:
+    def _halt(self, error: str, *, at: str | None = None) -> RunResult:
+        return RunResult(
+            "halt",
+            self.trace,
+            self.ctx,
+            error=error,
+            at=at if at is not None else self.state_id,
+            usage=self._usage(),
+        )
+
+    def go(self) -> RunResult:
+        if self._init_error is not None:
+            return self._init_error
+        _emit(
+            self.deps,
+            "run-start",
+            self.machine.name,
+            self.depth,
+            entry=self.state_id,
+            resumed=bool(self._resume_arg),
+        )
+        while True:
+            early = self._loop_guards()
+            if early is not None:
+                return early
+            # Sub-runs inherit the *remaining* budget so parent+children share one pool.
+            self.deps.cost_budget = self._remaining_budget()
+            outcome = self._step_once()
+            if outcome is not None:
+                return outcome
+
+    def _loop_guards(self) -> RunResult | None:
+        if self.cancel_requested is not None:
             try:
-                cancelled = bool(cancel_requested())
+                cancelled = bool(self.cancel_requested())
             except Exception:
                 cancelled = False
             if cancelled:
-                return RunResult("halt", trace, ctx, error="cancelled", at=state_id, usage=usage())
-        if steps >= machine.budget:
-            return suspend_or_halt("budget-exhausted")
-        if cost_budget is not None and spent() >= cost_budget:
-            return suspend_or_halt("cost-exhausted")
-        # Sub-runs inherit the *remaining* budget so parent+children share one pool.
-        deps.cost_budget = remaining_budget()
-        S = machine.states[state_id]
-        sub_resume, deeper = deeper, None  # descend into the suspended call once, then clear
+                return self._halt("cancelled")
+        if self.steps >= self.machine.budget:
+            return self._suspend_or_halt("budget-exhausted")
+        if self.cost_budget is not None and self._spent() >= self.cost_budget:
+            return self._suspend_or_halt("cost-exhausted")
+        return None
+
+    def _step_once(self) -> RunResult | None:
+        """Execute → deposit → judge → transition. None means continue the loop."""
+        S = self.machine.states[self.state_id]
+        sub_resume, self.deeper = self.deeper, None  # descend into suspended call once
         if sub_resume is not None and S.kind != "call":
-            return RunResult(
-                "halt",
-                trace,
-                ctx,
-                error=f"resume-mismatch: state {state_id!r} is not a call",
-                at=state_id,
-                usage=usage(),
-            )
-        step: dict = {"state": state_id, "tier": S.tier or machine.default_tier}
+            return self._halt(f"resume-mismatch: state {self.state_id!r} is not a call")
+        step: dict = {"state": self.state_id, "tier": S.tier or self.machine.default_tier}
         _emit(
-            deps,
+            self.deps,
             "state-start",
-            machine.name,
-            depth,
-            state=state_id,
-            step=steps + 1,
+            self.machine.name,
+            self.depth,
+            state=self.state_id,
+            step=self.steps + 1,
             kind=S.kind,
             tier=step["tier"],
         )
 
-        # 1) EXECUTE (isolate failures: single → halt cleanly, branch → marker)
-        judge_reasoning: str | None = None
+        exec_out = self._execute_state(S, step, sub_resume)
+        if isinstance(exec_out, RunResult):
+            return exec_out
+        result, judge_reasoning = exec_out
+
+        # DEPOSIT — every deposit is tainted: tool observations and call
+        # results are external data, and produce output is derived from
+        # untrusted input by an untrusted oracle (SPEC §11).
+        _deposit(self.ctx, self.tainted, S, result)
+
+        judged = self._judge(S, result, judge_reasoning, step)
+        if isinstance(judged, RunResult):
+            return judged
+        gate, gate_index = judged
+        return self._transition(gate, gate_index, result)
+
+    def _execute_state(
+        self,
+        S: State,
+        step: dict,
+        sub_resume: list[dict] | None,
+    ) -> tuple[object, str | None] | RunResult:
+        """Run fan-out or single state; update step/tokens/steps. Returns result+reasoning."""
         if S.is_fanout:
-            fan = _execute_fanout(
-                S, state_id, ctx, deps, machine, depth, tainted, steps, trace, (total_in, total_out)
+            return self._execute_fanout_state(S, step)
+        return self._execute_single(S, step, sub_resume)
+
+    def _execute_fanout_state(self, S: State, step: dict) -> tuple[object, str | None] | RunResult:
+        fan = _execute_fanout(
+            S,
+            self.state_id,
+            self.ctx,
+            self.deps,
+            self.machine,
+            self.depth,
+            self.tainted,
+            self.steps,
+            self.trace,
+            (self.total_in, self.total_out),
+        )
+        if isinstance(fan, RunResult):
+            return fan
+        result, judge_reasoning, step_in, step_out, self.steps, fan_fields = fan
+        step.update(fan_fields)
+        self._charge_step(step, step_in, step_out)
+        return result, judge_reasoning
+
+    def _handle_suspend(self, s: _Suspend) -> RunResult:
+        # A sub-call suspended: prepend this level's loop-top frame and keep unwinding.
+        s.frames.insert(0, self._snapshot(at_steps=self.steps - 1))
+        if self.depth:
+            raise s
+        return RunResult(
+            "suspended",
+            self.trace,
+            self.ctx,
+            error=s.reason,
+            at=s.frames[-1]["state"],
+            usage=self._usage(),
+            frames=s.frames,
+        )
+
+    def _annotate_single_step(
+        self,
+        step: dict,
+        out: object,
+        sub: list[dict] | None,
+        reasoning: str | None,
+        meta: dict,
+    ) -> None:
+        step["output"] = out if isinstance(out, str) else fmt(out)
+        if reasoning:
+            step["reasoning"] = reasoning
+        if sub is not None:
+            step["sub_trace"] = sub
+        if meta.get("truncated"):
+            step["truncated"] = True
+            if meta.get("finish_reason"):
+                step["finish_reason"] = meta["finish_reason"]
+
+    def _execute_single(
+        self,
+        S: State,
+        step: dict,
+        sub_resume: list[dict] | None,
+    ) -> tuple[object, str | None] | RunResult:
+        self.steps += 1
+        try:
+            out, sub, reasoning, (step_in, step_out), meta = _exec_one(
+                S,
+                self.ctx,
+                self.feedback,
+                self.deps,
+                self.machine,
+                self.depth,
+                resume=sub_resume,
+                tainted=self.tainted,
             )
-            if isinstance(fan, RunResult):
-                return fan
-            result, judge_reasoning, step_in, step_out, steps, fan_fields = fan
-            step.update(fan_fields)
-        else:
-            steps += 1
-            try:
-                out, sub, reasoning, (step_in, step_out), meta = _exec_one(
-                    S, ctx, feedback, deps, machine, depth, resume=sub_resume, tainted=tainted
-                )
-            except _Suspend as s:
-                # A sub-call suspended: prepend this level's loop-top frame and keep unwinding.
-                s.frames.insert(0, snapshot(at_steps=steps - 1))
-                if depth:
-                    raise
-                return RunResult(
-                    "suspended",
-                    trace,
-                    ctx,
-                    error=s.reason,
-                    at=s.frames[-1]["state"],
-                    usage=usage(),
-                    frames=s.frames,
-                )
-            except CallFailed as e:
-                total_in += e.input_tokens
-                total_out += e.output_tokens
-                step["sub_trace"] = e.sub_trace
-                if e.input_tokens or e.output_tokens:
-                    step["cost"] = {
-                        "input_tokens": e.input_tokens,
-                        "output_tokens": e.output_tokens,
-                    }
-                step.update(step=steps, gate=None, policy="call-failed", to=None)
-                record(step)
-                return RunResult(
-                    "halt",
-                    trace,
-                    ctx,
-                    error=f"call-failed: {e.error}",
-                    at=state_id,
-                    usage=usage(),
-                )
-            except RefusalError:
-                return RunResult("halt", trace, ctx, error="refusal", at=state_id, usage=usage())
-            except ProviderError as e:
-                return RunResult(
-                    "halt", trace, ctx, error=f"provider-error: {e}", at=state_id, usage=usage()
-                )
-            except Exception as e:  # surface as a clean halt, not a traceback
-                return RunResult(
-                    "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
-                )
-            result = out
-            judge_reasoning = reasoning
-            step["output"] = out if isinstance(out, str) else fmt(out)
-            if reasoning:
-                step["reasoning"] = reasoning
-            if sub is not None:
-                step["sub_trace"] = sub
-            if meta.get("truncated"):
-                step["truncated"] = True
-                if meta.get("finish_reason"):
-                    step["finish_reason"] = meta["finish_reason"]
-        feedback = ""
-        total_in += step_in
-        total_out += step_out
+        except _Suspend as s:
+            return self._handle_suspend(s)
+        except CallFailed as e:
+            return self._halt_call_failed(step, e)
+        except RefusalError:
+            return self._halt("refusal")
+        except ProviderError as e:
+            return self._halt(f"provider-error: {e}")
+        except Exception as e:  # surface as a clean halt, not a traceback
+            return self._halt(f"state-error: {e}")
+        self._annotate_single_step(step, out, sub, reasoning, meta)
+        self._charge_step(step, step_in, step_out)
+        return out, reasoning
+
+    def _halt_call_failed(self, step: dict, e: CallFailed) -> RunResult:
+        self.total_in += e.input_tokens
+        self.total_out += e.output_tokens
+        step["sub_trace"] = e.sub_trace
+        if e.input_tokens or e.output_tokens:
+            step["cost"] = {
+                "input_tokens": e.input_tokens,
+                "output_tokens": e.output_tokens,
+            }
+        step.update(step=self.steps, gate=None, policy="call-failed", to=None)
+        self._record(step)
+        return self._halt(f"call-failed: {e.error}")
+
+    def _charge_step(self, step: dict, step_in: int, step_out: int) -> None:
+        self.feedback = ""
+        self.total_in += step_in
+        self.total_out += step_out
         if step_in or step_out:
             step["cost"] = {"input_tokens": step_in, "output_tokens": step_out}
 
-        # 2) DEPOSIT — every deposit is tainted: tool observations and call
-        # results are external data, and produce output is derived from
-        # untrusted input by an untrusted oracle (SPEC §11).
-        _deposit(ctx, tainted, S, result)
-
-        # 3) JUDGE — hooks (host bool) then otherwise then fused LLM prose (SPEC §5)
+    def _judge(
+        self,
+        S: State,
+        result: object,
+        judge_reasoning: str | None,
+        step: dict,
+    ) -> tuple[Gate, int] | RunResult:
+        """Hooks then otherwise then fused LLM prose (SPEC §5). Records the step."""
         eligible = [
             (i, g)
             for i, g in enumerate(S.gates)
-            if not (g.kind == "repair" and repair_left.get((state_id, i), g.repair) == 0)
+            if not (g.kind == "repair" and self.repair_left.get((self.state_id, i), g.repair) == 0)
         ]
         if not eligible:  # every gate was a repair with an exhausted budget
-            step.update(step=steps, gate=None, policy="no-gate-matched", to=None)
-            record(step)
-            return RunResult(
-                "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
-            )
+            step.update(step=self.steps, gate=None, policy="no-gate-matched", to=None)
+            self._record(step)
+            return self._halt("no-gate-matched")
         try:
-            judge_model = _judge_model_for(S, machine, deps)
-            i, gate, gann = _select_gate(eligible, result, ctx, deps, judge_reasoning, judge_model)
+            judge_model = _judge_model_for(S, self.machine, self.deps)
+            i, gate, gann = _select_gate(
+                eligible, result, self.ctx, self.deps, judge_reasoning, judge_model
+            )
             step.update(gann)
         except JudgeUnparseable:
-            step.update(step=steps, gate=None, policy="judge-unparseable", to=None)
+            step.update(step=self.steps, gate=None, policy="judge-unparseable", to=None)
             if "judge_fallback" not in step:
                 step["judge_fallback"] = True
-            record(step)
-            return RunResult(
-                "halt",
-                trace,
-                ctx,
-                error="judge-unparseable",
-                at=state_id,
-                usage=usage(),
-            )
+            self._record(step)
+            return self._halt("judge-unparseable")
         except RuntimeError as e:
             if str(e) == "no-gate-matched":
-                step.update(step=steps, gate=None, policy="no-gate-matched", to=None)
-                record(step)
-                return RunResult(
-                    "halt", trace, ctx, error="no-gate-matched", at=state_id, usage=usage()
-                )
-            return RunResult(
-                "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
-            )
+                step.update(step=self.steps, gate=None, policy="no-gate-matched", to=None)
+                self._record(step)
+                return self._halt("no-gate-matched")
+            return self._halt(f"state-error: {e}")
         except Exception as e:  # missing hook / host error
-            return RunResult(
-                "halt", trace, ctx, error=f"state-error: {e}", at=state_id, usage=usage()
-            )
-        step.update(step=steps, gate=gate.when, policy=gate.kind, to=gate.to)
-        record(step)
+            return self._halt(f"state-error: {e}")
+        step.update(step=self.steps, gate=gate.when, policy=gate.kind, to=gate.to)
+        self._record(step)
+        return gate, i
 
-        # 4) TRANSITION
+    def _transition(self, gate: Gate, gate_index: int, result: object) -> RunResult | None:
         to, feedback, halt_err = _apply_gate_transition(
             gate,
-            i,
-            state_id,
-            repair_left=repair_left,
+            gate_index,
+            self.state_id,
+            repair_left=self.repair_left,
         )
         if halt_err is not None:
-            return RunResult("halt", trace, ctx, error=halt_err, at=state_id, usage=usage())
+            return self._halt(halt_err)
         assert to is not None
-        if gate.kind == "escalate" and deps.escalate_suspend and to != "END":
+        self.feedback = feedback
+        if gate.kind == "escalate" and self.deps.escalate_suspend and to != "END":
             # HITL: pause before the handler runs; a resume can drop the human
             # reply into ctx so the handler state sees it (ADR 0008).
-            state_id = to
-            return suspended("escalated")
+            self.state_id = to
+            return self._suspended("escalated")
         if to == "END":
-            rv = ctx.get(machine.result) if machine.result else result
-            return RunResult("done", trace, ctx, result=rv, usage=usage())
-        state_id = to
+            rv = self.ctx.get(self.machine.result) if self.machine.result else result
+            return RunResult("done", self.trace, self.ctx, result=rv, usage=self._usage())
+        self.state_id = to
+        return None
 
 
 def run(
@@ -856,7 +1033,7 @@ def run(
     context: dict,
     registry: dict,
     llm: LLM,
-    tiers: dict,
+    tiers: dict[str, str],
     judge: str | None = None,
     depth: int = 0,
     max_workers: int = 5,
@@ -879,7 +1056,7 @@ def run(
     ``cancel_requested`` is cooperative and observed between states. Existing
     callers that omit it retain identical semantics.
     """
-    result = _run_impl(
+    result = _Runner(
         machine,
         context,
         registry,
@@ -901,7 +1078,7 @@ def run(
         cancel_requested,
         delimit,
         trusted_keys,
-    )
+    ).go()
     if on_event is not None:
         try:
             on_event(

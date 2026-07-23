@@ -8,13 +8,27 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.3`).
+  `pyproject.toml` (currently `1.0.4`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.4] — 2026-07-24
+
+Engine core structure: `_Runner` class replaces the monolithic `_run_impl`,
+and `mklang.engine` joins the mypy strict tier. No language or behaviour change.
+
+### Changed
+
+- **`_Runner` refactor:** main loop, execute, judge, and transition are class
+  methods; `_exec_one` splits into call/tool/produce; `_select_gate` uses prose
+  batch helpers. Cyclomatic complexity: `_run_impl` 53 (F) → gone; highest
+  remaining engine symbols are B (≤10). Public API remains `run` / `RunResult`.
+- **mypy strict ratchet:** `mklang.engine` added (`tiers: dict[str, str]`,
+  typed `_safe_exec` / `ExecOut`).
 
 ## [1.0.3] — 2026-07-24
 
