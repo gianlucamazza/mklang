@@ -352,9 +352,11 @@ produce and judge prompts (SPEC §6, ADR 0025);
 by default.
 
 - **Live:** DeepSeek (default) and **OpenAI** green through the 0.14.0 and 0.15.0
-  release matrices, including cross-provider gate-divergence agreement **1.0** on
-  the [gate-divergence suite](./docs/experiments/gate-divergence.md). Anthropic
-  unit-tested; live e2e still billing-blocked (credits, not a missing key).
+  release matrices, including the blocking cross-provider gate-agreement check at
+  **1.0** — the release gate runs the single `gate_divergence` machine; the
+  [four-machine suite](./docs/experiments/gate-divergence.md) is ready to measure
+  live at scale. Anthropic unit-tested; live e2e still billing-blocked (credits,
+  not a missing key).
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
