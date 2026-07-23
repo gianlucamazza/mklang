@@ -202,40 +202,25 @@ Items marked **DONE** were fixed on this branch alongside the report.
 
 | From | Action | Size | Status |
 |---|---|---|---|
-| A1 | Reformat `tests/test_truncation.py` (**DONE**); add `ruff format --check` to `quality.yml` lint step (**CI edit pending** — see below). | XS | **DONE (file) / CI pending** |
+| A1 | Reformat `tests/test_truncation.py` (**DONE**); add `ruff format --check` to `quality.yml` lint step (**DONE** — #58). | XS | **DONE** |
 | A2 | Fix stale `fail_under = 88` → `90` in CONTRIBUTING (2×); note the `--extra mcp` requirement. (Canonical command already documented; that was the real residual.) | S | **DONE** |
-| A3 | Enforce the tag↔CHANGELOG invariant (cut at 0.5.3) in `tests/test_release.py` (**DONE**); `fetch-depth: 0` on the test-job checkout so CI sees tags (**CI edit pending**). The test skips (not fails) without tags, so it is safe already. | S | **DONE (test) / CI pending** |
+| A3 | Enforce the tag↔CHANGELOG invariant (cut at 0.5.3) in `tests/test_release.py` (**DONE**); `fetch-depth: 0` on the test-job checkout so CI sees tags (**DONE** — #58). The test skips (not fails) without tags, so it is safe for sdist installs. | S | **DONE** |
 | B3 | One-line MCP no-persist note in SECURITY.md (ADR-decided). | XS | **DONE** |
 | A4 | (Optional) refactor only `cmd_doctor` (CC 41). Do **not** split `cli.py` wholesale. | S | Open (optional) |
 | B1 | Freeze the authoring corpus + hand-written acceptance scenarios; run the blind_spot experiment. | L | Blocked (provider key) |
 | C3 | (When credited) run one Anthropic four-machine pass (~30k tok) to close the three-provider gap. | XS | Blocked (credit) |
 | D1 | Run the five-reader comprehension test; record verbatim first questions. | M | Blocked (external) |
 
-### CI edits pending (need `workflows` permission)
+### CI enforcements (applied — closes #58)
 
-The automation account that produced this branch cannot modify
-`.github/workflows/`, so two one-line CI enforcements are prepared here for a
-maintainer to apply. Both are additive; the underlying defects (drifted file,
-missing test) are already fixed on this branch.
+Both workflow edits land with this branch (maintainer push; the automation
+account that wrote the report lacked `workflows` permission):
 
-**A1 — gate the format check** (`.github/workflows/quality.yml`, `checks` job,
-right after the `Lint` step):
-
-```yaml
-      - name: Format check
-        run: uv run --extra dev ruff format --check src tests scripts
-```
-
-**A3 — let CI see tags** (`.github/workflows/quality.yml`, `test` job checkout
-— without it, `test_changelog_entries_from_distribution_cutoff_are_tagged`
-skips in CI instead of enforcing):
-
-```yaml
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref }}
-          fetch-depth: 0   # pull tags so the tag/CHANGELOG invariant is enforced
-```
+- **A1** — `Format check` step after `Lint` in the `checks` job
+  (`ruff format --check src tests scripts`).
+- **A3** — `fetch-depth: 0` on the `test` job checkout so
+  `test_changelog_entries_from_distribution_cutoff_are_tagged` runs (does not
+  skip) in CI.
 
 ---
 
