@@ -121,14 +121,14 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-22T23:12:24.386145+00:00",
-  "generated_from": "13e0c69ce50e2f0713008ea9e43cceea247c82e6",
+  "generated_at": "2026-07-23T07:29:53.978233+00:00",
+  "generated_from": "fed08eefb529165d9615521c6c15255607a8ce39",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
     "reasoning": "deepseek-reasoner"
   },
-  "package_version": "0.12.0",
+  "package_version": "0.13.0",
   "provider": "deepseek",
   "schema": 2,
   "source": {
@@ -148,32 +148,32 @@
       "examples/triage.test.yaml": "9e7a316ec06c0d7583d1cc684a493cc6b62f2809ff0ea034eb36e7c37c7e03b3",
       "scripts/demo_assets.py": "820617f4e60e5bc3ba601fd189a562c07fa5b17629fb68fb44e76fcc39227854",
       "src/mklang/checkpoint.py": "0d8ce83556916ea966eeb6244301ab68c970267cc9646714e32f74d54d9a3e4e",
-      "src/mklang/cli.py": "fb5faf80e7482a7a8e702336311e9c682df80a8dea6d540503cc0603c091cbf3",
+      "src/mklang/cli.py": "5e6466735a3660a254eaa15f4fc386b35a8d34602879b8299f2d438ff288ed6d",
       "src/mklang/config.py": "7517bccf43fecf9af064b035d8f09d97bcc7d603bc344726021666bbeca85aa9",
       "src/mklang/console/__init__.py": "dad58b3e68833660f6565d992d9eed87320b1216c137f657d122624e8af5d63a",
-      "src/mklang/console/app.py": "dc9efdff36c541824371ded62d0ae0aa5a3c538315b7b9102dbccfabcf48fb26",
+      "src/mklang/console/app.py": "d0c4537815749604338aaab74bae8479c060f6cbc66baa95521725c2a98b938f",
       "src/mklang/console/commands.py": "3e556499af51c12c372f6795d2b4a1e03129ffdedb52848fe97e44530d25b697",
-      "src/mklang/console/render.py": "844dd8941cf6b53a407bfbe8c0e8efa67e09830bec8162c139c0dbb61eb6873f",
+      "src/mklang/console/render.py": "f473c1fe04a83e6f31d0bc686773c8ff03b3561a082ece600a61484ee9bab30c",
       "src/mklang/console/session.py": "0fd690e457f8fb69a0dd92a5954d65352cdd1c0506ced3f1aae3991f680c7a7a",
-      "src/mklang/console/tools.py": "b66c3e909128ce039fafc701ecadbc4a5bf5e0ce4cdf9223f790565bae038a1e",
-      "src/mklang/console/widgets.py": "891973a37e88f3f1d4d0c28e4ce1631c10538712a2c28103bbe923f3fe33f06b",
+      "src/mklang/console/tools.py": "5c47029924a34ce856421fbdb720cd4cb0d7fcb61705b9940bb20b7e89f7b7b8",
+      "src/mklang/console/widgets.py": "c3702b34eab2d342e1e1d8c8cfa7bf4b74441d9ce2d21aa00e4b8829e2714a82",
       "src/mklang/data/console/agent.mk": "f24814bc5e16056377bfaad6e02e58eb85cbf5cda80450e6183b6ece49d8411e",
       "src/mklang/data/stdlib/std_self_consistency.mk": "6021f47a1ab23a94c41c8ef962fa83525c6592e907aa7c2d1cbee36a93ce82b3",
-      "src/mklang/engine.py": "b2001ba4c8ef02fa8017008ece6f46dd80418b533c55f6f7f5de447368a52abd",
+      "src/mklang/engine.py": "ca3662d0d4aff269463ee931dc406af847a130a9a50b46a3a2d86199ab49e048",
       "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
       "src/mklang/llm/anthropic.py": "b542fe1a6716e3c2fbbb9ea343104677dce62ab40da2d13f8f26ea687ff5f617",
       "src/mklang/llm/base.py": "939b9e061b476463de93715fd10eab80b014d891009f414aa4d5318d4d9d1483",
       "src/mklang/llm/context_view.py": "ff6d745ef7e78c544a57bc5a92cd1ebd48e413c84b47aa525af2eef0dae237eb",
-      "src/mklang/llm/mock.py": "b83b5c22b4b322fe2163c4e2e933ec06b0bd19bc951fd4cc23b0bec58be1a9ef",
-      "src/mklang/llm/openai_compat.py": "31a8636b61c7199c69a97fb3f268b6f5bad68b3e4ad6031f6bd4ef8c3e6a6257",
+      "src/mklang/llm/mock.py": "a631787aaab1cd4660e8807efa7b2afbfdf687795fc9dce2662fbe42cae9ef7f",
+      "src/mklang/llm/openai_compat.py": "37068fae047d1acb882462e8a5716972bf2643b7ce3f01671b21a4fe5059f697",
       "src/mklang/llm/prompts.py": "bc02ffc60021d3d89ae1bc3e8d1083330b849151450faa3d0ac2ef9f90377a11",
-      "src/mklang/presentation.py": "812a1c363ace95f5bc5778615ffd36ecf681ce33adf78c41857ee984c6e9b012",
-      "src/mklang/providers.py": "79b2f4041429e9c5d5beda81063e3c88d0033fa68dc6eb2cab892ffc8300f0c4",
-      "src/mklang/scripttest.py": "da5e5d96da90eee313a3003b16cb50c15420910bf7c6b93342f311efafad4053",
-      "src/mklang/search.py": "77ba703a7042ecd058ffce8154e1f2573972d51eb70c5a2c9f44816cc584de22",
-      "src/mklang/tools.py": "265e1210645ce9e0ba544a12010a4a084d3428407bfb641d82fbfaf28025473a"
+      "src/mklang/presentation.py": "ef64505e39d42cd7cb3d5dfb3a53ae71cdfa9c9de59c4c121095a8cc073e3320",
+      "src/mklang/providers.py": "f885d259680d2233cbdc92c8d4551a04bf9f8df6f33a6fbbc1561d9b991c4e18",
+      "src/mklang/scripttest.py": "865db513df132c7d637b6804288821885e1ad09b4e611286c2dda9f0dc1e3a55",
+      "src/mklang/search.py": "c6e110f4e4590e461b45353d72c6db4a612d1f6966cbf593ece7020af775ace4",
+      "src/mklang/tools.py": "83dadd2f68b04a9d821b21b48471cab5f260a0c1ff7e9c26135680855d8a7b03"
     },
-    "sha256": "4b1650d6d3991987ab075d0dacc71d79103895a85ce343c6d45547d707520634"
+    "sha256": "4dc8920ac06f00ff70ea5672e9324b2afc1482adaaf83644ad115f9fd4119302"
   },
   "toolchain": {
     "font": {
