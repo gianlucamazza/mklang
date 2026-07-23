@@ -179,9 +179,22 @@ Per the plan's Method rule, no J-item enters a fix backlog until its decision is
 1. **C1** — provisional-freeze ADR: what 1.0.0 bought at zero users (Q1), the ADR-0026 cost of
    a needed language change (Q2), and whether 0.17.0-then-1.0.0-on-first-external-issue was the
    honest alternative (Q4). Decide *after* B1's magnitude and D1 are in hand — the plan
-   sequences C1 last for this reason.
-2. **C2** — cadence policy in CONTRIBUTING.
-3. **C4** — acknowledge in CONTRIBUTING; no code.
+   sequences C1 last for this reason. **Still owed.**
+2. **C2** — cadence policy in CONTRIBUTING. **Done** — "Publish cadence" added to the Releases
+   section (the plan's candidate wording; maintainer may tune the interval).
+3. **C4** — acknowledge in CONTRIBUTING; no code. The change checklist + ADR trail already
+   answer "how a second person gets productive"; no further action taken.
+
+### Best-practices documentation completed (this branch)
+
+The findings surfaced three gaps in `docs/guides/best-practices.md`, now filled:
+
+- **B1** — §10 gains "Static checks are not behavioural correctness" (and §15 anti-pattern
+  #16): `check`/`lint` prove well-formedness, not behaviour; run a scenario, especially for
+  agent-authored machines.
+- **B3** — §11 + §14 now state the MCP **read-only-to-disk** posture (ADR 0011/0013).
+- **A1** — CONTRIBUTING dev loop + change checklist now include the CI-gated `ruff format`.
+- **A3** — CONTRIBUTING Releases now documents the tag↔CHANGELOG invariant enforced by the test.
 
 ## Derived fix backlog (T/M-class — verdict-driven)
 
