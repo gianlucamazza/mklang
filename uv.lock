@@ -738,6 +738,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "textual" },
 ]
 
 [package.optional-dependencies]
@@ -746,9 +747,6 @@ anthropic = [
 ]
 completions = [
     { name = "argcomplete" },
-]
-console = [
-    { name = "textual" },
 ]
 dev = [
     { name = "mypy" },
@@ -776,11 +774,11 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6" },
     { name = "rich", specifier = ">=13.7" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
-    { name = "textual", marker = "extra == 'console'", specifier = ">=0.80" },
+    { name = "textual", specifier = ">=0.80" },
     { name = "types-jsonschema", marker = "extra == 'dev'", specifier = ">=4" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6" },
 ]
-provides-extras = ["anthropic", "dev", "mcp", "console", "completions"]
+provides-extras = ["anthropic", "console", "dev", "mcp", "completions"]
 
 [[package]]
 name = "mypy"

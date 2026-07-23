@@ -26,6 +26,10 @@ states:
 
 
 def test_xdg_roots_and_config_precedence(tmp_path, monkeypatch):
+    # This test pins XDG resolution itself: drop the suite-wide MKLANG_*_DIR
+    # sandbox (conftest isolated_host_layers), which would take precedence.
+    for var in ("MKLANG_CONFIG_DIR", "MKLANG_DATA_DIR", "MKLANG_STATE_DIR"):
+        monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))

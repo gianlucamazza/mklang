@@ -23,6 +23,7 @@ dependencies = [
   "python-dotenv>=1",
   "openai>=1.40",
   "rich>=13.7",
+  "textual>=0.80",
 ]
 
 [project.urls]
@@ -33,6 +34,9 @@ Changelog = "https://github.com/gianlucamazza/mklang/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.40"]
+# The console ships by default since 0.15.0; the extra stays as a no-op so
+# `pip install "mklang[console]"` from older docs keeps working.
+console = []
 dev = [
   "pytest>=8",
   "pytest-cov>=6",
@@ -42,7 +46,6 @@ dev = [
   "types-jsonschema>=4",
 ]
 mcp = ["mcp>=1.10"]
-console = ["textual>=0.80"]
 completions = ["argcomplete>=3"]
 
 [project.scripts]

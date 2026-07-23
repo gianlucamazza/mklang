@@ -10,6 +10,28 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.14.0`).
 
+## [Unreleased]
+
+### Changed
+
+- **The console TUI ships by default**: `textual` moved from the `console`
+  extra into the core dependencies, and the Arch PKGBUILD promotes
+  `python-textual` from optdepends to depends. The `console` extra remains
+  as an empty no-op so `pip install "mklang[console]"` from older docs keeps
+  working; `scripts/install.sh` defaults to the `mcp` extra only.
+
+### Fixed
+
+- `mklang console` without `textual` installed now prints the actionable
+  install hint again: the hint guarded only the `console.app` import, but
+  textual is imported lazily inside `build_app`, so the real failure escaped
+  to the generic `ERROR No module named 'textual'` handler.
+- The test suite is hermetic against a real mklang installation on the host:
+  a pacman/AUR install ships `/etc/mklang` + `/usr/share/mklang` and `mklang
+  init --user` creates `~/.config/mklang`, all of which leaked into config
+  and machine discovery (CI runners are clean, so only dev machines saw it).
+  System paths are module constants now, sandboxed by an autouse fixture.
+
 ## [0.14.0] — 2026-07-23
 
 Untrusted-context delimiting (SPEC §6, ADR 0025) and the CI quality gates

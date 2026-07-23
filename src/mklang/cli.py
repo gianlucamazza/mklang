@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import logging
 import os
@@ -509,15 +510,18 @@ def _resolve_workspace(workspace: str | None) -> str:
 
 
 def cmd_console(args: argparse.Namespace) -> int:
-    """Launch the agent-first console TUI (ADR 0015; needs the [console] extra)."""
-    try:
-        from .console.app import main as console_main
-    except ImportError:
+    """Launch the agent-first console TUI (ADR 0015)."""
+    # Probe textual itself: console.app imports it lazily inside build_app, so
+    # guarding only the module import would let a missing package escape to the
+    # generic ERROR handler with no actionable hint.
+    if importlib.util.find_spec("textual") is None:
         print(
-            "the console needs the `textual` package — install with: pip install 'mklang[console]'",
+            "the console needs the `textual` package (bundled by default since "
+            "0.15.0) — reinstall mklang, or: pip install textual",
             file=sys.stderr,
         )
         return 2
+    from .console.app import main as console_main
     from .config import load_provider
 
     missing = host.missing_key_message(load_provider(args.config, args.provider))
@@ -723,7 +727,7 @@ def _getting_started() -> str:
         "  mklang test machines/hello.mk --script machines/hello.test.yaml\n"
         "                       run the sample's scripted scenarios (no API key)\n"
         '  mklang run machines/hello.mk --set task="say hello"\n'
-        "  mklang console       interactive TUI (pip install 'mklang[console]')\n"
+        "  mklang console       interactive TUI\n"
         "  mklang doctor        check where config, keys, and machines resolve from\n"
         "\n"
         "Run `mklang --help` for all commands."
@@ -865,7 +869,7 @@ def main(argv: list[str] | None = None) -> int:
     logging_args(s)
     s.set_defaults(fn=cmd_resume)
 
-    co = sub.add_parser("console", help="agent-first console TUI (needs the [console] extra)")
+    co = sub.add_parser("console", help="agent-first console TUI")
     co.add_argument("--config", default=None, help="runtime config (auto-discovered when omitted)")
     co.add_argument("--provider", default=None, help="override the config's `active` provider")
     co.add_argument(

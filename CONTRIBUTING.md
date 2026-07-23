@@ -9,7 +9,7 @@ operating rules in [`docs/guides/best-practices.md`](./docs/guides/best-practice
 ## Dev setup
 
 ```bash
-uv run --extra dev --extra mcp --extra console pytest -q --cov=mklang  # unit + conformance (no network — MockLLM); coverage gate ≥88%
+uv run --extra dev --extra mcp pytest -q --cov=mklang  # unit + conformance (no network — MockLLM); coverage gate ≥88%
 MKLANG_LIVE=1 uv run --extra dev pytest -q tests/test_live.py  # opt-in live smoke (active provider; MKLANG_LIVE_PROVIDER=… to override)
 uv run --extra dev ruff check src tests
 uv run --all-extras mypy              # static types (zero suppressions)

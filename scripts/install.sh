@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-EXTRAS="console,mcp"
+EXTRAS="mcp"  # the console ships in the core package since 0.15.0
 FORCE=0
 UNINSTALL=0
 

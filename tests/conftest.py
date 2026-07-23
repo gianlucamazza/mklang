@@ -8,6 +8,26 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def isolated_host_layers(monkeypatch, tmp_path_factory):
+    """Keep the suite hermetic against a real mklang installation on the host.
+
+    A pacman/AUR install ships /etc/mklang + /usr/share/mklang, and `mklang
+    init --user` creates ~/.config/mklang — all of which would leak into
+    config/machine discovery. CI runners are clean, so only dev machines see
+    the difference. Tests that need a specific layer re-point these env vars
+    or constants themselves.
+    """
+    from mklang import paths
+
+    sandbox = tmp_path_factory.mktemp("host-layers")
+    monkeypatch.setattr(paths, "SYSTEM_CONFIG", sandbox / "etc" / "runtime.yaml")
+    monkeypatch.setattr(paths, "SYSTEM_MACHINES", sandbox / "share" / "machines")
+    monkeypatch.setenv("MKLANG_CONFIG_DIR", str(sandbox / "user-config"))
+    monkeypatch.setenv("MKLANG_DATA_DIR", str(sandbox / "user-data"))
+    monkeypatch.setenv("MKLANG_STATE_DIR", str(sandbox / "user-state"))
+
+
+@pytest.fixture(autouse=True)
 def offline_fs(monkeypatch):
     """Keep the suite hermetic: fs tools default to stub unless a test opts in.
 

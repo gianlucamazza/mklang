@@ -289,7 +289,7 @@ environment, never over the wire.
 
 ## Console (interactive)
 
-`mklang console` (extra `mklang[console]`) is the agent-first front door: type
+`mklang console` (bundled by default since 0.15.0) is the agent-first front door: type
 what you want, the console's agent authors or picks a machine, commissions it,
 and streams the run state-by-state — escalations and tool consent come back to
 you inline. The agent itself **is** a machine
@@ -299,7 +299,7 @@ brain declares host clocks `today` / `now` for wall-clock questions. Details:
 [`docs/guides/console.md`](./docs/guides/console.md).
 
 ```bash
-pip install 'mklang[console]'
+pip install mklang
 mklang console
 ```
 
