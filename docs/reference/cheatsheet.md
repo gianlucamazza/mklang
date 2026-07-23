@@ -86,9 +86,12 @@ gates:
 
 ## Interpolation
 
-`{{key.path}}` reads the context blackboard (SPEC §3). Machine-declared empty
-`today` / `now` keys MAY be filled by the host with the ISO date / timestamp
-(SPEC §6) — declare them instead of asking the model for the date.
+`{{key.path}}` reads the context blackboard (SPEC §3). Interpolations of
+**tainted** keys (host inputs, tool observations, deposits) render inside a
+`<data-NONCE>…</data-NONCE>` fence; author `context:` literals render bare
+(SPEC §6, ADR 0025). Machine-declared empty `today` / `now` keys MAY be filled
+by the host with the ISO date / timestamp (SPEC §6) — declare them instead of
+asking the model for the date.
 
 ## Tiers (SPEC §2.1)
 

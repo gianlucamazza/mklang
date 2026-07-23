@@ -12,9 +12,17 @@ def M(d):
     return parse_machine(d)
 
 
-def run1(machine, llm, ctx=None, registry=None):
+def run1(machine, llm, ctx=None, registry=None, delimit=True):
     reg = registry or {machine.name: machine}
-    return run(machine, ctx if ctx is not None else dict(machine.context), reg, llm, TIERS, "m")
+    return run(
+        machine,
+        ctx if ctx is not None else dict(machine.context),
+        reg,
+        llm,
+        TIERS,
+        "m",
+        delimit=delimit,
+    )
 
 
 def gate(when, **kw):
@@ -210,7 +218,14 @@ def test_fanout_over_list():
             },
         }
     )
-    r = run1(m, MockLLM(produce_fn=produce, judge_fn=lambda *a: 0), ctx={"items": ["a", "b"]})
+    # delimit off: this test pins fan-out semantics; fencing of tainted items
+    # is covered in test_taint.py.
+    r = run1(
+        m,
+        MockLLM(produce_fn=produce, judge_fn=lambda *a: 0),
+        ctx={"items": ["a", "b"]},
+        delimit=False,
+    )
     assert r.trace[0]["branches"] == ["seen:a", "seen:b"]
 
 
@@ -251,7 +266,9 @@ def test_call_submachine_nests_trace():
         produce_fn=lambda model, system, user, reason: Produced(f"got:{user}"),
         judge_fn=lambda *a: 0,
     )
-    r = run(parent, {"msg": "hi"}, {"sub": sub, "par": parent}, llm, TIERS, "m")
+    # delimit off: this test pins call/trace nesting; input-taint propagation
+    # is covered in test_taint.py.
+    r = run(parent, {"msg": "hi"}, {"sub": sub, "par": parent}, llm, TIERS, "m", delimit=False)
     assert r.status == "done"
     assert r.result == "got:hi"
     assert "sub_trace" in r.trace[0]
@@ -300,7 +317,9 @@ def test_over_plus_call_map_reduce():
     llm = MockLLM(
         produce_fn=lambda model, system, user, reason: Produced(user), judge_fn=lambda *a: 0
     )
-    r = run(parent, {"chunks": ["a", "b"]}, {"w": worker, "mr": parent}, llm, TIERS, "m")
+    r = run(
+        parent, {"chunks": ["a", "b"]}, {"w": worker, "mr": parent}, llm, TIERS, "m", delimit=False
+    )
     assert r.status == "done"
     # each branch ran the worker sub-machine on its item
     assert r.trace[0]["branches"] == ["sum:a", "sum:b"]

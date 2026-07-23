@@ -1,0 +1,48 @@
+case: taint-call-result-delimited
+description: >
+  ADR 0025 / SPEC §6: a sub-machine result is a deposit like any other —
+  tainted — so a downstream prompt interpolating it MUST fence it. Inside the
+  sub-run, the parent's literal `input:` value stays trusted and renders bare.
+machine:
+  machine: taint_call
+  entry: c
+  budget: 6
+  result: out
+  states:
+    c:
+      call: helper
+      input: { text: literal-seed }
+      output: sub_out
+      gates:
+        - { when: otherwise, then: ok, to: reply }
+    reply:
+      structure: x
+      prompt: "use {{sub_out}}"
+      output: out
+      gates:
+        - { when: otherwise, then: ok, to: END }
+registry:
+  helper:
+    machine: helper
+    entry: s
+    budget: 3
+    result: r
+    states:
+      s:
+        structure: x
+        prompt: "seed {{text}}"
+        output: r
+        gates:
+          - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "seed literal-seed": "sub-answer"
+    "<data-": "fenced"
+expect:
+  status: done
+  result: "fenced"
+  context:
+    sub_out: "sub-answer"
+  trace:
+    - { state: c, policy: ok, to: reply }
+    - { state: reply, policy: ok, to: END }

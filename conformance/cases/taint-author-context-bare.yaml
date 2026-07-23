@@ -1,0 +1,29 @@
+case: taint-author-context-bare
+description: >
+  ADR 0025 / SPEC §6: an author `context:` literal is trusted, so its
+  interpolation MUST NOT be fenced. Map keys are matched first-wins, so if a
+  fence appeared the `<data-` key would capture the call and the expectation
+  on `result` would fail.
+machine:
+  machine: taint_author
+  entry: a
+  budget: 4
+  result: out
+  context:
+    task: do-it
+  states:
+    a:
+      structure: x
+      prompt: "task: {{task}}"
+      output: out
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "<data-": "WRAPPED"
+    "task: do-it": "bare"
+expect:
+  status: done
+  result: "bare"
+  trace:
+    - { state: a, policy: ok, to: END }

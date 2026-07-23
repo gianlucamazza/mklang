@@ -14,7 +14,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from . import __version__, host
-from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
+from .checkpoint import load_checkpoint, save_checkpoint, taint_frame, verify_hash
 from .config import ProviderConfig
 from .engine import RunResult, run
 from .llm.base import LLM
@@ -243,11 +243,13 @@ def cmd_resume(args: argparse.Namespace) -> int:
             )
     out_path = args.checkpoint_out or args.checkpoint
     hitl = ck.get("hitl", False) or args.hitl
-    # A human reply lands in the innermost frame's context (the suspended run).
+    # A human reply lands in the innermost frame's context (the suspended run);
+    # host-injected values are untrusted (ADR 0025).
     try:
         _apply_sets(ck["frames"][-1]["ctx"], args.set)
     except ValueError as exc:
         return _input_error(args, str(exc))
+    taint_frame(ck["frames"][-1], [kv.split("=", 1)[0] for kv in args.set or []])
     if output_format(args.format, structured_default=True) != "json":
         print(
             f"# {machine.name} · resume · provider={prov.name} · tiers={prov.tiers}",

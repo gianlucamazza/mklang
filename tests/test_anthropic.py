@@ -1,5 +1,7 @@
 """Anthropic adapter: params, temperature, retry, ProviderError, judge — no network."""
 
+import re
+
 import pytest
 
 from mklang.errors import ProviderError, RefusalError
@@ -148,7 +150,8 @@ def test_judge_includes_reasoning():
     llm = _adapter(text='{"choice": 1}')
     llm.judge("m", ["ok"], "out", {}, reasoning="because X")
     body = llm.client.messages.captured["messages"][0]["content"]
-    assert "REASONING:\nbecause X" in body
+    # Reasoning is presented to the judge as fenced data (ADR 0025).
+    assert re.search(r"REASONING:\n<data-\w+>\nbecause X\n</data-\w+>", body)
 
 
 def test_judge_unparseable_raises():

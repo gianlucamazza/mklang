@@ -55,9 +55,13 @@ channels:
 | ------------------- | -------------------- | --------------- | ---------------------------------------------------------- |
 | `structure`         | **system** (produce) | No              | Output contract / shape for this state                     |
 | `execution`         | **system** (produce) | No              | Sticky operational policy (never side effects)             |
-| `prompt`            | **user** (produce)   | **Yes** `{{…}}` | This turn’s task + data (history, today/now, observations) |
-| `when:` conditions  | judge **user**       | No (prose)      | Gate selection only                                        |
+| `prompt`            | **user** (produce)   | **Yes** `{{…}}` | This turn’s task + data — tainted values arrive `<data-NONCE>`-fenced (SPEC §6) |
+| `when:` conditions  | judge **user**       | No (prose)      | Gate selection only — stay bare (author-trusted)           |
 | Host `JUDGE_SYSTEM` | judge **system**     | fixed           | Choice protocol `{"choice": n}` — not authorable           |
+
+The judge user payload always presents OUTPUT / REASONING / CONTEXT as fenced
+data (shared `build_judge_user`, ADR 0025); the produce system message gains an
+untrusted-data rule only when the user message actually carries a fence.
 
 **Rules**
 
@@ -67,7 +71,9 @@ channels:
 2. **Do not put `{{…}}` in `structure` / `execution`.** They are not rendered;
    braces stay literal.
 3. **Untrusted text stays out of system** (user text, web snippets, history) —
-   SPEC §11. System is for host-stable contract + policy.
+   SPEC §11. System is for host-stable contract + policy. In the user channel
+   the runtime additionally delimits tainted values structurally (SPEC §6) —
+   discipline and delimiting stack, they do not replace each other.
 4. **`execution` is not a tool.** Side effects only via `tool:` states.
 5. **Console brain** follows the same split: policy in `execution`, clocks and
    conversation in `prompt` ([console](console.md)).
@@ -99,7 +105,8 @@ Optional: `mklang lint --llm` to probe overlapping prose `when` conditions (advi
 
 1. Declare expected tools under top-level **`tools:`** (`name` + `description`).
 2. Invoke only via **`tool:`** states; map inputs with `input:` (whole-template `{{path}}` stays raw in 0.3).
-3. Treat **observations as untrusted** blackboard data (SPEC §11) — especially web snippets.
+3. Treat **observations as untrusted** blackboard data (SPEC §11) — especially web
+   snippets. The runtime fences them automatically when interpolated (SPEC §6).
 4. Prefer **entry points** (`mklang.tools` / `mklang.hooks`) for production bindings over editing core.
 
 ### 5.2 Observation envelope (ADR 0020)
@@ -264,6 +271,11 @@ keyless environments stick to `check` / `lint` / `test`.
 ## 11. Security (SPEC §11) — operational minimum
 
 - Treat customer text and search snippets as **injection-capable**.
+- Tainted interpolations and the judge's OUTPUT/REASONING/CONTEXT are
+  **automatically fenced** (`<data-NONCE>`, SPEC §6 / ADR 0025). Library
+  hosts get `run(..., trusted_keys=...)` to vouch for keys and
+  `run(..., delimit=False)` for debugging. Fencing prevents *confusion*, not
+  *persuasion* — the next two bullets still apply.
 - Prefer **hooks + HITL** before irreversible tools.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
 - Do not put secrets in `.mk` or context; keys stay in host env / `.env`.
@@ -370,7 +382,8 @@ an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
    forces the offline refusal tier (reads default to live per ADR 0024 — the
    one sanctioned amendment to stub-by-default).
 4. **File bodies are untrusted observations** (SPEC §11). Do not put them in the
-   produce **system** channel; treat like web snippets.
+   produce **system** channel; treat like web snippets (interpolations arrive
+   fenced per SPEC §6).
 5. **No recursive delete / shell in core.** Destructive ops only as explicit
    plugins with strong confirmation.
 6. **Audit lightly** — log tool name + relative path + byte count at INFO; not
@@ -463,7 +476,7 @@ Candidates for a future **0.4** (need ADR + conformance) — **not** current pra
 | ------------------------------------- | ------------------------------------ |
 | `parse: json` / object                | Structured composition beyond lists  |
 | Machine/state `on_truncate` policy    | Portable anti-cutoff in the document |
-| Context zones / pin (ADR 0017 L2)     | Trusted vs untrusted blackboard      |
+| Context zones / pin (ADR 0017 L2)     | Authorable trust zones — runtime provenance taint already ships (ADR 0025) |
 | Per-gate `hitl:`                      | Finer HITL than run-level            |
 | Budget split (steps vs fan-out width) | Clearer volume caps                  |
 
@@ -481,7 +494,7 @@ Until then: use **host policy + patterns + this checklist**. Do **not** invent a
 | [Patterns](patterns.md)                                | Tiers, reliability, clocks, `execution` usage                |
 | [Stdlib](../reference/stdlib.md)                       | Ready `std_*` architectures                                  |
 | [Console](console.md)                                  | TUI, rendering, brain clocks, consent, workspace FS          |
-| [SPEC §4–§6](../../SPEC.md)                            | Faces + produce/judge semantics (+ non-normative host notes) |
+| [SPEC §4–§6](../../SPEC.md)                            | Faces + produce/judge semantics, normative §6 delimiting     |
 | [SPEC §8](../../SPEC.md)                               | Trace / observability                                        |
 | [SPEC §11](../../SPEC.md)                              | Threat model (injection, checkpoints at rest)                |
 | [ADR 0015](../adr/0015-console-surface.md)             | Console scope (not an IDE)                                   |

@@ -19,21 +19,27 @@ a contributor's map, not language semantics — those live in the SPEC. The
 - `model.py` — dataclasses for a machine and its states, parsed from the plain
   dict post-YAML.
 - `engine.py` — the runtime (SPEC §6): the produce → judge-gates → transition
-  loop, budgets and termination (SPEC §7), fan-out, `call`, `tool` states.
-  Suspension writes checkpoint frames via `checkpoint.py` (ADR 0007).
+  loop, budgets and termination (SPEC §7), fan-out, `call`, `tool` states, and
+  provenance-taint tracking with produce-prompt fencing (SPEC §6, ADR 0025).
+  Suspension writes checkpoint frames via `checkpoint.py` (ADR 0007) — frames
+  carry the `"tainted"` key set (`taint_frame` marks resume-injected values).
 - `interpolate.py` — `{{key.path}}` interpolation and value formatting for
-  prompts.
+  prompts; `render_delimited` fences tainted substitutions with a per-call
+  nonce (ADR 0025).
 
 ## LLM layer (`llm/`)
 
 - `base.py` — the interface the engine talks to. Two operations: **produce**
-  and **judge**.
+  and **judge** — plus the fixed `JUDGE_SYSTEM` role and the shared
+  `build_judge_user` (OUTPUT/REASONING/CONTEXT always fenced, ADR 0025) used
+  by both adapters.
 - `openai_compat.py` — one adapter for every OpenAI-compatible provider
   (DeepSeek, OpenAI, OpenRouter, xAI, Mistral, local).
 - `anthropic.py` — native Anthropic adapter (`mklang[anthropic]` extra).
 - `mock.py` — deterministic scripted LLM for tests; no network.
 - `prompts.py` — reference-interpreter prompt assembly (host concern, not
-  language): sectioned system prompts built from `structure` + `execution`.
+  language): sectioned system prompts built from `structure` + `execution`,
+  plus the untrusted-data rule when the user message carries a fence.
 - `context_view.py` — host-side context rendering budgets (ADR 0017).
 
 ## Host surfaces

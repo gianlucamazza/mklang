@@ -53,7 +53,7 @@ Core (generative states — SPEC §4):
 | ----------- | -------------- | ------------------------------ | -------------------------------------------------------- |
 | `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated                    |
 | `execution` | how to act?    | **system** (produce)           | sticky policy — **never** side effects; not interpolated |
-| `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation             |
+| `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation — tainted values arrive fenced (SPEC §6) |
 | `gates`     | when to exit?  | judge (separate call)          | transition table (below)                                 |
 
 Durable role/constraints → `structure` / `execution`. Turn data (`{{today}}`,
