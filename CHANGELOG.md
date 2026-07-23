@@ -8,9 +8,18 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.0`).
+  `pyproject.toml` (currently `1.0.1`).
 
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+## [1.0.1] — 2026-07-24
+
+Validation follow-ups after 1.0.0: measured the authoring-loop blind_spot, recorded the
+1.0 provisional posture, tightened CI, and reduced doctor complexity. Spec stays **0.3**.
 
 ### Added
 

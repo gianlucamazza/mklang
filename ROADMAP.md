@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **1.0.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **1.0.1**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 1.0.0)
+## Where we are (language 0.3 / package 1.0.1)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -268,7 +268,7 @@ untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
   [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md)), and a stated
   **stability & deprecation policy** pins the package / spec-version contract
   ([guide](./docs/guides/stability.md), ADR 0026). Spec stays **0.3**.
-- **[next] Cut 1.0.0** — drop the `Development Status :: 4 - Beta` classifier,
+- **[shipped] Cut 1.0.0** — drop the `Development Status :: 4 - Beta` classifier,
   bump the package to **1.0.0** (spec stays 0.3), and run the live release gate
   (DeepSeek + OpenAI agreement 1.0; Anthropic re-runs when credits allow). The
   last explicit item the maturity assessment named.
