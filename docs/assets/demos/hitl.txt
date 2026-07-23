@@ -5,7 +5,7 @@ mized receipt attached"
 deepseek-chat', 'reasoning': 'deepseek-reasoner'}
 # suspended (escalated) — checkpoint written to /tmp/mklang-demo-ck.json
 SUSPENDED expense_approval · provider deepseek
-tokens 314+319 · steps 2
+tokens 434+154 · steps 2
 Error: escalated
 Checkpoint: /tmp/mklang-demo-ck.json
 > uv run mklang resume /tmp/mklang-demo-ck.json --provider deepseek --set manager_note
@@ -14,6 +14,7 @@ Checkpoint: /tmp/mklang-demo-ck.json
 anced': 'deepseek-chat', 'reasoning': 'deepseek-reasoner'}
 DONE expense_approval · provider deepseek
 ╭────────────────────────────────────── Result ──────────────────────────────────────╮
-│ Expense: 240 EUR, Meals. Policy verdict: Compliant, manager approval required.     │
+│ Expense: $240 for client dinner, receipt attached. Policy verdict: compliant,      │
+│ needs manager approval.                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
-tokens 455+339 · steps 3
+tokens 720+175 · steps 3
