@@ -15,7 +15,7 @@ optdepends=('python-mcp: mklang-mcp MCP server'
             'python-argcomplete: shell completions')
 backup=(etc/mklang/runtime.yaml)
 source=("https://files.pythonhosted.org/packages/source/m/mklang/mklang-$pkgver.tar.gz")
-sha256sums=('82739831513bec1dfdee55d1a2dbd793d27d26fd9aae0d5951d48855998acc1b')
+sha256sums=('8306373001a802437d18a3991dbef31a3ac29f57793540e5584db3c7fe5860b4')
 
 build() {
   cd "mklang-$pkgver"
