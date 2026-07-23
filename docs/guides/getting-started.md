@@ -7,23 +7,23 @@ anything.
 ## 1. Install
 
 mklang needs Python ≥ 3.11. The recommended install is [pipx](https://pipx.pypa.io/)
-with the console and MCP extras:
+with the MCP extra (the console ships by default):
 
 ```bash
-pipx install 'mklang[console,mcp]'
+pipx install 'mklang[mcp]'
 mklang --version
 ```
 
 Alternatives:
 
-- **pip in a virtualenv** — `pip install 'mklang[console,mcp]'`.
+- **pip in a virtualenv** — `pip install 'mklang[mcp]'`.
 - **install script** — [`scripts/install.sh`](../../scripts/install.sh) runs the
   pipx install plus the initialization below in one go (and has `--uninstall`).
 - **Arch Linux** — an AUR-style recipe lives in
   [`packaging/arch/`](https://github.com/gianlucamazza/mklang/tree/main/packaging/arch).
 
-The extras: `[console]` is the interactive TUI, `[mcp]` the MCP server for
-agent hosts. Both are optional, but the console is the native surface — take it.
+The console TUI is part of the core install since 0.15.0; the `[mcp]` extra
+adds the MCP server for agent hosts.
 
 ## 2. Initialize your user host
 
