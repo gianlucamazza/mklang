@@ -2,7 +2,11 @@
 
 from pathlib import Path
 import importlib.util
+import re
+import subprocess
 import tomllib
+
+import pytest
 
 import mklang
 
@@ -48,6 +52,57 @@ def test_current_version_docs_are_synchronized():
     assert f"## [{version}]" in changelog
     assert f"package {version}**" in readme
     assert f"package **{version}**" in roadmap
+
+
+# The tag/CHANGELOG invariant: distribution began at 0.5.3 (the first PyPI
+# release was 0.5.4; 0.5.3 was the last pre-publish tag). Every CHANGELOG entry
+# from 0.5.3 up MUST carry a matching `v<version>` git tag; entries at or below
+# 0.5.2 are pre-distribution history and are exempt. See the 2026-07-23
+# validation report (docs/experiments/) for the measured three-way divergence.
+_DISTRIBUTION_CUTOFF = (0, 5, 3)
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    parts = [int(p) for p in version.split(".")]
+    return tuple(parts + [0] * (3 - len(parts)))
+
+
+def _changelog_versions() -> list[str]:
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    return re.findall(r"^## \[([0-9][^\]]*)\]", changelog, re.MULTILINE)
+
+
+def _git_tags() -> set[str] | None:
+    """Return the repo's tags, or None when git/tags are unavailable (an sdist
+    install or a shallow checkout without tags — the invariant simply can't be
+    checked there, so the test skips rather than fails)."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "tag"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    tags = set(result.stdout.split())
+    return tags or None
+
+
+def test_changelog_entries_from_distribution_cutoff_are_tagged():
+    tags = _git_tags()
+    if tags is None:
+        pytest.skip("no git tags available (sdist or shallow checkout)")
+    missing = [
+        version
+        for version in _changelog_versions()
+        if _version_tuple(version) >= _DISTRIBUTION_CUTOFF and f"v{version}" not in tags
+    ]
+    assert not missing, (
+        f"CHANGELOG entries at/above {'.'.join(map(str, _DISTRIBUTION_CUTOFF))} without a "
+        f"matching git tag: {missing}. Tag them (`v<version>`) or, if they were never "
+        f"released, drop them from the CHANGELOG."
+    )
 
 
 def test_console_docs_link_to_host_path_ssot():
