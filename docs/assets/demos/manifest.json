@@ -121,8 +121,8 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-23T09:58:59.268347+00:00",
-  "generated_from": "ca8f5529991d1b419ec29baa5323a3444d8e633a",
+  "generated_at": "2026-07-23T10:33:58.107033+00:00",
+  "generated_from": "a2c4ed40938a192ac593453f4e7ccdcbd14807e3",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
@@ -148,7 +148,7 @@
       "examples/summarize_doc.mk": "a8df4eda29903e753de21f7a91daab9543348997194f7ffe3035540fb04f8de1",
       "examples/triage.mk": "bf872abbdb8fc06bce8d2ff8665c8f760d03fae322772e96fb8a2380910d1bab",
       "examples/triage.test.yaml": "9e7a316ec06c0d7583d1cc684a493cc6b62f2809ff0ea034eb36e7c37c7e03b3",
-      "scripts/demo_assets.py": "38e7eceaa5fe6d30b90cf83488abad800ca3787570be137a6efb6286166be4c8",
+      "scripts/demo_assets.py": "4afc6e562980bf9375d10c47bc24509895575b744b70f150ff54cca35a0ff286",
       "src/mklang/checkpoint.py": "4d59fc382fe14598f568b2f6e320f738221bbed8a77936da36403404cfd14566",
       "src/mklang/cli.py": "460155a49063c76023df5ee6a2ce9ee8f6efe53eb99ef73289ef47fb6bff4f11",
       "src/mklang/config.py": "7517bccf43fecf9af064b035d8f09d97bcc7d603bc344726021666bbeca85aa9",
@@ -175,7 +175,7 @@
       "src/mklang/search.py": "c6e110f4e4590e461b45353d72c6db4a612d1f6966cbf593ece7020af775ace4",
       "src/mklang/tools.py": "83dadd2f68b04a9d821b21b48471cab5f260a0c1ff7e9c26135680855d8a7b03"
     },
-    "sha256": "bed2d63901783bfecb7f48ec5d5ea1e47b1af1873114bc3211d8b8d04eaa9da1"
+    "sha256": "3146f3624d368c81a4a42ee7d8c3d5e2b2faaa802e675264ec16135c135c115a"
   },
   "toolchain": {
     "font": {
@@ -185,7 +185,7 @@
     },
     "vhs": {
       "archive_sha256": "99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009",
-      "reported_version": "v0.11.0 (c6af91a)",
+      "reported_version": "v0.10.0",
       "version": "0.11.0"
     }
   }

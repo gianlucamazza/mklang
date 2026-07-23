@@ -403,6 +403,13 @@ def check_drift() -> None:
     expected_assets = {f"docs/assets/demos/{demo}.{ext}" for demo in DEMOS for ext in FORMATS}
     if set((manifest.get("assets") or {})) != expected_assets:
         raise DemoError("demo manifest asset set is incomplete")
+    # Also guard the on-disk set: a demo removed from DEMOS leaves orphan asset
+    # files (its tape is gone, but the rendered webm/gif/txt linger). The
+    # manifest check above cannot see them; this does.
+    on_disk = {f"docs/assets/demos/{p.name}" for ext in FORMATS for p in ASSET_DIR.glob(f"*.{ext}")}
+    orphans = sorted(on_disk - expected_assets)
+    if orphans:
+        raise DemoError("orphan demo assets (not in DEMOS): " + ", ".join(orphans))
 
 
 def main(argv: list[str] | None = None) -> int:
