@@ -269,8 +269,12 @@ untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
   (`react.mk`); the peripheral recordings (`cli`, `search`, `console`,
   `orchestrate`, `hitl`, `test`) are gone, the README leads with the two
   surfaces, and `check-drift` also fails on orphan asset files.
-- **[next] gate-divergence at scale** — run the four-machine suite live across
-  providers and publish a dated agreement table (harness ready).
+- **[shipped] gate-divergence at scale** — the four-machine suite ran live
+  across DeepSeek + OpenAI (×3 repeats, 24/24 done): agreement **1.0 per
+  machine**, free-text outputs diverging on the contestable machines while
+  routing stayed identical. Dated table + detail in
+  [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md);
+  re-run live per release and extend to more providers as keys allow.
 - **[next] Live-verify Anthropic** — unblock when credits allow; already routed
   through the live matrix and the divergence harness.
 - **[later] Truncation `continue` stitching** (ADR 0018).
