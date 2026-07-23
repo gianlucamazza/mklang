@@ -240,7 +240,9 @@ def _run_once(
     """Run one machine once for one provider. `build_llm` is injectable so the
     offline suite can drive the harness with a scripted LLM (no keys)."""
     prov = load_provider(config, provider_name)
-    if not prov.api_key and prov.name != "local":
+    # The missing-key skip only applies to the real live path; an injected
+    # build_llm means there is no live call to gate (offline tests).
+    if build_llm is _build_llm and not prov.api_key and prov.name != "local":
         return {"provider": provider_name, "skipped": True, "reason": "no API key"}
     doc = machine_doc if machine_doc is not None else MACHINE
     m = parse_machine(doc)
