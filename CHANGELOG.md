@@ -18,6 +18,14 @@ All notable changes to mklang are documented here. The format follows
   OpenAI-compat adapter (produce mapping, param split/drop-and-retry,
   fenced judge prompt), the text emitters, and registry plugin/stdlib
   resilience — total coverage 92%.
+- Extended the cross-provider gate-divergence harness
+  (`scripts/gate_divergence.py`) from one synthetic machine to a suite of
+  four, each stressing a different gate shape (multi-way `ok` routing,
+  borderline judgement, control-flow `escalate`, `repair` grounding). New
+  `--machines` selector (default the single `gate_divergence` for
+  release-gate comparability, or `all`); agreement and the `--min-agreement`
+  release floor are computed per-machine with a `per_machine` breakdown.
+  Offline-tested end to end via an injectable `build_llm`.
 
 ### Changed
 

@@ -24,18 +24,27 @@ This is also the smallest publishable measurement next to the interpreter work.
 
 Script: [`scripts/gate_divergence.py`](../../scripts/gate_divergence.py).
 
-1. Fixed synthetic machine: classify a fixed spam-like string into
-   `spam` / `ham` / `unknown`, then three prose gates on the label, then a
-   trivial terminal path.
-2. For each provider in the runtime config that has an API key, run the machine
-   (`--repeats N` optional).
-3. Record per-run **gate signature**: ordered
-   `state|gate|gate_via|to` (not full free-text outputs).
-4. Report pairwise `same_signature` and `signature_agreement_rate`.
+1. A **suite** of small synthetic machines, each stressing a different gate
+   shape (`--machines`, default the single `gate_divergence` for release-gate
+   comparability, or `all`):
+   - `gate_divergence` — multi-way `ok` routing on a spam/ham/unknown label;
+   - `sentiment_borderline` — a deliberately mixed review, so the
+     positive/negative/mixed gates are genuinely contestable;
+   - `severity_escalate` — an `escalate` gate that decides whether a human is
+     paged (control-flow-critical divergence, SPEC §11);
+   - `grounding_repair` — a `repair` loop on "grounded in the given fact".
+2. For each selected machine and each provider in the runtime config with an
+   API key, run it (`--repeats N` optional).
+3. Record per-run **gate signature**: ordered `state|gate|gate_via|to` (not
+   full free-text outputs).
+4. Report pairwise `same_signature` and `signature_agreement_rate`, **computed
+   within each machine** (cross-machine signatures differ by construction), plus
+   a `per_machine` breakdown. The release gate enforces `--min-agreement`
+   per-machine so no single machine hides behind a high pooled average.
 
 ```bash
 uv run python scripts/gate_divergence.py
-uv run python scripts/gate_divergence.py --providers deepseek,openai --repeats 3 \
+uv run python scripts/gate_divergence.py --machines all --providers deepseek,openai --repeats 3 \
   --jsonl /tmp/gate-div.jsonl
 # force one judge tier across providers (comparable to pre-0.5.2 fast-judge runs):
 uv run python scripts/gate_divergence.py --judge-tier fast
@@ -50,12 +59,13 @@ uv run python scripts/gate_divergence.py --judge-tier fast
 
 ## Metrics
 
-| Metric | Definition |
-| ------ | ---------- |
-| `signature` | Compact routing trace (gates + via + destinations) |
-| `same_signature` | Pairwise equality of signatures |
-| `signature_agreement_rate` | Fraction of provider pairs that agree |
-| `distinct_signatures` | Set of observed routing patterns |
+| Metric                     | Definition                                           |
+| -------------------------- | ---------------------------------------------------- |
+| `signature`                | Compact routing trace (gates + via + destinations)   |
+| `same_signature`           | Pairwise equality of signatures                      |
+| `signature_agreement_rate` | Fraction of within-machine provider pairs that agree |
+| `per_machine`              | Same metrics broken down per suite machine           |
+| `distinct_signatures`      | Set of observed routing patterns                     |
 
 Optional later: majority vote over `N` repeats; Cohen's κ on first-step gate;
 temperature ablation.
@@ -70,9 +80,9 @@ temperature ablation.
 
 ## Results
 
-| Date | Providers | Agreement rate | Distinct signatures | Notes |
-| ---- | --------- | -------------- | ------------------- | ----- |
-| 2026-07-16 | deepseek, openai (×3 each) | **1.0** | 1 | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key). |
+| Date       | Providers                  | Agreement rate | Distinct signatures | Notes                                                                                                                                                                                                                                  |
+| ---------- | -------------------------- | -------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-16 | deepseek, openai (×3 each) | **1.0**        | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key). |
 
 ### 2026-07-16 detail
 
