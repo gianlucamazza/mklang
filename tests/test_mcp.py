@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -135,7 +136,8 @@ def test_run_inputs_reach_context(monkeypatch, store):
     )
     out = srv.run_tool(store, DEFAULTS, source=src, inputs={"ticket.body": "hello"})
     assert out["status"] == "done"
-    assert "q=hello" in out["result"]
+    # MCP inputs are host-supplied → tainted → fenced in the prompt (ADR 0025).
+    assert re.search(r"q=<data-\w+>\nhello\n</data-\w+>", out["result"])
 
 
 def test_run_requires_exactly_one_of_source_and_path(store):

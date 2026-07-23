@@ -14,6 +14,18 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Untrusted-context delimiting** (SPEC §6, ADR 0025): the engine tracks
+  provenance taint per top-level context key (host inputs, tool observations,
+  and every deposit are tainted; author `context:` literals stay trusted) and
+  fences tainted interpolations in produce prompts as
+  `<data-NONCE>…</data-NONCE>` with a fresh per-call nonce, adding an
+  untrusted-data rule to the system message. Judge prompts (shared
+  `build_judge_user`, deduplicated across adapters) always fence
+  OUTPUT/REASONING/CONTEXT. Taint survives checkpoints (`"tainted"` frame
+  field; missing field resumes all-tainted) and resume-injected values are
+  tainted. New: `run(..., delimit=..., trusted_keys=...)`, scenario `input:`
+  key, four `taint-*` conformance cases, `tests/test_taint.py`.
+
 - CI quality gates: static type checking with **mypy** (zero suppressions —
   `check_untyped_defs`, `disallow_incomplete_defs`, `strict_equality`, warn
   flags; every function in `src/mklang` is annotated) and **coverage** via
@@ -25,6 +37,11 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
+- **Behavior change:** produce prompts of machines fed host inputs or tool
+  observations now carry `<data-NONCE>` fences and one extra system
+  paragraph; judge user messages always fence their data sections. Machines
+  interpolating only author literals are byte-identical. Escape hatch:
+  `run(..., delimit=False)` (produce side only).
 - Engine transition step now halts with explicit `state-error:
 gate-missing-to` / `repair-missing-budget` labels when a hand-built
   `Machine` bypasses schema validation (schema-validated machines are

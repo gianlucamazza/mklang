@@ -18,6 +18,7 @@ bindings, and the expectation matcher (status, error, `error_prefix`, result,
 llm:   { produce: [...], judge: [...], tokens: [in, out] }
 tools: { name: [...] | {input-substring: output} }
 hooks: { name: [bool, ...] }
+input: { key: value }   # host-supplied context — tainted by provenance (ADR 0025)
 run:   { cost_budget: N, on_truncate: report|halt }  # optional interpreter options
 expect:
   status: done | halt            # required
@@ -163,13 +164,16 @@ def run_scenario(
 ) -> RunResult:
     """Execute `machine` under a scenario's scripted LLM/tools/hooks/run options.
 
-    The scenario is a dict with optional `llm`, `tools`, `hooks`, and `run` keys —
-    the shared conformance/scenario format. Judging follows each state's tier
-    (SPEC §2.1); with the collapsed `TIERS` map every tier resolves to one model.
+    The scenario is a dict with optional `llm`, `tools`, `hooks`, `input`, and
+    `run` keys — the shared conformance/scenario format. `input:` merges
+    host-supplied values over the machine's `context:`; the engine's provenance
+    rule marks them tainted (ADR 0025), so cases can exercise host-input
+    delimiting. Judging follows each state's tier (SPEC §2.1); with the
+    collapsed `TIERS` map every tier resolves to one model.
     """
     return run(
         machine,
-        dict(machine.context),
+        {**machine.context, **(scenario.get("input") or {})},
         registry,
         ScriptedLLM(scenario.get("llm")),
         tiers or TIERS,

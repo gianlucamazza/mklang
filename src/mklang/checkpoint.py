@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,6 +52,7 @@ def make_frame(
     feedback: str,
     repair_left: dict[tuple[str, int], int],
     trace: list[dict],
+    tainted: set[str] | None = None,
 ) -> dict:
     """Snapshot one run() loop-top: everything needed to re-enter the loop."""
     return {
@@ -63,7 +65,20 @@ def make_frame(
         "feedback": feedback,
         "repair_left": encode_repair(repair_left),
         "trace": list(trace),
+        # Provenance taint (ADR 0025). Resume treats a missing field as
+        # all-tainted, so pre-0025 checkpoints stay resumable and fail safe.
+        "tainted": sorted(tainted or ()),
     }
+
+
+def taint_frame(frame: dict, keys: Iterable[str]) -> None:
+    """Mark host-injected top-level keys tainted in a checkpoint frame.
+
+    Every `resume --set` / resume-inputs path must call this beside the ctx
+    write: values crossing the host boundary are untrusted (ADR 0025)."""
+    current = set(frame.get("tainted", frame.get("ctx", {}).keys()))
+    current.update(k.split(".")[0] for k in keys)
+    frame["tainted"] = sorted(current)
 
 
 def file_sha256(path: str | Path) -> str | None:

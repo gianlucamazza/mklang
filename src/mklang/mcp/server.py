@@ -39,7 +39,7 @@ else:
 from collections.abc import Callable
 
 from .. import fs, host
-from ..checkpoint import load_checkpoint, save_checkpoint, verify_hash
+from ..checkpoint import load_checkpoint, save_checkpoint, taint_frame, verify_hash
 from ..engine import RunResult
 from ..engine import run as run_machine
 from ..logs import LEVELS, setup_process_logging
@@ -281,6 +281,7 @@ def _resume_from_file(
     warnings = _budget_warning(ck.get("reason"), ck.get("cost_budget"), budget)
     for k, v in (inputs or {}).items():
         host.set_path(ck["frames"][-1]["ctx"], k, v)
+    taint_frame(ck["frames"][-1], inputs or ())  # host-injected → untrusted (ADR 0025)
     session = _session_from(
         p,
         budget,
@@ -330,9 +331,11 @@ def resume_tool(
         )
     budget = cost_budget if cost_budget is not None else s.cost_budget
     warnings = _budget_warning(s.reason, s.cost_budget, budget)
-    # A human reply lands in the innermost frame's context (the suspended run).
+    # A human reply lands in the innermost frame's context (the suspended run);
+    # host-injected values are untrusted (ADR 0025).
     for k, v in (inputs or {}).items():
         host.set_path(s.frames[-1]["ctx"], k, v)
+    taint_frame(s.frames[-1], inputs or ())
     if on_truncate is not None:
         if on_truncate not in ("report", "halt"):
             return _error(
