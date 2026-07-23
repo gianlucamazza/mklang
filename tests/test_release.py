@@ -80,6 +80,36 @@ def test_release_gate_requires_every_core_repeat():
     assert _ci_errors(rows, ["deepseek", "openai"], 3, 1.0) == []
 
 
+def test_release_gate_ignores_skipped_optional_providers_when_counting_machines():
+    # Regression: skipped providers carry no `machine` field (see `_run_once`), so
+    # the distinct-machine count once included `None` and inflated
+    # `repeats * n_machines`. With the release matrix always skipping the
+    # no-key optional providers, that made the gate demand 2x the runs and fail
+    # the 0.16.0 live-matrix despite perfect agreement.
+    _ci_errors = _gate_divergence_module()._ci_errors
+
+    rows = [
+        {
+            "provider": provider,
+            "machine": "gate_divergence",
+            "repeat": repeat,
+            "skipped": False,
+            "status": "done",
+            "signature": "same",
+            "output_hash": "same",
+        }
+        for provider in ("deepseek", "openai")
+        for repeat in range(3)
+    ]
+    # Optional providers without keys: skipped rows have NO `machine` field.
+    rows += [
+        {"provider": provider, "repeat": repeat, "skipped": True, "reason": "no API key"}
+        for provider in ("anthropic", "google", "openrouter", "xai", "mistral")
+        for repeat in range(3)
+    ]
+    assert _ci_errors(rows, ["deepseek", "openai"], 3, 1.0) == []
+
+
 def test_release_gate_distinguishes_skips_failures_and_divergence():
     module = _gate_divergence_module()
     _ci_errors, _summary = module._ci_errors, module._summary

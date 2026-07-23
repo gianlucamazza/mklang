@@ -351,7 +351,12 @@ def _ci_errors(
     `repeats * n_machines` successful rows; the agreement floor is enforced
     per-machine so no single machine can hide behind a high pooled average."""
     errors: list[str] = []
-    machines = sorted({r.get("machine") for r in rows}, key=lambda x: (x is None, x))
+    # Count only machines that actually ran. Skipped-provider rows carry no
+    # `machine` field (see `_run_once`), so a naive distinct-count over all rows
+    # would include `None` and inflate `repeats * n_machines` — failing the
+    # release gate even with perfect agreement whenever any optional provider
+    # lacks a key (the normal release-matrix state).
+    machines = {r.get("machine") for r in rows if r.get("machine") is not None}
     expected = repeats * max(1, len(machines))
     for name in required:
         provider_rows = [r for r in rows if r.get("provider") == name]
