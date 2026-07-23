@@ -1,5 +1,5 @@
-# Scenario tests for std_debate.mk — run with:
-#   mklang test std_debate.mk --script std_debate.test.yaml
+# Scenario tests for std_debate.mkl — run with:
+#   mklang test std_debate.mkl --script std_debate.test.yaml
 #
 # argue fans out over the three default personas concurrently → MAP-form
 # produce keyed on the persona word rendered into each branch prompt

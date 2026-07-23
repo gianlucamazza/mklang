@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://mklang.dev/schema/runtime.schema.json",
   "title": "mklang runtime config",
-  "description": "Host-side runtime configuration for mklang: selects a provider and maps capability tiers (fast/balanced/reasoning) to concrete models. NOT part of any .mk file. See SPEC.md §2.1.",
+  "description": "Host-side runtime configuration for mklang: selects a provider and maps capability tiers (fast/balanced/reasoning) to concrete models. NOT part of any .mkl file. See SPEC.md §2.1.",
   "type": "object",
   "required": ["active", "providers"],
   "additionalProperties": false,

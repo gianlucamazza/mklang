@@ -163,7 +163,7 @@ class ConsoleTools:
         """Resolve a machine name/filename inside the workspace; None if it escapes."""
         if not name:
             return None
-        fname = name if name.endswith(".mk") else f"{name}.mk"
+        fname = name if name.endswith(".mkl") else f"{name}.mkl"
         candidate = (self.workspace / fname).resolve()
         if not candidate.is_relative_to(self.workspace):
             return None

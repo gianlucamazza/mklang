@@ -121,14 +121,14 @@ def _check(
 
 
 def _parse_source(source: str, warnings: list[str]) -> Machine:
-    """Inline `.mk` source string → Machine: YAML → schema → parse."""
+    """Inline `.mkl` source string → Machine: YAML → schema → parse."""
     try:
         d = yaml.safe_load(source)
     except yaml.YAMLError as e:
         raise PrepareError([f"invalid YAML: {e}"], warnings, kind="load") from e
     if not isinstance(d, dict):
         raise PrepareError(
-            ["source is not a mapping (a .mk document is a YAML mapping)"], warnings, kind="load"
+            ["source is not a mapping (a .mkl document is a YAML mapping)"], warnings, kind="load"
         )
     try:
         validate_dict(d)
@@ -176,7 +176,7 @@ def prepare_path(
     strict: bool = False,
     build_llm: BuildLLM | None = None,
 ) -> Prepared:
-    """Load a machine from disk with sibling-`.mk` registry discovery, layered on
+    """Load a machine from disk with sibling-`.mkl` registry discovery, layered on
     the bundled stdlib. `machine_path` may also be a bare registry name (e.g.
     `std_cot`) when no such file exists — run-by-name, no sibling discovery."""
     prov, llm, warnings = _provider(config, provider, build_llm)
@@ -215,7 +215,7 @@ def prepare_source(
     strict: bool = False,
     build_llm: BuildLLM | None = None,
 ) -> Prepared:
-    """Load a machine from an inline `.mk` source string; the registry holds it plus
+    """Load a machine from an inline `.mkl` source string; the registry holds it plus
     the bundled stdlib (`call: std_*` works), so a `call:` to any other unsupplied
     target surfaces as a semantic error."""
     prov, llm, warnings = _provider(config, provider, build_llm)
@@ -252,7 +252,7 @@ def inject_host_defaults(ctx: dict, *, today: str | None = None, now: str | None
     """Fill host-convention keys **only when the machine declared them**.
 
     Convention (no language change): if the blackboard already has a top-level
-    key (from ``context:`` in the ``.mk``) and its value is still empty/None
+    key (from ``context:`` in the ``.mkl``) and its value is still empty/None
     after user inputs, fill it from the host clock. Never invents undeclared
     keys — keeps check/lint and document purity intact.
 

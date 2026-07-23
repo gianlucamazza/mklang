@@ -62,11 +62,11 @@ def test_single_gate_terminal_does_not_warn_catchall():
 def test_load_registry_skips_malformed_siblings(tmp_path):
     from mklang.registry import load_registry
 
-    (tmp_path / "good.mk").write_text(
+    (tmp_path / "good.mkl").write_text(
         "machine: g\nentry: a\nbudget: 3\nstates:\n"
         "  a: {structure: x, prompt: p, output: o, gates: [{when: otherwise, then: ok, to: END}]}\n"
     )
-    (tmp_path / "broken.mk").write_text("machine: b\nstates: {a: {}}\n")  # no output/gates
+    (tmp_path / "broken.mkl").write_text("machine: b\nstates: {a: {}}\n")  # no output/gates
     reg = load_registry(tmp_path, validate=False)
     assert set(reg) == {"g"}
 

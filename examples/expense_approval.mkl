@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# expense_approval.mk — divergent-terminals FSM (expense reports)
+# expense_approval.mkl — divergent-terminals FSM (expense reports)
 #
 # Flow:
 #   extract → validate → {auto_approve | manager_review | reject(fail)}

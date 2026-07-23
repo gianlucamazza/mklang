@@ -1,5 +1,5 @@
-# Scenario tests for std_self_consistency.mk — run with:
-#   mklang test std_self_consistency.mk --script std_self_consistency.test.yaml
+# Scenario tests for std_self_consistency.mkl — run with:
+#   mklang test std_self_consistency.mkl --script std_self_consistency.test.yaml
 #
 # The sample fan-out runs branches concurrently, so `produce` uses the MAP form:
 # each branch prompt contains its own "branch {{index}}" token. `vote` is the

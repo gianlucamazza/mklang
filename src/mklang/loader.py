@@ -1,4 +1,4 @@
-"""Load and validate a .mk file: JSON-Schema (structure) + semantic checks."""
+"""Load and validate a .mkl file: JSON-Schema (structure) + semantic checks."""
 
 from __future__ import annotations
 

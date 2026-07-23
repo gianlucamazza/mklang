@@ -205,7 +205,7 @@ def test_local_write_env_grant(local_root, monkeypatch):
 def test_write_suffix_allowlist_and_cap(tmp_path):
     configure_fs(LocalFSBackend(tmp_path, max_write_bytes=4))
     allow_writes(True)
-    for path in ("run.py", "m.mk", "noext"):
+    for path in ("run.py", "m.mkl", "noext"):
         obs = J(write_file({"path": path, "content": "x"}))
         assert obs["written"] is False and "not writable" in obs["error"]
     over = J(write_file({"path": "big.txt", "content": "12345"}))

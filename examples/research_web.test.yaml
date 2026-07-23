@@ -1,5 +1,5 @@
-# Scenario tests for research_web.mk — run with:
-#   mklang test examples/research_web.mk --script examples/research_web.test.yaml
+# Scenario tests for research_web.mkl — run with:
+#   mklang test examples/research_web.mkl --script examples/research_web.test.yaml
 #
 # Search is scripted (no network). Judge picks are indices into each state's
 # fused prose-gate batch in visit order.

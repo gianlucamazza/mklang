@@ -1,5 +1,5 @@
-# Scenario tests for std_plan_execute.mk — run with:
-#   mklang test std_plan_execute.mk --script std_plan_execute.test.yaml
+# Scenario tests for std_plan_execute.mkl — run with:
+#   mklang test std_plan_execute.mkl --script std_plan_execute.test.yaml
 #
 # plan is judged never (single otherwise gate); its produce must be a JSON
 # array (parse: list). execute fans out over the parsed steps → MAP-form

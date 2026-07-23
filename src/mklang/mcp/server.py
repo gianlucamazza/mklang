@@ -403,8 +403,8 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         ctx: Context | None = None,
     ) -> dict:
         """Commission an mklang machine and return its result with full provenance
-        (trace + usage). Pass the machine as inline `.mk` YAML via `source`, OR via
-        `path`: a filesystem path (sibling `.mk` files become callable machines) or
+        (trace + usage). Pass the machine as inline `.mkl` YAML via `source`, OR via
+        `path`: a filesystem path (sibling `.mkl` files become callable machines) or
         the bare name of a bundled machine (see list_machines) — exactly one of the
         two. Inline sources may `call:` bundled machines. `inputs` merges values
         into the machine's context by dotted key (e.g. {"ticket.body": "..."});
@@ -484,7 +484,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
     def check(source: str | None = None, path: str | None = None, strict: bool = False) -> dict:
         """Validate a machine WITHOUT running it — schema + semantic checks + lint
         smells as structured output: {ok, errors, warnings, lint}. Same validators
-        as `mklang check`/`mklang lint`. Exactly one of `source` (inline `.mk`
+        as `mklang check`/`mklang lint`. Exactly one of `source` (inline `.mkl`
         YAML) or `path`. Use it as the authoring loop before commissioning `run`."""
         return check_tool(source=source, path=path, strict=strict)
 

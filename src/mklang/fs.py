@@ -29,7 +29,7 @@ DEFAULT_READ_BYTES = 65_536
 MAX_READ_BYTES = 262_144
 MAX_WRITE_BYTES = 262_144
 
-# Data formats only — `.mk` stays with the console's write_machine (BP §13.7),
+# Data formats only — `.mkl` stays with the console's write_machine (BP §13.7),
 # executables and dotfiles are never writable.
 ALLOWED_WRITE_SUFFIXES = frozenset(
     {

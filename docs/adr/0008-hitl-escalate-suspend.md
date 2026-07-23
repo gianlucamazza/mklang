@@ -32,7 +32,7 @@ envelope for exactly this.
 
 - A machine can park indefinitely on a human decision at zero token cost and
   continue exactly where it stopped — nested `call`s included.
-- The language is untouched: same schema, same `.mk` files, spec stays 0.2.
+- The language is untouched: same schema, same `.mkl` files, spec stays 0.2.
   Whether an escalate pauses is a host/run decision, not an author decision;
   if per-gate control turns out to matter, a `hitl:` gate field is the obvious
   later extension.

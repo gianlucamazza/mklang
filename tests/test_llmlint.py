@@ -115,7 +115,7 @@ def test_cli_lint_llm_is_advisory(monkeypatch, capsys):
     monkeypatch.setattr(
         cli, "_build_llm", lambda prov: scripted('["b1", "b2"]', [0, 1, 0, 1, 1, 1])
     )
-    rc = cli.main(["lint", "examples/triage.mk", "--llm", "--strict", "--llm-samples", "2"])
+    rc = cli.main(["lint", "examples/triage.mkl", "--llm", "--strict", "--llm-samples", "2"])
     out = capsys.readouterr().out
     assert "llm:" in out
     assert rc == 0  # --llm findings never flip the exit code, even under --strict

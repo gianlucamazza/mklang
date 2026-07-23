@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# map_reduce.mk — orchestrator-worker (§4.7 over + §4.8 call)
+# map_reduce.mkl — orchestrator-worker (§4.7 over + §4.8 call)
 #
 # Flow: map (one summarize_doc sub-run per chunk) → combine → END
-# The callee `summarize_doc` lives in summarize_doc.mk (same project dir).
+# The callee `summarize_doc` lives in summarize_doc.mkl (same project dir).
 
 mklang: "0.2"
 machine: map_reduce

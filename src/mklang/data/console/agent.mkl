@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=../../../../schema/mklang.schema.json
-# agent.mk — the console's brain (ADR 0015): one run per user turn.
+# agent.mkl — the console's brain (ADR 0015): one run per user turn.
 #
 # Flow: decide → {discover | prepare_run → do_run | clarify |
 #                 author → save | reply → END}
 #       (every action loops back to decide; the budget bounds the turn)
 # Shows: the console's intelligence as an ordinary, auditable machine — swap it
-# with `mklang console --agent your_brain.mk` as long as the tool contract
+# with `mklang console --agent your_brain.mkl` as long as the tool contract
 # (list_machines / run_machine / ask_user, console-registered) is honored.
 # Contract: the console sets `user_message` and `history`; observations
 # accumulate under `observation`; the turn's answer lands in `reply`.
@@ -38,9 +38,9 @@ tools:
       Input: {"question": "..."}.
   - name: write_machine
     description: >
-      Save an authored .mk into the workspace (filename derived from its
+      Save an authored .mkl into the workspace (filename derived from its
       machine: field) and return the validation verdict.
-      Input: {"source": "<the full .mk document>"}.
+      Input: {"source": "<the full .mkl document>"}.
 
 context:
   user_message: ""
@@ -163,10 +163,10 @@ states:
 
   author: # write a new machine from the decided requirements
     structure: >
-      A complete, valid .mk document and nothing else — no fences, no prose
+      A complete, valid .mkl document and nothing else — no fences, no prose
       around it.
     execution: |
-      Emit only the .mk source. Follow language 0.3 rules: never name a provider
+      Emit only the .mkl source. Follow language 0.3 rules: never name a provider
       or model (tier only); never put side effects in generative prose — real I/O
       uses tool: states; time-sensitive machines declare today: "" and wall-clock
       ones now: ""; every multi-gate state ends with when: otherwise last.
@@ -177,7 +177,7 @@ states:
       Observations so far (fix any validation errors they report):
       {{observation}}
 
-      Rules for a valid .mk document:
+      Rules for a valid .mkl document:
       - Top-level keys: mklang: "0.3", machine (snake_case name), entry,
         budget (shortest entry→END path + 2), optional default_tier / result /
         context, states. Optional top-level tools: list of {name, description}.

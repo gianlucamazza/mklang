@@ -1,5 +1,5 @@
-# Scenario tests for news_search.mk — run with:
-#   mklang test examples/news_search.mk --script examples/news_search.test.yaml
+# Scenario tests for news_search.mkl — run with:
+#   mklang test examples/news_search.mkl --script examples/news_search.test.yaml
 #
 # Search is scripted (no network). Host today injection is not required here —
 # scenario supplies context via defaults + produce texts.

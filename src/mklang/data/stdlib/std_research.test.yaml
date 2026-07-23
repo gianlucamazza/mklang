@@ -1,5 +1,5 @@
-# Scenario tests for std_research.mk — run with:
-#   mklang test std_research.mk --script std_research.test.yaml
+# Scenario tests for std_research.mkl — run with:
+#   mklang test std_research.mkl --script std_research.test.yaml
 #
 # Search is scripted (no network). Judge picks are indices into each state's
 # fused prose-gate batch in visit order.

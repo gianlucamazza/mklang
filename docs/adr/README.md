@@ -7,7 +7,7 @@ change checklist in CONTRIBUTING says when to add one.
 | ----------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------- |
 | [0001](0001-capability-tiers.md)                | Capability tiers, not model names                                         | Accepted                               |
 | [0002](0002-fanout-llm-reducer.md)              | Fan-out reduces via an LLM state, not built-in aggregators                | Accepted                               |
-| [0003](0003-provider-agnostic.md)               | Provider-agnostic: no provider/model pinning in a `.mk`                   | Accepted                               |
+| [0003](0003-provider-agnostic.md)               | Provider-agnostic: no provider/model pinning in a `.mkl`                   | Accepted                               |
 | [0004](0004-llm-as-runtime-gates.md)            | LLM as runtime; gates as the reliability mechanism                        | Accepted                               |
 | [0005](0005-reasoning-first-class.md)           | Reasoning is first-class and traced                                       | Accepted                               |
 | [0006](0006-code-hook-gates.md)                 | Code-hook gates alongside LLM-judged gates                                | Accepted                               |
@@ -30,3 +30,5 @@ change checklist in CONTRIBUTING says when to add one.
 | [0023](0023-global-local-config-separation.md)  | Global vs local configuration separation                                  | Accepted                               |
 | [0024](0024-fs-data-tools.md)                   | Filesystem data tools with a coding-tool workspace model                  | Accepted                               |
 | [0025](0025-untrusted-context-delimiting.md)    | Untrusted-context delimiting: provenance taint + data fences              | Accepted                               |
+| [0026](0026-stability-and-deprecation-policy.md) | Stability & deprecation policy for the package and the spec version      | Accepted                               |
+| [0027](0027-adopt-mkl-extension.md)             | Adopt the `.mkl` extension (rename from `.mk`)                            | Accepted                               |

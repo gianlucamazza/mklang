@@ -10,7 +10,7 @@ The reference runner is a thin consumer of **`src/mklang/scripttest.py`** — th
 single source of truth for the scripted LLM, the scripted `hooks:`/`tools:`
 bindings, and the expectation matcher (status / error / `error_prefix` / result /
 `at` / trace skeleton / context). The same module powers `mklang test`, which
-lets _authors_ run their own `.mk` against a script of named scenarios in exactly
+lets _authors_ run their own `.mkl` against a script of named scenarios in exactly
 this case format (see [README: "Test your machine without API keys"](../README.md)).
 The case format below and the `mklang test` scenario format are therefore one
 format, matched by one matcher.
@@ -20,7 +20,7 @@ format, matched by one matcher.
 ```yaml
 case: <slug> # must match the filename stem
 description: <one line — which semantic rule this pins down>
-machine: { ... } # an inline mklang machine (same shape as a .mk file)
+machine: { ... } # an inline mklang machine (same shape as a .mkl file)
 registry: # optional: extra machines resolvable by `call`
   <name>: { ... }
 llm: # the scripted LLM (see contract below)

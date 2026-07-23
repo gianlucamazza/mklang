@@ -98,7 +98,7 @@ Orthogonal, and must not be confused:
   themselves stable and non-overlapping? Live LLM, non-deterministic, opt-in.
 
 One pins semantics of the runtime; the other probes the quality of a specific
-`.mk`'s prose. Neither substitutes for the other.
+`.mkl`'s prose. Neither substitutes for the other.
 
 ## Why it was out of 0.5.x (shipped later, Accepted)
 

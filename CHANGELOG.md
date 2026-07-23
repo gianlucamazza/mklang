@@ -14,7 +14,25 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Stability & deprecation policy** — SemVer for the package from 1.0.0, spec
+  **0.3** frozen as the 1.0 language surface, a stated deprecation cycle for
+  future breaking changes, and the spec-version / package-version contract
+  ([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md),
+  [guide](./docs/guides/stability.md)).
+- **SPEC §9 triaged** — every open question closed as a permanent non-goal,
+  deferred with rationale, or resolved by measurement. Cross-provider gate
+  agreement is now measured at **1.0** on the four-machine suite (DeepSeek +
+  OpenAI); Anthropic remains billing-blocked
+  ([docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md)).
+
 ### Changed
+
+- **Breaking (pre-1.0): machine file extension renamed `.mk` → `.mkl`** (mklang;
+  hard cut — directory discovery matches `*.mkl` only). The Makefile / GitHub
+  Linguist collision is shed. Bundled machines, the console `write_machine`,
+  examples, tests, packaging, and docs move together; `.mk` machines stay
+  loadable by explicit path but are no longer auto-discovered by directory. See
+  [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md).
 
 ## [0.16.0] — 2026-07-23
 

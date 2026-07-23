@@ -1,5 +1,5 @@
-# Scenario tests for hello.mk — run with:
-#   mklang test machines/hello.mk --script machines/hello.test.yaml
+# Scenario tests for hello.mkl — run with:
+#   mklang test machines/hello.mkl --script machines/hello.test.yaml
 #
 # The LLM is scripted (no API key, fully deterministic): `produce` feeds the
 # state outputs in order, `judge` picks which prose gate fires (0 = "addresses

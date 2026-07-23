@@ -1,4 +1,4 @@
-"""Machine registry: load every .mk in a directory, keyed by `machine:` name,
+"""Machine registry: load every .mkl in a directory, keyed by `machine:` name,
 plus the bundled `std_*` stdlib and `mklang.machines` entry-point plugins."""
 
 from __future__ import annotations
@@ -21,11 +21,11 @@ _log = logging.getLogger("mklang.registry")
 
 
 def load_registry(directory: str | Path, validate: bool = True) -> dict[str, Machine]:
-    """Load every parseable .mk in `directory`, keyed by name. Malformed siblings are
+    """Load every parseable .mkl in `directory`, keyed by name. Malformed siblings are
     skipped (the caller validates its own target explicitly), so one bad file in the
     project directory can't sink an unrelated run."""
     reg: dict[str, Machine] = {}
-    for f in sorted(Path(directory).glob("*.mk")):
+    for f in sorted(Path(directory).glob("*.mkl")):
         try:
             m = load_machine(f, validate=validate)
         except Exception:  # a broken sibling shouldn't crash the run
@@ -46,9 +46,9 @@ def load_stdlib_registry() -> dict[str, Machine]:
         from importlib.resources import files
 
         stdlib = files("mklang").joinpath("data/stdlib")
-        entries = [e for e in stdlib.iterdir() if e.name.endswith(".mk")]
+        entries = [e for e in stdlib.iterdir() if e.name.endswith(".mkl")]
     except (FileNotFoundError, ModuleNotFoundError, OSError):
-        entries = sorted((Path(__file__).resolve().parent / "data" / "stdlib").glob("*.mk"))
+        entries = sorted((Path(__file__).resolve().parent / "data" / "stdlib").glob("*.mkl"))
     for e in sorted(entries, key=lambda x: x.name):
         try:
             m = parse_machine(yaml.safe_load(e.read_text(encoding="utf-8")))

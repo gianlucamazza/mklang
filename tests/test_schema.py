@@ -14,7 +14,7 @@ def test_schema_copies_are_byte_identical():
 
     ``schema/mklang.schema.json`` is the source of truth; the packaging copy at
     ``src/mklang/data/mklang.schema.json`` is force-included in the wheel
-    (pyproject ``force-include``) so a pip-installed interpreter validates .mk
+    (pyproject ``force-include``) so a pip-installed interpreter validates .mkl
     files identically. Nothing pins them together but this test — a schema edit
     that lands in only one copy makes installs behave differently from the repo.
     """
@@ -26,13 +26,13 @@ def test_schema_copies_are_byte_identical():
     )
 
 
-@pytest.mark.parametrize("path", sorted(glob.glob("examples/*.mk")))
+@pytest.mark.parametrize("path", sorted(glob.glob("examples/*.mkl")))
 def test_examples_validate(path):
     validate_dict(load_dict(path))
 
 
 def test_at_least_the_v02_examples_present():
-    names = set(glob.glob("examples/*.mk"))
+    names = set(glob.glob("examples/*.mkl"))
     assert any("self_consistency" in n for n in names)
     assert any("map_reduce" in n for n in names)
     assert any("react" in n for n in names)

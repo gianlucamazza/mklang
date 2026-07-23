@@ -1,4 +1,4 @@
-"""The console brain (agent.mk, ADR 0015 M1c): validity + scripted scenarios in CI."""
+"""The console brain (agent.mkl, ADR 0015 M1c): validity + scripted scenarios in CI."""
 
 from pathlib import Path
 
@@ -13,7 +13,7 @@ AGENT_DIR = Path(__file__).resolve().parents[1] / "src" / "mklang" / "data" / "c
 
 
 def load_agent():
-    doc = yaml.safe_load((AGENT_DIR / "agent.mk").read_text(encoding="utf-8"))
+    doc = yaml.safe_load((AGENT_DIR / "agent.mkl").read_text(encoding="utf-8"))
     validate_dict(doc)
     return parse_machine(doc)
 

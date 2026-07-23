@@ -27,11 +27,11 @@ Stratify; implement bottom-up:
 | SPEC §5 wording                | **done**                                                                 |
 | Produce-prompt char budget     | **done** (`interpolate.PROMPT_VALUE_CHARS`, `run(prompt_value_chars=…)`) |
 | Console history window         | **done** (`history_for_brain`, prompt-only; full audit kept)             |
-| Compress pattern example       | **done** (`examples/research_compress.mk` + scenario test)               |
+| Compress pattern example       | **done** (`examples/research_compress.mkl` + scenario test)               |
 | `std_compress`                 | shipped (composable stdlib compression utility)                          |
 | language faces (Layer 2)       | deferred                                                                 |
 
 ## Consequences
 
-- Existing `.mk` files keep working.
+- Existing `.mkl` files keep working.
 - Authors still own semantic summarization; the host only makes judge truncation visible.

@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-mklang's thesis is that "the host supplies the interpreter" (README §1): the `.mk` is
+mklang's thesis is that "the host supplies the interpreter" (README §1): the `.mkl` is
 the program, some host with an LLM runs it. Two host surfaces exist today. The **CLI**
 (`mklang run/resume/check/lint`) is the author's toolchain — the authoring loop. The
 importable **library** (`mklang.engine.run`) is the production embedding: a service loads
@@ -15,7 +15,7 @@ They cannot embed a Python library — they speak MCP. Today such a host would h
 re-implement the CLI's wiring or shell out to the `mklang` script, neither of which is a
 first-class seam.
 
-This matters because a `.mk` is exactly the kind of work an LLM host should _not_ do by
+This matters because a `.mkl` is exactly the kind of work an LLM host should _not_ do by
 free-form reasoning inside its own context: a verifiable finite-state machine with an
 explicit `budget`, typed gates, and an auditable `trace`. The disciplined move is for the
 host to **commission** the machine and receive a result _with provenance_ — the same
@@ -42,7 +42,7 @@ implementation change, not this ADR.
   there is no second interpreter path to drift. The language stays 0.2; the schema is
   untouched.
 
-- **Tool `run`.** Accepts the machine as an **inline `.mk` source string OR a filesystem
+- **Tool `run`.** Accepts the machine as an **inline `.mkl` source string OR a filesystem
   path**; `inputs` (a dict merged onto `machine.context`, the wire form of `--set`);
   optional `cost_budget`, provider/config selection, and `hitl` flag. Returns the `_emit`
   shape as MCP **structured output** — `trace` passes through as nested JSON unchanged.

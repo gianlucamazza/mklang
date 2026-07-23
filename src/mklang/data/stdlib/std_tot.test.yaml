@@ -1,5 +1,5 @@
-# Scenario tests for std_tot.mk — run with:
-#   mklang test std_tot.mk --script std_tot.test.yaml
+# Scenario tests for std_tot.mkl — run with:
+#   mklang test std_tot.mkl --script std_tot.test.yaml
 #
 # propose fans out 3 concurrent branches → MAP-form produce keyed on the
 # per-branch "approach {{index}} of 3" token. select is the only judged state;

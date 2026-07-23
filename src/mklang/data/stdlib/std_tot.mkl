@@ -4,7 +4,7 @@
 # Flow: propose (sample: 3) → select → {finalize → END | loop back to propose}
 # Shows: {{index}}-driven branch diversity, a reasoning-tier select step that
 # carries the running best (plus what is still missing) forward under `best`,
-# and a budget-bounded refinement loop (research.mk-style loop-back gate: the
+# and a budget-bounded refinement loop (research.mkl-style loop-back gate: the
 # global budget forces termination — two full rounds fit).
 # Contract: set `task`; returns `answer`.
 

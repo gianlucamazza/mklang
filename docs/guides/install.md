@@ -18,13 +18,13 @@ one go (idempotent, `--extras` to customize, `--uninstall` to remove the package
 while listing the user data it leaves behind).
 
 `init` never overwrites existing files. Project mode creates `config/runtime.yaml`,
-`config/runtime.schema.json`, `machines/` (with a commented `hello.mk` sample and
+`config/runtime.schema.json`, `machines/` (with a commented `hello.mkl` sample and
 its `hello.test.yaml` scenario script), and `.env`. User mode uses XDG roots:
 
 | Data                                        | Default                           |
 | ------------------------------------------- | --------------------------------- |
 | runtime config, its schema, and `.env`      | `~/.config/mklang/`               |
-| user machines (incl. the `hello.mk` sample) | `~/.local/share/mklang/machines/` |
+| user machines (incl. the `hello.mkl` sample) | `~/.local/share/mklang/machines/` |
 | console sessions/checkpoints                | `~/.local/state/mklang/`          |
 
 `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and `XDG_STATE_HOME` are honored.

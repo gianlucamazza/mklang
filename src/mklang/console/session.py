@@ -6,7 +6,7 @@ end), `transcript.jsonl` (streaming append: turns and run events), and
 
 Brain prompt history is windowed separately (ADR 0017): the full transcript and
 ``Session.history`` remain the audit trail; only the view passed into
-``agent.mk`` is capped.
+``agent.mkl`` is capped.
 """
 
 from __future__ import annotations

@@ -82,13 +82,13 @@ def test_unreadable_entry_points_yield_empty_registry(monkeypatch, caplog):
 def test_broken_stdlib_file_is_skipped_with_warning(
     monkeypatch, tmp_path, caplog, fresh_stdlib_cache
 ):
-    (tmp_path / "std_ok.mk").write_text(
+    (tmp_path / "std_ok.mkl").write_text(
         "machine: std_ok\nentry: a\nbudget: 2\nstates:\n"
         "  a:\n    structure: x\n    prompt: p\n    output: out\n"
         "    gates:\n      - {when: otherwise, then: ok, to: END}\n",
         encoding="utf-8",
     )
-    (tmp_path / "std_broken.mk").write_text("machine: [not a document", encoding="utf-8")
+    (tmp_path / "std_broken.mkl").write_text("machine: [not a document", encoding="utf-8")
 
     class _Pkg:
         def joinpath(self, _rel):
@@ -98,7 +98,7 @@ def test_broken_stdlib_file_is_skipped_with_warning(
     with caplog.at_level(logging.WARNING, logger="mklang.registry"):
         reg = load_stdlib_registry()
     assert set(reg) == {"std_ok"}  # the broken file is skipped, not fatal
-    assert any("std_broken.mk" in r.message for r in caplog.records)
+    assert any("std_broken.mkl" in r.message for r in caplog.records)
 
 
 def test_stdlib_falls_back_to_repo_tree_when_package_copy_is_missing(

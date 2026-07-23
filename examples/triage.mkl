@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# triage.mk — branching FSM (customer support) with real host effectors
+# triage.mkl — branching FSM (customer support) with real host effectors
 #
 # Flow:
 #   classify → plan_query → search_kb (tool) → draft_reply → {send_reply (tool) | human_review}

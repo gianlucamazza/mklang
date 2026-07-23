@@ -102,7 +102,7 @@ applies to both its generation and its gate judging.
 ## Run it
 
 ```bash
-mklang check machine.mk && mklang run machine.mk --set question.text="…"
+mklang check machine.mkl && mklang run machine.mkl --set question.text="…"
 ```
 
 All commands and flags: [CLI reference](cli.md).

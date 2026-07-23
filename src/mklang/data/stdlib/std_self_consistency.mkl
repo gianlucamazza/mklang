@@ -3,7 +3,7 @@
 #
 # Flow: sample_answers (sample: 5, reason) → vote → {END | low_confidence → END}
 # Shows: fan-out sampling at the fast tier, a reasoning-tier reducer, and a
-# low-confidence escalation sink (mirrors examples/self_consistency.mk, domain-
+# low-confidence escalation sink (mirrors examples/self_consistency.mkl, domain-
 # free). Contract: set `task`; reads {{task}}, returns `answer`.
 
 mklang: "0.2"

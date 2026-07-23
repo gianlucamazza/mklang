@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# self_consistency.mk — fan-out sampling + majority reducer (§4.7)
+# self_consistency.mkl — fan-out sampling + majority reducer (§4.7)
 #
 # Flow: sample_answers (sample: 5, reason) → vote → {END | low_confidence → END}
 

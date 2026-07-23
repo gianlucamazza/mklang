@@ -25,7 +25,7 @@ distill a one-line takeaway — no slash commands involved.
   Your browser does not support embedded WebM video.
 </video>
 
-The language recording checks and lints `react.mk`, then runs it: a real
+The language recording checks and lints `react.mkl`, then runs it: a real
 reason → act → observe loop. Gates route on natural-language conditions, the
 `calc` tool observation re-enters the context, the loop is bounded by the step
 `budget`, and the `finalize` state escalates to the `reasoning` tier.

@@ -77,8 +77,10 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./\.\./ROADMAP\.md|(ROADMAP.md|g" \
 	-e "s|(\./ROADMAP\.md)|(ROADMAP.md)|g" \
 	-e "s|(\.\./ROADMAP\.md)|(ROADMAP.md)|g" \
+	-e "s|(\.\./\.\./CHANGELOG\.md)|(CHANGELOG.md)|g" \
 	-e "s|(\./CHANGELOG\.md)|(CHANGELOG.md)|g" \
 	-e "s|(\.\./CHANGELOG\.md)|(CHANGELOG.md)|g" \
+	-e "s|(\.\./\.\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
 	-e "s|(\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
 	-e "s|(\.\./CONTRIBUTING\.md)|(CONTRIBUTING.md)|g" \
 	-e "s|(\./SPEC\.md|(SPEC.md|g"

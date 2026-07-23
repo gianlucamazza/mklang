@@ -92,7 +92,7 @@ def bundled_env_example() -> Path:
 
 def bundled_sample_machine() -> Path:
     """The hello-world machine `mklang init` scaffolds into machines/."""
-    packaged = files("mklang").joinpath("data/init/hello.mk")
+    packaged = files("mklang").joinpath("data/init/hello.mkl")
     if packaged.is_file():
         return Path(str(packaged))
     raise FileNotFoundError("the bundled sample machine is missing from this installation")

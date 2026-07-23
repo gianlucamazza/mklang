@@ -35,6 +35,7 @@ nav:
       - Installation: install.md
       - Authoring guide: authoring.md
       - Best practices: best-practices.md
+      - Stability policy: stability.md
       - Patterns: patterns.md
       - Console: console.md
       - Live demos: demos.md

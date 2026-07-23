@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# summarize_doc.mk — a small worker machine, called by map_reduce.mk (§4.8)
+# summarize_doc.mkl — a small worker machine, called by map_reduce.mkl (§4.8)
 
 mklang: "0.2"
 machine: summarize_doc

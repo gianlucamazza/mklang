@@ -1,5 +1,5 @@
-# Scenario tests for std_refine.mk — run with:
-#   mklang test std_refine.mk --script std_refine.test.yaml
+# Scenario tests for std_refine.mkl — run with:
+#   mklang test std_refine.mkl --script std_refine.test.yaml
 #
 # draft's judge batch is [satisfies-criteria, falls-short] while the repair
 # gate has budget; once both repairs burn, the repair gate drops out of the

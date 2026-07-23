@@ -29,7 +29,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 - **Use code-hook gates for exact checks** (`hook: name` → host `(ctx, output) -> bool`).
   Amounts, equality, allowlists: do **not** ask the LLM. Put hooks **above** prose
-  gates; keep `when` as the trace label. See `examples/hook_gates.mk` and ADR 0006.
+  gates; keep `when` as the trace label. See `examples/hook_gates.mkl` and ADR 0006.
   Custom tools/hooks: package entry points `mklang.tools` / `mklang.hooks` (see
   CONTRIBUTING).
 - **Never put real I/O in generative states.** Searching, sending mail, charging a
@@ -45,7 +45,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   Tavily**; or set `MKLANG_SEARCH_BACKEND=fake|tavily|stub`. Never put "search
   the web" only in generative `prompt`/`execution` — the model will invent hits.
   Use `tool: search` — ready-made as the `std_research` stdlib machine, or see
-  `examples/research_web.mk`, `machines/news_search.mk`.
+  `examples/research_web.mkl`, `machines/news_search.mkl`.
   Optional tool inputs: `days`, `topic` (`news`|`general`); results may include
   `published_date`. Snippets are **untrusted** (SPEC §11).
 - **`execution` for sticky policy.** The reference interpreter puts `structure` +
@@ -77,7 +77,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 - **Bound growing blackboards (working memory vs archive).** Long `accumulate`
   / research loops explode prompts. Prefer an explicit **compress** generative
   state that rewrites a key shorter before the next loop — see
-  `examples/research_compress.mk`. The host does **not** summarize for you: it
+  `examples/research_compress.mkl`. The host does **not** summarize for you: it
   only caps judge CONTEXT (head+tail marker), per-value produce interpolation
   (high default, `…[truncated]`), and console brain history (last N turns /
   chars). Transcript and full `Session.history` stay the audit archive; only
@@ -136,7 +136,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 ## Testing — pin the gates before you spend a token
 
 - **Write scenario tests for every gate you would be embarrassed to see misfire.**
-  `mklang test machine.mk --script machine.test.yaml` runs the machine against a
+  `mklang test machine.mkl --script machine.test.yaml` runs the machine against a
   **scripted LLM** (produce texts + judge picks) and scripted tools/hooks — no
   provider, no API key, fully deterministic. Each scenario is a named case in the
   conformance format (`llm`/`tools`/`hooks`/`input`/`run` + `expect`), and the runner
@@ -148,8 +148,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   and assert the `trace` skeleton (`state` → `to`, `policy`) lands where you think.
   See [`examples/triage.test.yaml`](../../examples/triage.test.yaml) (happy path +
   KB-empty escalation).
-- **Keep scenarios next to the machine** (`triage.mk` → `triage.test.yaml`) and
-  run them in CI — a `.mk` edit that reroutes a gate fails the scenario, not a
+- **Keep scenarios next to the machine** (`triage.mkl` → `triage.test.yaml`) and
+  run them in CI — a `.mkl` edit that reroutes a gate fails the scenario, not a
   customer.
 
 ## Reasoning & observability
@@ -176,7 +176,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 ## Provider notes
 
-- The `.mk` never names a model — only tiers. Pick models in
+- The `.mkl` never names a model — only tiers. Pick models in
   [`config/runtime.example.yaml`](../../config/runtime.example.yaml) (default
   `active: deepseek`); keys come from `.env` (`DEEPSEEK_API_KEY`, …). Switching
   provider is a one-line `active:` change or `mklang run --provider …`.
@@ -198,7 +198,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 ## Layer boundaries (quick)
 
-| Put in the `.mk`                         | Keep on the host / surface                                          |
+| Put in the `.mkl`                         | Keep on the host / surface                                          |
 | ---------------------------------------- | ------------------------------------------------------------------- |
 | Gates, tiers, `tool:` / `hook:` _names_  | Tool/hook _implementations_, API keys                               |
 | `parse: list`, compress _states_         | `on_truncate` default, search backend                               |

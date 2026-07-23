@@ -35,5 +35,5 @@ package() {
   # System-level host layout (ADR 0021): lowest-precedence config and machines.
   install -Dm644 config/runtime.example.yaml "$pkgdir/etc/mklang/runtime.yaml"
   install -Dm644 config/runtime.schema.json "$pkgdir/etc/mklang/runtime.schema.json"
-  install -Dm644 examples/*.mk -t "$pkgdir/usr/share/mklang/machines/"
+  install -Dm644 examples/*.mkl -t "$pkgdir/usr/share/mklang/machines/"
 }

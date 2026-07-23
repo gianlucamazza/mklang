@@ -13,7 +13,7 @@ scaffolding command — a `pip install mklang` outside the repo has nothing to r
 against until the user hand-builds a config.
 
 Best practices §13 defines the filesystem taxonomy for _machines_ (host paths,
-workspace `.mk`, data tools); this ADR is the host-side counterpart: where the
+workspace `.mkl`, data tools); this ADR is the host-side counterpart: where the
 host itself keeps config, machines, and state.
 
 ## Decision

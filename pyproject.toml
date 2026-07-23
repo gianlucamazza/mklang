@@ -99,7 +99,7 @@ packages = ["src/mklang"]
 "config/runtime.example.yaml" = "mklang/data/runtime.example.yaml"
 "config/runtime.schema.json" = "mklang/data/runtime.schema.json"
 ".env.example" = "mklang/data/env.example"
-# data/stdlib/*.mk|*.test.yaml ride along with the package itself — hatchling
+# data/stdlib/*.mkl|*.test.yaml ride along with the package itself — hatchling
 # includes non-.py files under `packages`; forcing them here would duplicate.
 
 [tool.ruff]

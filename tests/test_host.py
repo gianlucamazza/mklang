@@ -109,14 +109,14 @@ def test_prepare_source_call_to_unsupplied_target_is_semantic_error():
 
 
 def test_prepare_path_discovers_sibling_registry(tmp_path):
-    (tmp_path / "caller.mk").write_text(CALLER, encoding="utf-8")
-    (tmp_path / "worker.mk").write_text(WORKER, encoding="utf-8")
-    p = host.prepare_path(CONFIG, None, str(tmp_path / "caller.mk"), build_llm=build_llm)
+    (tmp_path / "caller.mkl").write_text(CALLER, encoding="utf-8")
+    (tmp_path / "worker.mkl").write_text(WORKER, encoding="utf-8")
+    p = host.prepare_path(CONFIG, None, str(tmp_path / "caller.mkl"), build_llm=build_llm)
     assert {"caller", "worker"} <= set(p.registry)  # stdlib machines ride along
 
 
 def test_prepare_path_load_failure(tmp_path):
-    bad = tmp_path / "bad.mk"
+    bad = tmp_path / "bad.mkl"
     bad.write_text("machine: x\n", encoding="utf-8")  # missing entry/budget/states
     with pytest.raises(host.PrepareError) as ei:
         host.prepare_path(CONFIG, None, str(bad), build_llm=build_llm)
