@@ -14,7 +14,23 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **ADR 0028** — provisional posture of package 1.0.0 (SemVer-stable freeze, falsifiable
+  2.0 conditions; no retraction).
+- **Authoring-loop blind_spot experiment** — frozen corpus
+  (`docs/experiments/authoring-corpus.yaml`), harness
+  (`scripts/authoring_blind_spot.py`), and the 2026-07-23 DeepSeek measurement
+  (`blind_spot = 0.0167` → do not build `test_machine`).
+- **Five-reader distribution protocol** — `docs/experiments/distribution-five-reader.md`
+  (execution remains external).
+- **CI:** `ruff format --check` in the quality gate; full-history checkout so the
+  tag↔CHANGELOG release invariant is enforced.
+
 ### Changed
+
+- **`mklang doctor`:** extract helpers from `cmd_doctor` (cyclomatic complexity 41 → 8);
+  behaviour unchanged.
+- **Validation report** — follow-up register filled for A1–A4, B1/B2, C1/C2; open items
+  remain Anthropic live re-run (C3) and the five-reader test (D1).
 
 ## [1.0.0] — 2026-07-23
 

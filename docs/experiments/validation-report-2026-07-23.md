@@ -8,18 +8,18 @@ fixes beyond that backlog, per the plan's method.
 
 ## Environment constraint (read first)
 
-This run had **no provider API keys** (`DEEPSEEK_API_KEY` / `OPENAI_API_KEY` /
-`ANTHROPIC_API_KEY` all unset). That bounds three items to *code-and-record* evidence rather
-than fresh live execution:
+The **original audit run** had **no provider API keys** (`DEEPSEEK_API_KEY` /
+`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` all unset). That bounded three items to
+*code-and-record* evidence rather than fresh live execution at first write.
 
-- **B1 / B2** — the `blind_spot` and repair-frequency *magnitudes* need ~60 reasoning-tier
-  calls. Their **structural premises are settled from source**; their numbers are not.
-- **C3** — cannot be *re-reproduced* live; settled instead from the **recorded** post-freeze
-  run in `docs/experiments/gate-divergence.md` (dated the same day as this audit).
+**Same-day / next-session follow-ups** (keys present for DeepSeek + OpenAI):
 
-Every such item is marked **BLOCKED (live)** with the exact resource needed. Nothing below is
-inferred where a command could have decided it, and no magnitude is reported that was not
-actually measured.
+- **B1 / B2** — measured; see `authoring-blind-spot.md` and the register below.
+- **C3** — still not re-run with Anthropic (`ANTHROPIC_API_KEY` unset / billing);
+  the recorded DeepSeek+OpenAI 2026-07-23 suite remains the baseline.
+- **D1** — still external; protocol frozen in `distribution-five-reader.md`.
+
+Nothing below reports a magnitude that was not actually measured.
 
 ---
 
@@ -27,9 +27,9 @@ actually measured.
 
 | ID | Verdict | Evidence | Falsifier triggered? | Follow-up |
 |---|---|---|---|---|
-| A1 | **CONFIRMED** | `ruff format --check` reformats `tests/test_truncation.py`; reproduced on the CI-resolved ruff **0.15.22**; `quality.yml:24` runs `ruff check` only (no `format --check`); no rationale in `git log --grep=format`. | No | Add `ruff format --check` to the lint step. |
-| A2 | **CONFIRMED** | `--extra dev`: **87.58% → FAIL** (fail_under=90). `--extra dev --extra mcp`: **91.81% → PASS**. Mechanism: `mcp/server.py` (184 stmts) is 0% without the extra. | No | Document the canonical invocation, or gate conditionally, or promote `mcp` to core. Decide one. |
-| A3 | **CONFIRMED** | Three-way divergence: **23 tags / 28 CHANGELOG entries / 16 PyPI releases**. CHANGELOG-only (untagged): `0.1, 0.2.0, 0.2.1, 0.5.1, 0.5.2`. Tagged-but-unpublished: 7 (incl. `v0.8.1`, `v0.9.0`). | No | Pick an invariant, enforce in `tests/test_release.py` (has version-sync tests, no tag/changelog invariant yet). |
+| A1 | **CONFIRMED; CI fixed** | At audit: `quality.yml` ran `ruff check` only; one file drifted. Follow-up: `Format check` step + reformatted file (#58). | No | **DONE** — `ruff format --check` in `quality.yml`. |
+| A2 | **CONFIRMED; docs fixed** | `--extra dev`: **87.58% FAIL** vs `--extra dev --extra mcp`: **91.81% PASS**. Follow-up: CONTRIBUTING documents gate 90 + `--extra mcp`. | No | **DONE** — canonical invocation documented. |
+| A3 | **CONFIRMED; invariant enforced** | Three-way divergence at audit (23 tags / 28 CHANGELOG / 16 PyPI). Follow-up: tag↔CHANGELOG ≥0.5.3 test + `fetch-depth: 0` (#58). | No | **DONE** — `tests/test_release.py` + CI tags. |
 | A4 | **DOWNGRADE (mostly cosmetic); hotspot fixed** | At audit: 1026 lines / mean CC 8.05 (B); hotspot **`cmd_doctor` CC 41 (F)**. Follow-up: helpers extracted — `cmd_doctor` CC **8 (B)** (#63). | **Partial** at audit; hotspot closed. | Do not split `cli.py` wholesale. |
 | B1 | **CONFIRMED (structural); magnitude MEASURED** | Structural premise unchanged. Live run 2026-07-23: DeepSeek `deepseek-reasoner`, 20 corpus items × 3, `blind_spot = 0.0167` (check 0.7167 − behaviour 0.7000). Verdict: **do not build `test_machine`**. See `authoring-blind-spot.md`. | Falsifier for “must build test_machine” **triggered** (spot < 0.10). | Close #59 on measurement; keep authoring-reliability work separate. |
 | B2 | **CONFIRMED (structural); magnitude MEASURED** | Same harness: 41.7% of trials needed ≥1 static repair; 28.3% still failed check after one repair. Shared `budget: 16` remains optimistic for multi-gate authoring — orthogonal to `test_machine`. | n/a | Optional: dedicated authoring-repair budget (product), not a language break. |
@@ -52,35 +52,27 @@ actually measured.
   observation). Not a local-version artifact.
 - **Second question:** `git log --all --grep=format -i` surfaces only unrelated commits (docs
   alignment, taint fences, logging). **No recorded rationale** for omitting the format check.
-- `quality.yml:24` is `ruff check src tests scripts` — lint only.
-- **Decision gate → add the check.** Drift confirmed + no rationale ⇒ add `ruff format --check`
-  to the Lint step.
+- At audit, `quality.yml` was `ruff check` only (no format gate).
+- **Follow-up:** `Format check` step added (`ruff format --check src tests scripts`);
+  drifted `tests/test_truncation.py` reformatted (#58).
 
-### A2 — Coverage gate is environment-dependent — CONFIRMED
+### A2 — Coverage gate is environment-dependent — CONFIRMED; docs fixed
 - Leg 1 (`--extra dev`): TOTAL **87.58%**, *"Required test coverage of 90.0% not reached"* → FAIL.
 - Leg 2 (`--extra dev --extra mcp`): TOTAL **91.81%** → PASS. `mcp/server.py` goes 0% → 87%.
-- A first-time contributor running the *documented* dev command hits a red gate through no
-  fault of their own. **Open question is real; pick one option** (document canonical
-  invocation / conditional `fail_under` / promote `mcp` to core — as `textual` was in 0.15.0).
+- **Follow-up:** CONTRIBUTING documents the canonical
+  `uv run --extra dev --extra mcp pytest …` invocation and `fail_under = 90`.
 
-### A3 — Tag / CHANGELOG / PyPI divergence — CONFIRMED
-- Counts: **23 tags, 28 CHANGELOG entries, 16 PyPI releases** (three-way).
-- CHANGELOG-only (never tagged): `0.1, 0.2.0, 0.2.1, 0.5.1, 0.5.2` — the plan's specific
-  A3 claim (0.5.1 / 0.5.2 untagged) is exactly reproduced.
-- Note the candidate invariant *"every CHANGELOG entry above 0.5.0 has a tag"* is itself
-  **violated** by 0.5.1/0.5.2 — so the invariant must be phrased ≥0.5.3 (pre-distribution
-  cut at 0.5.2), or those two must be retro-tagged. Decide, then enforce in
-  `tests/test_release.py`.
+### A3 — Tag / CHANGELOG / PyPI divergence — CONFIRMED; invariant enforced
+- Counts at audit: **23 tags, 28 CHANGELOG entries, 16 PyPI releases** (three-way).
+- CHANGELOG-only (never tagged): `0.1, 0.2.0, 0.2.1, 0.5.1, 0.5.2` — pre-distribution history.
+- **Follow-up:** invariant cut at **0.5.3** in `tests/test_release.py`; CI
+  `fetch-depth: 0` so the test runs (does not skip) on the matrix (#58).
 
-### A4 — `cli.py` monolith — DOWNGRADE to cosmetic (one hotspot)
-- Radon: 20 blocks, **mean CC 8.05 (B)**. Distribution is bimodal: a long tail of A/B
-  subcommand handlers (dispatch-table shape) **plus** one outlier — `cmd_doctor` **CC 41 (F)**
-  — and three C-grade handlers (`cmd_resume` 20, `cmd_lint` 16, `cmd_test` 12).
-- Raw: 917 SLOC, comments 2%.
-- **Verdict:** the "largest module / weakest-covered" alarm is *mostly* a line-count optical
-  illusion — the file is a dispatch table. The falsifier ("low complexity everywhere") is
-  **partially** met: it holds for every handler except `cmd_doctor`. Close the monolith
-  framing; open a narrow ticket for `cmd_doctor` if its 41 warrants it.
+### A4 — `cli.py` monolith — DOWNGRADE to cosmetic; hotspot fixed
+- At audit: Radon mean CC **8.05 (B)**; outlier **`cmd_doctor` CC 41 (F)**; three C-grade
+  handlers (`cmd_resume` 20, `cmd_lint` 16, `cmd_test` 12). Dispatch-table shape confirmed.
+- **Follow-up:** `cmd_doctor` extracted into helpers — CC **8 (B)** (#63). Rest of `cli.py`
+  left alone.
 
 ### B1 — Structural ≠ behavioural validation — CONFIRMED (structural); magnitude MEASURED
 - **Mechanism proven from source, provider-free:**

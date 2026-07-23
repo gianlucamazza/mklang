@@ -27,14 +27,12 @@ import sys
 from itertools import combinations
 from pathlib import Path
 
+from mklang.cli import _build_llm
+from mklang.config import load_provider
+from mklang.engine import run
+from mklang.model import parse_machine
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-
-from mklang.cli import _build_llm  # noqa: E402
-from mklang.config import load_provider  # noqa: E402
-from mklang.engine import run  # noqa: E402
-from mklang.model import parse_machine  # noqa: E402
-
 DEFAULT_CONFIG = str(ROOT / "config" / "runtime.example.yaml")
 
 # A suite of small synthetic machines, each stressing a DIFFERENT gate shape so
@@ -454,7 +452,7 @@ def main(argv: list[str] | None = None) -> int:
             for i in range(args.repeats):
                 try:
                     row = _run_once(name, args.config, judge_tier=args.judge_tier, machine_doc=doc)
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:  # provider/network/runtime failures become error rows
                     row = {
                         "provider": name,
                         "machine": machine_name,
