@@ -4,31 +4,37 @@
 [![Docs](https://img.shields.io/badge/docs-gianlucamazza.github.io%2Fmklang-blue)](https://gianlucamazza.github.io/mklang/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green)](./LICENSE)
 
-**A declarative language for LLM-driven state machines.** A `.mk` file (mk =
-_machine_) describes an agent as a set of states; an LLM _is_ the runtime that
-executes generative steps. The document is the program; the host supplies the
-interpreter, optional tools, and optional code-hook gates.
+**A declarative language for LLM-driven state machines, with an agent-first
+console to author and run them.** A `.mk` file (mk = _machine_) describes an
+agent as a set of states; an LLM _is_ the runtime that executes generative
+steps. The document is the program; the [`mklang console`](#the-console) is how
+you drive it. The host supplies the interpreter, optional tools, and optional
+code-hook gates.
 
 ```
 mklang : LangGraph  ::  a declarative spec : Python code
 ```
 
+Two things to look at first: **the language** — states with prose faces and
+natural-language gates as transitions — and **the console** — an agent-first TUI
+that authors, commissions, and traces machines for you. Everything else (CLI,
+MCP, scenario tests) is scaffolding around those two.
+
 ## See it in action
 
-| CLI: check, lint, and run                                                                  | Console: self-consistency fan-out                                                                       | Agent: free-language chained flows                                                                               |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [![Live mklang CLI demo](./docs/assets/demos/cli.gif)](./docs/demos.md#cli-check-lint-run) | [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) | [![Live mklang agent demo](./docs/assets/demos/agent.gif)](./docs/demos.md#agent-natural-language-commissioning) |
+| Console: agent-first TUI, stdlib, fan-out                                                               | Agent: free-language chained flows                                                                               |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) | [![Live mklang agent demo](./docs/assets/demos/agent.gif)](./docs/demos.md#agent-natural-language-commissioning) |
 
-| HITL: suspend and resume                                                                          | Search: live web tool                                                                                             | Tests: no API key                                                                                           |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [![Live mklang HITL demo](./docs/assets/demos/hitl.gif)](./docs/demos.md#hitl-suspend-and-resume) | [![Live mklang search demo](./docs/assets/demos/search.gif)](./docs/demos.md#search-chained-states-with-live-web) | [![mklang scenario test demo](./docs/assets/demos/test.gif)](./docs/demos.md#tests-deterministic-scenarios) |
+| HITL: escalate, suspend, resume                                                                   | Tests: deterministic, no API key                                                                            |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [![Live mklang HITL demo](./docs/assets/demos/hitl.gif)](./docs/demos.md#hitl-suspend-and-resume) | [![mklang scenario test demo](./docs/assets/demos/test.gif)](./docs/demos.md#tests-deterministic-scenarios) |
 
-All recordings run the real surfaces against DeepSeek — the agent and search
-demos also hit the live web — except the test demo, which is fully
-deterministic and needs no API key. See the
+Recordings run the real surfaces against DeepSeek (the agent demo also hits the
+live web); the test demo is fully deterministic and needs no API key. See the
 [full WebM recordings, transcripts, and reproducibility notes](./docs/demos.md).
 
-## The idea
+## The language
 
 Each **state** has four faces:
 
@@ -71,6 +77,27 @@ gates:
 Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
 (route to a handler), `fail` (abort). A global step `budget` prevents runaway loops.
 
+## The console
+
+`mklang console` is the agent-first front door and the primary way to use the
+language: type what you want, and the console's agent authors or picks a machine,
+commissions it, and streams the run **state-by-state** as a live trace tree —
+escalations and tool consent come back to you inline (human-in-the-loop is a
+first-class part of the flow, not an afterthought).
+
+```bash
+pip install mklang        # the console ships in the core package since 0.15.0
+mklang console
+```
+
+The agent itself **is** a machine
+([`agent.mk`](./src/mklang/data/console/agent.mk)) — read it, lint it, swap it
+with `--agent your_brain.mk` (ADR 0015). It has no privileged powers the language
+lacks: it commissions the same `.mk` machines you write, over the same gates and
+tiers. Sessions persist (`--continue`), agent replies render as Markdown, and the
+brain declares host clocks `today` / `now` for wall-clock questions. Details:
+[`docs/guides/console.md`](./docs/guides/console.md).
+
 ## Design commitments
 
 - **Document-first** — readable without the interpreter; prose-first for the
@@ -91,36 +118,37 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
   pins interpreter semantics so a second runtime can match the language contract.
 - **Language-agnostic runtime** — the spec assumes only "some host with an LLM".
 
-## Files
+## Reasoning architectures
 
-- [`SPEC.md`](./SPEC.md) — the full language specification.
-- [`schema/mklang.schema.json`](./schema/mklang.schema.json) — JSON Schema that
-  validates the structure of a `.mk` file (add
-  `# yaml-language-server: $schema=../schema/mklang.schema.json` at the top of a
-  `.mk` for editor validation).
-- [`config/runtime.example.yaml`](./config/runtime.example.yaml) — host-side
-  runtime config: the `tier → model` map for each provider
-  ([schema](./config/runtime.schema.json)).
-- [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
-- [`docs/`](./docs) — `guides/` ([best practices](./docs/guides/best-practices.md),
-  [patterns](./docs/guides/patterns.md), [authoring](./docs/guides/authoring.md),
-  [console](./docs/guides/console.md), [install](./docs/guides/install.md)),
-  `reference/` ([CLI](./docs/reference/cli.md), [stdlib](./docs/reference/stdlib.md),
-  [cheatsheet](./docs/reference/cheatsheet.md),
-  [architecture](./docs/reference/architecture.md)),
-  [`demos.md`](./docs/demos.md), and the [ADR index](./docs/adr/README.md);
-  plus [`ROADMAP.md`](./ROADMAP.md).
-- `examples/` — runnable machines:
-  - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
-  - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
-  - [`research_web.mk`](./examples/research_web.mk) — research loop with `tool: search` (host-bound).
-  - [`research_compress.mk`](./examples/research_compress.mk) — same + explicit notes compression.
-  - [`news_search.mk`](./examples/news_search.mk) — topic → `tool: search` → news brief (`today` + recency).
-  - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
-  - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
-  - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.
-  - [`react.mk`](./examples/react.mk) — reason/act/observe loop with `accumulate`.
-  - [`hook_gates.mk`](./examples/hook_gates.mk) — deterministic code-hook gates (exact policy).
+Every modern reasoning/agentic pattern maps onto the core (states + gates + prose +
+tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
+guidance in [`docs/guides/patterns.md`](./docs/guides/patterns.md).
+
+Ten of these ship as **ready, general-purpose `std_*` machines** — parameterized
+by context, callable from your machines (`call: std_refine`), runnable by name
+(from the CLI or the console's `/run`):
+
+```bash
+mklang run std_self_consistency --set task="Estimate the risk of X"
+```
+
+See the [stdlib catalog](./docs/reference/stdlib.md) (ADR 0012). The patterns that need host
+tools/hooks or static `call:` targets (ReAct, router, exact policy) stay as
+authored examples.
+
+| Architecture            | mklang constructs                                                |
+| ----------------------- | ---------------------------------------------------------------- |
+| Chain-of-Thought        | `reason: true`                                                   |
+| ReAct                   | think → `tool` state (host callable) → observation `accumulate`d |
+| Reflexion / self-refine | produce → self-judge gate → `repair`                             |
+| Self-consistency        | `sample: N` → reducer state (majority)                           |
+| Tree-of-Thought         | `sample: k` → score/select reducer → loop (depth via budget)     |
+| Plan-and-Execute        | planner `parse: list` (0.3) → `over: {{steps}}` → reducer        |
+| Debate / ensemble       | `over: {{personas}}` → synthesizer                               |
+| Map-Reduce              | `over: {{chunks}}` → reducer                                     |
+| Router-of-experts       | classify → `call` specialists                                    |
+| Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`              |
+| Exact policy checks     | gate `hook:` host `(ctx, output) -> bool` (no LLM)               |
 
 ## Runtime configuration
 
@@ -160,47 +188,17 @@ Per-tier params (Anthropic adaptive-thinking + `effort`, OpenAI/xAI
 `reasoning_effort`, …) live under `params`. Full map:
 [`config/runtime.example.yaml`](./config/runtime.example.yaml).
 
-## Reasoning architectures
-
-Every modern reasoning/agentic pattern maps onto the core (states + gates + prose +
-tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
-guidance in [`docs/guides/patterns.md`](./docs/guides/patterns.md).
-
-Ten of these ship as **ready, general-purpose `std_*` machines** — parameterized
-by context, callable from your machines (`call: std_refine`), runnable by name:
-
-```bash
-mklang run std_self_consistency --set task="Estimate the risk of X"
-```
-
-See the [stdlib catalog](./docs/reference/stdlib.md) (ADR 0012). The patterns that need host
-tools/hooks or static `call:` targets (ReAct, router, exact policy) stay as
-authored examples.
-
-| Architecture            | mklang constructs                                                |
-| ----------------------- | ---------------------------------------------------------------- |
-| Chain-of-Thought        | `reason: true`                                                   |
-| ReAct                   | think → `tool` state (host callable) → observation `accumulate`d |
-| Reflexion / self-refine | produce → self-judge gate → `repair`                             |
-| Self-consistency        | `sample: N` → reducer state (majority)                           |
-| Tree-of-Thought         | `sample: k` → score/select reducer → loop (depth via budget)     |
-| Plan-and-Execute        | planner `parse: list` (0.3) → `over: {{steps}}` → reducer        |
-| Debate / ensemble       | `over: {{personas}}` → synthesizer                               |
-| Map-Reduce              | `over: {{chunks}}` → reducer                                     |
-| Router-of-experts       | classify → `call` specialists                                    |
-| Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`              |
-| Exact policy checks     | gate `hook:` host `(ctx, output) -> bool` (no LLM)               |
-
 ## Install
 
 ```bash
-pipx install 'mklang[console,mcp]'   # or: pip install 'mklang[console,mcp]'
-mklang init --user                   # scaffold config, .env, and a sample machine
+pipx install 'mklang[mcp]'   # console TUI is in the core package; [mcp] adds the MCP server
+mklang init --user           # scaffold config, .env, and a sample machine
 # set DEEPSEEK_API_KEY (or another provider key) in the .env that init reported, then:
 mklang console
 ```
 
-The full walk-through — including a first run that needs **no API key** — is the
+`pip install mklang` works too. The full walk-through — including a first run
+that needs **no API key** — is the
 [Getting started guide](./docs/guides/getting-started.md). A one-shot
 [`scripts/install.sh`](./scripts/install.sh) and an Arch Linux
 [PKGBUILD](https://github.com/gianlucamazza/mklang/tree/main/packaging/arch)
@@ -210,10 +208,11 @@ Editor validation for `.mk` files works out of the box via the JSON Schema —
 point yaml-language-server at
 `https://raw.githubusercontent.com/gianlucamazza/mklang/main/schema/mklang.schema.json`.
 
-## Quickstart (from a checkout)
+## The CLI (for scripting and CI)
 
-Working on mklang itself, or preferring the repo? Clone it and drive everything
-through [uv](https://docs.astral.sh/uv/) — no install step needed:
+The console is the interactive surface; the `mklang` CLI is the scriptable one —
+same interpreter, same machines. Drive a checkout through
+[uv](https://docs.astral.sh/uv/) with no install step:
 
 ```bash
 git clone https://github.com/gianlucamazza/mklang && cd mklang
@@ -233,15 +232,12 @@ uv run mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
 uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
-For an installed package outside this repository, follow the
-[Getting started guide](./docs/guides/getting-started.md); host layout details
-are in the [installation guide](./docs/guides/install.md). Every command, flag,
-and exit code: [CLI reference](./docs/reference/cli.md).
+Every command, flag, and exit code: [CLI reference](./docs/reference/cli.md).
+The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models
+(`active: deepseek` by default); the key comes from `.env`. Same machine, any
+provider.
 
-The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models (`active:
-deepseek` by default); the key comes from `.env`. Same machine, any provider.
-
-## Test your machine without API keys
+### Test your machine without API keys
 
 `mklang test` runs your machine against a script of named scenarios with a
 **scripted LLM** (produce texts, judge picks) and scripted tools/hooks — fully
@@ -261,7 +257,7 @@ format the [conformance suite](./conformance/README.md) uses. A mismatch prints 
 minimal diff (the first differing key, expected vs actual) and exits 1. See
 [`examples/triage.test.yaml`](./examples/triage.test.yaml).
 
-## MCP server (agentic hosts)
+### MCP server (agentic hosts)
 
 Agent hosts that speak [MCP](https://modelcontextprotocol.io) (Claude Code and
 other clients) can **commission** a machine instead of embedding the library
@@ -275,33 +271,64 @@ claude mcp add mklang -- mklang-mcp
 
 The server auto-discovers config and keys through the same chain as the CLI
 (project → user host → `/etc/mklang` → bundled example, ADR 0023); pass
-`--config` only to pin a specific file.
+`--config` only to pin a specific file. It exposes commissioning tools
+(`run` / `resume`), discovery (`list_machines` / `describe_machine`), and `check`
+(ADR 0011 + 0013). `run` accepts inline `.mk` source or a path, with `inputs`
+merged into the context (host inputs are untrusted by provenance and reach
+prompts fenced — SPEC §6); `resume` takes an opaque handle or checkpoint file
+(e.g. `{"human.reply": "…"}` for HITL, injected values equally tainted). Live
+engine events stream as `mklang.event` logging notifications (ADR 0019).
+In-memory sessions hold suspensions unless you pass `checkpoint_path`. Provider
+keys resolve server-side from the environment, never over the wire.
 
-The server exposes commissioning tools (`run` / `resume`), discovery
-(`list_machines` / `describe_machine`), and `check` (ADR 0011 + 0013). `run`
-accepts inline `.mk` source or a path, with `inputs` merged into the context
-(host inputs are untrusted by provenance and reach prompts fenced — SPEC §6);
-`resume` takes an opaque handle or checkpoint file (e.g.
-`{"human.reply": "…"}` for HITL, injected values equally tainted). Live engine events stream as `mklang.event`
-logging notifications (ADR 0019). In-memory sessions hold suspensions unless
-you pass `checkpoint_path`. Provider keys resolve server-side from the
-environment, never over the wire.
+## Files
 
-## Console (interactive)
+- [`SPEC.md`](./SPEC.md) — the full language specification.
+- [`schema/mklang.schema.json`](./schema/mklang.schema.json) — JSON Schema that
+  validates the structure of a `.mk` file (add
+  `# yaml-language-server: $schema=../schema/mklang.schema.json` at the top of a
+  `.mk` for editor validation).
+- [`config/runtime.example.yaml`](./config/runtime.example.yaml) — host-side
+  runtime config: the `tier → model` map for each provider
+  ([schema](./config/runtime.schema.json)).
+- [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
+- [`docs/`](./docs) — `guides/` ([best practices](./docs/guides/best-practices.md),
+  [patterns](./docs/guides/patterns.md), [authoring](./docs/guides/authoring.md),
+  [console](./docs/guides/console.md), [install](./docs/guides/install.md)),
+  `reference/` ([CLI](./docs/reference/cli.md), [stdlib](./docs/reference/stdlib.md),
+  [cheatsheet](./docs/reference/cheatsheet.md),
+  [architecture](./docs/reference/architecture.md)),
+  [`demos.md`](./docs/demos.md), and the [ADR index](./docs/adr/README.md);
+  plus [`ROADMAP.md`](./ROADMAP.md).
+- `examples/` — runnable machines:
+  - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
+  - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
+  - [`research_web.mk`](./examples/research_web.mk) — research loop with `tool: search` (host-bound).
+  - [`research_compress.mk`](./examples/research_compress.mk) — same + explicit notes compression.
+  - [`news_search.mk`](./examples/news_search.mk) — topic → `tool: search` → news brief (`today` + recency).
+  - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
+  - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
+  - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.
+  - [`react.mk`](./examples/react.mk) — reason/act/observe loop with `accumulate`.
+  - [`hook_gates.mk`](./examples/hook_gates.mk) — deterministic code-hook gates (exact policy).
 
-`mklang console` (bundled by default since 0.15.0) is the agent-first front door: type
-what you want, the console's agent authors or picks a machine, commissions it,
-and streams the run state-by-state — escalations and tool consent come back to
-you inline. The agent itself **is** a machine
-([`agent.mk`](./src/mklang/data/console/agent.mk)) — read it, lint it, swap it
-with `--agent your_brain.mk` (ADR 0015). Agent replies render as Markdown; the
-brain declares host clocks `today` / `now` for wall-clock questions. Details:
-[`docs/guides/console.md`](./docs/guides/console.md).
+## Stack
 
-```bash
-pip install mklang
-mklang console
-```
+- **Language spec:** `.mk` = YAML validated by a JSON Schema; semantics fixed by
+  [`SPEC.md`](./SPEC.md) and an implementation-neutral
+  [conformance suite](./conformance/README.md).
+- **Reference interpreter:** Python ≥ 3.11, dependencies `pyyaml`, `jsonschema`,
+  `python-dotenv`, `openai` (the OpenAI-compatible adapter serves every
+  non-Anthropic provider), `rich`, and `textual` (the console).
+- **Providers:** DeepSeek / OpenAI / Google / OpenRouter / xAI / Mistral / local
+  via one OpenAI-compatible adapter, plus a native Anthropic adapter (extra).
+- **Surfaces:** the `textual` console TUI, the `mklang` CLI, and an optional
+  stdio `mklang-mcp` server (extra `mklang[mcp]`).
+- **Quality:** `ruff`, `mypy` (zero suppressions, a growing strict tier),
+  `pytest` + `pytest-cov` (coverage gate, offline via MockLLM/scripted LLM),
+  and the conformance suite — on an ubuntu 3.11–3.13 + macOS + Windows matrix.
+- **Packaging:** `hatchling`; published to PyPI via GitHub OIDC Trusted
+  Publishing; Arch [PKGBUILD](https://github.com/gianlucamazza/mklang/tree/main/packaging/arch).
 
 ## Status
 
@@ -310,8 +337,8 @@ mklang console
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
 (`--llm` optional) / **`test`** / **`doctor`**; [conformance suite](./conformance/README.md);
-machine **stdlib** (`std_*`); **MCP** host; **console** TUI (M1–M3); structured
-web `search` (offline stub by default); host tool stub architecture for
+machine **stdlib** (`std_*`); **MCP** host; **console** TUI (bundled by default);
+structured web `search` (offline stub by default); host tool stub architecture for
 `search` / `search_kb` / `send_reply` (ADR 0020); host clock conventions
 `context.today` / `context.now`; sectioned produce system prompts from
 `structure`+`execution`; output anti-cutoff + context budgets (ADR 0016–0019);
@@ -320,16 +347,16 @@ produce and judge prompts (SPEC §6, ADR 0025);
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green in the latest (0.10.0) release matrix,
-  including gate-divergence agreement **1.0** on the synthetic
-  harness — see
-  [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
-  Anthropic unit-tested; live may be billing-blocked.
+- **Live:** DeepSeek (default) and **OpenAI** green through the 0.14.0 and 0.15.0
+  release matrices, including cross-provider gate-divergence agreement **1.0** on
+  the [gate-divergence suite](./docs/experiments/gate-divergence.md). Anthropic
+  unit-tested; live e2e still billing-blocked (credits, not a missing key).
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
-- **Open / later:** Anthropic live when the account has credit; `on_truncate=continue`
-  stitching; language-level context zones (ROADMAP).
+- **Open / later:** the path to 1.0 (close the open SPEC §9 questions, a stated
+  stability policy); Anthropic live when the account has credit;
+  `on_truncate=continue` stitching; language-level context zones (ROADMAP).
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 
