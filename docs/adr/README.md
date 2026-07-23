@@ -32,3 +32,4 @@ change checklist in CONTRIBUTING says when to add one.
 | [0025](0025-untrusted-context-delimiting.md)    | Untrusted-context delimiting: provenance taint + data fences              | Accepted                               |
 | [0026](0026-stability-and-deprecation-policy.md) | Stability & deprecation policy for the package and the spec version      | Accepted                               |
 | [0027](0027-adopt-mkl-extension.md)             | Adopt the `.mkl` extension (rename from `.mk`)                            | Accepted                               |
+| [0028](0028-provisional-1.0-posture.md)         | Provisional posture of package 1.0.0                                      | Accepted                               |

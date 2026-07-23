@@ -1,0 +1,521 @@
+# Authoring-loop blind_spot corpus (validation finding B1/B2, issue #59).
+#
+# Each item freezes a *contract* before any authoring run:
+#   - request: what the agent is asked to author (NL + fixed names so the
+#     acceptance scenario can pin traces without seeing the produced source)
+#   - acceptance.scenarios: hand-written scripted-LLM tests (scripttest contract)
+#
+# The harness (scripts/authoring_blind_spot.py) authors from `request` only,
+# then measures check_pass (static) vs behaviour_pass (scenario). Writing the
+# scenarios *after* authoring would measure nothing.
+#
+# Shapes covered: linear, routing, repair, escalate/HITL, tool, accumulate,
+# fan-out sample, call, parse:list, multi-state.
+
+items:
+  - id: linear_summarize
+    shape: linear
+    request: |
+      Author a complete .mkl machine named `bs_summarize`.
+      - mklang: "0.3", entry: summarize, budget: 4, result: summary
+      - context: { note: "" }
+      - One generative state `summarize`: structure "a one-sentence summary of the note",
+        prompt reads {{note}}, output: summary.
+      - Gates: when "the output is a non-empty summary" then ok to END;
+        when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: happy
+          input: { note: "buy milk and eggs" }
+          llm:
+            produce: ["Buy milk and eggs."]
+            judge: [0]
+          expect:
+            status: done
+            result: "Buy milk and eggs."
+            trace:
+              - { state: summarize, policy: ok, to: END }
+
+  - id: linear_echo
+    shape: linear
+    request: |
+      Author machine `bs_echo`. mklang "0.3", entry: speak, budget: 3, result: answer.
+      context: { task: "" }. State `speak`: structure "a short direct answer",
+      prompt "Task: {{task}}", output answer.
+      Gates: when "the answer addresses the task" then ok to END; when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: happy
+          input: { task: "say hi" }
+          llm:
+            produce: ["hi"]
+            judge: [0]
+          expect:
+            status: done
+            result: "hi"
+            trace:
+              - { state: speak, policy: ok, to: END }
+
+  - id: route_spam
+    shape: routing
+    request: |
+      Author machine `bs_spam`. mklang "0.3", entry: label, budget: 4, result: verdict.
+      context: { text: "" }.
+      States:
+        - label (generative): structure 'exactly one of the words "spam", "ham", or "unknown"',
+          prompt "Classify: {{text}}", output tag.
+          Gates: when 'the output is the word "spam"' then ok to spam_path;
+                 when 'the output is the word "ham"' then ok to ham_path;
+                 when otherwise then ok to unknown_path.
+        - spam_path: structure "the single word spam", prompt "confirm spam", output verdict,
+          gates: when otherwise then ok to END.
+        - ham_path: structure "the single word ham", prompt "confirm ham", output verdict,
+          gates: when otherwise then ok to END.
+        - unknown_path: structure "the single word unknown", prompt "confirm unknown",
+          output verdict, gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: spam-path
+          input: { text: "BUY NOW!!!" }
+          llm:
+            produce: ["spam", "spam"]
+            judge: [0, 0]
+          expect:
+            status: done
+            result: "spam"
+            trace:
+              - { state: label, policy: ok, to: spam_path }
+              - { state: spam_path, policy: ok, to: END }
+
+  - id: route_sentiment
+    shape: routing
+    request: |
+      Author machine `bs_sentiment`. mklang "0.3", entry: assess, budget: 4, result: label.
+      context: { review: "" }.
+      State assess: structure 'exactly one of "positive", "negative", "mixed"',
+      prompt "Sentiment of: {{review}}", output label.
+      Gates: when 'the output is "positive"' then ok to END;
+             when 'the output is "negative"' then ok to END;
+             when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: negative
+          input: { review: "terrible, never again" }
+          llm:
+            produce: ["negative"]
+            judge: [1]
+          expect:
+            status: done
+            result: "negative"
+            trace:
+              - { state: assess, policy: ok, to: END }
+
+  - id: repair_grounding
+    shape: repair
+    request: |
+      Author machine `bs_ground`. mklang "0.3", entry: answer, budget: 6, result: reply.
+      context: { fact: "", question: "" }.
+      State answer: structure "a short answer grounded only in the given fact",
+      prompt "Fact: {{fact}}\nQuestion: {{question}}", output reply.
+      Gates: when "the answer is grounded in the given fact" then ok to END;
+             when "the answer invents facts not in the given fact" repair: 1 to answer;
+             when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: grounded-first-try
+          input: { fact: "The store is open 30 days a year.", question: "How many days?" }
+          llm:
+            produce: ["30 days"]
+            judge: [0]
+          expect:
+            status: done
+            result: "30 days"
+            trace:
+              - { state: answer, policy: ok, to: END }
+        - name: repair-then-ok
+          input: { fact: "The store is open 30 days a year.", question: "How many days?" }
+          llm:
+            produce: ["365 days", "30 days"]
+            judge: [1, 0]
+          expect:
+            status: done
+            result: "30 days"
+            trace:
+              - { state: answer, policy: repair, to: answer }
+              - { state: answer, policy: ok, to: END }
+
+  - id: escalate_severity
+    shape: escalate
+    request: |
+      Author machine `bs_severity`. mklang "0.3", entry: triage, budget: 5, result: note.
+      context: { incident: "" }.
+      States:
+        - triage (generative): structure 'exactly one of "page" or "log"',
+          prompt "Incident: {{incident}} — page a human or only log?", output decision.
+          Gates: when "the decision is to page a human" escalate: true to human;
+                 when otherwise then ok to logged.
+        - human: structure "a handoff note", prompt "Handoff: {{incident}}", output note,
+          gates: when otherwise then ok to END.
+        - logged: structure "a short log line", prompt "Log: {{incident}}", output note,
+          gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: escalates
+          input: { incident: "production down for all users" }
+          llm:
+            produce: ["page", "Human review needed for production outage."]
+            judge: [0, 0]
+          expect:
+            status: done
+            trace:
+              - { state: triage, policy: escalate, to: human }
+              - { state: human, policy: ok, to: END }
+        - name: logs-only
+          input: { incident: "cosmetic typo in docs" }
+          llm:
+            produce: ["log", "logged cosmetic typo"]
+            judge: [1, 0]
+          expect:
+            status: done
+            trace:
+              - { state: triage, policy: ok, to: logged }
+              - { state: logged, policy: ok, to: END }
+
+  - id: tool_calc
+    shape: tool
+    request: |
+      Author machine `bs_calc`. mklang "0.3", entry: compute, budget: 4, result: out.
+      tools: [{name: calc, description: "Evaluate arithmetic, input expression"}].
+      context: { expr: "" }.
+      State compute: tool: calc, input: { expression: "{{expr}}" }, output: out.
+      Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: add
+          input: { expr: "2+2" }
+          tools:
+            calc: ["4"]
+          expect:
+            status: done
+            result: "4"
+            trace:
+              - { state: compute, policy: ok, to: END }
+
+  - id: tool_then_reply
+    shape: tool
+    request: |
+      Author machine `bs_tool_reply`. mklang "0.3", entry: lookup, budget: 6, result: answer.
+      tools: [{name: search_kb, description: "KB search, input query"}].
+      context: { topic: "" }.
+      States:
+        - lookup: tool: search_kb, input: { query: "{{topic}}" }, output: facts.
+          gates: when otherwise then ok to draft.
+        - draft: structure "a short answer using the facts", prompt "Topic {{topic}} facts {{facts}}",
+          output answer. gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: with-facts
+          input: { topic: "login" }
+          llm:
+            produce: ["Retry after 60s."]
+            judge: [0]
+          tools:
+            search_kb: ["[kb] retry after 60s"]
+          expect:
+            status: done
+            result: "Retry after 60s."
+            trace:
+              - { state: lookup, policy: ok, to: draft }
+              - { state: draft, policy: ok, to: END }
+
+  - id: accumulate_notes
+    shape: accumulate
+    request: |
+      Author machine `bs_accum`. mklang "0.3", entry: collect, budget: 8, result: notes.
+      tools: [{name: calc, description: "arithmetic"}].
+      context: { expr: "", notes: [] }.
+      States:
+        - collect: tool: calc, input: { expression: "{{expr}}" }, output: notes, accumulate: true.
+          gates: when otherwise then ok to done.
+        - done: structure "the word done", prompt "finish", output flag.
+          gates: when otherwise then ok to END.
+      result should be the notes key (list).
+    acceptance:
+      scenarios:
+        - name: one-obs
+          input: { expr: "1+1" }
+          llm:
+            produce: ["done"]
+            judge: [0]
+          tools:
+            calc: ["2"]
+          expect:
+            status: done
+            context:
+              notes: ["2"]
+            trace:
+              - { state: collect, policy: ok, to: done }
+              - { state: done, policy: ok, to: END }
+
+  - id: sample_fanout
+    shape: fanout
+    request: |
+      Author machine `bs_sample`. mklang "0.3", entry: ideas, budget: 6, result: pick.
+      context: { topic: "" }.
+      States:
+        - ideas: structure "one short idea as a single line", prompt "Idea for {{topic}}",
+          output candidates, sample: 3.
+          gates: when otherwise then ok to pick.
+        - pick: structure "the best idea copied verbatim from the candidates",
+          prompt "Pick best of: {{candidates}}", output pick.
+          gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: three-samples
+          input: { topic: "snacks" }
+          llm:
+            # sample: 3 → three produce calls, then pick
+            produce: ["nuts", "fruit", "chips", "fruit"]
+            judge: [0, 0]
+          expect:
+            status: done
+            result: "fruit"
+            trace:
+              - { state: ideas, policy: ok, to: pick }
+              - { state: pick, policy: ok, to: END }
+
+  - id: call_child
+    shape: call
+    request: |
+      Author machine `bs_parent` that calls a sibling. Also the child is declared
+      only as a call target name `bs_child_echo` — the harness injects a tiny
+      child registry machine; you must still emit a valid parent document only
+      (one machine: bs_parent).
+      mklang "0.3", entry: run_child, budget: 5, result: out.
+      context: { msg: "" }.
+      State run_child: call: bs_child_echo, input: { text: "{{msg}}" }, output: out.
+      Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: calls
+          input: { msg: "ping" }
+          llm:
+            # child generative produce (parent is a call state — no produce)
+            produce: ["echo:ping"]
+            judge: [0]
+          expect:
+            status: done
+            result: "echo:ping"
+            trace:
+              - { state: run_child, policy: ok, to: END }
+    registry:
+      bs_child_echo:
+        mklang: "0.3"
+        machine: bs_child_echo
+        entry: e
+        budget: 2
+        result: text
+        context: { text: "" }
+        states:
+          e:
+            structure: "echo of the text prefixed with echo:"
+            prompt: "echo:{{text}}"
+            output: text
+            gates:
+              - when: otherwise
+                then: ok
+                to: END
+
+  - id: parse_list
+    shape: parse_list
+    request: |
+      Author machine `bs_list`. mklang "0.3", entry: list_items, budget: 4, result: items.
+      context: { topic: "" }.
+      State list_items: structure "a JSON array of 2 short strings", parse: list,
+      prompt "Two items about {{topic}} as a JSON array", output items.
+      Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: two-items
+          input: { topic: "fruit" }
+          llm:
+            produce: ['["apple", "pear"]']
+            judge: [0]
+          expect:
+            status: done
+            result: ["apple", "pear"]
+            trace:
+              - { state: list_items, policy: ok, to: END }
+
+  - id: two_step_plan
+    shape: multi_state
+    request: |
+      Author machine `bs_plan`. mklang "0.3", entry: plan, budget: 6, result: report.
+      context: { goal: "" }.
+      States:
+        - plan: structure "a one-line plan", prompt "Plan for: {{goal}}", output steps.
+          gates: when otherwise then ok to report.
+        - report: structure "a one-line report that mentions the plan",
+          prompt "Goal {{goal}} plan {{steps}}", output report.
+          gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: happy
+          input: { goal: "ship docs" }
+          llm:
+            produce: ["write the guide", "Guide drafted from: write the guide"]
+            judge: [0, 0]
+          expect:
+            status: done
+            result: "Guide drafted from: write the guide"
+            trace:
+              - { state: plan, policy: ok, to: report }
+              - { state: report, policy: ok, to: END }
+
+  - id: fail_gate
+    shape: fail
+    request: |
+      Author machine `bs_fail`. mklang "0.3", entry: guard, budget: 3, result: ok_text.
+      context: { code: "" }.
+      State guard: structure 'exactly "ok" or "bad"', prompt "Code: {{code}}", output ok_text.
+      Gates: when 'the output is "ok"' then ok to END;
+             when 'the output is "bad"' fail: true;
+             when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: fails
+          input: { code: "x" }
+          llm:
+            produce: ["bad"]
+            judge: [1]
+          expect:
+            status: halt
+            trace:
+              - { state: guard, policy: fail }
+
+  - id: reason_flag
+    shape: linear
+    request: |
+      Author machine `bs_reason`. mklang "0.3", entry: think, budget: 4, result: answer.
+      context: { q: "" }.
+      State think: structure "a short answer", reason: true, prompt "Q: {{q}}", output answer.
+      Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: happy
+          input: { q: "2+2" }
+          llm:
+            produce: ["4"]
+            judge: [0]
+          expect:
+            status: done
+            result: "4"
+            trace:
+              - { state: think, policy: ok, to: END }
+
+  - id: default_tier_fast
+    shape: linear
+    request: |
+      Author machine `bs_fast`. mklang "0.3", entry: go, budget: 3, result: out,
+      default_tier: fast. context: { x: "" }.
+      State go: structure "echo of x", prompt "{{x}}", output out.
+      Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: happy
+          input: { x: "z" }
+          llm:
+            produce: ["z"]
+            judge: [0]
+          expect:
+            status: done
+            result: "z"
+
+  - id: budget_tight
+    shape: linear
+    request: |
+      Author machine `bs_tight`. mklang "0.3", entry: one, budget: 2, result: out.
+      context: { n: "" }. Single state one: structure "the number as a word",
+      prompt "Number {{n}}", output out. Gates: when otherwise then ok to END.
+      Budget must be at least 2 (entry visit + END).
+    acceptance:
+      scenarios:
+        - name: happy
+          input: { n: "3" }
+          llm:
+            produce: ["three"]
+            judge: [0]
+          expect:
+            status: done
+            result: "three"
+
+  - id: multi_gate_otherwise_last
+    shape: routing
+    request: |
+      Author machine `bs_multi`. mklang "0.3", entry: pick, budget: 4, result: choice.
+      context: { s: "" }.
+      State pick: structure 'exactly "a" or "b" or "c"', prompt "Pick for {{s}}", output choice.
+      Gates MUST end with when: otherwise last:
+        - when 'the output is "a"' then ok to END
+        - when 'the output is "b"' then ok to END
+        - when otherwise then ok to END
+    acceptance:
+      scenarios:
+        - name: c-fallback
+          input: { s: "x" }
+          llm:
+            produce: ["c"]
+            judge: [2]
+          expect:
+            status: done
+            result: "c"
+            trace:
+              - { state: pick, policy: ok, to: END }
+
+  - id: hitl_review
+    shape: escalate
+    request: |
+      Author machine `bs_hitl`. mklang "0.3", entry: draft, budget: 6, result: final.
+      context: { request: "" }.
+      States:
+        - draft: structure "a decision that grants or denies the request",
+          prompt "grant: {{request}}", output draft.
+          Gates: when "the decision grants something" escalate: true to review;
+                 when otherwise then ok to END.
+        - review: structure "the human decision applied",
+          prompt "human said {{human.reply}} draft was {{draft}}", output final.
+          Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: grant-escalates
+          input: { request: "delete all data" }
+          llm:
+            produce: ["grant delete", "denied by human"]
+            judge: [0, 0]
+          expect:
+            status: done
+            # escalate suspends in live runs; under scripted engine escalate
+            # to a state continues when not suspended — expect escalate policy
+            trace:
+              - { state: draft, policy: escalate, to: review }
+              - { state: review, policy: ok, to: END }
+
+  - id: tool_search_stub
+    shape: tool
+    request: |
+      Author machine `bs_search`. mklang "0.3", entry: find, budget: 4, result: hits.
+      tools: [{name: search, description: "web search, input query"}].
+      context: { query: "" }.
+      State find: tool: search, input: { query: "{{query}}" }, output: hits.
+      Gates: when otherwise then ok to END.
+    acceptance:
+      scenarios:
+        - name: stub-hit
+          input: { query: "mklang" }
+          tools:
+            search: ['{"results":[{"title":"mklang"}]}']
+          expect:
+            status: done
+            result: '{"results":[{"title":"mklang"}]}'
+            trace:
+              - { state: find, policy: ok, to: END }

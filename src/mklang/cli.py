@@ -539,101 +539,131 @@ def cmd_console(args: argparse.Namespace) -> int:
     )
 
 
-def cmd_doctor(args: argparse.Namespace) -> int:
-    """Diagnose the resolved setup: which layer wins for config, env, keys, machines."""
-    import jsonschema
+def _doctor_load_config(config_arg: str | None) -> tuple[dict | None, str, Path, list[dict], bool]:
+    """Load and shape-check the resolved runtime config.
+
+    Returns ``(cfg_or_None, layer, path, items, ok)``. ``cfg`` is None when the
+    file is unreadable or fails the structural providers/active check.
+    """
     import yaml
 
-    from .config import ProviderConfig, load_env_files
-    from .paths import (
-        bundled_config_schema,
-        host_paths,
-        machine_layers,
-        resolve_config_with_layer,
-    )
-    from .registry import load_stdlib_registry
+    from .paths import resolve_config_with_layer
 
-    hp = host_paths()
-    items: list[dict] = []
-    ok = True
-    resolved, layer = resolve_config_with_layer(args.config)
-    cfg = None
+    resolved, layer = resolve_config_with_layer(config_arg)
     try:
         cfg = yaml.safe_load(resolved.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
-        ok = False
-        items.append(
-            {"name": f"config {resolved} · layer={layer}", "status": "error", "errors": [str(exc)]}
+        return (
+            None,
+            layer,
+            resolved,
+            [
+                {
+                    "name": f"config {resolved} · layer={layer}",
+                    "status": "error",
+                    "errors": [str(exc)],
+                }
+            ],
+            False,
         )
-    else:
-        valid = (
-            isinstance(cfg, dict)
-            and isinstance(cfg.get("providers"), dict)
-            and cfg.get("active") in cfg["providers"]
-        )
-        if valid:
-            items.append(
+    valid = (
+        isinstance(cfg, dict)
+        and isinstance(cfg.get("providers"), dict)
+        and cfg.get("active") in cfg["providers"]
+    )
+    if valid:
+        assert isinstance(cfg, dict)
+        return (
+            cfg,
+            layer,
+            resolved,
+            [
                 {
                     "name": f"config {resolved} · layer={layer} · active={cfg['active']}",
                     "status": "ok",
                 }
-            )
-        else:
-            ok = False
-            items.append(
-                {
-                    "name": f"config {resolved} · layer={layer}",
-                    "status": "error",
-                    "errors": ["must define `providers` and an `active` provider among them"],
-                }
-            )
-            cfg = None
-    if cfg:
-        schema = json.loads(bundled_config_schema().read_text(encoding="utf-8"))
-        violations = [
-            f"{'/'.join(str(p) for p in err.path) or '<root>'}: {err.message}"
-            for err in jsonschema.Draft7Validator(schema).iter_errors(cfg)
-        ]
-        if violations:
-            items.append(
-                {
-                    "name": f"schema {resolved.name} · {len(violations)} finding(s)",
-                    "status": "warning",
-                    "warnings": violations,
-                }
-            )
-    active = cfg["active"] if cfg else None
-    project_env, user_env = load_env_files()
-    items.append(
-        {
-            "name": f"env project={project_env or '-'} · user={user_env or '-'}",
-            "status": "ok",
-        }
+            ],
+            True,
+        )
+    return (
+        None,
+        layer,
+        resolved,
+        [
+            {
+                "name": f"config {resolved} · layer={layer}",
+                "status": "error",
+                "errors": ["must define `providers` and an `active` provider among them"],
+            }
+        ],
+        False,
     )
-    if cfg:
-        for pname, block in cfg["providers"].items():
-            env_var = (block or {}).get("api_key_env", "")
-            # The run-time readiness contract, not a reimplementation of it.
-            prov = ProviderConfig(
-                name=pname,
-                tiers={},
-                api_key=os.environ.get(env_var, "") if env_var else "",
-                api_key_env=env_var,
-            )
-            if host.missing_key_message(prov) is None:
-                note = "set" if prov.api_key else "optional"
-                status = "ok"
-            else:
-                note = "missing"
-                status = "error" if pname == active else "warning"
-                if pname == active:
-                    ok = False
-            items.append({"name": f"key {pname} · {env_var or '-'} · {note}", "status": status})
-    # Tool backends through the shared resolvers (ADR 0016) — the doctor
-    # reports what the runtime would actually bind, plus the deciding layer.
+
+
+def _doctor_schema_items(cfg: dict, resolved: Path) -> list[dict]:
+    """Schema findings for a loaded config (warnings only — never fail the doctor)."""
+    import jsonschema
+
+    from .paths import bundled_config_schema
+
+    schema = json.loads(bundled_config_schema().read_text(encoding="utf-8"))
+    violations = [
+        f"{'/'.join(str(p) for p in err.path) or '<root>'}: {err.message}"
+        for err in jsonschema.Draft7Validator(schema).iter_errors(cfg)
+    ]
+    if not violations:
+        return []
+    return [
+        {
+            "name": f"schema {resolved.name} · {len(violations)} finding(s)",
+            "status": "warning",
+            "warnings": violations,
+        }
+    ]
+
+
+def _doctor_env_item() -> dict:
+    """Which .env layers the runtime loaded (project / user)."""
+    from .config import load_env_files
+
+    project_env, user_env = load_env_files()
+    return {
+        "name": f"env project={project_env or '-'} · user={user_env or '-'}",
+        "status": "ok",
+    }
+
+
+def _doctor_provider_key_items(cfg: dict, active: str) -> tuple[list[dict], bool]:
+    """Per-provider API-key readiness; fails only when the *active* key is missing."""
+    items: list[dict] = []
+    ok = True
+    for pname, block in cfg["providers"].items():
+        env_var = (block or {}).get("api_key_env", "")
+        # The run-time readiness contract, not a reimplementation of it.
+        prov = ProviderConfig(
+            name=pname,
+            tiers={},
+            api_key=os.environ.get(env_var, "") if env_var else "",
+            api_key_env=env_var,
+        )
+        if host.missing_key_message(prov) is None:
+            note = "set" if prov.api_key else "optional"
+            status = "ok"
+        else:
+            note = "missing"
+            status = "error" if pname == active else "warning"
+            if pname == active:
+                ok = False
+        items.append({"name": f"key {pname} · {env_var or '-'} · {note}", "status": status})
+    return items, ok
+
+
+def _doctor_tool_backend_items(cfg: dict | None) -> list[dict]:
+    """What the runtime would bind for search/kb/mail/fs (ADR 0016 resolvers)."""
     from . import fs, kb, mail, search
     from .toolconfig import parse_tools_block
 
+    items: list[dict] = []
     tc = parse_tools_block(cfg or {})
     search_backend, search_src = search.resolve_backend_name(tc)
     search_status = "ok"
@@ -666,6 +696,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
             f"write={'on' if write else 'off'} ({write_src})"
         )
     items.append({"name": f"tools fs · backend={fs_desc}", "status": fs_status})
+    return items
+
+
+def _doctor_machine_and_state_items() -> list[dict]:
+    """Machine discovery roots + host state directories."""
+    from .paths import host_paths, machine_layers
+    from .registry import load_stdlib_registry
+
+    hp = host_paths()
+    items: list[dict] = []
     project_machines = Path("machines")
     machine_roots = [("project", project_machines)] if project_machines.is_dir() else []
     machine_roots += [(name, root) for name, root in reversed(machine_layers())]
@@ -675,6 +715,27 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     items.append({"name": f"machines stdlib · {len(load_stdlib_registry())}", "status": "ok"})
     items.append({"name": f"state sessions {hp.sessions}", "status": "ok"})
     items.append({"name": f"state checkpoints {hp.checkpoints}", "status": "ok"})
+    return items
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """Diagnose the resolved setup: which layer wins for config, env, keys, machines."""
+    items: list[dict] = []
+    ok = True
+    cfg, layer, resolved, config_items, cfg_ok = _doctor_load_config(args.config)
+    items.extend(config_items)
+    ok = ok and cfg_ok
+    if cfg is not None:
+        items.extend(_doctor_schema_items(cfg, resolved))
+    items.append(_doctor_env_item())
+    active: str | None = None
+    if cfg is not None:
+        active = str(cfg["active"])
+        key_items, keys_ok = _doctor_provider_key_items(cfg, active)
+        items.extend(key_items)
+        ok = ok and keys_ok
+    items.extend(_doctor_tool_backend_items(cfg))
+    items.extend(_doctor_machine_and_state_items())
     result = CommandResult(
         command="doctor",
         ok=ok,
