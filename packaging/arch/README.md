@@ -45,5 +45,9 @@ git add PKGBUILD .SRCINFO && git commit -m "mklang $(source ./PKGBUILD && echo "
 ## Release checklist
 
 On every mklang release, bump `pkgver`, reset `pkgrel=1`, and update
-`sha256sums` with the new sdist digest from
-`https://pypi.org/pypi/mklang/<version>/json`.
+`source` + `sha256sums` from `https://pypi.org/pypi/mklang/<version>/json`.
+
+Prefer the **content-addressed** `files.pythonhosted.org/packages/<hash>/…`
+URL from the JSON `urls[]` entry for the sdist: the legacy
+`packages/source/m/mklang/mklang-$pkgver.tar.gz` path can 404 for a while after
+publish. Verify the digest against a local download before pushing AUR.
