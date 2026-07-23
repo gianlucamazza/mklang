@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.15.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.16.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.15.0)
+## Where we are (language 0.3 / package 0.16.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -79,7 +79,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   `[console]` extra; actionable hint when it is somehow missing), test
   hermeticity against installed-host layers, ADR 0025 follow-up audit
   closed, SECURITY.md + issue/PR templates + dependabot.
-- **Unreleased:** quality ratchet (coverage gate 88 → **90**, mypy strict
+- **0.16.0:** quality ratchet (coverage gate 88 → **90**, mypy strict
   tier — add-only — for eleven leaf modules, targeted tests for the three
   weakest modules lifting total coverage to **92%**) and the gate-divergence
   harness widened from one synthetic machine to a **four-machine suite**.
