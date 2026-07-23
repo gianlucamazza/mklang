@@ -6,13 +6,13 @@ host-layout and config-resolution reference.
 Install the desired surfaces, then initialize either a project or your user host:
 
 ```bash
-pip install 'mklang[console,mcp]'
+pip install 'mklang[mcp]'  # console TUI included by default
 mklang init --user
 # or, inside a project
 mklang init
 ```
 
-`pipx install 'mklang[console,mcp]'` is equivalent and keeps the CLI in its own
+`pipx install 'mklang[mcp]'` is equivalent and keeps the CLI in its own
 environment; [`scripts/install.sh`](../../scripts/install.sh) does both steps in
 one go (idempotent, `--extras` to customize, `--uninstall` to remove the package
 while listing the user data it leaves behind).

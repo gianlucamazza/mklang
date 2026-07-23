@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.14.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **0.15.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.14.0)
+## Where we are (language 0.3 / package 0.15.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -75,6 +75,10 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   `<data-NONCE>` fences in produce/judge prompts, normative in SPEC §6 — and
   the CI quality gates: mypy (zero suppressions), coverage `fail_under = 88`,
   ubuntu 3.11–3.13 + macOS + Windows matrix in a reusable `quality.yml`.
+- **0.15.0:** console TUI in the core install (textual promoted from the
+  `[console]` extra; actionable hint when it is somehow missing), test
+  hermeticity against installed-host layers, ADR 0025 follow-up audit
+  closed, SECURITY.md + issue/PR templates + dependabot.
 - **Live (2026-07-22, release 0.12.0 matrix):** DeepSeek + OpenAI smoke and gate
   agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
 
@@ -227,7 +231,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   analog and per-path allow/deny rules (`Read(...)`/`Edit(...)` syntax shared
   by Claude Code and Grok); ADR 0024 defers both until a real use case appears.
 
-## Near-term after 0.14.0
+## Near-term after 0.15.0
 
 Elevate **one** host/stdlib item per package release (layer discipline: no
 language 0.4 without ADR + conformance):
