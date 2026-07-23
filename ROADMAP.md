@@ -83,9 +83,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped:** code-hook gates (`hook:`, `hooks:`, host bool predicates).
 - **Shipped:** untrusted-context delimiting — provenance taint + `<data-NONCE>`
   fences in produce and judge prompts (SPEC §6,
-  [ADR 0025](./docs/adr/0025-untrusted-context-delimiting.md)). Follow-up:
-  taint-aware rendering for the remaining `render()` callers (console brain
-  prompts, `llmlint` probes); dual-channel / CaMeL-style control stays open (§9).
+  [ADR 0025](./docs/adr/0025-untrusted-context-delimiting.md)). Follow-up
+  audit closed: the console brain is covered via `engine.run` (fence
+  regression test), `llmlint` probes use author faces only, and `resolve()`
+  tool/call inputs stay raw by design. Dual-channel / CaMeL-style control
+  stays open (§9).
 - **[later] Formal types for `structure`** — optional typed I/O before spending tokens.
 - **[maybe] Determinism knobs** — portable seed / temperature in the `.mk`.
 
@@ -250,8 +252,6 @@ language 0.4 without ADR + conformance):
   bindings for search/kb/mail/fs; per-knob precedence env > config > default;
   `mklang doctor` reports every binding with its deciding source.
 - **[shipped] Untrusted-context delimiting** (ADR 0025) — see Language.
-- **[next] Taint-aware rendering for the remaining `render()` callers** —
-  console brain prompts and `llmlint` probes (ADR 0025 follow-up).
 - **[later] Truncation `continue` stitching** (ADR 0018).
 
 Defer: context Layer 2 zones/pin, external console client, OTel, LangGraph.
