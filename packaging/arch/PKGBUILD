@@ -10,16 +10,23 @@ url="https://github.com/gianlucamazza/mklang"
 license=(Apache-2.0)
 depends=(python python-yaml python-jsonschema python-dotenv python-openai python-rich python-textual)
 makedepends=(python-build python-installer python-wheel python-hatchling)
-optdepends=('python-textual: mklang console TUI'
-            'python-mcp: mklang-mcp MCP server'
+checkdepends=(python-pytest python-mcp)
+optdepends=('python-mcp: mklang-mcp MCP server'
             'python-argcomplete: shell completions')
 backup=(etc/mklang/runtime.yaml)
 source=("https://files.pythonhosted.org/packages/source/m/mklang/mklang-$pkgver.tar.gz")
-sha256sums=('8b9844f990978013cb7c8b50a930cba295c829de76c62f3e6cf0b8555773f127')
+sha256sums=('f929a46d74252bfc5d3a87a37b769efb7adb48b1afe1b1634441d76f23ef97ce')
 
 build() {
   cd "mklang-$pkgver"
   python -m build --wheel --no-isolation
+}
+
+check() {
+  cd "mklang-$pkgver"
+  # Offline suite (MockLLM/scripted — no network, no keys); the sdist ships
+  # tests/ and conformance/ exactly for this.
+  PYTHONPATH=src python -m pytest tests -q
 }
 
 package() {

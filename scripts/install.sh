@@ -2,15 +2,18 @@
 # Install mklang for the current user via pipx (ADR 0021 phase 3).
 #
 #   curl -fsSL https://raw.githubusercontent.com/gianlucamazza/mklang/main/scripts/install.sh | bash
-#   ./scripts/install.sh [--extras console,mcp] [--force] [--uninstall]
+#   ./scripts/install.sh [--extras mcp,completions] [--force] [--uninstall]
 #
-# Installs the PyPI package with the console and MCP extras, then scaffolds the
-# XDG user host (config, .env, sample machine) with `mklang init --user`.
+# Installs the PyPI package (console TUI included since 0.15.0) with the MCP
+# and shell-completions extras, then scaffolds the XDG user host (config,
+# .env, sample machine) with `mklang init --user`.
 # Never touches system paths and never overwrites existing user files.
 
 set -euo pipefail
 
-EXTRAS="mcp"  # the console ships in the core package since 0.15.0
+# The console ships in the core package since 0.15.0; completions puts
+# argcomplete in the venv so `register-python-argcomplete mklang` works.
+EXTRAS="mcp,completions"
 FORCE=0
 UNINSTALL=0
 
@@ -21,7 +24,7 @@ usage() {
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--extras)
-		EXTRAS="${2:?--extras needs a value, e.g. console,mcp}"
+		EXTRAS="${2:?--extras needs a value, e.g. mcp,completions}"
 		shift 2
 		;;
 	--force)
@@ -116,7 +119,11 @@ cat <<EOF
 mklang is installed. Next steps:
   1. Set a provider API key:  edit $config_dir/.env  (DEEPSEEK_API_KEY by default)
   2. Open the console TUI:    mklang console
-  3. Or try it without a key (scripted, deterministic):
+  3. Shell completions (bash): add to ~/.bashrc:
+       eval "\$(register-python-argcomplete mklang)"
+     (needs register-python-argcomplete on PATH — e.g. pacman -S python-argcomplete;
+      zsh/fish: see the install guide)
+  4. Or try it without a key (scripted, deterministic):
        mklang test $data_dir/machines/hello.mk \\
          --script $data_dir/machines/hello.test.yaml
 
