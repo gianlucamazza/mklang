@@ -294,9 +294,9 @@ it.
 - Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
 - Console: tool **consent** once per session; workspace confinement for authored `.mkl` files.
 - MCP: **read-only to disk by design.** The server can author, validate (`check`)
-  and run inline machines, but exposes **no persist/write tool** — a headless host
-  gains no filesystem authority (ADR 0011/0013; the only disk write is an explicit
-  per-call `checkpoint_path`). The console's guard model (workspace confinement,
+  and run inline machines, but exposes **no persist/write tool** — headless hosts
+  gain no general filesystem-write authority (ADR 0011/0013; the only disk write is
+  an explicit per-call `checkpoint_path`). The console's guard model (workspace confinement,
   human `confirm` on overwrite) assumes an interactive human and does **not**
   transfer to a headless host — so it isn't granted there.
 - Do not confuse **run trace / live events / ops logging** (§12) or turn arbitrary disk into a language feature (§13).

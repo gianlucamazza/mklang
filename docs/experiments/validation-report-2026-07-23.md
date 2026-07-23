@@ -153,7 +153,7 @@ actually measured.
   control-flow-critical `severity_escalate` and a `grounding_repair` loop. The recorded note —
   *"free-text outputs diverge on the contestable machines while routing stays identical"* — is
   precisely the reassurance the plan asked for: agreement is not measured only on easy cases.
-- **Anthropic priced:** billing-blocked, not key-blocked (SPEC §, README, experiment doc all
+- **Anthropic priced:** billing-blocked, not key-blocked (SPEC §9, README, experiment doc all
   say so). One four-machine × 3-repeat Anthropic pass is ~12 small synthetic runs ≈ **~30k
   tokens, well under \$1**. The decision to leave it blocked is therefore a credit-purchase
   choice, not a cost-at-scale one.

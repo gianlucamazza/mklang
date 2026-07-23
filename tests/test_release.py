@@ -63,11 +63,13 @@ _DISTRIBUTION_CUTOFF = (0, 5, 3)
 
 
 def _version_tuple(version: str) -> tuple[int, ...]:
+    """Parse a dotted version into a padded 3-tuple for ordering (`0.5` -> (0, 5, 0))."""
     parts = [int(p) for p in version.split(".")]
     return tuple(parts + [0] * (3 - len(parts)))
 
 
 def _changelog_versions() -> list[str]:
+    """Every version heading (`## [X.Y.Z]`) declared in CHANGELOG.md."""
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     return re.findall(r"^## \[([0-9][^\]]*)\]", changelog, re.MULTILINE)
 
@@ -90,6 +92,7 @@ def _git_tags() -> set[str] | None:
 
 
 def test_changelog_entries_from_distribution_cutoff_are_tagged():
+    """Every CHANGELOG entry from the distribution cutoff up must carry a git tag."""
     tags = _git_tags()
     if tags is None:
         pytest.skip("no git tags available (sdist or shallow checkout)")
