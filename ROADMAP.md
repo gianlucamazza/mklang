@@ -77,6 +77,11 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 ## Language
 
 - **Shipped:** code-hook gates (`hook:`, `hooks:`, host bool predicates).
+- **Shipped:** untrusted-context delimiting — provenance taint + `<data-NONCE>`
+  fences in produce and judge prompts (SPEC §6,
+  [ADR 0025](./docs/adr/0025-untrusted-context-delimiting.md)). Follow-up:
+  taint-aware rendering for the remaining `render()` callers (console brain
+  prompts, `llmlint` probes); dual-channel / CaMeL-style control stays open (§9).
 - **[later] Formal types for `structure`** — optional typed I/O before spending tokens.
 - **[maybe] Determinism knobs** — portable seed / temperature in the `.mk`.
 

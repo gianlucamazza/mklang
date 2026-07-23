@@ -25,7 +25,10 @@ machine:
         - { when: otherwise, then: ok, to: END }
 llm:
   produce:
-    "answer using [kb] fact A": "final-answer"
+    # The observation is tainted and reaches the prompt fenced (ADR 0025);
+    # keying on the observation text alone stays fence-agnostic while still
+    # proving it crossed into the prompt.
+    "[kb] fact A": "final-answer"
 tools:
   search_kb: ["[kb] fact A"]
 expect:

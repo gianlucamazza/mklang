@@ -1,6 +1,7 @@
 """Console tools (ADR 0015 M1b): bridge-injected, workspace-confined, offline."""
 
 import json
+import re
 
 import pytest
 
@@ -373,8 +374,9 @@ states:
     (tools.workspace / "dated.mk").write_text(src, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "dated", "inputs": "{}"}))
     assert out["status"] == "done"
-    # echo_llm returns the user prompt, which interpolates today
-    assert "today is 20" in out["result"]  # ISO year prefix
+    # echo_llm returns the user prompt; the injected date is host-supplied,
+    # so it interpolates fenced (ADR 0025). ISO year prefix inside the fence.
+    assert re.search(r"today is <data-\w+>\n20", out["result"])
 
 
 def test_run_machine_injects_declared_now(tools):
@@ -399,5 +401,5 @@ states:
     (tools.workspace / "clocked.mk").write_text(src, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "clocked", "inputs": "{}"}))
     assert out["status"] == "done"
-    assert "now is 20" in out["result"]
+    assert re.search(r"now is <data-\w+>\n20", out["result"])
     assert "T" in out["result"]

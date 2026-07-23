@@ -29,3 +29,4 @@ change checklist in CONTRIBUTING says when to add one.
 | [0022](0022-cli-console-experience.md)          | Human-first CLI presentation and responsive console workspace             | Accepted                               |
 | [0023](0023-global-local-config-separation.md)  | Global vs local configuration separation                                  | Accepted                               |
 | [0024](0024-fs-data-tools.md)                   | Filesystem data tools with a coding-tool workspace model                  | Accepted                               |
+| [0025](0025-untrusted-context-delimiting.md)    | Untrusted-context delimiting: provenance taint + data fences              | Accepted                               |

@@ -9,7 +9,7 @@ from dataclasses import dataclass, replace
 
 from .checkpoint import decode_repair, make_frame
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
-from .interpolate import fmt, lookup, render, resolve
+from .interpolate import fmt, lookup, render, render_delimited, resolve
 from .llm.base import LLM
 from .model import Gate, Machine, State
 
@@ -55,11 +55,11 @@ def _judge_model_for(state: State, machine: Machine, deps: "_Ctx") -> str:
     return _model_for(state, machine, deps.tiers)
 
 
-def _system(state: State) -> str:
+def _system(state: State, data_nonce: str | None = None) -> str:
     """Produce system message: structure + execution (see ``llm.prompts``)."""
     from .llm.prompts import build_produce_system
 
-    return build_produce_system(state)
+    return build_produce_system(state, data_nonce=data_nonce)
 
 
 @dataclass
@@ -96,6 +96,9 @@ class _Ctx:
     # Cooperative cancellation, checked between states. The active provider
     # call is never interrupted mid-response.
     cancel_requested: Callable[[], object] | None = None
+    # Untrusted-context delimiting (SPEC §6 / ADR 0025): fence tainted
+    # interpolations in produce prompts. Off only for debugging/comparison.
+    delimit: bool = True
 
 
 def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields: object) -> None:
@@ -212,6 +215,7 @@ def _exec_one(
     machine: Machine,
     depth: int,
     resume: list[dict] | None = None,
+    tainted: set[str] | None = None,
 ) -> tuple[object, list[dict] | None, str | None, tuple[int, int], dict]:
     """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
 
@@ -219,8 +223,14 @@ def _exec_one(
     tool/call states.
     """
     empty_meta: dict = {}
+    tainted = tainted if tainted is not None else set()
     if state.kind == "call":
         sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
+        # An input key is trusted in the sub-run unless its value interpolates
+        # a tainted key here; the sub-run's own provenance rule handles the rest.
+        trusted_inputs = {
+            k for k, v in (state.input or {}).items() if not _refs_tainted(v, tainted)
+        }
         sub_machine = deps.registry.get(state.call)
         if sub_machine is None:
             raise KeyError(f"call: unknown machine {state.call!r}")
@@ -244,6 +254,8 @@ def _exec_one(
             on_truncate=deps.on_truncate,
             prompt_value_chars=deps.prompt_value_chars,
             cancel_requested=deps.cancel_requested,
+            delimit=deps.delimit,
+            trusted_keys=trusted_inputs,
         )
         u = sub.usage or {}
         tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -260,12 +272,21 @@ def _exec_one(
     tier = state.tier or machine.default_tier
     model = _model_for(state, machine, deps.tiers)
     params = deps.tier_params.get(tier)
-    user = render(state.prompt, ctx, value_chars=deps.prompt_value_chars) + (
-        f"\n\n[Repair feedback] {feedback}" if feedback else ""
-    )
+    if deps.delimit:
+        prompt, nonce = render_delimited(
+            state.prompt, ctx, value_chars=deps.prompt_value_chars, tainted=tainted
+        )
+    else:
+        prompt, nonce = render(state.prompt, ctx, value_chars=deps.prompt_value_chars), None
+    user = prompt + (f"\n\n[Repair feedback] {feedback}" if feedback else "")
     temperature = 0.8 if state.sample else 0.4
     p = deps.llm.produce(
-        model, _system(state), user, reason=state.reason, temperature=temperature, params=params
+        model,
+        _system(state, nonce),
+        user,
+        reason=state.reason,
+        temperature=temperature,
+        params=params,
     )
     meta: dict = {}
     if getattr(p, "truncated", False):
@@ -304,13 +325,19 @@ def _parse_list(text: str) -> list:
     return value
 
 
-def _safe_exec(state, ctx, deps, machine, depth):
+def _safe_exec(state, ctx, deps, machine, depth, tainted=None):
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
         # Branches never suspend: a budget-exhausted sub halts into a marker as
         # usual, and an escalate inside a branch just routes.
         out = _exec_one(
-            state, ctx, "", replace(deps, suspendable=False, escalate_suspend=False), machine, depth
+            state,
+            ctx,
+            "",
+            replace(deps, suspendable=False, escalate_suspend=False),
+            machine,
+            depth,
+            tainted=tainted,
         )
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
@@ -370,6 +397,15 @@ def _pick_otherwise(eligible: list[tuple[int, Gate]]) -> tuple[int, Gate] | None
     return None
 
 
+def _refs_tainted(value: object, tainted: set[str]) -> bool:
+    """True when an `input:` value interpolates any tainted top-level key.
+
+    Non-string YAML values are author literals — trusted by construction."""
+    if not isinstance(value, str) or not tainted:
+        return False
+    return any(m.group(1).split(".")[0] in tainted for m in _OVER_VAR.finditer(value))
+
+
 def _run_impl(
     machine: Machine,
     context: dict,
@@ -390,6 +426,8 @@ def _run_impl(
     on_truncate: str = "report",
     prompt_value_chars: int | None = None,
     cancel_requested: Callable[[], object] | None = None,
+    delimit: bool = True,
+    trusted_keys: set[str] | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -411,8 +449,15 @@ def _run_impl(
         on_truncate,
         prompt_value_chars,
         cancel_requested,
+        delimit,
     )
     ctx = dict(context)
+    # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
+    # value is still the author's `.mk` literal; host-supplied or host-overridden
+    # values are untrusted unless the embedder vouches via `trusted_keys`.
+    tainted: set[str] = {k for k in ctx if machine.context.get(k) != ctx[k]} - set(
+        trusted_keys or ()
+    )
     state_id = machine.entry
     trace: list[dict] = []
     steps = 0
@@ -438,6 +483,9 @@ def _run_impl(
         total_out = frame["total_out"]
         feedback = frame["feedback"]
         repair_left = decode_repair(frame["repair_left"])
+        # Frames without a taint record (pre-ADR 0025 checkpoints, or values
+        # injected by `resume --set`) default to all-tainted — fail-safe.
+        tainted = set(frame.get("tainted", frame["ctx"].keys()))
         deeper = list(resume[1:]) or None
 
     def usage() -> dict:
@@ -462,6 +510,7 @@ def _run_impl(
             feedback,
             repair_left,
             trace,
+            tainted,
         )
 
     def suspended(reason: str) -> RunResult:
@@ -560,9 +609,19 @@ def _run_impl(
                     usage=usage(),
                 )
             steps += max(1, len(branches))
+            branch_tainted = set(tainted)
+            if S.over:
+                m_over = _OVER_VAR.search(S.over)
+                if m_over and m_over.group(1).split(".")[0] in tainted:
+                    branch_tainted.add("item")  # `index` stays trusted
             if branches:
                 with ThreadPoolExecutor(max_workers=deps.max_workers) as ex:
-                    outs = list(ex.map(lambda b: _safe_exec(S, b, deps, machine, depth), branches))
+                    outs = list(
+                        ex.map(
+                            lambda b: _safe_exec(S, b, deps, machine, depth, branch_tainted),
+                            branches,
+                        )
+                    )
             else:
                 outs = []
             result: object = [o[0] for o in outs]
@@ -588,7 +647,7 @@ def _run_impl(
             steps += 1
             try:
                 out, sub, reasoning, (step_in, step_out), meta = _exec_one(
-                    S, ctx, feedback, deps, machine, depth, resume=sub_resume
+                    S, ctx, feedback, deps, machine, depth, resume=sub_resume, tainted=tainted
                 )
             except _Suspend as s:
                 # A sub-call suspended: prepend this level's loop-top frame and keep unwinding.
@@ -650,7 +709,9 @@ def _run_impl(
         if step_in or step_out:
             step["cost"] = {"input_tokens": step_in, "output_tokens": step_out}
 
-        # 2) DEPOSIT
+        # 2) DEPOSIT — every deposit is tainted: tool observations and call
+        # results are external data, and produce output is derived from
+        # untrusted input by an untrusted oracle (SPEC §11).
         if S.accumulate:
             prev = ctx.get(S.output, [])
             if not isinstance(prev, list):
@@ -658,6 +719,7 @@ def _run_impl(
             ctx[S.output] = prev + [result]
         else:
             ctx[S.output] = result
+        tainted.add(S.output)
 
         # 3) JUDGE — hooks (host bool) then otherwise then fused LLM prose (SPEC §5)
         eligible = [
@@ -759,6 +821,8 @@ def run(
     on_truncate: str = "report",
     prompt_value_chars: int | None = None,
     cancel_requested: Callable[[], object] | None = None,
+    delimit: bool = True,
+    trusted_keys: set[str] | None = None,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
@@ -785,6 +849,8 @@ def run(
         on_truncate,
         prompt_value_chars,
         cancel_requested,
+        delimit,
+        trusted_keys,
     )
     if on_event is not None:
         try:

@@ -8,8 +8,9 @@ from ..errors import JudgeUnparseable, ProviderError
 from .base import (
     JUDGE_CONTEXT_CHARS,
     JUDGE_SYSTEM,
-    TRANSIENT_STATUS,
     Produced,
+    TRANSIENT_STATUS,
+    build_judge_user,
     is_connection_error,
     is_length_stop,
     parse_choice,
@@ -94,14 +95,12 @@ class OpenAICompatLLM:
         context: dict,
         reasoning: str | None = None,
     ) -> tuple[int, str | None]:
-        lines = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(conditions))
-        parts = [f"OUTPUT:\n{output}"]
-        if reasoning:
-            parts.append(f"REASONING:\n{reasoning}")
-        parts.append(f"CONTEXT:\n{format_judge_context(context, JUDGE_CONTEXT_CHARS)}")
-        parts.append(f"CONDITIONS (priority order, 1-based):\n{lines}")
-        parts.append('Reply with ONLY a JSON object: {"choice": <number>}.')
-        user = "\n\n".join(parts)
+        user = build_judge_user(
+            conditions,
+            output,
+            format_judge_context(context, JUDGE_CONTEXT_CHARS),
+            reasoning=reasoning,
+        )
         r = self._create(
             model=model,
             messages=[
