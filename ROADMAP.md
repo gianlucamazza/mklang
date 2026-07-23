@@ -79,8 +79,14 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   `[console]` extra; actionable hint when it is somehow missing), test
   hermeticity against installed-host layers, ADR 0025 follow-up audit
   closed, SECURITY.md + issue/PR templates + dependabot.
-- **Live (2026-07-22, release 0.12.0 matrix):** DeepSeek + OpenAI smoke and gate
-  agreement **1.0** green. Anthropic unit-tested; live may be billing-blocked.
+- **Unreleased:** quality ratchet (coverage gate 88 → **90**, mypy strict
+  tier — add-only — for eleven leaf modules, targeted tests for the three
+  weakest modules lifting total coverage to **92%**) and the gate-divergence
+  harness widened from one synthetic machine to a **four-machine suite**.
+- **Live (release 0.14.0 & 0.15.0 matrices):** DeepSeek + OpenAI live smoke
+  and cross-provider gate agreement **1.0** green through both release
+  pipelines (PyPI Trusted Publishing). Anthropic remains unit-tested; live
+  e2e still billing-blocked (credits, not a missing key).
 
 ## Language
 
@@ -115,33 +121,43 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 ## Quality
 
 - **Shipped:** CI quality gates — mypy (zero suppressions, every function in
-  `src/mklang` annotated), pytest-cov with a `fail_under = 88` coverage gate
-  (90% measured at introduction; ratchet up, never down), and an offline test
-  matrix (ubuntu 3.11–3.13 + macOS + Windows, console extra installed) in a
-  reusable `quality.yml` workflow shared by `ci.yml` and `release.yml`
-  (pinned to the release tag).
+  `src/mklang` annotated) with an **add-only strict tier** for eleven leaf
+  modules (full `--strict` minus `disallow_any_generics`, the documented JSON
+  idiom — modules may only ever be added to the tier, the inverse of a
+  relaxation list); pytest-cov with a `fail_under = 90` coverage gate (92%
+  measured; ratchet up, never down); and an offline test matrix (ubuntu
+  3.11–3.13 + macOS + Windows) in a reusable `quality.yml` workflow shared by
+  `ci.yml` and `release.yml` (pinned to the release tag).
 - **Shipped:** gated live smoke tests — provider-agnostic, opt-in via
   `MKLANG_LIVE=1` (`MKLANG_LIVE_PROVIDER=<name>` to override the config's
   `active`); skips cleanly when the key is missing. Anthropic goes through the
   same path as every other provider.
-- **Shipped (scaffold):** cross-provider **gate-divergence** harness —
+- **Shipped:** cross-provider **gate-divergence** harness —
   [`scripts/gate_divergence.py`](./scripts/gate_divergence.py) +
-  [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
-  Document portability is syntactic until agreement rates are measured live.
+  [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md)
+  — now a **four-machine suite**, each stressing a different gate shape
+  (multi-way `ok` routing, borderline judgement, control-flow `escalate`,
+  `repair` grounding). `--machines` selects the set (default the single
+  `gate_divergence` for release-gate comparability, or `all`); agreement and
+  the `--min-agreement` release floor are computed **per-machine** (cross-machine
+  signatures differ by construction). The harness is offline-testable via an
+  injectable `build_llm`. Document portability stays syntactic until agreement
+  is measured live at scale.
 - **Shipped (results, 2026-07-16):** first gate-divergence table —
-  deepseek×openai, 3 repeats each, **agreement rate 1.0** on the synthetic spam
+  deepseek×openai, 3 repeats each, **agreement rate 1.0** on the single spam
   machine (tier-following judges). Dated row in
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
-  Re-run when model IDs or judge defaults change; Anthropic still billing-blocked.
+  Re-run at suite scale when credits allow; Anthropic still billing-blocked.
 - **Shipped:** LLM-assisted lint (`mklang lint --llm`,
   [ADR 0010](./docs/adr/0010-llm-assisted-lint.md), Accepted) — opt-in probe of
   ambiguous / overlapping prose `when` conditions with the real gate judge
   (K synthetic outputs × R judge repeats per multi-gate state). Advisory only:
   never a `--strict` error source, never in the offline CI path.
-- **Shipped (partial multi-provider live, 2026-07-16):** DeepSeek + **OpenAI**
-  live smoke green (`MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=…`). **Anthropic** adapter
-  remains unit-tested; live e2e blocked by **account billing/credits**, not by a
-  missing key (key present in 1Password; API returns purchase-credits error).
+- **Shipped (multi-provider live, 0.14.0 & 0.15.0 release matrices):** DeepSeek +
+  **OpenAI** live smoke and gate agreement green through both release pipelines.
+  **Anthropic** adapter remains unit-tested; live e2e blocked by **account
+  billing/credits**, not by a missing key (key present; API returns a
+  purchase-credits error).
 
 ## Organizational
 
@@ -151,6 +167,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **Shipped:** [best practices](./docs/guides/best-practices.md) — layer discipline
   (language / host / surface), tool contracts, web+time+cutoff checklist,
   anti-patterns, and explicit non-goals for core (bash/FS, knowledge-cutoff magic).
+- **Shipped:** community & security hygiene — `SECURITY.md` (private GitHub
+  Security Advisories, scope aligned with SPEC §11 — persuasion of fenced
+  content and checkpoint-at-rest are documented limitations, not
+  vulnerabilities), issue forms (bug asks for a scripted `mklang test` repro;
+  feature asks for the layer), a default PR template with the quality-gate
+  checklist, and dependabot (grouped uv deps + GitHub Actions, weekly).
 - **0.5.4 release path:** a published GitHub Release builds and tests one artifact
   set, requires DeepSeek + OpenAI live agreement, then publishes through PyPI
   Trusted Publishing (OIDC, no long-lived package token). The one-time external
@@ -233,29 +255,25 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Near-term after 0.15.0
 
-Elevate **one** host/stdlib item per package release (layer discipline: no
-language 0.4 without ADR + conformance):
+The 0.13–0.15 cycle shifted from feature growth to **maturity**: quality gates,
+untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
+"mature framework" are stability and evidence, not more surface:
 
-- **[shipped] `std_research`** — search → ground pattern as a stdlib machine
-  (discoverable from console/MCP); dogfoods `today` + the bundled `tool: search`,
-  with an honest no-backend state instead of answering from training knowledge.
-- **Shipped (ADR 0021 phases 1–3):** XDG user/system dirs, config resolution,
-  `mklang init` (now seeding a `hello.mk` sample), state migration, layered
-  machine discovery, and phase 3 packaging: `scripts/install.sh` (pipx) and the
-  AUR recipe in `packaging/arch/`. The optional MCP user service is deferred —
-  the server is stdio-only, so there is nothing for a persistent unit to listen
-  on until a network transport lands.
-- **Shipped (ADR 0023):** global/local config separation — per-key `.env`
-  layering, `mklang-mcp` config auto-discovery, workspace and HITL-checkpoint
-  XDG fallbacks, `mklang doctor`, and the removal of the dead `run:` block and
-  the legacy `~/.mklang` sessions fallback.
-- **[shipped] `std_compress`** — the compression pattern of
-  `research_compress.mk` as a composable stdlib utility (call it mid-loop to
-  rewrite an accumulator short), not a near-duplicate of `std_research`.
-- **[shipped] `runtime.yaml` tools block** (ADR 0016) — declarative backend
-  bindings for search/kb/mail/fs; per-knob precedence env > config > default;
-  `mklang doctor` reports every binding with its deciding source.
-- **[shipped] Untrusted-context delimiting** (ADR 0025) — see Language.
+- **[next] Path to 1.0** — resolve the open questions in [SPEC §9](./SPEC.md)
+  (close each as decided, or record it as a permanent non-goal via an ADR), a
+  stated **stability & deprecation policy** for the package and the `mklang:`
+  spec version, then drop the `Development Status :: 4 - Beta` classifier. This
+  is the explicit blocker the maturity assessment named.
+- **[next] Showcase refresh** — replace the peripheral demo recordings with a
+  small set that makes the CLI, run flow, and architecture legible (gates,
+  trace, HITL, `call`/fan-out, MCP). Analysis + plan tracked separately; the
+  VHS→manifest pipeline and the manual **Demo assets** workflow already exist.
+- **[next] gate-divergence at scale** — run the four-machine suite live across
+  providers and publish a dated agreement table (harness ready).
+- **[next] Live-verify Anthropic** — unblock when credits allow; already routed
+  through the live matrix and the divergence harness.
 - **[later] Truncation `continue` stitching** (ADR 0018).
+- **[later] Editor tooling / LSP**; **[maybe]** budget split, async fan-out,
+  per-state caching, external console client, OTel export, LangGraph interop.
 
-Defer: context Layer 2 zones/pin, external console client, OTel, LangGraph.
+Defer: context Layer 2 zones/pin.
