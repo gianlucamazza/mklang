@@ -49,6 +49,9 @@ nav:
   - Decisions (ADRs): adr/README.md
   - Research:
       - Gate divergence: experiments/gate-divergence.md
+      - Authoring blind_spot: experiments/authoring-blind-spot.md
+      - Validation report 2026-07-23: experiments/validation-report-2026-07-23.md
+      - Five-reader distribution: experiments/distribution-five-reader.md
   - Project:
       - Roadmap: ROADMAP.md
       - Changelog: CHANGELOG.md

@@ -30,15 +30,15 @@ actually measured.
 | A1 | **CONFIRMED** | `ruff format --check` reformats `tests/test_truncation.py`; reproduced on the CI-resolved ruff **0.15.22**; `quality.yml:24` runs `ruff check` only (no `format --check`); no rationale in `git log --grep=format`. | No | Add `ruff format --check` to the lint step. |
 | A2 | **CONFIRMED** | `--extra dev`: **87.58% → FAIL** (fail_under=90). `--extra dev --extra mcp`: **91.81% → PASS**. Mechanism: `mcp/server.py` (184 stmts) is 0% without the extra. | No | Document the canonical invocation, or gate conditionally, or promote `mcp` to core. Decide one. |
 | A3 | **CONFIRMED** | Three-way divergence: **23 tags / 28 CHANGELOG entries / 16 PyPI releases**. CHANGELOG-only (untagged): `0.1, 0.2.0, 0.2.1, 0.5.1, 0.5.2`. Tagged-but-unpublished: 7 (incl. `v0.8.1`, `v0.9.0`). | No | Pick an invariant, enforce in `tests/test_release.py` (has version-sync tests, no tag/changelog invariant yet). |
-| A4 | **DOWNGRADE (mostly cosmetic)** | 1026 lines / 507 stmts / 87% cov. Mean CC **8.05 (B)**, but median low: most `cmd_*` handlers grade A/B. One real hotspot: **`cmd_doctor` CC 41 (F)**; `cmd_resume` (20), `cmd_lint` (16), `cmd_test` (12) grade C. | **Partial** — dispatch-table shape confirmed; falsifier not *fully* met (cmd_doctor). | Close the "monolith" framing; narrow refactor ticket for `cmd_doctor` only. |
+| A4 | **DOWNGRADE (mostly cosmetic); hotspot fixed** | At audit: 1026 lines / mean CC 8.05 (B); hotspot **`cmd_doctor` CC 41 (F)**. Follow-up: helpers extracted — `cmd_doctor` CC **8 (B)** (#63). | **Partial** at audit; hotspot closed. | Do not split `cli.py` wholesale. |
 | B1 | **CONFIRMED (structural); magnitude MEASURED** | Structural premise unchanged. Live run 2026-07-23: DeepSeek `deepseek-reasoner`, 20 corpus items × 3, `blind_spot = 0.0167` (check 0.7167 − behaviour 0.7000). Verdict: **do not build `test_machine`**. See `authoring-blind-spot.md`. | Falsifier for “must build test_machine” **triggered** (spot < 0.10). | Close #59 on measurement; keep authoring-reliability work separate. |
 | B2 | **CONFIRMED (structural); magnitude MEASURED** | Same harness: 41.7% of trials needed ≥1 static repair; 28.3% still failed check after one repair. Shared `budget: 16` remains optimistic for multi-gate authoring — orthogonal to `test_machine`. | n/a | Optional: dedicated authoring-repair budget (product), not a language break. |
 | B3 | **CONFIRMED asymmetry — but DELIBERATE & documented → close by-design** | MCP tools: `run, resume, list_machines, describe_machine, check` — no write. Author-and-run works (`run(source=…)` + `check`). ADR 0011: "a remote MCP host should not touch the server's filesystem… introduces no new authority." ADR 0013:53: "ADR 0011's 'never write to disk' default is preserved." | **Yes** — "deliberate" branch: it *was* withheld, on purpose. "undocumented" sub-claim refuted. | One-line surfacing in SECURITY.md / SPEC §11 (ADR trail is the current home). |
-| C1 | **Judgement — decision owed** | Whole example surface first appeared **2026-07-18** (`git log --follow`), 5 days before the 1.0.0 freeze (2026-07-23). Author-only soak; zero external. (Naïve `--diff-filter=A` showed 2026-07-23 — a `.mk→.mkl` rename artifact; corrected.) | n/a (J) | ADR stating the freeze is *provisional*, naming conditions for 2.0 (see §Decisions). |
-| C2 | **CONFIRMED (observation); decision owed** | `v0.16.0` 14:48 and `v1.0.0` 17:34 **same day** (+0200 ≈ plan's UTC 12:51/15:40). 16 PyPI releases across 2026-07-16…23. | No | Set an explicit PyPI cadence policy in CONTRIBUTING. |
+| C1 | **Judgement — decided (ADR 0028)** | Whole example surface first appeared **2026-07-18** (`git log --follow`), 5 days before the 1.0.0 freeze (2026-07-23). Author-only soak; zero external. (Naïve `--diff-filter=A` showed 2026-07-23 — a `.mk→.mkl` rename artifact; corrected.) | n/a (J) | ADR 0028: freeze provisional on evidence; 2.0 conditions named; no retraction. |
+| C2 | **CONFIRMED (observation); policy set** | `v0.16.0` 14:48 and `v1.0.0` 17:34 **same day** (+0200 ≈ plan's UTC 12:51/15:40). 16 PyPI releases across 2026-07-16…23. | No | Publish-cadence policy in CONTRIBUTING (done on the validation PR). |
 | C3 | **CONFIRMED via recorded run; BLOCKED (live re-run)** | `gate-divergence.md` records 2026-07-23 four-machine suite: **1.0 agreement per machine** (15/15 pairs each), 24/24 runs done, zero gate errors, deepseek+openai ×3. Per-machine breakdown present. | **Coarse-routing critique pre-addressed** — `sentiment_borderline` (deliberately contestable) is already in the suite; routing stayed 1.0 while free-text diverged. | Price Anthropic gap: one 4-machine×3 pass ≈ **~30k tokens / < $1**; blocker is account credit, not cost-at-scale. |
 | C4 | **CONFIRMED bus factor 1** | `git shortlog`: 124 + 54 commits one human (two spellings), 8 Claude, 2+2 bots. | n/a (J) | No action now; confirm CONTRIBUTING answers "how does a 2nd person get productive." |
-| D1 | **BLOCKED (external)** | Cannot be validated from inside the repo — needs 5 external readers. Internal facts consistent with the claim: 11 examples, 27 ADRs, 91.81% cov, 5-platform matrix, repo age 5–7 days. | Not evaluable in-repo | Run the 5-reader test (record verbatim first questions). |
+| D1 | **BLOCKED (external)** | Cannot be validated from inside the repo — needs 5 external readers. Internal facts consistent with the claim: 11 examples, 28 ADRs, ~92% cov, 5-platform matrix; protocol frozen in `distribution-five-reader.md`. | Not evaluable in-repo | Run the 5-reader test (record verbatim first questions). |
 
 ---
 
@@ -82,7 +82,7 @@ actually measured.
   **partially** met: it holds for every handler except `cmd_doctor`. Close the monolith
   framing; open a narrow ticket for `cmd_doctor` if its 41 warrants it.
 
-### B1 — Structural ≠ behavioural validation — CONFIRMED (structural); magnitude BLOCKED
+### B1 — Structural ≠ behavioural validation — CONFIRMED (structural); magnitude MEASURED
 - **Mechanism proven from source, provider-free:**
   - `host.check_machine` (host.py:140) docstring: *"Validate without running — schema +
     semantics + lint, no provider needed."* Body = `_parse_source` + `semantic_check` +
@@ -95,24 +95,21 @@ actually measured.
   - **No `test_machine` exists** anywhere in `src/`. The `mklang test` / `scripttest` runner
     is a separate CLI path, not wired into the authoring loop.
 - So the plan's core assertion — the loop "cannot distinguish valid from correct" — is
-  **true by construction.** What remains unmeasured is *how often* that gap bites
-  (`blind_spot`), which is the entire quantitative decision (build `test_machine`? mandatory
-  vs opt-in?). That needs live reasoning-tier runs.
-- **To run when unblocked:** freeze `docs/experiments/authoring-corpus.yaml` (20 requests
-  across the language's shapes), hand-write acceptance `.test.yaml` scenarios *first*, drive
-  `ConsoleTools` with a fake `Bridge` (per `tests/test_console_tools.py`), run each authored
-  machine through `scripttest.py`. Report `blind_spot = check_pass − behaviour_pass` against
-  the plan's thresholds (<0.10 close / 0.10–0.25 opt-in tool / >0.25 required step + 1.1.0
-  headline). Budget ~60 DeepSeek reasoning calls.
+  **true by construction.**
+- **Follow-up (same day, keys available):** corpus + harness + live DeepSeek
+  `deepseek-reasoner` run (20×3) → **`blind_spot = 0.0167`**. Verdict under the fixed
+  thresholds: **do not build `test_machine`.** Recorded in
+  `docs/experiments/authoring-blind-spot.md`; issue #59 closed.
 
-### B2 — Repair-pass sufficiency — CONFIRMED (structural); magnitude BLOCKED
+### B2 — Repair-pass sufficiency — CONFIRMED (structural); magnitude MEASURED
 - `agent.mkl:19 budget: 16 # decide/action cycles incl. an authoring repair + the reply`.
 - **Structural observation supporting the concern:** there is no *dedicated* repair budget.
   A turn that discovers + runs a machine or two, then authors and needs a *second* repair,
   draws every step from the same pool of 16. The comment implies headroom for *one* repair;
   the code does not reserve it.
-- Frequency (fraction needing a 2nd repair; fraction exhausting budget) rides on the B1
-  harness and is unmeasured here.
+- **Follow-up:** same harness measured 41.7% of trials needing ≥1 static re-author and
+  28.3% still failing check after one repair — authoring reliability, orthogonal to
+  `test_machine`.
 
 ### B3 — MCP persistence asymmetry — CONFIRMED asymmetry, DELIBERATE → close by-design
 - Surface: `run, resume, list_machines, describe_machine, check`. `run(source=…)` +
@@ -130,19 +127,19 @@ actually measured.
   pretend it does. **Close as by-design;** optional one-liner in SECURITY.md / SPEC §11 for
   discoverability outside the ADR trail.
 
-### C1 — Premature 1.0.0 — decision owed
+### C1 — Premature 1.0.0 — decision recorded (ADR 0028)
 - **Q3 (soak time), measured:** every example first appeared **2026-07-18** (via
   `git log --follow`, correcting a `.mk→.mkl` rename that made naïve dating read 2026-07-23).
   Five days of **author-only** exercise; no external soak on any part of the spec-0.3 surface.
-- Q1/Q2/Q4 are unpriced strategy questions (see §Decisions). The measured Q3 result supports
-  the plan's recommended move: not a retraction, but an ADR declaring the freeze **provisional**
-  with named 2.0 conditions.
+- **Follow-up:** ADR 0028 records the posture — 1.0.0 stands (no retraction), freeze is
+  SemVer-stable under ADR 0026 and provisional on evidence for product confidence, with
+  falsifiable 2.0 conditions. Issue #62 closed. Distribution evidence (#61) still open.
 
-### C2 — Release cadence — CONFIRMED observation, decision owed
+### C2 — Release cadence — CONFIRMED observation; policy set
 - `git for-each-ref` timeline: `v0.16.0` 2026-07-23 14:48, `v1.0.0` 2026-07-23 17:34 — under
   three hours apart, same day. 16 PyPI publishes in the repo's ~7-day tag history.
-- With no consumers, a PyPI publish and a git tag are near-substitutes. Set a cadence policy
-  (candidate: PyPI on user-visible change *or* a fixed interval, whichever is slower).
+- **Follow-up:** CONTRIBUTING Releases now states publish cadence (PyPI on user-visible
+  change or a fixed interval, whichever is slower; a tag alone is enough for a checkpoint).
 
 ### C3 — Provider coverage — CONFIRMED via recorded run; live re-run BLOCKED
 - `docs/experiments/gate-divergence.md` Results table records the post-freeze **2026-07-23**
@@ -165,10 +162,10 @@ actually measured.
 
 ### D1 — Distribution is the binding constraint — BLOCKED (external)
 - Un-testable from inside the repository by design. Internal facts are consistent with the
-  claim (mature engineering: 27 ADRs, 91.81% cov, 5-platform matrix; zero external signal on a
-  5–7-day-old repo), but the claim's *own* falsifier is external: show two demos to five
-  people, record their first verbatim question, count how many understand it unaided, and
-  whether ≥1 installs. That test is cheap and owed; it cannot be run here.
+  claim (mature engineering: 28 ADRs, ~92% cov, 5-platform matrix; zero external signal),
+  but the claim's *own* falsifier is external: show two demos to five people, record their
+  first verbatim question, count how many understand it unaided, and whether ≥1 installs.
+  Protocol: `distribution-five-reader.md`. That test is cheap and owed; it cannot be run here.
 
 ---
 
@@ -176,10 +173,8 @@ actually measured.
 
 Per the plan's Method rule, no J-item enters a fix backlog until its decision is recorded.
 
-1. **C1** — provisional-freeze ADR: what 1.0.0 bought at zero users (Q1), the ADR-0026 cost of
-   a needed language change (Q2), and whether 0.17.0-then-1.0.0-on-first-external-issue was the
-   honest alternative (Q4). Decide *after* B1's magnitude and D1 are in hand — the plan
-   sequences C1 last for this reason. **Still owed.**
+1. **C1** — provisional-freeze ADR. **Done (ADR 0028)** after B1 measurement; D1 still
+   external. 1.0.0 stands; 2.0 conditions named; no retraction.
 2. **C2** — cadence policy in CONTRIBUTING. **Done** — "Publish cadence" added to the Releases
    section (the plan's candidate wording; maintainer may tune the interval).
 3. **C4** — acknowledge in CONTRIBUTING; no code. The change checklist + ADR trail already
@@ -227,13 +222,14 @@ account that wrote the report lacked `workflows` permission):
 ## 5. Assumptions revisited (plan §5)
 
 - **"The weakness is in distribution and the authoring loop, not code quality."** Partly
-  supported: code quality is *good* (the audit's own A/C hygiene items are minor; A4 downgrades
-  to cosmetic). B1's blind-spot magnitude — the one thing that would confirm the authoring-loop
-  weakness — is **un-run here**, so the load-bearing claim of the audit remains *plausible but
-  unmeasured*. Do not treat B1 as settled until the corpus experiment runs.
-- **"`blind_spot` is measurable with hand-written acceptance criteria."** Untested — the
-  experiment did not run. If writing those criteria proves ambiguous, that ambiguity is the
-  more interesting finding, exactly as the plan anticipates.
-- **Severity ordering (B1, D1 above all).** Survives this pass on structure but not on
-  evidence: both top items are the two that could not be executed here. The next session's
-  first priority is a provider key and five external readers — not more in-repo ratcheting.
+  revised by follow-up measurement: code quality remains *good*; B1's **blind_spot is
+  tiny (0.0167)** so the structural authoring-loop gap does **not** dominate product risk
+  the way the audit hypothesized. Residual authoring pain is **static-check failure /
+  repair rate**, not silent behavioural wrongness. Distribution (D1) is still unmeasured
+  and remains the open external risk.
+- **"`blind_spot` is measurable with hand-written acceptance criteria."** **Confirmed** —
+  the corpus + harness ran; writing criteria first was feasible. One true blind-spot trial
+  out of 60.
+- **Severity ordering (B1, D1 above all).** After measurement, **D1 outranks B1**. Next
+  human priority: five external readers (#61). Optional: authoring-repair budget product
+  work. Not more in-repo coverage ratcheting.
