@@ -406,6 +406,117 @@ def _refs_tainted(value: object, tainted: set[str]) -> bool:
     return any(m.group(1).split(".")[0] in tainted for m in _OVER_VAR.finditer(value))
 
 
+def _initial_taint(machine: Machine, ctx: dict, trusted_keys: set[str] | None) -> set[str]:
+    """Top-level keys whose values differ from the authoring literal (SPEC §6)."""
+    return {k for k in ctx if machine.context.get(k) != ctx[k]} - set(trusted_keys or ())
+
+
+def _deposit(ctx: dict, tainted: set[str], state: State, result: object) -> None:
+    """Write state output into the blackboard and mark it tainted (SPEC §11)."""
+    if state.accumulate:
+        prev = ctx.get(state.output, [])
+        if not isinstance(prev, list):
+            prev = [prev]
+        ctx[state.output] = prev + [result]
+    else:
+        ctx[state.output] = result
+    tainted.add(state.output)
+
+
+def _apply_gate_transition(
+    gate: Gate,
+    gate_index: int,
+    state_id: str,
+    *,
+    repair_left: dict[tuple[str, int], int],
+) -> tuple[str | None, str, str | None]:
+    """Map a selected gate to (next_state_id | END | None, feedback, halt_error).
+
+    When halt_error is set, next_state is None and the run should halt.
+    HITL escalate-suspend is handled by the caller (needs deps.escalate_suspend).
+    """
+    if gate.kind == "fail":
+        return None, "", "gate-fail"
+    to = gate.to
+    if to is None:
+        return None, "", "state-error: gate-missing-to"
+    feedback = ""
+    if gate.kind == "repair":
+        if gate.repair is None:
+            return None, "", "state-error: repair-missing-budget"
+        repair_left[(state_id, gate_index)] = (
+            repair_left.get((state_id, gate_index), gate.repair) - 1
+        )
+        feedback = f"The previous attempt did not satisfy: '{gate.when}'. Fix it."
+    return to, feedback, None
+
+
+def _execute_fanout(
+    state: State,
+    state_id: str,
+    ctx: dict,
+    deps: _Ctx,
+    machine: Machine,
+    depth: int,
+    tainted: set[str],
+    steps: int,
+    trace: list[dict],
+    usage_tokens: tuple[int, int],
+) -> tuple[object, str | None, int, int, int, dict] | RunResult:
+    """Run a sample/over fan-out; return (result, judge_reasoning, step_in, step_out, steps, step_fields)
+    or a halt RunResult on branch-setup failure."""
+    total_in, total_out = usage_tokens
+    try:
+        branches = _branch_contexts(state, ctx)
+    except Exception as e:  # bad over path / type
+        return RunResult(
+            "halt",
+            trace,
+            ctx,
+            error=f"state-error: {e}",
+            at=state_id,
+            usage={"input_tokens": total_in, "output_tokens": total_out},
+        )
+    # Fan-out: step count is max(1, n_branches) — see SPEC fan-out charging.
+    new_steps = steps + max(1, len(branches))
+    branch_tainted = set(tainted)
+    if state.over:
+        m_over = _OVER_VAR.search(state.over)
+        if m_over and m_over.group(1).split(".")[0] in tainted:
+            branch_tainted.add("item")  # `index` stays trusted
+    if branches:
+        with ThreadPoolExecutor(max_workers=deps.max_workers) as ex:
+            outs = list(
+                ex.map(
+                    lambda b: _safe_exec(state, b, deps, machine, depth, branch_tainted),
+                    branches,
+                )
+            )
+    else:
+        outs = []
+    result: object = [o[0] for o in outs]
+    step_fields: dict = {
+        "branches": [o[0] if isinstance(o[0], str) else fmt(o[0]) for o in outs],
+    }
+    subs = [o[1] for o in outs if o[1] is not None]
+    if subs:
+        step_fields["sub_trace"] = subs
+    judge_reasoning: str | None = None
+    if state.reason:
+        step_fields["reasonings"] = [o[2] for o in outs]
+        rs = [o[2] for o in outs if o[2]]
+        judge_reasoning = "\n---\n".join(rs) if rs else None
+    step_in = sum(o[3][0] for o in outs)
+    step_out = sum(o[3][1] for o in outs)
+    trunc_metas = [o[4] for o in outs if (o[4] or {}).get("truncated")]
+    if trunc_metas:
+        step_fields["truncated"] = True
+        fr = trunc_metas[0].get("finish_reason")
+        if fr:
+            step_fields["finish_reason"] = fr
+    return result, judge_reasoning, step_in, step_out, new_steps, step_fields
+
+
 def _run_impl(
     machine: Machine,
     context: dict,
@@ -455,9 +566,7 @@ def _run_impl(
     # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
     # value is still the author's `.mkl` literal; host-supplied or host-overridden
     # values are untrusted unless the embedder vouches via `trusted_keys`.
-    tainted: set[str] = {k for k in ctx if machine.context.get(k) != ctx[k]} - set(
-        trusted_keys or ()
-    )
+    tainted = _initial_taint(machine, ctx, trusted_keys)
     state_id = machine.entry
     trace: list[dict] = []
     steps = 0
@@ -597,52 +706,13 @@ def _run_impl(
         # 1) EXECUTE (isolate failures: single → halt cleanly, branch → marker)
         judge_reasoning: str | None = None
         if S.is_fanout:
-            try:
-                branches = _branch_contexts(S, ctx)
-            except Exception as e:  # bad over path / type
-                return RunResult(
-                    "halt",
-                    trace,
-                    ctx,
-                    error=f"state-error: {e}",
-                    at=state_id,
-                    usage=usage(),
-                )
-            steps += max(1, len(branches))
-            branch_tainted = set(tainted)
-            if S.over:
-                m_over = _OVER_VAR.search(S.over)
-                if m_over and m_over.group(1).split(".")[0] in tainted:
-                    branch_tainted.add("item")  # `index` stays trusted
-            if branches:
-                with ThreadPoolExecutor(max_workers=deps.max_workers) as ex:
-                    outs = list(
-                        ex.map(
-                            lambda b: _safe_exec(S, b, deps, machine, depth, branch_tainted),
-                            branches,
-                        )
-                    )
-            else:
-                outs = []
-            result: object = [o[0] for o in outs]
-            subs = [o[1] for o in outs if o[1] is not None]
-            step["branches"] = [o[0] if isinstance(o[0], str) else fmt(o[0]) for o in outs]
-            if subs:
-                step["sub_trace"] = subs
-            if S.reason:
-                step["reasonings"] = [o[2] for o in outs]
-                rs = [o[2] for o in outs if o[2]]
-                judge_reasoning = "\n---\n".join(rs) if rs else None
-            step_in = sum(o[3][0] for o in outs)
-            step_out = sum(o[3][1] for o in outs)
-            # Any branch that reported produce truncation annotates the parent step.
-            trunc_metas = [o[4] for o in outs if (o[4] or {}).get("truncated")]
-            if trunc_metas:
-                step["truncated"] = True
-                # First branch's finish_reason is enough signal for the parent step.
-                fr = trunc_metas[0].get("finish_reason")
-                if fr:
-                    step["finish_reason"] = fr
+            fan = _execute_fanout(
+                S, state_id, ctx, deps, machine, depth, tainted, steps, trace, (total_in, total_out)
+            )
+            if isinstance(fan, RunResult):
+                return fan
+            result, judge_reasoning, step_in, step_out, steps, fan_fields = fan
+            step.update(fan_fields)
         else:
             steps += 1
             try:
@@ -712,14 +782,7 @@ def _run_impl(
         # 2) DEPOSIT — every deposit is tainted: tool observations and call
         # results are external data, and produce output is derived from
         # untrusted input by an untrusted oracle (SPEC §11).
-        if S.accumulate:
-            prev = ctx.get(S.output, [])
-            if not isinstance(prev, list):
-                prev = [prev]
-            ctx[S.output] = prev + [result]
-        else:
-            ctx[S.output] = result
-        tainted.add(S.output)
+        _deposit(ctx, tainted, S, result)
 
         # 3) JUDGE — hooks (host bool) then otherwise then fused LLM prose (SPEC §5)
         eligible = [
@@ -768,28 +831,15 @@ def _run_impl(
         record(step)
 
         # 4) TRANSITION
-        if gate.kind == "fail":
-            return RunResult("halt", trace, ctx, error="gate-fail", at=state_id, usage=usage())
-        to = gate.to
-        if to is None:
-            # Schema requires `to` on every non-fail gate; only a hand-built
-            # Machine that bypassed validation can get here.
-            return RunResult(
-                "halt", trace, ctx, error="state-error: gate-missing-to", at=state_id, usage=usage()
-            )
-        if gate.kind == "repair":
-            if gate.repair is None:
-                # Same schema invariant: repair gates always carry a budget ≥ 1.
-                return RunResult(
-                    "halt",
-                    trace,
-                    ctx,
-                    error="state-error: repair-missing-budget",
-                    at=state_id,
-                    usage=usage(),
-                )
-            repair_left[(state_id, i)] = repair_left.get((state_id, i), gate.repair) - 1
-            feedback = f"The previous attempt did not satisfy: '{gate.when}'. Fix it."
+        to, feedback, halt_err = _apply_gate_transition(
+            gate,
+            i,
+            state_id,
+            repair_left=repair_left,
+        )
+        if halt_err is not None:
+            return RunResult("halt", trace, ctx, error=halt_err, at=state_id, usage=usage())
+        assert to is not None
         if gate.kind == "escalate" and deps.escalate_suspend and to != "END":
             # HITL: pause before the handler runs; a resume can drop the human
             # reply into ctx so the handler state sees it (ADR 0008).

@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "1.0.2"
+version = "1.0.3"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -148,6 +148,13 @@ module = [
   "mklang.llm.prompts",
   "mklang.llm.context_view",
   "mklang.console.commands",
+  # P2 ratchet (architecture inventory): core model + leaf modules
+  "mklang.model",
+  "mklang.interpolate",
+  "mklang.registry",
+  "mklang.checkpoint",
+  "mklang.hooks",
+  "mklang.loader",
 ]
 disallow_untyped_defs = true
 disallow_untyped_calls = true

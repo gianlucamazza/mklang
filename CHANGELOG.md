@@ -8,13 +8,27 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.2`).
+  `pyproject.toml` (currently `1.0.3`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.3] — 2026-07-24
+
+Internal structure (P2 architecture inventory): thinner engine/loader entry
+points and a wider mypy strict ratchet. No language or behaviour change.
+
+### Changed
+
+- **Engine / loader structure:** extract fan-out execution, deposit, and
+  gate-transition helpers from `_run_impl` (CC 82→53); split `semantic_check`
+  into state/version/reachability/budget helpers. Behaviour unchanged.
+- **mypy strict ratchet:** `model`, `interpolate`, `registry`, `checkpoint`,
+  `hooks`, `loader` added to the strict tier (type fixes for checkpoint hash
+  and loader dict loads).
 
 ## [1.0.2] — 2026-07-24
 

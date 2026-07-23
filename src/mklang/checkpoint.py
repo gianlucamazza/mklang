@@ -136,4 +136,4 @@ def load_checkpoint(path: str | Path) -> dict:
 def verify_hash(ck: dict, machine_path: str | Path) -> bool:
     if ck["machine_sha256"] is None:  # run-by-name checkpoint: nothing to pin
         return True
-    return file_sha256(machine_path) == ck["machine_sha256"]
+    return bool(file_sha256(machine_path) == ck["machine_sha256"])

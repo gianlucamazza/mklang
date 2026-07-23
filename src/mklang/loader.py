@@ -24,11 +24,17 @@ def _schema() -> dict:
     except (FileNotFoundError, ModuleNotFoundError, OSError):
         repo_schema = Path(__file__).resolve().parents[2] / "schema" / "mklang.schema.json"
         text = repo_schema.read_text(encoding="utf-8")
-    return json.loads(text)
+    data = json.loads(text)
+    if not isinstance(data, dict):
+        raise TypeError("mklang schema root must be a JSON object")
+    return data
 
 
 def load_dict(path: str | Path) -> dict:
-    return yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise TypeError(f"{path}: machine document must be a YAML mapping")
+    return data
 
 
 def validate_dict(d: dict) -> None:
@@ -69,22 +75,12 @@ def shortest_path_to_end(machine: Machine) -> int | None:
     return None
 
 
-def semantic_check(
-    machine: Machine, registry: dict, strict: bool = False
+def _check_states_and_gates(
+    machine: Machine, registry: dict, ids: set[str]
 ) -> tuple[list[str], list[str]]:
-    """Return (errors, warnings). Errors block a run; warnings are advisory.
-
-    `strict` promotes an unsupported `mklang:` version from a warning to an error
-    (`version-unsupported`): running a future-versioned document under a v0.2
-    interpreter behind a mere warning is incoherent for a conformance-pinned
-    language — semantics may have diverged (F6)."""
+    """Per-state gate targets, call/tool declarations, otherwise catch-alls, result key."""
     errors: list[str] = []
     warnings: list[str] = []
-    ids = set(machine.states)
-
-    if machine.entry not in ids:
-        errors.append(f"entry '{machine.entry}' is not a state")
-
     produced = {s.output for s in machine.states.values()}
     declared_tools = {t.get("name") for t in machine.tools}
     declared_hooks = {h.get("name") for h in machine.hooks}
@@ -105,7 +101,13 @@ def semantic_check(
             warnings.append(f"{sid}: no 'otherwise' catch-all gate (a transition may fail to fire)")
     if machine.result and machine.result not in produced:
         warnings.append(f"result key '{machine.result}' is not produced by any state's output")
+    return errors, warnings
 
+
+def _check_version(machine: Machine, strict: bool) -> tuple[list[str], list[str]]:
+    """mklang: field vs interpreter targets; parse: is a 0.3 face."""
+    errors: list[str] = []
+    warnings: list[str] = []
     if machine.version and machine.version not in ("0.2", "0.2.0", "0.3"):
         msg = f'mklang version field is {machine.version!r}; this interpreter targets "0.2"/"0.3"'
         if strict:
@@ -114,8 +116,13 @@ def semantic_check(
             warnings.append(msg)
     if machine.version in ("0.2", "0.2.0") and any(s.parse for s in machine.states.values()):
         warnings.append('`parse:` is a 0.3 face — declare mklang: "0.3"')
+    return errors, warnings
 
-    # reachability of END from entry
+
+def _check_reachability(machine: Machine, ids: set[str]) -> tuple[list[str], list[str]]:
+    """END reachable from entry; flag unreachable states."""
+    errors: list[str] = []
+    warnings: list[str] = []
     seen: set[str] = set()
     stack = [machine.entry]
     while stack:
@@ -130,25 +137,56 @@ def semantic_check(
         errors.append("no reachable path to END")
     for dead in sorted(ids - seen):
         warnings.append(f"{dead}: unreachable state (never entered from '{machine.entry}')")
+    return errors, warnings
 
-    # Static budget feasibility: `budget` bounds steps, so a budget below the
-    # shortest path to END is a guaranteed `budget-exhausted` halt at run time —
-    # detectable now (SPEC §7). Only meaningful when END is reachable and the
-    # entry exists (the checks above already error otherwise).
-    if machine.entry in ids:
-        sp = shortest_path_to_end(machine)
-        if sp is not None:
-            if machine.budget < sp:
-                errors.append(
-                    f"budget-infeasible: budget {machine.budget} is below the {sp}-step "
-                    f"shortest path to END (fan-out states counted as 1 step — actual "
-                    f"branch counts are data-dependent and may push the true cost higher)"
-                )
-            elif machine.budget < sp + 2:
-                warnings.append(
-                    f"budget {machine.budget} leaves no headroom above the {sp}-step "
-                    f"shortest path to END — a single repair or loop-back would exhaust it"
-                )
+
+def _check_budget(machine: Machine, ids: set[str]) -> tuple[list[str], list[str]]:
+    """Static budget feasibility vs shortest path to END (SPEC §7)."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    if machine.entry not in ids:
+        return errors, warnings
+    sp = shortest_path_to_end(machine)
+    if sp is None:
+        return errors, warnings
+    if machine.budget < sp:
+        errors.append(
+            f"budget-infeasible: budget {machine.budget} is below the {sp}-step "
+            f"shortest path to END (fan-out states counted as 1 step — actual "
+            f"branch counts are data-dependent and may push the true cost higher)"
+        )
+    elif machine.budget < sp + 2:
+        warnings.append(
+            f"budget {machine.budget} leaves no headroom above the {sp}-step "
+            f"shortest path to END — a single repair or loop-back would exhaust it"
+        )
+    return errors, warnings
+
+
+def semantic_check(
+    machine: Machine, registry: dict, strict: bool = False
+) -> tuple[list[str], list[str]]:
+    """Return (errors, warnings). Errors block a run; warnings are advisory.
+
+    `strict` promotes an unsupported `mklang:` version from a warning to an error
+    (`version-unsupported`): running a future-versioned document under a v0.2
+    interpreter behind a mere warning is incoherent for a conformance-pinned
+    language — semantics may have diverged (F6)."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    ids = set(machine.states)
+
+    if machine.entry not in ids:
+        errors.append(f"entry '{machine.entry}' is not a state")
+
+    for errs, warns in (
+        _check_states_and_gates(machine, registry, ids),
+        _check_version(machine, strict),
+        _check_reachability(machine, ids),
+        _check_budget(machine, ids),
+    ):
+        errors.extend(errs)
+        warnings.extend(warns)
 
     return errors, warnings
 
