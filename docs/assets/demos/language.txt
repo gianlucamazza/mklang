@@ -1,0 +1,16 @@
+> uv run mklang check examples/react.mk
+OK examples/react.mk
+╭────────────────────────────────────── check ───────────────────────────────────────╮
+│ files=1                                                                            │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+> uv run mklang lint --strict examples/react.mk
+╭─────────────────────────────────────── lint ───────────────────────────────────────╮
+│ files=1 · findings=0                                                               │
+> uv run mklang run examples/react.mk --provider deepseek --set question.text="A shelf
+ holds 7 boxes of 24 books each; 15 books are then removed. How many books remain?"
+# react · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': 'deepseek-ch
+at', 'reasoning': 'deepseek-reasoner'}
+DONE react · provider deepseek
+╭────────────────────────────────────── Result ──────────────────────────────────────╮
+│ 153                                                                                │
+tokens 967+82 · steps 6

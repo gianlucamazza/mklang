@@ -1,51 +1,47 @@
 > uv run mklang console --provider deepseek --workspace /tmp/mklang-agent-machines
- ⭘                                         mklang console
- READY · deepseek · tokens 0+0 · session 20260718-013216-8c6d
+ ⭘                                     mklang console
+ READY · deepseek · tokens 0+0 · session 20260723-095419-cb42
  Ready. Ask the agent what should happen, or type /help.
-┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-▊  Ask the agent or type / for commands                                                              ▎
-▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
- f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                              ▏^p palette
-▊  Find this week's news about open-source AI models and give me a short brief with links.           ▎
- RUNNING · deepseek · tokens 0+0 · session 20260718-013216-8c6d
- you: Find this week's news about open-source AI models and give me a short brief with links.
+┌───────────────────────────────────────────────────────────────────────────────────────────┐
+▊  Ask the agent or type / for commands                                                     ▎
+▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
+ f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                     ▏^p palette
+▊  ind this week's news about open-source AI models and give me a short brief with links.   ▎
+ RUNNING · deepseek · tokens 2087+535 · session 20260723-095419-cb42
+ you: Find this week's news about open-source AI models and give me a short brief with
+ links.
+ ⏸ Consent: machine 'news_search' will call host tool(s) [search] (e.g. live web search).
+ Allow this once for the session?  → type y / yes / sì  (Enter = no)
  ▼ Find this week's news about open-source AI models and give m
  └── ▼ console_agent
- RUNNING · deepseek · tokens 1630+575 · session 20260718-013216-8c6d
- ⏸ Consent: machine 'news_search' will call host tool(s) [search] (e.g. live web search). Allow
- this once for the session?  → type y / yes / sì  (Enter = no)
      ├── ● decide ok → discover
      ├── ● discover ok → decide
      ├── ● decide ok → prepare_run
      ├── ● prepare_run ok → do_run
      └── ◐ do_run tool·balanced
-▊  answer here, then Enter…                                                                          ▎
-▊  yes                                                                                               ▎
+▊  answer here, then Enter…                                                                 ▎
+▊  yes                                                                                      ▎
  you: yes
-     └── ▶ ◐ do_run tool·balanced
- READY · deepseek · tokens 8244+2273 · session 20260718-013216-8c6d
- ⏸ Consent: machine 'news_search' will call host tool(s) [search] (e.g. live web search). Allow    ▃▃
+ READY · deepseek · tokens 9573+3035 · session 20260723-095419-cb42
+ you: Find this week's news about open-source AI models and give me a short brief with    ▂▂
  agent:
- Here's a brief of this week's news about open-source AI models (July 13–18, 2026):
  └── ▼ ✓ console_agent  done
      ├── ▶ ● do_run ok → decide
      ├── ● decide ok → reply
      └── ● reply ok → END
-    administration and AI industry discuss a capability framework keyed to current Chinese
-    open‑source model abilities.
-    Link
-  • I tried China's buzzy free AI. The wait was painful, but the answers impressed me. – Business
-    Insider tests China's open‑source GLM‑5.2, finding it matches GPT‑5.5 and Opus 4.8 in context  ▅▅
-    window and code tasks.
-▊  Now boil that down to a single headline takeaway.                                                 ▎
- RUNNING · deepseek · tokens 8244+2273 · session 20260718-013216-8c6d
-    Insider tests China's open‑source GLM‑5.2, finding it matches GPT‑5.5 and Opus 4.8 in context  ▇▇
-    Link                                                                                           ▃▃
- ▼ Now boil that down to a single headline takeaway.
- READY · deepseek · tokens 9436+2689 · session 20260718-013216-8c6d
+    Proposal would streamline US models if their capabilities equal or fall below leading
+    Chinese open‑source models.
+    Washington Post
+  • China’s Zhipu closing in on top US AI models – Zhipu’s GLM 5.2 nearly matches
+    Anthropic’s Opus 4.8 on a key benchmark at one‑fifth the cost; government limits on US
+    models drive interest in open source.                                                 ▆▆
+    CNBC
+▊  Now boil that down to a single headline takeaway.                                        ▎
+ READY · deepseek · tokens 11213+3227 · session 20260723-095419-cb42
+    models drive interest in open source.
  you: Now boil that down to a single headline takeaway.
- The week’s open‑source AI news is dominated by Chinese models matching or beating US frontier
- systems: Moonshot’s Kimi K3 and GLM‑5.2 both impress on coding and reasoning benchmarks, and the
- Trump administration is discussing a regulatory framework calibrated to those very Chinese
- open‑source capabilities.
-▊  /quit                                                                                             ▎
+ This week’s news is dominated by the rising competitiveness of Chinese open‑source AI
+ models (e.g., Kimi K3, GLM 5.2) which is prompting a US policy rethink on open‑source    ▄▄
+ restrictions and pushing enterprises toward cheaper Chinese alternatives.
+ ▼ Now boil that down to a single headline takeaway.
+▊  /quit                                                                                    ▎
