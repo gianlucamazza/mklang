@@ -29,6 +29,12 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
+- Demo showcase refocused on the two product surfaces — **language** and
+  **console**. The peripheral `cli` and `search` recordings are replaced by
+  `language` (react.mk: gates + `tool` observation + `accumulate` loop +
+  tier escalation) and `orchestrate` (map_reduce.mk: `over:` fan-out + `call:`
+  sub-machine); the README leads with console/agent and the CLI/MCP/test
+  sections are framed as scaffolding.
 - Quality ratchet: the coverage gate rises to `fail_under = 90` (from 88),
   and eleven leaf modules are promoted to a mypy strict tier (full
   `--strict` minus `disallow_any_generics`, the documented JSON idiom);
@@ -55,7 +61,7 @@ language stays **0.3**.
   to the generic `ERROR No module named 'textual'` handler.
 - The test suite is hermetic against a real mklang installation on the host:
   a pacman/AUR install ships `/etc/mklang` + `/usr/share/mklang` and `mklang
-  init --user` creates `~/.config/mklang`, all of which leaked into config
+init --user` creates `~/.config/mklang`, all of which leaked into config
   and machine discovery (CI runners are clean, so only dev machines saw it).
   System paths are module constants now, sandboxed by an autouse fixture.
 

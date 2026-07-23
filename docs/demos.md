@@ -1,19 +1,10 @@
 # Live demos
 
-These six recordings exercise the real `mklang` CLI and Textual console. All
-but the deterministic test demo run against DeepSeek; the search and agent
-demos also hit the live web through the host `search` tool. They are generated
-from versioned VHS tapes, not hand-edited terminal captures.
-
-## CLI: check, lint, run
-
-<video autoplay loop muted playsinline controls width="100%">
-  <source src="assets/demos/cli.webm" type="video/webm">
-  Your browser does not support embedded WebM video.
-</video>
-
-The CLI recording checks and lints a machine before running it with a live
-provider. [Read the terminal transcript](assets/demos/cli.txt).
+These six recordings exercise the real Textual console and the `mklang` CLI,
+led by the two product surfaces — the console and the language. All but the
+deterministic test demo run against DeepSeek; the agent demo also hits the live
+web through the host `search` tool. They are generated from versioned VHS tapes,
+not hand-edited terminal captures.
 
 ## Console: interactive run
 
@@ -41,6 +32,31 @@ tool) and report a sourced brief; the follow-up turn chains on that context to
 distill a one-line takeaway — no slash commands involved.
 [Read the terminal transcript](assets/demos/agent.txt).
 
+## Language: gates, tools, and the reasoning loop
+
+<video autoplay loop muted playsinline controls width="100%">
+  <source src="assets/demos/language.webm" type="video/webm">
+  Your browser does not support embedded WebM video.
+</video>
+
+The language recording checks and lints `react.mk`, then runs it: a real
+reason → act → observe loop. Gates route on natural-language conditions, the
+`calc` tool observation re-enters the context, the loop is bounded by the step
+`budget`, and the `finalize` state escalates to the `reasoning` tier.
+[Read the terminal transcript](assets/demos/language.txt).
+
+## Orchestrate: fan-out and sub-machines
+
+<video autoplay loop muted playsinline controls width="100%">
+  <source src="assets/demos/orchestrate.webm" type="video/webm">
+  Your browser does not support embedded WebM video.
+</video>
+
+The orchestrate recording runs `map_reduce.mk`: `over:` fans out one
+`summarize_doc` sub-run per chunk (`call:` a sub-machine), then a reducer state
+merges the per-chunk summaries — the language's orchestrator-worker composition.
+[Read the terminal transcript](assets/demos/orchestrate.txt).
+
 ## HITL: suspend and resume
 
 <video autoplay loop muted playsinline controls width="100%">
@@ -52,18 +68,6 @@ The HITL recording runs `expense_approval` with `--hitl`: an escalate gate
 suspends the run and writes a checkpoint, then `mklang resume` injects the
 manager's reply and completes it.
 [Read the terminal transcript](assets/demos/hitl.txt).
-
-## Search: chained states with live web
-
-<video autoplay loop muted playsinline controls width="100%">
-  <source src="assets/demos/search.webm" type="video/webm">
-  Your browser does not support embedded WebM video.
-</video>
-
-The search recording runs `news_search` end to end: the machine plans a query,
-calls the host `search` tool (Tavily), judges whether the notes are usable, and
-finalizes a sourced brief — a chained multi-state flow with real side effects.
-[Read the terminal transcript](assets/demos/search.txt).
 
 ## Tests: deterministic scenarios
 

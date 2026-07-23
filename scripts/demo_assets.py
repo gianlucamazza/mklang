@@ -21,7 +21,7 @@ ASSET_DIR = ROOT / "docs" / "assets" / "demos"
 TAPE_DIR = ROOT / "demos" / "tapes"
 TOOLCHAIN_FILE = ROOT / "demos" / "toolchain.conf"
 MANIFEST = ASSET_DIR / "manifest.json"
-DEMOS = ("cli", "console", "agent", "hitl", "search", "test")
+DEMOS = ("console", "agent", "language", "orchestrate", "hitl", "test")
 FORMATS = ("webm", "gif", "txt")
 
 SOURCE_PATTERNS = (
@@ -29,6 +29,8 @@ SOURCE_PATTERNS = (
     "demos/toolchain.conf",
     "scripts/demo_assets.py",
     "config/runtime.example.yaml",
+    "examples/react.mk",
+    "examples/map_reduce.mk",
     "examples/summarize_doc.mk",
     "examples/expense_approval.mk",
     "examples/triage.mk",
@@ -50,13 +52,6 @@ SOURCE_PATTERNS = (
 )
 
 REQUIRED_TEXT = {
-    "cli": (
-        "OK examples/summarize_doc.mk",
-        "findings=0",
-        "DONE summarize_doc",
-        "provider deepseek",
-        "Result",
-    ),
     "console": (
         "Ready",
         "/machines",
@@ -72,16 +67,24 @@ REQUIRED_TEXT = {
         "news_search",
         "boil that down",
     ),
+    "language": (
+        "OK examples/react.mk",
+        "findings=0",
+        "DONE react",
+        "provider deepseek",
+        "Result",
+    ),
+    "orchestrate": (
+        "files=2",
+        "DONE map_reduce",
+        "provider deepseek",
+        "Result",
+    ),
     "hitl": (
         "SUSPENDED expense_approval",
         "Checkpoint",
         "resume",
         "DONE expense_approval",
-        "provider deepseek",
-        "Result",
-    ),
-    "search": (
-        "DONE news_search",
         "provider deepseek",
         "Result",
     ),

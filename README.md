@@ -26,6 +26,10 @@ MCP, scenario tests) is scaffolding around those two.
 | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) | [![Live mklang agent demo](./docs/assets/demos/agent.gif)](./docs/demos.md#agent-natural-language-commissioning) |
 
+| Language: gates, tools, reasoning loop                                                                                   | Orchestrate: fan-out + sub-machines                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| [![mklang language demo](./docs/assets/demos/language.gif)](./docs/demos.md#language-gates-tools-and-the-reasoning-loop) | [![mklang orchestrate demo](./docs/assets/demos/orchestrate.gif)](./docs/demos.md#orchestrate-fan-out-and-sub-machines) |
+
 | HITL: escalate, suspend, resume                                                                   | Tests: deterministic, no API key                                                                            |
 | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | [![Live mklang HITL demo](./docs/assets/demos/hitl.gif)](./docs/demos.md#hitl-suspend-and-resume) | [![mklang scenario test demo](./docs/assets/demos/test.gif)](./docs/demos.md#tests-deterministic-scenarios) |
