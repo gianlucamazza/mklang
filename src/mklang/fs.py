@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+import time
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Protocol
 
@@ -85,6 +86,23 @@ def _normalize_rel(rel: str, *, allow_empty: bool = False) -> str:
     if not parts and not allow_empty:
         raise FSError("empty path")
     return "/".join(parts)
+
+
+def _replace_with_retry(tmp: Path, target: Path, attempts: int = 10) -> None:
+    """Atomic rename with a bounded retry for Windows sharing violations.
+
+    ``os.replace`` is atomic on every platform, but on Windows a replace onto a
+    target that another replace is concurrently swapping raises a transient
+    ``PermissionError`` (sharing violation). POSIX renames never see this, so
+    the retry loop only ever spins on Windows."""
+    for attempt in range(attempts):
+        try:
+            os.replace(tmp, target)
+            return
+        except PermissionError:
+            if os.name != "nt" or attempt == attempts - 1:
+                raise
+            time.sleep(0.01 * (attempt + 1))
 
 
 def _check_write(rel: str, data: bytes, *, max_bytes: int) -> None:
@@ -213,7 +231,7 @@ class LocalFSBackend:
         try:
             with os.fdopen(fd, "wb") as fh:
                 fh.write(data)
-            os.replace(tmp, target)
+            _replace_with_retry(tmp, target)
         except BaseException:
             tmp.unlink(missing_ok=True)
             raise
