@@ -10,6 +10,22 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.15.0`).
 
+## [Unreleased]
+
+### Added
+
+- Targeted offline tests for the three weakest-covered modules: the
+  OpenAI-compat adapter (produce mapping, param split/drop-and-retry,
+  fenced judge prompt), the text emitters, and registry plugin/stdlib
+  resilience — total coverage 92%.
+
+### Changed
+
+- Quality ratchet: the coverage gate rises to `fail_under = 90` (from 88),
+  and eleven leaf modules are promoted to a mypy strict tier (full
+  `--strict` minus `disallow_any_generics`, the documented JSON idiom);
+  the tier is add-only.
+
 ## [0.15.0] — 2026-07-23
 
 The console ships by default, and the ADR 0025 follow-up audit closes —

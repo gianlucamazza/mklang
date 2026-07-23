@@ -114,8 +114,9 @@ testpaths = ["tests"]
 source = ["mklang"]
 
 [tool.coverage.report]
-# Measured 90.27% when the gate was introduced; ratchet up, never down.
-fail_under = 88
+# Ratchet up, never down: 88 at introduction (90.3% measured), 90 since the
+# targeted openai_compat/presentation/registry tests (92.0% measured).
+fail_under = 90
 show_missing = true
 skip_covered = true
 exclude_also = ["if TYPE_CHECKING:"]
@@ -130,3 +131,26 @@ no_implicit_reexport = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unreachable = true
+
+[[tool.mypy.overrides]]
+# Strict tier (ratchet: modules may only be ADDED here, never removed). Full
+# --strict minus disallow_any_generics: bare dict/list is the codebase's JSON
+# idiom (see the CI-gates plan non-goal).
+module = [
+  "mklang.paths",
+  "mklang.lint",
+  "mklang.logs",
+  "mklang.tool_obs",
+  "mklang.errors",
+  "mklang.config",
+  "mklang.toolconfig",
+  "mklang.llm.base",
+  "mklang.llm.prompts",
+  "mklang.llm.context_view",
+  "mklang.console.commands",
+]
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_subclassing_any = true
+warn_return_any = true
