@@ -20,46 +20,6 @@
       "sha256": "2880b03ac7066cb010ebac4e4e5b1585b64547e0874fa21feeea5a1638e1d1f5",
       "width": 1200
     },
-    "docs/assets/demos/console.gif": {
-      "bytes": 1109765,
-      "codec": "gif",
-      "duration_seconds": 12.66,
-      "height": 540,
-      "sha256": "eab13a3fb2ed8eef519778e82e700d64065859b4cfabdeaf42463f3f2b46488f",
-      "width": 960
-    },
-    "docs/assets/demos/console.txt": {
-      "bytes": 2858,
-      "sha256": "047cfd944f14bf8f0b37705bd519743d197d091cbc02303432b7afc78e750f54"
-    },
-    "docs/assets/demos/console.webm": {
-      "bytes": 297493,
-      "codec": "vp9",
-      "duration_seconds": 12.68,
-      "height": 675,
-      "sha256": "2155a6ee72da4564f6c9add5a9ea368ea86b3deb380f7aae7a67a0edfcd0b970",
-      "width": 1200
-    },
-    "docs/assets/demos/hitl.gif": {
-      "bytes": 1087971,
-      "codec": "gif",
-      "duration_seconds": 20.33,
-      "height": 540,
-      "sha256": "9ca6dd160fc15b60be4e6ce4319c3fb9795a3bc508aba9afe3e4c0fb7d3c3fcf",
-      "width": 960
-    },
-    "docs/assets/demos/hitl.txt": {
-      "bytes": 1571,
-      "sha256": "989761c65c3203cca116316dc4deab2ce49e0ae4cba67da0519bc24686ce89c8"
-    },
-    "docs/assets/demos/hitl.webm": {
-      "bytes": 256995,
-      "codec": "vp9",
-      "duration_seconds": 20.32,
-      "height": 675,
-      "sha256": "f127fb9e15b7ab4cdb9d28e74afd74472910d8a7bf33492b58cca0fd407e81ab",
-      "width": 1200
-    },
     "docs/assets/demos/language.gif": {
       "bytes": 772585,
       "codec": "gif",
@@ -79,50 +39,10 @@
       "height": 675,
       "sha256": "e5cb3487b9166dd4213647e7e5e996e7c12e6d8a1e349d4303e14cd5f093a75b",
       "width": 1200
-    },
-    "docs/assets/demos/orchestrate.gif": {
-      "bytes": 1323376,
-      "codec": "gif",
-      "duration_seconds": 17.33,
-      "height": 540,
-      "sha256": "cd21047065ce47b84060607fe17e9728ccf0fcf7ea80ba9a118234ddd85dd674",
-      "width": 960
-    },
-    "docs/assets/demos/orchestrate.txt": {
-      "bytes": 1960,
-      "sha256": "f1237164b2cdb0d4fa658b7448f911493b77ea71729607b335594cf34a08ac61"
-    },
-    "docs/assets/demos/orchestrate.webm": {
-      "bytes": 334634,
-      "codec": "vp9",
-      "duration_seconds": 17.32,
-      "height": 675,
-      "sha256": "f1b90ad55e1a75ba25ac0586d884c6d7e3ec9e905731133999c11cfab64f5e79",
-      "width": 1200
-    },
-    "docs/assets/demos/test.gif": {
-      "bytes": 466671,
-      "codec": "gif",
-      "duration_seconds": 13.33,
-      "height": 540,
-      "sha256": "adce8044d627fa06255f12dbb1f88db410ae1586905fbb8ccabaa6647f67e207",
-      "width": 960
-    },
-    "docs/assets/demos/test.txt": {
-      "bytes": 1500,
-      "sha256": "4cfe71ff2c903805b7cb949e42b3070354331d539712b9e0478a91bd1cbcbba8"
-    },
-    "docs/assets/demos/test.webm": {
-      "bytes": 119282,
-      "codec": "vp9",
-      "duration_seconds": 13.36,
-      "height": 675,
-      "sha256": "ca00c94c6fd1ec89e0cd408eded4373e741b5e344ef87308d9474af128103fc7",
-      "width": 1200
     }
   },
-  "generated_at": "2026-07-23T10:33:58.107033+00:00",
-  "generated_from": "a2c4ed40938a192ac593453f4e7ccdcbd14807e3",
+  "generated_at": "2026-07-23T11:13:50.215405+00:00",
+  "generated_from": "3853aebf41148a2840f93766c6c18c6396c9448a",
   "models": {
     "balanced": "deepseek-chat",
     "fast": "deepseek-chat",
@@ -135,21 +55,11 @@
     "files": {
       "config/runtime.example.yaml": "cbe0a52f199768f8e0cd4e5a4d5a445596f8b9f50c7f2ef8984d20b2b8b1aa3d",
       "demos/tapes/agent.tape": "ab91d6e791fb5365579a14d43ee5dfb70d815f798657ca7c48cb2447950b6467",
-      "demos/tapes/console.tape": "2d00c5ea5355be4305669969e3fdeafc9fbddc629ac410f177ebd78934cbc9af",
-      "demos/tapes/hitl.tape": "63177b3014a4a094fc4903842e3627cfe76ce66bd29e523084adee292c6dfacd",
       "demos/tapes/language.tape": "5460b96996e2ad8b3fa342b949ce589bc040368debfa35505850c2fbbd32dbcb",
-      "demos/tapes/orchestrate.tape": "a4ce495c479c1b43e734484f2911c31a4ffd4002e26a64c6e3b5d9865c2c0264",
-      "demos/tapes/test.tape": "14039378af889cb60e60217a9b1ec41e551c97426fe9e4d9e83d08b7bfa77d8b",
       "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
-      "examples/expense_approval.mk": "550271dacc1c050bc4e8801e3ddd275ba7eda9cf2ae790913a5478582ddded8e",
-      "examples/map_reduce.mk": "6a83df88bc907d8f9d8945bd5f81efca9fbeed35a0f3409503ead8c4841320b9",
       "examples/news_search.mk": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mk": "e9d56a1f31156442fb374bf5269db4f018e06753333e5b1fba5e33b7e124d59d",
-      "examples/summarize_doc.mk": "a8df4eda29903e753de21f7a91daab9543348997194f7ffe3035540fb04f8de1",
-      "examples/triage.mk": "bf872abbdb8fc06bce8d2ff8665c8f760d03fae322772e96fb8a2380910d1bab",
-      "examples/triage.test.yaml": "9e7a316ec06c0d7583d1cc684a493cc6b62f2809ff0ea034eb36e7c37c7e03b3",
-      "scripts/demo_assets.py": "4afc6e562980bf9375d10c47bc24509895575b744b70f150ff54cca35a0ff286",
-      "src/mklang/checkpoint.py": "4d59fc382fe14598f568b2f6e320f738221bbed8a77936da36403404cfd14566",
+      "scripts/demo_assets.py": "80ea0557e634b93b748f6019818436fed8f187884bdf05296e5c1fc66217806b",
       "src/mklang/cli.py": "460155a49063c76023df5ee6a2ce9ee8f6efe53eb99ef73289ef47fb6bff4f11",
       "src/mklang/config.py": "7517bccf43fecf9af064b035d8f09d97bcc7d603bc344726021666bbeca85aa9",
       "src/mklang/console/__init__.py": "89e07bbecf189192a684db26463237ecdc31a4cca146e68c5374029450d0ac2c",
@@ -160,7 +70,6 @@
       "src/mklang/console/tools.py": "5c47029924a34ce856421fbdb720cd4cb0d7fcb61705b9940bb20b7e89f7b7b8",
       "src/mklang/console/widgets.py": "c3702b34eab2d342e1e1d8c8cfa7bf4b74441d9ce2d21aa00e4b8829e2714a82",
       "src/mklang/data/console/agent.mk": "f24814bc5e16056377bfaad6e02e58eb85cbf5cda80450e6183b6ece49d8411e",
-      "src/mklang/data/stdlib/std_self_consistency.mk": "6021f47a1ab23a94c41c8ef962fa83525c6592e907aa7c2d1cbee36a93ce82b3",
       "src/mklang/engine.py": "251a8b266a705a105e4f192fb417fe5782cdeb04a7a93ea1eebf869eef404640",
       "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
       "src/mklang/llm/anthropic.py": "948f8bcdbd1e18ea5e3823368bd9b58b5d960212646c72fc4c460e2c54ffc91b",
@@ -171,11 +80,10 @@
       "src/mklang/llm/prompts.py": "80e849690c73783d9a52d0790c11b405772c3537db57628f56a6809b6e851239",
       "src/mklang/presentation.py": "ef64505e39d42cd7cb3d5dfb3a53ae71cdfa9c9de59c4c121095a8cc073e3320",
       "src/mklang/providers.py": "f885d259680d2233cbdc92c8d4551a04bf9f8df6f33a6fbbc1561d9b991c4e18",
-      "src/mklang/scripttest.py": "564e13d007c74db3c0e2fdb7cbb199768006e8b34a794db1aec0e03222f7d03d",
       "src/mklang/search.py": "c6e110f4e4590e461b45353d72c6db4a612d1f6966cbf593ece7020af775ace4",
       "src/mklang/tools.py": "83dadd2f68b04a9d821b21b48471cab5f260a0c1ff7e9c26135680855d8a7b03"
     },
-    "sha256": "3146f3624d368c81a4a42ee7d8c3d5e2b2faaa802e675264ec16135c135c115a"
+    "sha256": "b53502c71698af4eae7c10b0e93b7ca95511f636251122b7eadf6f15d44c5a3e"
   },
   "toolchain": {
     "font": {

@@ -103,7 +103,7 @@ test -f site-src/adr/README.md
 # pretty URLs such as /demos/ from silently resolving media below /demos/assets/.
 # The demo set is the source of truth in scripts/demo_assets.py (DEMOS); keep
 # this list in sync when it changes.
-for demo in console agent language orchestrate hitl test; do
+for demo in agent language; do
 	grep -q "src=\"../assets/demos/${demo}.webm\"" site-src/demos.md
 done
 

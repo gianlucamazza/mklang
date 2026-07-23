@@ -29,12 +29,13 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
-- Demo showcase refocused on the two product surfaces — **language** and
-  **console**. The peripheral `cli` and `search` recordings are replaced by
-  `language` (react.mk: gates + `tool` observation + `accumulate` loop +
-  tier escalation) and `orchestrate` (map_reduce.mk: `over:` fan-out + `call:`
-  sub-machine); the README leads with console/agent and the CLI/MCP/test
-  sections are framed as scaffolding.
+- Demo showcase refocused and pruned to the two product surfaces: **`agent`**
+  (console TUI — natural-language commissioning, tool consent, live trace) and
+  **`language`** (`react.mk`: gates + `tool` observation + `accumulate` loop +
+  tier escalation). The peripheral recordings (`cli`, `search`, `console`,
+  `orchestrate`, `hitl`, `test`) are gone; the README leads with those two, and
+  the CLI/MCP/test sections are framed as scaffolding. `check-drift` now also
+  fails on orphan asset files left outside `DEMOS`.
 - Quality ratchet: the coverage gate rises to `fail_under = 90` (from 88),
   and eleven leaf modules are promoted to a mypy strict tier (full
   `--strict` minus `disallow_any_generics`, the documented JSON idiom);
