@@ -5,7 +5,7 @@ be run from inside the repository).
 
 ## Why this exists
 
-Engineering maturity (28 ADRs, ~92% coverage, multi-platform CI, package 1.0.0)
+Engineering maturity (28 ADRs, ~92% coverage, multi-platform CI, package 1.0.1)
 has outrun distribution. This test is the one finding the 2026-07-23 validation
 could not settle in-repo, and the one most likely to be rationalised away.
 

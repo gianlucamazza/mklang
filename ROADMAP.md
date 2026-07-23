@@ -272,6 +272,10 @@ untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
   bump the package to **1.0.0** (spec stays 0.3), and run the live release gate
   (DeepSeek + OpenAI agreement 1.0; Anthropic re-runs when credits allow). The
   last explicit item the maturity assessment named.
+- **[shipped] 1.0.1 validation follow-ups** — authoring-loop
+  `blind_spot = 0.0167` (no `test_machine`), ADR 0028 provisional 1.0 posture,
+  `cmd_doctor` CC cut, CI format-check + tag↔CHANGELOG enforcement; protocol for
+  the five-reader distribution test. Anthropic live re-run still open.
 - **[shipped] Showcase refresh** — the demo suite was refocused and pruned to
   the two product surfaces: **`agent`** (console TUI) and **`language`**
   (`react.mkl`); the peripheral recordings (`cli`, `search`, `console`,

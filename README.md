@@ -345,18 +345,24 @@ produce and judge prompts (SPEC §6, ADR 0025);
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green through the 0.14.0 and 0.15.0
-  release matrices, including the blocking cross-provider gate-agreement check at
+- **Live:** DeepSeek (default) and **OpenAI** green through the 1.0.x release
+  matrices, including the blocking cross-provider gate-agreement check at
   **1.0** — the release gate runs the single `gate_divergence` machine; the
-  [four-machine suite](./docs/experiments/gate-divergence.md) is ready to measure
-  live at scale. Anthropic unit-tested; live e2e still billing-blocked (credits,
-  not a missing key).
+  [four-machine suite](./docs/experiments/gate-divergence.md) measured **1.0
+  agreement per machine** (DeepSeek + OpenAI ×3). Anthropic unit-tested; live
+  e2e still blocked (key/credits).
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
-- **Open / later:** the path to 1.0 (close the open SPEC §9 questions, a stated
-  stability policy); Anthropic live when the account has credit;
-  `on_truncate=continue` stitching; language-level context zones (ROADMAP).
+  Arch: [AUR `mklang`](https://aur.archlinux.org/packages/mklang) tracks the
+  PyPI sdist pin.
+- **1.0 posture:** SemVer from 1.0.0, spec **0.3** frozen
+  ([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)); freeze is
+  provisional on evidence ([ADR 0028](./docs/adr/0028-provisional-1.0-posture.md)).
+  Authoring-loop `blind_spot = 0.0167` (no `test_machine` yet).
+- **Open / later:** Anthropic live when the account has credit; five-reader
+  distribution test; `on_truncate=continue` stitching; language-level context
+  zones (ROADMAP).
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
 
