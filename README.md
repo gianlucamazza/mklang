@@ -75,7 +75,8 @@ Policies: `ok` (advance), `repair(N)` (self-correct with feedback), `escalate`
 
 - **Document-first** — readable without the interpreter; prose-first for the
   common path. Production machines still need developer judgment for tools,
-  hooks, and untrusted inputs (see SPEC threat model).
+  hooks, and untrusted inputs (see SPEC threat model); the runtime delimits
+  untrusted context structurally (SPEC §6), it does not judge it for you.
 - **LLM-as-runtime** — non-deterministic by design; **gates** (prose + optional
   code hooks + budgets + trace) are the reliability mechanism. Prose-gate accuracy
   is an empirical claim, not a free lunch.
@@ -253,7 +254,8 @@ uv run mklang test examples/triage.mk --script examples/triage.test.yaml
 # PASS kb-empty-escalates
 ```
 
-Each scenario declares a scripted `llm:`/`tools:`/`hooks:` and an `expect:`
+Each scenario declares a scripted `llm:`/`tools:`/`hooks:`, optional host
+`input:` context (untrusted by provenance, SPEC §6), and an `expect:`
 (status, error, result, `at`, `trace` skeleton, context keys) — the same case
 format the [conformance suite](./conformance/README.md) uses. A mismatch prints a
 minimal diff (the first differing key, expected vs actual) and exits 1. See
@@ -277,9 +279,10 @@ The server auto-discovers config and keys through the same chain as the CLI
 
 The server exposes commissioning tools (`run` / `resume`), discovery
 (`list_machines` / `describe_machine`), and `check` (ADR 0011 + 0013). `run`
-accepts inline `.mk` source or a path, with `inputs` merged into the context;
+accepts inline `.mk` source or a path, with `inputs` merged into the context
+(host inputs are untrusted by provenance and reach prompts fenced — SPEC §6);
 `resume` takes an opaque handle or checkpoint file (e.g.
-`{"human.reply": "…"}` for HITL). Live engine events stream as `mklang.event`
+`{"human.reply": "…"}` for HITL, injected values equally tainted). Live engine events stream as `mklang.event`
 logging notifications (ADR 0019). In-memory sessions hold suspensions unless
 you pass `checkpoint_path`. Provider keys resolve server-side from the
 environment, never over the wire.
@@ -312,6 +315,8 @@ web `search` (offline stub by default); host tool stub architecture for
 `search` / `search_kb` / `send_reply` (ADR 0020); host clock conventions
 `context.today` / `context.now`; sectioned produce system prompts from
 `structure`+`execution`; output anti-cutoff + context budgets (ADR 0016–0019);
+**untrusted-context delimiting** — provenance taint + `<data-NONCE>` fences in
+produce and judge prompts (SPEC §6, ADR 0025);
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 

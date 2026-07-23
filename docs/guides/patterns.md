@@ -83,8 +83,11 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   chars). Transcript and full `Session.history` stay the audit archive; only
   the prompt view is windowed (ADR 0017).
 - **Treat `{{context}}` as untrusted** when it may contain customer or web text.
-  Prose gates and prompts interpolate raw values; injection can steer transitions
-  (SPEC §11). Prefer hooks + HITL before irreversible tools.
+  The runtime delimits tainted interpolations automatically — host inputs, tool
+  observations, and deposits render inside `<data-NONCE>` fences, and the judge
+  always sees OUTPUT/REASONING/CONTEXT as fenced data (SPEC §6, ADR 0025) — but
+  that is a mitigation, not a proof: fenced content can still *persuade*. Prefer
+  hooks + HITL before irreversible tools (SPEC §11).
 - **End every non-terminal state with an `otherwise` gate.** Without it, a run can
   `halt` with `no-gate-matched` — and if the judge returns garbage, the runtime
   **hard-halts** with `judge-unparseable` unless `otherwise` is eligible (soft
@@ -136,7 +139,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   `mklang test machine.mk --script machine.test.yaml` runs the machine against a
   **scripted LLM** (produce texts + judge picks) and scripted tools/hooks — no
   provider, no API key, fully deterministic. Each scenario is a named case in the
-  conformance format (`llm`/`tools`/`hooks`/`run` + `expect`), and the runner
+  conformance format (`llm`/`tools`/`hooks`/`input`/`run` + `expect`), and the runner
   shares its matcher with the [conformance suite](../../conformance/README.md), so a
   green scenario means the _interpreter_ would route your machine exactly that way.
 - **Cover both the happy path and the escape hatches.** The value is in the

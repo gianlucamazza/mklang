@@ -104,6 +104,12 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 
 ## Quality
 
+- **Shipped:** CI quality gates — mypy (zero suppressions, every function in
+  `src/mklang` annotated), pytest-cov with a `fail_under = 88` coverage gate
+  (90% measured at introduction; ratchet up, never down), and an offline test
+  matrix (ubuntu 3.11–3.13 + macOS + Windows, console extra installed) in a
+  reusable `quality.yml` workflow shared by `ci.yml` and `release.yml`
+  (pinned to the release tag).
 - **Shipped:** gated live smoke tests — provider-agnostic, opt-in via
   `MKLANG_LIVE=1` (`MKLANG_LIVE_PROVIDER=<name>` to override the config's
   `active`); skips cleanly when the key is missing. Anthropic goes through the

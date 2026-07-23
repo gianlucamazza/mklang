@@ -1044,7 +1044,8 @@ language contract; silent omission would be worse than incomplete mitigation.
 - **Author discipline:** treat every `{{…}}` as untrusted unless the host proved
   otherwise; put high-stakes transitions on hooks or humans.
 
-### Explicit non-goals for v0.2
+### Explicit non-goals
 
-Sandboxed tool brokers, signed context zones, automatic wrapping of untrusted
-fields, cryptographic attestation of traces, and formal non-interference proofs.
+Sandboxed tool brokers, signed context zones, cryptographic attestation of
+traces, and formal non-interference proofs. (Automatic wrapping of untrusted
+fields — a v0.2 non-goal — shipped as the §6 delimiting, ADR 0025.)

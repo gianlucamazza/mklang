@@ -37,7 +37,7 @@ observation deposit, unknown-tool halt, fan-out `{{index}}`, fan-out step
 charging) are **in the contract** — they pin language rules from SPEC §4.9 / §5,
 not host persistence or provider adapters. Checkpoint/HITL/provider behavior
 remains out of scope. Case inventory and format: [`conformance/README.md`](../../conformance/README.md)
-(21 cases as of 0.5.2+).
+(21 cases as of 0.5.2+; 28 as of ADR 0025).
 
 ## Consequences
 

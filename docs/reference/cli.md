@@ -72,7 +72,7 @@ mklang run MACHINE [--set k.path=value]... [options]
 | `--config PATH`              | runtime config (auto-discovered when omitted)                                                              |
 | `--provider NAME`            | override the config's `active` provider                                                                    |
 | `--max-tokens N`             | cost budget: halt once total tokens reach this                                                             |
-| `--checkpoint PATH`          | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11) |
+| `--checkpoint PATH`          | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11; frames record the taint set, SPEC §6) |
 | `--hitl`                     | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)   |
 | `--strict`                   | refuse to run a document whose `mklang:` version is unsupported (default: warning)                         |
 | `--on-truncate report\|halt` | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)         |
@@ -90,7 +90,7 @@ mklang resume CHECKPOINT [--set k.path=value]... [options]
 
 | Flag                         | Effect                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------- |
-| `--set k.path=value`         | inject values (e.g. the human reply) into the suspended run's context         |
+| `--set k.path=value`         | inject values (e.g. the human reply) into the suspended run's context — untrusted by provenance, fenced in prompts (SPEC §6); pre-taint checkpoints resume all-tainted |
 | `--config` / `--provider`    | as in `run`                                                                   |
 | `--max-tokens N`             | new total budget, including tokens spent before the suspend                   |
 | `--hitl`                     | keep suspending on escalate gates even if the checkpoint didn't record it     |

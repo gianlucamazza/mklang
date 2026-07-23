@@ -64,7 +64,9 @@ A change to the **language** must land as a coherent set — in this order:
    update a case under `conformance/cases/` (ADR 0009).
 5. **Examples** — add/adjust a machine in `examples/` that exercises the feature;
    where gate paths matter, a sibling `*.test.yaml` for `mklang test` is welcome.
-6. **Tests** — deterministic coverage with `MockLLM` in `tests/`; keep `ruff` clean.
+6. **Tests** — deterministic coverage with `MockLLM` in `tests/`; keep `ruff`
+   **and `mypy`** clean (zero suppressions) and coverage above the
+   `fail_under = 88` gate.
 7. **Docs** — `README.md`, `docs/guides/patterns.md`, `CHANGELOG.md`, and `ROADMAP.md`.
 
 A change to the **interpreter only** (no language change) skips steps 1–2 and 4
@@ -87,7 +89,9 @@ for the format and the existing decisions. Reference the ADR in your PR.
 Releases are provenance-bound: update `pyproject.toml` and `mklang.__version__`
 together, record the package release in `CHANGELOG.md`, and publish a GitHub
 Release whose tag is exactly `v<package-version>`. The release workflow runs the
-offline suite, strict docs/package checks, and the required live-provider gate;
+same reusable quality gate as CI (lint, mypy, coverage, the multi-platform
+offline matrix) pinned to the tag, strict docs/package checks, and the required
+live-provider gate;
 only its previously tested artifacts reach PyPI through the protected `pypi`
 environment and Trusted Publishing. Do not upload a locally rebuilt artifact for
 an existing tag.
