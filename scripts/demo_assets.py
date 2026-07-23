@@ -21,23 +21,19 @@ ASSET_DIR = ROOT / "docs" / "assets" / "demos"
 TAPE_DIR = ROOT / "demos" / "tapes"
 TOOLCHAIN_FILE = ROOT / "demos" / "toolchain.conf"
 MANIFEST = ASSET_DIR / "manifest.json"
-DEMOS = ("console", "agent", "language", "orchestrate", "hitl", "test")
+DEMOS = ("agent", "language")
 FORMATS = ("webm", "gif", "txt")
 
+# Only the files the two live demos actually exercise; editing one of these
+# should force a demo re-pin, nothing else. (agent → console + news_search live
+# web; language → react.mk + the calc tool via the CLI.)
 SOURCE_PATTERNS = (
     "demos/tapes/*.tape",
     "demos/toolchain.conf",
     "scripts/demo_assets.py",
     "config/runtime.example.yaml",
     "examples/react.mk",
-    "examples/map_reduce.mk",
-    "examples/summarize_doc.mk",
-    "examples/expense_approval.mk",
-    "examples/triage.mk",
-    "examples/triage.test.yaml",
     "examples/news_search.mk",
-    "src/mklang/checkpoint.py",
-    "src/mklang/scripttest.py",
     "src/mklang/search.py",
     "src/mklang/tools.py",
     "src/mklang/data/console/agent.mk",
@@ -48,17 +44,9 @@ SOURCE_PATTERNS = (
     "src/mklang/providers.py",
     "src/mklang/llm/*.py",
     "src/mklang/console/*.py",
-    "src/mklang/data/stdlib/std_self_consistency.mk",
 )
 
 REQUIRED_TEXT = {
-    "console": (
-        "Ready",
-        "/machines",
-        "/run std_self_consistency",
-        "status",
-        "done",
-    ),
     "agent": (
         "Ready",
         "you:",
@@ -73,28 +61,6 @@ REQUIRED_TEXT = {
         "DONE react",
         "provider deepseek",
         "Result",
-    ),
-    "orchestrate": (
-        "files=2",
-        "DONE map_reduce",
-        "provider deepseek",
-        "Result",
-    ),
-    "hitl": (
-        "SUSPENDED expense_approval",
-        "Checkpoint",
-        "resume",
-        "DONE expense_approval",
-        "provider deepseek",
-        "Result",
-    ),
-    "test": (
-        "OK examples/triage.mk",
-        "findings=0",
-        "PASS happy-path",
-        "PASS kb-empty-escalates",
-        "passed=2",
-        "failed=0",
     ),
 }
 FORBIDDEN_TEXT = (

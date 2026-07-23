@@ -22,20 +22,14 @@ MCP, scenario tests) is scaffolding around those two.
 
 ## See it in action
 
-| Console: agent-first TUI, stdlib, fan-out                                                               | Agent: free-language chained flows                                                                               |
-| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [![Live mklang console demo](./docs/assets/demos/console.gif)](./docs/demos.md#console-interactive-run) | [![Live mklang agent demo](./docs/assets/demos/agent.gif)](./docs/demos.md#agent-natural-language-commissioning) |
+The two product surfaces — the **console** and the **language**:
 
-| Language: gates, tools, reasoning loop                                                                                   | Orchestrate: fan-out + sub-machines                                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| [![mklang language demo](./docs/assets/demos/language.gif)](./docs/demos.md#language-gates-tools-and-the-reasoning-loop) | [![mklang orchestrate demo](./docs/assets/demos/orchestrate.gif)](./docs/demos.md#orchestrate-fan-out-and-sub-machines) |
+| Console: agent-first TUI, commissioning, trace                                                                   | Language: gates, tools, reasoning loop                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [![Live mklang agent demo](./docs/assets/demos/agent.gif)](./docs/demos.md#agent-natural-language-commissioning) | [![mklang language demo](./docs/assets/demos/language.gif)](./docs/demos.md#language-gates-tools-and-the-reasoning-loop) |
 
-| HITL: escalate, suspend, resume                                                                   | Tests: deterministic, no API key                                                                            |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [![Live mklang HITL demo](./docs/assets/demos/hitl.gif)](./docs/demos.md#hitl-suspend-and-resume) | [![mklang scenario test demo](./docs/assets/demos/test.gif)](./docs/demos.md#tests-deterministic-scenarios) |
-
-Recordings run the real surfaces against DeepSeek (the agent demo also hits the
-live web); the test demo is fully deterministic and needs no API key. See the
+Both recordings run the real surfaces against DeepSeek (the agent demo also hits
+the live web). See the
 [full WebM recordings, transcripts, and reproducibility notes](./docs/demos.md).
 
 ## The language

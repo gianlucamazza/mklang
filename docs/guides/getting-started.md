@@ -66,7 +66,7 @@ state-by-state:
 mklang console
 ```
 
-![The mklang console](../assets/demos/console.gif)
+![The mklang console](../assets/demos/agent.gif)
 
 Try typing:
 
