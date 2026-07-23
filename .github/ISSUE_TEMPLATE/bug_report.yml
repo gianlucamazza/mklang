@@ -1,0 +1,33 @@
+name: Bug report
+description: Something behaves differently from SPEC.md or the docs
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: "`mklang --version` (and the `mklang:` spec version of your document, if relevant)"
+      placeholder: "0.14.0 / spec 0.3"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you expect (cite SPEC.md when it is a semantics question) and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: >
+        Ideally a minimal `.mk` plus a `mklang test` scenario (scripted LLM — no
+        API keys, deterministic; see conformance/README.md for the format). A
+        CLI command + `--trace` output works too.
+      render: yaml
+  - type: input
+    id: provider
+    attributes:
+      label: Provider / model (if live)
+      placeholder: "deepseek · deepseek-chat — or 'scripted/offline'"

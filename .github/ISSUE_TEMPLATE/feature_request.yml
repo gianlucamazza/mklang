@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose a language, runtime, or tooling change
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      description: >
+        mklang keeps layer discipline (CONTRIBUTING.md): language changes need
+        SPEC + schema + conformance; host/tooling changes do not.
+      options:
+        - Language (SPEC/schema semantics)
+        - Runtime / interpreter
+        - CLI / console / MCP surface
+        - Host tools / stdlib machines
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't you express or do today? A concrete machine or workflow beats an abstract wish.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed shape (optional)
+      description: Sketch the `.mk` face / CLI flag / API. Check ROADMAP.md and SPEC §9 non-goals first.

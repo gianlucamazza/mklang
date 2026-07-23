@@ -1,0 +1,15 @@
+# Weekly dependency PRs. uv ecosystem covers pyproject + uv.lock; the GitHub
+# Actions ecosystem keeps workflow action tags current.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python-deps:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
