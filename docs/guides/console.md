@@ -7,7 +7,7 @@ run state by state. The agent itself **is** a machine
 read it, `check` it, `lint --llm` it, scenario-test it, or swap it out entirely.
 
 ```bash
-pip install 'mklang[console]'
+pip install mklang  # the console ships by default since 0.15.0
 mklang console                 # DeepSeek by default; --provider anthropic|openai|…
 ```
 

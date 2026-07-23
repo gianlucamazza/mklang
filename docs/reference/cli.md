@@ -184,7 +184,7 @@ the active provider cannot run (ADR 0023).
 mklang console [--workspace DIR] [--agent FILE.mk] [--continue | --session ID]
 ```
 
-The agent-first TUI (`pip install 'mklang[console]'`). `--workspace` confines
+The agent-first TUI (bundled by default since 0.15.0). `--workspace` confines
 machine writes (default: `./machines` when present, else the XDG user machines
 dir); `--agent` swaps the console's brain with your own machine;
 `--continue`/`--session` reopen sessions. Full guide:

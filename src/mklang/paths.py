@@ -7,6 +7,12 @@ from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
 
+# System-layer locations (ADR 0021). Module-level constants so the test suite
+# can point them at a sandbox — a host with an installed mklang (pacman/AUR
+# ships /etc/mklang and /usr/share/mklang) must not leak into the suite.
+SYSTEM_CONFIG = Path("/etc/mklang/runtime.yaml")
+SYSTEM_MACHINES = Path("/usr/share/mklang/machines")
+
 
 @dataclass(frozen=True)
 class HostPaths:
@@ -120,7 +126,7 @@ def resolve_config_with_layer(
     for candidate, layer in (
         (here / "config" / "runtime.yaml", "project"),
         (host_paths().user_config, "user"),
-        (Path("/etc/mklang/runtime.yaml"), "system"),
+        (SYSTEM_CONFIG, "system"),
     ):
         if candidate.is_file():
             return candidate, layer
@@ -134,6 +140,6 @@ def resolve_config_with_layer(
 def machine_layers() -> list[tuple[str, Path]]:
     """System then user machine roots; later layers have higher precedence."""
     return [
-        ("system", Path("/usr/share/mklang/machines")),
+        ("system", SYSTEM_MACHINES),
         ("user", host_paths().user_machines),
     ]

@@ -70,9 +70,10 @@ jobs:
           python-version: ${{ matrix.python }}
       # The coverage gate ([tool.coverage.report] fail_under) fires only on the
       # canonical leg; instrumenting every leg adds runtime for no extra signal,
-      # and platform-specific skips would shift the number.
+      # and platform-specific skips would shift the number. The console ships
+      # in the core dependencies since 0.15.0 — no extra needed.
       - name: Unit tests (MockLLM — no network, incl. MCP + console surface)
         run: >
-          uv run --extra dev --extra mcp --extra console pytest -q
+          uv run --extra dev --extra mcp pytest -q
           ${{ (matrix.os == 'ubuntu-latest' && matrix.python == '3.13')
               && '--cov=mklang --cov-report=term-missing' || '' }}

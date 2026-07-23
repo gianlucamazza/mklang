@@ -1,6 +1,6 @@
 """The mklang console TUI (ADR 0015 M1): agent-first, brain-as-machine.
 
-Requires the `mklang[console]` extra (Textual). The engine runs on a worker
+Textual TUI, bundled by default since 0.15.0. The engine runs on a worker
 thread; `TextualBridge` marshals events into the UI and blocks the worker on
 human questions (HITL escalations, tool consent) answered through the main
 input line. Nothing here adds semantics: the brain is `agent.mk`, the hands
