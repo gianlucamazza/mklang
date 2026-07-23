@@ -264,10 +264,11 @@ untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
   stated **stability & deprecation policy** for the package and the `mklang:`
   spec version, then drop the `Development Status :: 4 - Beta` classifier. This
   is the explicit blocker the maturity assessment named.
-- **[next] Showcase refresh** — replace the peripheral demo recordings with a
-  small set that makes the CLI, run flow, and architecture legible (gates,
-  trace, HITL, `call`/fan-out, MCP). Analysis + plan tracked separately; the
-  VHS→manifest pipeline and the manual **Demo assets** workflow already exist.
+- **[shipped] Showcase refresh** — the demo suite was refocused and pruned to
+  the two product surfaces: **`agent`** (console TUI) and **`language`**
+  (`react.mk`); the peripheral recordings (`cli`, `search`, `console`,
+  `orchestrate`, `hitl`, `test`) are gone, the README leads with the two
+  surfaces, and `check-drift` also fails on orphan asset files.
 - **[next] gate-divergence at scale** — run the four-machine suite live across
   providers and publish a dated agreement table (harness ready).
 - **[next] Live-verify Anthropic** — unblock when credits allow; already routed
