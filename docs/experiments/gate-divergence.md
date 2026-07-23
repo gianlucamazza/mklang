@@ -80,9 +80,10 @@ temperature ablation.
 
 ## Results
 
-| Date       | Providers                  | Agreement rate | Distinct signatures | Notes                                                                                                                                                                                                                                  |
-| ---------- | -------------------------- | -------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-16 | deepseek, openai (×3 each) | **1.0**        | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key). |
+| Date       | Providers                  | Agreement rate      | Distinct signatures | Notes                                                                                                                                                                                                                                                                       |
+| ---------- | -------------------------- | ------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-16 | deepseek, openai (×3 each) | **1.0**             | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key).                                      |
+| 2026-07-23 | deepseek, openai (×3 each) | **1.0** per machine | 1 per machine       | First full **four-machine suite** run (`--machines all`). 24/24 runs `done`, agreement 1.0 within every machine (15/15 pairs each), zero gate errors. Free-text outputs diverge on the contestable machines while routing stays identical. Anthropic still billing-blocked. |
 
 ### 2026-07-16 detail
 
@@ -100,6 +101,38 @@ uv run python scripts/gate_divergence.py --providers deepseek,openai --repeats 3
 - **Anthropic:** live smoke and divergence blocked by provider billing
   (`invalid_request_error` / purchase credits), not by missing `ANTHROPIC_API_KEY`
   or adapter bugs. Re-run when the account has credit.
+
+### 2026-07-23 detail — full four-machine suite
+
+```bash
+uv run python scripts/gate_divergence.py --machines all --providers deepseek,openai --repeats 3
+```
+
+- **runs_done:** 24 (4 machines × 2 providers × 3 repeats), 0 skipped, 0 failed,
+  `gate_errors: []`
+- **Judges:** tier-following (SPEC §2.1 default) — `deepseek-chat` and
+  `gpt-5.4-mini` (both machines are `fast`-tier throughout)
+- **Per-machine agreement** (15/15 within-machine pairs each):
+
+  | Machine                | Agreement | Distinct signatures | Shared signature (abbreviated)         |
+  | ---------------------- | --------- | ------------------- | -------------------------------------- |
+  | `gate_divergence`      | **1.0**   | 1                   | `label\|spam→spam_path → END`          |
+  | `sentiment_borderline` | **1.0**   | 1                   | `assess\|clearly negative→neg → END`   |
+  | `severity_escalate`    | **1.0**   | 1                   | `triage\|page a human→human → END`     |
+  | `grounding_repair`     | **1.0**   | 1                   | `answer\|grounded, states 30 days→END` |
+
+- **Free text diverges, routing doesn't:** on `sentiment_borderline` and
+  `severity_escalate` every pair reports `same_outputs: false` (the produced
+  prose differs across runs and providers) while `same_signature: true` — the
+  gates absorb the output non-determinism, which is the language's reliability
+  claim in miniature. On the two anchored machines (`gate_divergence`,
+  `grounding_repair`) even the outputs coincide.
+- **Interpretation:** four gate shapes (multi-way routing, borderline judgement,
+  control-flow `escalate`, `repair` grounding), two providers, full agreement.
+  Still synthetic and still two providers — not a portability guarantee, and
+  high-stakes prose gates keep needing hooks/HITL (SPEC §11) — but the
+  four-machine harness is now exercised live end to end.
+- **Anthropic:** unchanged — billing-blocked, not a key/adapter problem.
 
 ## Related
 
