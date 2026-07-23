@@ -9,9 +9,12 @@ points.
 from __future__ import annotations
 
 import os
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .tool_obs import tool_obs
+
+if TYPE_CHECKING:
+    from .toolconfig import ToolsConfig
 
 # Deterministic showcase facts (triage demos). Not a real KB.
 _DEFAULT_FACTS = [
@@ -60,7 +63,7 @@ def current_kb_backend() -> KBBackend | None:
     return _backend
 
 
-def resolve_backend_name(tc=None) -> tuple[str, str]:
+def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
     """Backend name + source layer: env > ``tools.kb.backend`` config > stub."""
     from .toolconfig import current_tools
 
@@ -96,7 +99,9 @@ def search_kb(inp: dict) -> str:
 
     backend = _backend if _backend is not None else _backend_from_settings()
     try:
-        facts = backend.lookup(query)
+        # Widened to object: third-party backends may violate the protocol,
+        # and the isinstance guard below is the boundary that catches it.
+        facts: object = backend.lookup(query)
         if not isinstance(facts, list):
             return tool_obs(
                 "search_kb",

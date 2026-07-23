@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
@@ -23,6 +24,7 @@ import yaml
 from .. import host
 from ..config import load_provider
 from ..engine import run as run_machine_engine
+from ..llm.base import LLM
 from ..registry import base_registry, load_registry
 
 
@@ -55,8 +57,8 @@ class ConsoleTools:
     default_cost_budget: int | None = None
     # Output anti-cutoff policy for commissioned machines (ADR 0018).
     on_truncate: str = "report"
-    build_llm: object = None
-    cancel_requested: object = None
+    build_llm: Callable[[object], LLM] | None = None
+    cancel_requested: Callable[[], object] | None = None
     _consented: set = field(default_factory=set)
     _close_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
     _closed: bool = field(default=False, init=False, repr=False)
@@ -244,6 +246,8 @@ class ConsoleTools:
                 f"'{target}' escalated at {res.at}: {last.get('gate', 'needs a decision')}\n"
                 f"last output: {last.get('output', '')}"
             )
+            # A suspended run always carries checkpoint frames.
+            assert res.frames is not None
             host.set_path(res.frames[-1]["ctx"], "human.reply", reply)
             res = run_machine_engine(
                 machine,

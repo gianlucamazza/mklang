@@ -13,10 +13,14 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+import time
 from pathlib import Path, PurePosixPath
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .tool_obs import tool_obs
+
+if TYPE_CHECKING:
+    from .toolconfig import ToolsConfig
 
 _log = logging.getLogger("mklang.fs")
 
@@ -82,6 +86,23 @@ def _normalize_rel(rel: str, *, allow_empty: bool = False) -> str:
     if not parts and not allow_empty:
         raise FSError("empty path")
     return "/".join(parts)
+
+
+def _replace_with_retry(tmp: Path, target: Path, attempts: int = 10) -> None:
+    """Atomic rename with a bounded retry for Windows sharing violations.
+
+    ``os.replace`` is atomic on every platform, but on Windows a replace onto a
+    target that another replace is concurrently swapping raises a transient
+    ``PermissionError`` (sharing violation). POSIX renames never see this, so
+    the retry loop only ever spins on Windows."""
+    for attempt in range(attempts):
+        try:
+            os.replace(tmp, target)
+            return
+        except PermissionError:
+            if os.name != "nt" or attempt == attempts - 1:
+                raise
+            time.sleep(0.01 * (attempt + 1))
 
 
 def _check_write(rel: str, data: bytes, *, max_bytes: int) -> None:
@@ -163,7 +184,7 @@ class LocalFSBackend:
         norm, target = self._resolve(rel, allow_empty=True)
         if not target.is_dir():
             raise FSError(f"no such directory: {rel!r}")
-        entries = []
+        entries: list[dict[str, str | int]] = []
         for child in sorted(target.iterdir(), key=lambda p: p.name):
             if child.name.startswith(".") or not self._confined(child.resolve()):
                 continue
@@ -210,7 +231,7 @@ class LocalFSBackend:
         try:
             with os.fdopen(fd, "wb") as fh:
                 fh.write(data)
-            os.replace(tmp, target)
+            _replace_with_retry(tmp, target)
         except BaseException:
             tmp.unlink(missing_ok=True)
             raise
@@ -237,7 +258,7 @@ def allow_writes(enabled: bool | None) -> None:
     _writes_allowed = enabled
 
 
-def writes_allowed_with_source(tc=None) -> tuple[bool, str]:
+def writes_allowed_with_source(tc: "ToolsConfig | None" = None) -> tuple[bool, str]:
     """Write grant + source: runtime grant > set env > config > off.
 
     A *set, non-empty* ``MKLANG_FS_WRITE`` decides either way, so
@@ -260,7 +281,7 @@ def writes_allowed() -> bool:
     return writes_allowed_with_source()[0]
 
 
-def resolve_workspace_with_source(tc=None) -> tuple[Path, str]:
+def resolve_workspace_with_source(tc: "ToolsConfig | None" = None) -> tuple[Path, str]:
     """Workspace root + source: ``MKLANG_FS_ROOT`` > ``tools.fs.workspace`` > cwd."""
     from .toolconfig import current_tools
 
@@ -277,7 +298,7 @@ def resolve_workspace() -> Path:
     return resolve_workspace_with_source()[0]
 
 
-def resolve_backend_name(tc=None) -> tuple[str, str]:
+def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
     """Backend name + source: env > ``tools.fs.backend`` config > local (ADR 0024).
 
     Unknown names degrade to ``stub`` — an unrecognized value must never

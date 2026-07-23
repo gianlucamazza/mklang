@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .tool_obs import tool_obs
+
+if TYPE_CHECKING:
+    from .toolconfig import ToolsConfig
 
 
 def _preview(body: str, limit: int = 120) -> str:
@@ -77,7 +80,7 @@ def current_mail_backend() -> MailBackend | None:
     return _backend
 
 
-def resolve_backend_name(tc=None) -> tuple[str, str]:
+def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
     """Backend name + source layer: env > ``tools.mail.backend`` config > stub."""
     from .toolconfig import current_tools
 
@@ -118,7 +121,9 @@ def send_reply(inp: dict) -> str:
     backend = _backend if _backend is not None else _backend_from_settings()
     preview = _preview(body)
     try:
-        meta = backend.send(to=to, body=body)
+        # Widened to object: third-party backends may violate the protocol,
+        # and the isinstance guard below is the boundary that catches it.
+        meta: object = backend.send(to=to, body=body)
         if not isinstance(meta, dict):
             return tool_obs(
                 "send_reply",

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from .engine import _parse_list
 from .errors import JudgeUnparseable
+from .llm.base import LLM
 from .model import Machine, State
 
 
@@ -36,7 +37,7 @@ def _synthesis_prompt(state: State, conditions: list[str], k: int) -> str:
     )
 
 
-def _judge_once(llm, model: str, conditions: list[str], output: str) -> int | None:
+def _judge_once(llm: LLM, model: str, conditions: list[str], output: str) -> int | None:
     """One real judge call; None when the judge picks no listed condition."""
     try:
         verdict = llm.judge(model, conditions, output, {})
@@ -50,7 +51,7 @@ def _judge_once(llm, model: str, conditions: list[str], output: str) -> int | No
 
 def llm_lint_machine(
     machine: Machine,
-    llm,
+    llm: LLM,
     tiers: dict,
     judge: str | None = None,
     *,

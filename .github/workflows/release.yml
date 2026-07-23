@@ -12,7 +12,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The same reusable gate as ci.yml (lint, mypy, schema, scenario tests, and
+  # the offline pytest matrix incl. coverage), pinned to the release tag.
+  quality:
+    uses: ./.github/workflows/quality.yml
+    with:
+      ref: ${{ github.event.release.tag_name }}
+
   quality-and-build:
+    needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -25,19 +33,6 @@ jobs:
         run: |
           package_version="$(uv run python -c 'import mklang; print(mklang.__version__)')"
           test "$RELEASE_TAG" = "v$package_version"
-      - name: Lint and unit tests
-        run: |
-          uv run --extra dev ruff check src tests scripts
-          uv run --extra dev pytest -q
-      - name: Reject stale or modified demo assets
-        run: uv run python scripts/demo_assets.py check-drift
-      - name: Validate examples and runtime config
-        run: |
-          uv run --with check-jsonschema check-jsonschema --default-filetype yaml --schemafile schema/mklang.schema.json examples/*.mk
-          uv run --with check-jsonschema check-jsonschema --default-filetype yaml --schemafile config/runtime.schema.json config/runtime.example.yaml
-          uv run mklang check examples/*.mk
-          uv run mklang lint --strict examples/*.mk
-          uv run mklang test examples/triage.mk --script examples/triage.test.yaml
       - name: Build docs strictly
         run: |
           bash scripts/build-docs.sh
@@ -95,7 +90,7 @@ jobs:
           if-no-files-found: warn
 
   publish:
-    needs: [quality-and-build, live-matrix]
+    needs: [quality, quality-and-build, live-matrix]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

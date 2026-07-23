@@ -18,6 +18,7 @@ import logging
 import operator
 from collections.abc import Callable
 from importlib.metadata import entry_points
+from typing import Any
 
 ToolFn = Callable[[dict], str]
 
@@ -30,10 +31,15 @@ _BINOPS = {
     ast.Mod: operator.mod,
     ast.Pow: operator.pow,
 }
-_UNARY = {ast.UAdd: operator.pos, ast.USub: operator.neg}
+# Annotated: pos/neg are overloaded, so an inferred value type would collapse
+# to a non-callable join.
+_UNARY: dict[type[ast.unaryop], Callable[[Any], Any]] = {
+    ast.UAdd: operator.pos,
+    ast.USub: operator.neg,
+}
 
 
-def _eval(node):
+def _eval(node: ast.AST) -> int | float:
     if isinstance(node, ast.Expression):
         return _eval(node.body)
     if isinstance(node, ast.Constant) and isinstance(node.value, int | float):
@@ -146,7 +152,7 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
     reg: dict[str, ToolFn] = {}
     try:
         eps = entry_points()
-        selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
+        selected = eps.select(group=group)
     except Exception as e:
         _log.warning("could not read entry points (%s): %s", group, e)
         return reg
@@ -155,7 +161,7 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
             obj = ep.load()
             if not callable(obj):
                 raise TypeError(f"{ep.name} is not callable")
-            reg[ep.name] = obj  # type: ignore[assignment]
+            reg[ep.name] = obj
         except Exception as e:
             _log.warning("tool plugin %r failed to load: %s", ep.name, e)
     return reg

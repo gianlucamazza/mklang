@@ -10,6 +10,26 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `0.13.0`).
 
+## [Unreleased]
+
+### Added
+
+- CI quality gates: static type checking with **mypy** (zero suppressions —
+  `check_untyped_defs`, `disallow_incomplete_defs`, `strict_equality`, warn
+  flags; every function in `src/mklang` is annotated) and **coverage** via
+  pytest-cov with a `fail_under = 88` gate (90.2% measured at introduction).
+- CI test matrix: Python 3.11/3.12/3.13 on ubuntu plus macOS and Windows legs
+  (3.13), with the console extra installed so Textual tests run in CI. The
+  shared checks live in a reusable `quality.yml` workflow called by both
+  `ci.yml` and `release.yml` (pinned to the release tag).
+
+### Changed
+
+- Engine transition step now halts with explicit `state-error:
+gate-missing-to` / `repair-missing-budget` labels when a hand-built
+  `Machine` bypasses schema validation (schema-validated machines are
+  unaffected — the schema already requires `to` and a repair budget).
+
 ## [0.13.0] — 2026-07-23
 
 Declarative tool-backend bindings, process logging hygiene, and the

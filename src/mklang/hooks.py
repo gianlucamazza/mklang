@@ -29,8 +29,11 @@ def always_false(_ctx: dict, _output: Any) -> bool:
 
 def amount_le_100(ctx: dict, _output: Any) -> bool:
     """True when context `amount` is a number ≤ 100 (demo auto-approve)."""
+    amount = ctx.get("amount")
+    if amount is None:
+        return False
     try:
-        return float(ctx.get("amount")) <= 100
+        return float(amount) <= 100
     except (TypeError, ValueError):
         return False
 
@@ -59,7 +62,7 @@ def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
     reg: dict[str, HookFn] = {}
     try:
         eps = entry_points()
-        selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
+        selected = eps.select(group=group)
     except Exception as e:
         _log.warning("could not read entry points (%s): %s", group, e)
         return reg
@@ -68,7 +71,7 @@ def load_entry_point_hooks(group: str = ENTRY_POINT_GROUP) -> dict[str, HookFn]:
             obj = ep.load()
             if not callable(obj):
                 raise TypeError(f"{ep.name} is not callable")
-            reg[ep.name] = obj  # type: ignore[assignment]
+            reg[ep.name] = obj
         except Exception as e:
             _log.warning("hook plugin %r failed to load: %s", ep.name, e)
     return reg

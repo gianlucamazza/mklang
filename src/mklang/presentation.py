@@ -51,7 +51,7 @@ def console_for(color: str = "auto", *, stderr: bool = False) -> Console:
     return Console(stderr=stderr, no_color=no_color, force_terminal=force)
 
 
-def emit_json(value) -> None:
+def emit_json(value: object) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2))
 
 

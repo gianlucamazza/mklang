@@ -10,18 +10,26 @@ are `ConsoleTools`, and the run tree is the `on_event` stream.
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from dataclasses import replace as dc_replace
+from typing import TYPE_CHECKING
 from datetime import datetime
 from pathlib import Path
 
 import yaml
 
 from ..checkpoint import save_checkpoint
+from ..engine import RunResult
 from ..engine import run as run_engine
 from ..loader import validate_dict
 from ..model import Machine, parse_machine
 from . import render as log_render
 from .tools import ConsoleTools
+
+if TYPE_CHECKING:
+    from textual.app import App
+
+    from ..llm.base import LLM
 
 
 def load_brain(agent_path: str | None = None) -> Machine:
@@ -42,11 +50,11 @@ def build_app(
     provider: str | None,
     workspace: str,
     agent_path: str | None = None,
-    build_llm=None,
+    build_llm: "Callable[[object], LLM] | None" = None,
     session_base: str | None = None,
     continue_session: bool = False,
     session_id: str | None = None,
-):
+) -> "App":
     """Construct the Textual app (imported lazily so the core stays TUI-free)."""
     from rich.console import RenderableType
     from textual.app import App, ComposeResult
@@ -63,9 +71,11 @@ def build_app(
     class TextualBridge:
         """Bridge impl: emit from any thread; ask/confirm block the worker."""
 
+        _reply: str | None
+
         def __init__(self, app: "ConsoleApp"):
             self.app = app
-            self._reply: str | None = None
+            self._reply = None
             self._event = threading.Event()
 
         def emit(self, event: dict) -> None:
@@ -77,7 +87,10 @@ def build_app(
             if self.app.shutting_down:
                 return ""
             self._event.clear()
-            if self.app.shutting_down:
+            # Re-check through a local: shutdown can flip from another thread,
+            # which per-expression narrowing cannot see.
+            app = self.app
+            if app.shutting_down:
                 return ""
             self.app.call_from_thread(self.app.enter_answer_mode, question)
             self._event.wait()
@@ -226,7 +239,7 @@ def build_app(
             while not self._worker_done.is_set():
                 await asyncio.sleep(0.01)
 
-        def _run_thread_worker(self, work) -> None:
+        def _run_thread_worker(self, work: Callable[[], object]) -> None:
             """Start work and track the backing thread, not only Textual's task."""
             self._worker_done.clear()
 
@@ -257,7 +270,7 @@ def build_app(
             self.apply_responsive_layout()
             self.query_one("#prompt", Input).focus()
 
-        def on_resize(self, _event) -> None:
+        def on_resize(self, _event: object) -> None:
             self.apply_responsive_layout()
 
         def apply_responsive_layout(self) -> None:
@@ -357,7 +370,7 @@ def build_app(
             box.disabled = False
             box.focus()
 
-        def on_input_submitted(self, event) -> None:
+        def on_input_submitted(self, event: Input.Submitted) -> None:
             text = event.value.strip()
             box = self.query_one("#prompt", Input)
             box.value = ""
@@ -463,7 +476,7 @@ def build_app(
                         self.log_plain(ck.name, label_markup=f"  [[{i}]] ", mirror_label=f"  [{i}]")
                     return
                 try:
-                    ck = load_checkpoint(cks[int(args[0])])
+                    ck_doc = load_checkpoint(cks[int(args[0])])
                 except (IndexError, ValueError, OSError) as e:
                     self.log_plain(
                         str(e),
@@ -477,7 +490,7 @@ def build_app(
                 )
                 self.query_one(ActivityTree).new_turn("/resume")
                 self.query_one("#prompt", Input).disabled = True
-                self._run_thread_worker(lambda: self.slash_resume(ck))
+                self._run_thread_worker(lambda: self.slash_resume(ck_doc))
             elif cmd == "/quit":
                 self.exit()
             elif cmd in ("/run", "/check", "/read", "/budget"):
@@ -571,7 +584,7 @@ def build_app(
             if not self.shutting_down:
                 self.call_from_thread(self.finish_turn, user_message, res)
 
-        def finish_turn(self, user_message: str, res) -> None:
+        def finish_turn(self, user_message: str, res: RunResult) -> None:
             if self.shutting_down:
                 return
             if res.status == "done":

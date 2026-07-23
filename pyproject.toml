@@ -33,7 +33,14 @@ Changelog = "https://github.com/gianlucamazza/mklang/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.40"]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = [
+  "pytest>=8",
+  "pytest-cov>=6",
+  "ruff>=0.6",
+  "mypy>=1.15",
+  "types-PyYAML>=6",
+  "types-jsonschema>=4",
+]
 mcp = ["mcp>=1.10"]
 console = ["textual>=0.80"]
 completions = ["argcomplete>=3"]
@@ -99,3 +106,24 @@ target-version = "py311"
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["mklang"]
+
+[tool.coverage.report]
+# Measured 90.27% when the gate was introduced; ratchet up, never down.
+fail_under = 88
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:"]
+
+[tool.mypy]
+files = ["src/mklang"]
+python_version = "3.11"
+check_untyped_defs = true
+disallow_incomplete_defs = true
+strict_equality = true
+no_implicit_reexport = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true

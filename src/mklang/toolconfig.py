@@ -33,7 +33,7 @@ EMPTY = ToolsConfig()
 _current: ToolsConfig | None = None
 
 
-def _clean_str(value) -> str | None:
+def _clean_str(value: object) -> str | None:
     if isinstance(value, str) and value.strip():
         return value.strip()
     return None
