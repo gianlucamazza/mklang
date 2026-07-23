@@ -84,6 +84,7 @@ temperature ablation.
 | ---------- | -------------------------- | ------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-07-16 | deepseek, openai (×3 each) | **1.0**             | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key).                                      |
 | 2026-07-23 | deepseek, openai (×3 each) | **1.0** per machine | 1 per machine       | First full **four-machine suite** run (`--machines all`). 24/24 runs `done`, agreement 1.0 within every machine (15/15 pairs each), zero gate errors. Free-text outputs diverge on the contestable machines while routing stays identical. Anthropic still billing-blocked. |
+| 2026-07-24 | deepseek, openai (×3 each) | **0.917** pooled; **1.0** on 3/4 machines | 1–2 per machine | **1.0.1 release day.** Full four-machine suite: 24/24 `done`, `gate_errors: []`. `gate_divergence` / `sentiment_borderline` / `grounding_repair` stay **1.0**; **`severity_escalate` drops to 0.667** (one DeepSeek run took `otherwise→auto` instead of page-human). Release-gate (single machine) still **1.0**. Anthropic **key absent** locally and in GitHub Actions secrets (not only billing). |
 
 ### 2026-07-16 detail
 
@@ -133,6 +134,42 @@ uv run python scripts/gate_divergence.py --machines all --providers deepseek,ope
   high-stakes prose gates keep needing hooks/HITL (SPEC §11) — but the
   four-machine harness is now exercised live end to end.
 - **Anthropic:** unchanged — billing-blocked, not a key/adapter problem.
+
+### 2026-07-24 detail — 1.0.1 release day (full suite + release gate)
+
+**Release gate** (workflow `release.yml` on `v1.0.1`, default single machine,
+`--require-providers deepseek,openai --min-agreement 1.0`):
+
+- **runs_done:** 6 (3×deepseek + 3×openai on `gate_divergence`); 15 skipped
+  (anthropic/google/openrouter/xai/mistral — no keys in CI secrets); 0 failed.
+- **signature_agreement_rate:** **1.0** (release published to PyPI).
+
+**Full four-machine suite** (maintainer re-run the same day):
+
+```bash
+uv run python scripts/gate_divergence.py --machines all --providers deepseek,openai --repeats 3
+```
+
+- **runs_done:** 24, 0 skipped, 0 failed, `gate_errors: []`
+- **Pooled signature_agreement_rate:** **0.917**
+- **Per-machine:**
+
+  | Machine                | Agreement | Distinct signatures | Note |
+  | ---------------------- | --------- | ------------------- | ---- |
+  | `gate_divergence`      | **1.0**   | 1                   | Release-gate machine — stable |
+  | `sentiment_borderline` | **1.0**   | 1                   | Free-text still diverges (`same_outputs: false`) |
+  | `grounding_repair`     | **1.0**   | 1                   | Anchored |
+  | `severity_escalate`    | **0.667** | 2                   | One DeepSeek repeat chose `otherwise→auto` instead of page-human |
+
+- **Interpretation:** the release gate (easy multi-way `ok` routing) remains at
+  1.0. The control-flow-critical `escalate` machine is **genuinely contestable**
+  across repeats of the same provider — evidence for SPEC §11 hooks/HITL on
+  high-stakes transitions, not a packaging regression. Recorded so the 1.0.1
+  story is not over-claimed from the single-machine gate alone.
+- **Anthropic / optional providers:** no `ANTHROPIC_API_KEY` in the maintainer
+  `.env` (empty placeholder) **nor** in GitHub Actions repository secrets
+  (`DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `TAVILY_API_KEY` only). Closing the
+  three-provider gap needs a live key + credit (issue #60).
 
 ## Related
 

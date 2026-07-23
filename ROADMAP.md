@@ -281,14 +281,15 @@ untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
   (`react.mkl`); the peripheral recordings (`cli`, `search`, `console`,
   `orchestrate`, `hitl`, `test`) are gone, the README leads with the two
   surfaces, and `check-drift` also fails on orphan asset files.
-- **[shipped] gate-divergence at scale** — the four-machine suite ran live
-  across DeepSeek + OpenAI (×3 repeats, 24/24 done): agreement **1.0 per
-  machine**, free-text outputs diverging on the contestable machines while
-  routing stayed identical. Dated table + detail in
-  [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md);
-  re-run live per release and extend to more providers as keys allow.
-- **[next] Live-verify Anthropic** — unblock when credits allow; already routed
-  through the live matrix and the divergence harness.
+- **[shipped] gate-divergence at scale** — four-machine suite on DeepSeek +
+  OpenAI (×3). First full run (2026-07-23): **1.0 per machine**. 1.0.1 re-run
+  (2026-07-24): three machines still **1.0**, `severity_escalate` at **0.667**
+  (contestability under repeats). Release gate (single machine) stays **1.0**.
+  Dated table in
+  [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md).
+- **[next] Live-verify Anthropic** — needs `ANTHROPIC_API_KEY` in local `.env`
+  **and** GitHub Actions secrets (currently absent from both) plus account
+  credit; already wired in the live matrix and divergence harness.
 - **[later] Truncation `continue` stitching** (ADR 0018).
 - **[later] Editor tooling / LSP**; **[maybe]** budget split, async fan-out,
   per-state caching, external console client, OTel export, LangGraph interop.
