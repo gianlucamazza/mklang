@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
-      - uses: astral-sh/setup-uv@v8.3.2
+      - uses: astral-sh/setup-uv@v9.0.0
       - name: Lint
         run: uv run --extra dev ruff check src tests scripts
       - name: Type check
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
-      - uses: astral-sh/setup-uv@v8.3.2
+      - uses: astral-sh/setup-uv@v9.0.0
         with:
           python-version: ${{ matrix.python }}
       # The coverage gate ([tool.coverage.report] fail_under) fires only on the
