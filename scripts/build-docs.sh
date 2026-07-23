@@ -101,11 +101,10 @@ test -f site-src/adr/README.md
 
 # Raw HTML is opaque to MkDocs' link rewriting. These checks keep nested
 # pretty URLs such as /demos/ from silently resolving media below /demos/assets/.
-grep -q 'src="../assets/demos/cli.webm"' site-src/demos.md
-grep -q 'src="../assets/demos/console.webm"' site-src/demos.md
-grep -q 'src="../assets/demos/agent.webm"' site-src/demos.md
-grep -q 'src="../assets/demos/hitl.webm"' site-src/demos.md
-grep -q 'src="../assets/demos/search.webm"' site-src/demos.md
-grep -q 'src="../assets/demos/test.webm"' site-src/demos.md
+# The demo set is the source of truth in scripts/demo_assets.py (DEMOS); keep
+# this list in sync when it changes.
+for demo in console agent language orchestrate hitl test; do
+	grep -q "src=\"../assets/demos/${demo}.webm\"" site-src/demos.md
+done
 
 echo "site-src assembled: $(find site-src -name '*.md' | wc -l) pages"
