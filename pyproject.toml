@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "0.16.0"
+version = "1.0.0"
 description = "A declarative language for LLM-driven state machines (reference interpreter)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -9,7 +9,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Gianluca Mazza", email = "info@gianlucamazza.it" }]
 keywords = ["llm", "state-machine", "agents", "dsl", "reasoning"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",

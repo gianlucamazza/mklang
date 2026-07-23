@@ -8,9 +8,19 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.16.0`).
+  `pyproject.toml` (currently `1.0.0`).
 
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+## [1.0.0] — 2026-07-23
+
+**mklang 1.0.0** — the interpreter and tooling are declared stable. The language
+spec stays **0.3**, frozen as the 1.0 surface
+([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)).
 
 ### Added
 
@@ -27,12 +37,14 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
-- **Breaking (pre-1.0): machine file extension renamed `.mk` → `.mkl`** (mklang;
-  hard cut — directory discovery matches `*.mkl` only). The Makefile / GitHub
-  Linguist collision is shed. Bundled machines, the console `write_machine`,
-  examples, tests, packaging, and docs move together; `.mk` machines stay
-  loadable by explicit path but are no longer auto-discovered by directory. See
+- **Breaking: machine file extension renamed `.mk` → `.mkl`** (mklang; hard cut
+  — directory discovery matches `*.mkl` only). The Makefile / GitHub Linguist
+  collision is shed. Bundled machines, the console `write_machine`, examples,
+  tests, packaging, and docs move together; `.mk` machines stay loadable by
+  explicit path but are no longer auto-discovered by directory. See
   [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md).
+- **Production/Stable** — `Development Status :: 4 - Beta` →
+  `5 - Production/Stable`; package `0.16.0` → `1.0.0`.
 
 ## [0.16.0] — 2026-07-23
 
