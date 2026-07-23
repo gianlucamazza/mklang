@@ -19,7 +19,7 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.3.2
+      - uses: astral-sh/setup-uv@v9.0.0
       - name: Live smoke (active provider)
         run: MKLANG_LIVE=1 uv run --extra dev pytest -q -rs tests/test_live.py
       - name: Live smoke (anthropic)
