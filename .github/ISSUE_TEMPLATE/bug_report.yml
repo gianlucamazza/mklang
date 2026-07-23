@@ -22,7 +22,7 @@ body:
     attributes:
       label: Reproduction
       description: >
-        Ideally a minimal `.mk` plus a `mklang test` scenario (scripted LLM — no
+        Ideally a minimal `.mkl` plus a `mklang test` scenario (scripted LLM — no
         API keys, deterministic; see conformance/README.md for the format). A
         CLI command + `--trace` output works too.
       render: yaml

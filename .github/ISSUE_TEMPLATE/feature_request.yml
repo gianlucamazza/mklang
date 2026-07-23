@@ -28,4 +28,4 @@ body:
     id: proposal
     attributes:
       label: Proposed shape (optional)
-      description: Sketch the `.mk` face / CLI flag / API. Check ROADMAP.md and SPEC §9 non-goals first.
+      description: Sketch the `.mkl` face / CLI flag / API. Check ROADMAP.md and SPEC §9 non-goals first.

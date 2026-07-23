@@ -30,7 +30,7 @@ jobs:
         run: >
           uv run --with check-jsonschema
           check-jsonschema --default-filetype yaml
-          --schemafile schema/mklang.schema.json examples/*.mk
+          --schemafile schema/mklang.schema.json examples/*.mkl
       - name: Validate the runtime config against its schema
         run: >
           uv run --with check-jsonschema
@@ -38,12 +38,12 @@ jobs:
           --schemafile config/runtime.schema.json config/runtime.example.yaml
       - name: Semantic check + static analysis on examples, stdlib, and init sample
         run: |
-          uv run mklang check examples/*.mk src/mklang/data/stdlib/*.mk src/mklang/data/init/*.mk
-          uv run mklang lint --strict examples/*.mk src/mklang/data/stdlib/*.mk src/mklang/data/init/*.mk
+          uv run mklang check examples/*.mkl src/mklang/data/stdlib/*.mkl src/mklang/data/init/*.mkl
+          uv run mklang lint --strict examples/*.mkl src/mklang/data/stdlib/*.mkl src/mklang/data/init/*.mkl
       - name: Deterministic scenario tests (scripted LLM — no API keys)
         run: |
-          uv run mklang test examples/triage.mk --script examples/triage.test.yaml
-          uv run mklang test src/mklang/data/init/hello.mk --script src/mklang/data/init/hello.test.yaml
+          uv run mklang test examples/triage.mkl --script examples/triage.test.yaml
+          uv run mklang test src/mklang/data/init/hello.mkl --script src/mklang/data/init/hello.test.yaml
       - name: Shellcheck the install script
         run: shellcheck scripts/install.sh
       - name: Build sdist + wheel
