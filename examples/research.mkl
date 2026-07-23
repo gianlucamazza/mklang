@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# research.mk — looping FSM (iterative Q&A)
+# research.mkl — looping FSM (iterative Q&A)
 #
 # Flow:
 #   gather → check_sufficiency → {loop back to gather | finalize} → END
 # Shows: a loop, a sufficiency gate, and the global budget forcing termination.
 #
 # gather is generative only: it does not call host tools. For real search I/O
-# use a `tool:` state (see react.mk / triage.mk) — do not put tool names in
+# use a `tool:` state (see react.mkl / triage.mkl) — do not put tool names in
 # `execution` on generative states (the model cannot invoke them).
 
 mklang: "0.2"

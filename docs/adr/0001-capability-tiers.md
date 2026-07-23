@@ -6,7 +6,7 @@ Status: Accepted
 
 States differ in how much model capability they need: a classifier is cheap, a
 final synthesis is not. We must let authors express that without naming models
-(which would couple a `.mk` to one provider — see ADR 0003).
+(which would couple a `.mkl` to one provider — see ADR 0003).
 
 ## Decision
 
@@ -20,8 +20,8 @@ MAY use a cheaper model for judging as an optimization, exposed here as the opt-
 
 ## Consequences
 
-- The same `.mk` runs on any backend by swapping the config's tier map.
+- The same `.mkl` runs on any backend by swapping the config's tier map.
 - Cost control is a first-class, readable property of the machine (see the
   speculative-cascade pattern).
 - The tier vocabulary is deliberately small (three levels); finer control lives in
-  the runtime config `params`, not the `.mk`.
+  the runtime config `params`, not the `.mkl`.

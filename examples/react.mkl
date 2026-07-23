@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# react.mk — real ReAct: think → act (host tool) → observe → loop (§4.5/§4.6/§4.9)
+# react.mkl — real ReAct: think → act (host tool) → observe → loop (§4.5/§4.6/§4.9)
 #
 # The `calc` state invokes a HOST tool (deterministic arithmetic); its result is a
 # real observation that re-enters the context — not a prose simulation.

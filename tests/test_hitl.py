@@ -199,7 +199,7 @@ states:
 def test_cli_hitl_defaults_the_checkpoint_to_the_state_root(tmp_path, monkeypatch, capsys):
     # ADR 0023: --hitl without --checkpoint suspends into the XDG state root.
     monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
-    mk = tmp_path / "h.mk"
+    mk = tmp_path / "h.mkl"
     mk.write_text(MK, encoding="utf-8")
     monkeypatch.setattr(cli, "_build_llm", lambda prov: echo_llm())
 
@@ -213,7 +213,7 @@ def test_cli_hitl_defaults_the_checkpoint_to_the_state_root(tmp_path, monkeypatc
 
 
 def test_cli_hitl_round_trip(tmp_path, monkeypatch, capsys):
-    mk = tmp_path / "h.mk"
+    mk = tmp_path / "h.mkl"
     mk.write_text(MK, encoding="utf-8")
     ck = tmp_path / "ck.json"
     monkeypatch.setattr(cli, "_build_llm", lambda prov: echo_llm())

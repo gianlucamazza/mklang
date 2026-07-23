@@ -13,9 +13,9 @@ uv run --extra dev --extra mcp pytest -q --cov=mklang  # unit + conformance (no 
 MKLANG_LIVE=1 uv run --extra dev pytest -q tests/test_live.py  # opt-in live smoke (active provider; MKLANG_LIVE_PROVIDER=… to override)
 uv run --extra dev ruff check src tests
 uv run --all-extras mypy              # static types (zero suppressions)
-uv run mklang check examples/*.mk     # schema + semantic validation
-uv run mklang lint --strict examples/*.mk   # + static analysis
-uv run mklang test examples/triage.mk --script examples/triage.test.yaml  # scripted scenarios, no API keys
+uv run mklang check examples/*.mkl     # schema + semantic validation
+uv run mklang lint --strict examples/*.mkl   # + static analysis
+uv run mklang test examples/triage.mkl --script examples/triage.test.yaml  # scripted scenarios, no API keys
 ```
 
 `pytest` already runs the [conformance suite](./conformance/README.md)
@@ -83,6 +83,10 @@ for the format and the existing decisions. Reference the ADR in your PR.
 - **Spec version** (`mklang:` field) changes when the _language_ changes.
 - **Package version** (`pyproject.toml`, SemVer) changes when the _interpreter/tooling_
   changes. Record both in `CHANGELOG.md`.
+- The full stability & deprecation policy (SemVer from 1.0.0, spec 0.3 frozen,
+  the deprecation cycle) lives in
+  [docs/guides/stability.md](./docs/guides/stability.md)
+  ([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)).
 
 ## Releases
 
@@ -98,5 +102,5 @@ an existing tag.
 
 ## Non-goals (don't propose these)
 
-Pinning a concrete provider/model inside a `.mk` — machines route by capability tier
+Pinning a concrete provider/model inside a `.mkl` — machines route by capability tier
 only (ADR 0003). See `SPEC.md §9` for the current non-goals.

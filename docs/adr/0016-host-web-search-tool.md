@@ -26,7 +26,7 @@ provider-native tool-calling or browser automation.
    unset, Tavily is selected automatically (the key is the host opt-in).
    `MKLANG_SEARCH_BACKEND=stub` forces offline. Entry-point plugins may still
    override `search` entirely.
-4. **No language change.** Example: `examples/research_web.mk` (+ scenario test).
+4. **No language change.** Example: `examples/research_web.mkl` (+ scenario test).
    Time-sensitive machines declare `context.today: ""`; hosts fill empty
    declared `today` with the ISO date (host convention, not a SPEC face).
    Wall-clock machines may also declare `context.now: ""` for a local ISO
@@ -39,7 +39,7 @@ provider-native tool-calling or browser automation.
 | --------------------------------------------------- | ------------------------------------------------ |
 | Structured stub default                             | **done**                                         |
 | Fake + Tavily backends                              | **done**                                         |
-| `research_web.mk` + scenario test                   | **done**                                         |
+| `research_web.mkl` + scenario test                   | **done**                                         |
 | SPEC / patterns note                                | **done**                                         |
 | Optional `days` / `topic` / `published_date`        | **done**                                         |
 | Host `context.today` convention + research patterns | **done**                                         |

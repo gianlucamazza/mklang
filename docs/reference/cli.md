@@ -78,7 +78,7 @@ mklang run MACHINE [--set k.path=value]... [options]
 | `--on-truncate report\|halt` | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)         |
 
 ```bash
-mklang run examples/self_consistency.mk \
+mklang run examples/self_consistency.mkl \
   --set question.text="What is the capital of Australia?"
 ```
 
@@ -94,13 +94,13 @@ mklang resume CHECKPOINT [--set k.path=value]... [options]
 | `--config` / `--provider`    | as in `run`                                                                   |
 | `--max-tokens N`             | new total budget, including tokens spent before the suspend                   |
 | `--hitl`                     | keep suspending on escalate gates even if the checkpoint didn't record it     |
-| `--machine PATH`             | machine path override (if the `.mk` moved)                                    |
+| `--machine PATH`             | machine path override (if the `.mkl` moved)                                    |
 | `--checkpoint PATH`          | where to write the checkpoint on re-suspension (default: overwrite the input) |
 | `--force`                    | resume even if the machine file changed                                       |
 | `--on-truncate report\|halt` | as in `run`                                                                   |
 
 ```bash
-mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
+mklang run examples/expense_approval.mkl --checkpoint ck.json --hitl
 mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
@@ -142,7 +142,7 @@ as the [conformance suite](../../conformance/README.md); a mismatch prints a
 minimal diff and exits 1.
 
 ```bash
-mklang test examples/triage.mk --script examples/triage.test.yaml
+mklang test examples/triage.mkl --script examples/triage.test.yaml
 ```
 
 ## machines
@@ -152,7 +152,7 @@ mklang machines [--dir DIR]
 ```
 
 Lists commissionable machines (stdlib, plugins; `--dir` adds a project
-directory's `.mk` files) with the winning source per name.
+directory's `.mkl` files) with the winning source per name.
 
 ## init
 
@@ -162,7 +162,7 @@ mklang init [--user] [--dir DIR]
 
 Never overwrites existing files. Project mode creates `config/runtime.yaml`,
 `config/runtime.schema.json`, `.env`, and `machines/` seeded with a commented
-`hello.mk` sample plus its `hello.test.yaml` scenario script — an immediate,
+`hello.mkl` sample plus its `hello.test.yaml` scenario script — an immediate,
 keyless first run via `mklang test`; `--user` initializes the XDG user host
 instead ([Installation](../guides/install.md)).
 
@@ -181,7 +181,7 @@ the active provider cannot run (ADR 0023).
 ## console
 
 ```bash
-mklang console [--workspace DIR] [--agent FILE.mk] [--continue | --session ID]
+mklang console [--workspace DIR] [--agent FILE.mkl] [--continue | --session ID]
 ```
 
 The agent-first TUI (bundled by default since 0.15.0). `--workspace` confines

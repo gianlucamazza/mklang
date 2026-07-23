@@ -9,12 +9,12 @@
 ## 1. Philosophy & positioning
 
 **mklang is a declarative language for describing LLM-driven state machines.** A
-`.mk` file (mk = _machine_) does not compile to code: it is _executed_ by feeding
+`.mkl` file (mklang) does not compile to code: it is _executed_ by feeding
 it to an LLM that interprets its states. The document _is_ the program.
 
 Principles:
 
-- **Document-first.** A `.mk` is readable without the interpreter. Logic for the
+- **Document-first.** A `.mkl` is readable without the interpreter. Logic for the
   common path lives in prose. Production machines still need developer judgment
   for tools, hooks, budgets, and untrusted inputs (§11).
 - **LLM-as-runtime.** Generative states are produced by an LLM, so execution is
@@ -26,7 +26,7 @@ Principles:
   LLM, optional host hooks, budgets, trace) — not from static types. Prose-gate
   accuracy is an **empirical** claim (hooks bound critical checks); the safety net
   is only as strong as the judge and the author's policies.
-- **Provider-agnostic.** A `.mk` file never names an LLM provider or a concrete
+- **Provider-agnostic.** A `.mkl` file never names an LLM provider or a concrete
   model. The same machine runs unchanged on Anthropic, OpenAI, Google, or a local
   model (Ollama/vLLM/…). A state may express a provider-neutral **capability tier**
   (§2.1); the runtime maps each tier to a concrete model in its own config.
@@ -59,7 +59,7 @@ _mklang is to LangGraph what a declarative spec is to Python code._
 
 Four entities.
 
-- **machine** — the unit of distribution: one `.mk` file. It has an entry state, a
+- **machine** — the unit of distribution: one `.mkl` file. It has an entry state, a
   global budget, and a map of states.
 - **state** — a node of the machine. It is where the LLM _does something_. It has
   four faces (§4).
@@ -79,7 +79,7 @@ budget is exhausted.
 ### 2.1 Provider-agnostic runtime & capability tiers
 
 The runtime is **multi-provider by design**. A conformant runtime holds a
-**tier → (provider, model)** mapping in its own configuration; the `.mk` file only
+**tier → (provider, model)** mapping in its own configuration; the `.mkl` file only
 references tiers, never providers or models. This keeps machines portable and lets
 the same document run against different backends by swapping config.
 
@@ -101,7 +101,7 @@ Three provider-neutral tiers:
   **global** override that forces one model for **all** gate judging (documented in
   `config/runtime.example.yaml`). Trading judging quality on your hardest gates is a
   deliberate host choice, never the default.
-- Example config (illustrative, host-side — **not** part of the `.mk`):
+- Example config (illustrative, host-side — **not** part of the `.mkl`):
   `reasoning → anthropic:claude-opus-4-8` on one deployment,
   `reasoning → openai:<model>` or `reasoning → ollama:<local-model>` on another.
 
@@ -109,14 +109,14 @@ The concrete shape of this host-side config is non-normative; a worked example
 covering all providers and current models lives at
 `config/runtime.example.yaml` (validated by `config/runtime.schema.json`).
 
-Explicit provider/model pinning inside a `.mk` is a deliberate non-goal (§9): it
+Explicit provider/model pinning inside a `.mkl` is a deliberate non-goal (§9): it
 would break portability. Route by capability, not by vendor.
 
 ---
 
-## 3. Anatomy of a `.mk` file
+## 3. Anatomy of a `.mkl` file
 
-A `.mk` is a YAML document with these top-level keys:
+A `.mkl` is a YAML document with these top-level keys:
 
 ```yaml
 machine: <name> # the machine's identifier
@@ -405,7 +405,7 @@ map_summarize: # one sub-machine run per chunk (orchestrator-worker)
 ```
 
 The runtime resolves `call` names against a **registry of machines** (a project may
-hold many `.mk` files). The parent's trace **nests** the child's trace (§8), and
+hold many `.mkl` files). The parent's trace **nests** the child's trace (§8), and
 sub-runs are bounded by their own `budget` plus a runtime **call-depth cap** so
 recursion terminates. If the sub-machine **halts**, the parent halts with
 `call-failed: <child-error>` (it must not continue as `done` with an empty result).
@@ -439,7 +439,7 @@ The optional `tools:` block documents the contract and lets `mklang check` warn 
 a `tool` state that references an undeclared name; the actual binding stays
 host-side. A tool state does not call the LLM, so it consumes no tier and no tokens.
 The reference `search` builtin is **offline by default** (structured stub
-observation); hosts opt into a real backend without changing the `.mk` (ADR 0016).
+observation); hosts opt into a real backend without changing the `.mkl` (ADR 0016).
 Web/search observations re-entering the blackboard are **untrusted** (§11).
 Reference host tools that perform external I/O or side effects **SHOULD** return
 structured JSON observations including `tool`, `stub`, and `error` (ADR 0020) so
@@ -691,7 +691,7 @@ fenced content, but it can no longer confuse it with host or author
 instructions by construction.
 
 - **Provenance rule.** At run start a key `k` is **trusted** iff `ctx[k]`
-  equals the author's `.mk` `context:` literal. Host-supplied or
+  equals the author's `.mkl` `context:` literal. Host-supplied or
   host-overridden values (`--set`, MCP `inputs`, injected host defaults) are
   tainted. An embedding host MAY vouch for specific keys
   (`run(..., trusted_keys=...)`).
@@ -782,7 +782,7 @@ budget exhaustion, or (opt-in) when an `escalate` gate fires, the run checkpoint
 its position and blackboard (frames) instead of halting, and can later be resumed
 as if uninterrupted — optionally with a human reply injected into the context
 (reference interpreter: `--checkpoint` / `--hitl` / `mklang resume --set`,
-ADR 0007/0008). This is host behavior, not part of the language: a `.mk` file
+ADR 0007/0008). This is host behavior, not part of the language: a `.mkl` file
 needs no changes and stays portable.
 
 ---
@@ -831,30 +831,49 @@ fan-out and sub-machines nest.
 
 ## 9. Non-goals & open questions
 
-Deliberately out of core (sub-machines, fan-out, reasoning, tools, and **code-hook
-gates** are now **in** — §4.5–§4.9, §5):
+The items below sit outside the 0.3 core (sub-machines, fan-out, reasoning, tools,
+and **code-hook gates** are now **in** — §4.5–§4.9, §5). Their status is made
+**explicit** so the 1.0 stable surface is unambiguous: each is closed as a
+**permanent non-goal**, **deferred** with rationale, or **resolved by
+measurement**. The [stability & deprecation policy](./docs/guides/stability.md)
+(ADR 0026) freezes the 0.3 surface they sit outside of.
 
-- **Formal types** in `structure`, for static verification of composition and gates.
-- **Caching / reproducibility** — per-state cache (same input+prompt → same output)
-  for deterministic tests and cost reduction.
-- **Explicit provider/model pinning** — a `.mk` routes by capability tier (§2.1),
-  never by vendor or model id. Pinning a concrete provider/model in the document
-  would break portability, so it is deliberately excluded. If a future version adds
-  it, it will be an optional, clearly-marked escape hatch — the tier remains the
-  portable default.
+### Permanent non-goals (decided out; additive if ever reintroduced)
 
-Each is an additive extension that does not alter the base state-machine model.
+- **Formal types** in `structure`, for static verification of composition and
+  gates. mklang's reliability contract is prose gates + host hooks + trace
+  (§1, §5), not a type system. Adding one later would be an additive layer over
+  the state-machine model, not a change to it, so it does not block a stable 1.0.
+- **Explicit provider/model pinning** — a `.mkl` routes by capability tier (§2.1),
+  never by vendor or model id (ADR 0003). Pinning a concrete provider/model in the
+  document would break portability, so it is deliberately excluded. If a future
+  version adds it, it will be an optional, clearly-marked escape hatch — the tier
+  remains the portable default.
+- **`.mkl` file extension** — adopted (renamed from `.mk`). The earlier `.mk`
+  suffix collided with Makefile includes in some tooling; `.mkl` (mklang) sheds
+  that. The suffix is a discovery convention, not a language contract
+  ([ADR 0027](./docs/adr/0027-adopt-mkl-extension.md)).
 
-Open / deferred (not denial — see also §11):
+### Deferred (valuable, later — not in 1.0, not ruled out)
 
-- **Prompt injection / untrusted context** — delimiting of untrusted spans is
-  now specified (§6, ADR 0025). Dual-channel control planes and capability
-  separation (CaMeL-style) remain open — fences constrain confusion, not
-  persuasion.
+- **Caching / reproducibility** — per-state cache (same input+prompt → same
+  output) for deterministic tests and cost reduction. Additive and host-side; a
+  natural post-1.0 extension that does not alter run semantics.
+- **Prompt injection / untrusted context** — delimiting of untrusted spans is now
+  normative (§6, ADR 0025). Dual-channel control planes and capability separation
+  (CaMeL-style) remain an open research direction: fences constrain confusion, not
+  persuasion (§11). This is a documented limitation, not a near-term item.
+
+### Resolved by measurement
+
 - **Cross-provider gate agreement** — syntactic portability of the document does
-  not imply identical gate traces across providers; measure empirically.
-- **File extension `.mk`** — collides with Makefile includes in some tooling;
-  renaming is a future packaging decision, not a language semantics change.
+  **not** imply identical gate traces across providers; it is measurable, not
+  guaranteed. The four-machine divergence suite measures **1.0** agreement across
+  DeepSeek + OpenAI today
+  ([docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md));
+  Anthropic remains billing-blocked, and high-stakes prose gates still need hooks /
+  HITL (§11). The measurement is evidence, not a portability guarantee — the caveat
+  stands.
 
 ---
 
@@ -988,7 +1007,7 @@ language contract; silent omission would be worse than incomplete mitigation.
 
 | Source                                  | Trust               | How it enters the machine                |
 | --------------------------------------- | ------------------- | ---------------------------------------- |
-| Author `.mk` prose                      | Trusted (author)    | structure, prompt, execution, `when`     |
+| Author `.mkl` prose                      | Trusted (author)    | structure, prompt, execution, `when`     |
 | Host tools / hooks                      | Trusted (host code) | `tool:` / `hook:` registries             |
 | Tool **observations** (search, KB, …)   | **Untrusted data**  | deposited into the blackboard (§4.9)     |
 | Blackboard / `--set` / resume injection | **Often untrusted** | `{{path}}` interpolation + judge CONTEXT |
@@ -1013,7 +1032,7 @@ language contract; silent omission would be worse than incomplete mitigation.
 2. **Fabricated effectors.** If authors put tool names only in generative
    `execution` text, the model invents tool results and "confirmations." The
    language allows this anti-pattern; the **recommended** pattern is `tool:`
-   states for real I/O (examples: `react.mk`, `triage.mk`).
+   states for real I/O (examples: `react.mkl`, `triage.mkl`).
 
 3. **Judge misrouting.** Unparseable or out-of-range judge replies are anomalies
    (§5); they must not be silently clamped. Soft-fallback to `otherwise` is

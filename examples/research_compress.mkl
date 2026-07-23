@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# research_compress.mk — research loop with explicit working-memory compression
-# (ADR 0017 Layer 1). Same tool:search contract as research_web.mk, plus a
+# research_compress.mkl — research loop with explicit working-memory compression
+# (ADR 0017 Layer 1). Same tool:search contract as research_web.mkl, plus a
 # compress_notes state that rewrites notes short before another search round.
 #
 # Flow: plan → search → check → {compress → plan | finalize}
 #
 # Scenario-tested:
-#   mklang test examples/research_compress.mk --script examples/research_compress.test.yaml
+#   mklang test examples/research_compress.mkl --script examples/research_compress.test.yaml
 
 mklang: "0.3"
 machine: research_compress

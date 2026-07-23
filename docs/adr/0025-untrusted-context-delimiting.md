@@ -19,7 +19,7 @@ observations", ADR 0017 Layer 2 defers capability separation, and the console
 Two orthogonal structural mechanisms, both normative in SPEC §6:
 
 1. **Provenance taint.** The engine tracks a per-run set of tainted top-level
-   context keys. Trusted at start ⇔ the value equals the author's `.mk`
+   context keys. Trusted at start ⇔ the value equals the author's `.mkl`
    `context:` literal; host-supplied or host-overridden values are tainted
    (embedders may vouch via `run(..., trusted_keys=...)`). Every deposit
    taints its `output` key — tool observation, `call` result, **and** produce
@@ -45,7 +45,7 @@ Two orthogonal structural mechanisms, both normative in SPEC §6:
 
 Recorded choices:
 
-- **Provenance, not annotation.** No `.mk` schema change and no authorable
+- **Provenance, not annotation.** No `.mkl` schema change and no authorable
   `trust:` face — taint derives from where a value came from, never from
   authoring. Zones/annotations stay deferred with ADR 0017 Layer 2.
 - **No detection heuristics.** Regex payload scanners and injection

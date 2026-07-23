@@ -20,7 +20,7 @@ Set WaitTimeout 180s
 Hide
 Type "export XDG_STATE_HOME=/tmp/mklang-agent-state"
 Enter
-Type "rm -rf /tmp/mklang-agent-state /tmp/mklang-agent-machines && mkdir -p /tmp/mklang-agent-machines && cp examples/news_search.mk /tmp/mklang-agent-machines/ && clear"
+Type "rm -rf /tmp/mklang-agent-state /tmp/mklang-agent-machines && mkdir -p /tmp/mklang-agent-machines && cp examples/news_search.mkl /tmp/mklang-agent-machines/ && clear"
 Enter
 Show
 

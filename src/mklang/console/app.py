@@ -3,7 +3,7 @@
 Textual TUI, bundled by default since 0.15.0. The engine runs on a worker
 thread; `TextualBridge` marshals events into the UI and blocks the worker on
 human questions (HITL escalations, tool consent) answered through the main
-input line. Nothing here adds semantics: the brain is `agent.mk`, the hands
+input line. Nothing here adds semantics: the brain is `agent.mkl`, the hands
 are `ConsoleTools`, and the run tree is the `on_event` stream.
 """
 
@@ -33,13 +33,13 @@ if TYPE_CHECKING:
 
 
 def load_brain(agent_path: str | None = None) -> Machine:
-    """The bundled agent.mk, or a user-supplied brain honoring the tool contract."""
+    """The bundled agent.mkl, or a user-supplied brain honoring the tool contract."""
     if agent_path is not None:
         text = Path(agent_path).read_text(encoding="utf-8")
     else:
         from importlib.resources import files
 
-        text = files("mklang").joinpath("data/console/agent.mk").read_text(encoding="utf-8")
+        text = files("mklang").joinpath("data/console/agent.mkl").read_text(encoding="utf-8")
     doc = yaml.safe_load(text)
     validate_dict(doc)
     return parse_machine(doc)

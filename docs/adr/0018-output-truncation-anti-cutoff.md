@@ -37,5 +37,5 @@ complete. Gates and `parse: list` saw silently cut-off content.
 
 ## Consequences
 
-- Observability improves with zero `.mk` changes.
+- Observability improves with zero `.mkl` changes.
 - Auto-continue stays out so token budgets and traces stay honest.

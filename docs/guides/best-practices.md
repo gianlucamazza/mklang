@@ -13,22 +13,22 @@ This page answers: _what should I always do, never do, and where does each rule 
 
 | Layer                | Owns                                                                                                                                  | Examples                                                                                                            |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Language (`.mk`)** | Control flow, prose contracts, portable structure                                                                                     | states, gates, tiers, `tool:` _names_, `parse: list`                                                                |
+| **Language (`.mkl`)** | Control flow, prose contracts, portable structure                                                                                     | states, gates, tiers, `tool:` _names_, `parse: list`                                                                |
 | **Host runtime**     | Bindings, budgets, clocks, truncation _policy_, LLM adapters, produce/judge prompt assembly, **ops logging**, FS data roots for tools | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py`, process loggers, plugin FS tools |
-| **Surface**          | UX, consent, compact observations, chrome vs content rendering, session audit                                                         | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, workspace **`.mk` only**               |
+| **Surface**          | UX, consent, compact observations, chrome vs content rendering, session audit                                                         | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, workspace **`.mkl` only**               |
 
 **Rules**
 
 - Side effects live only in **`tool:` states** (host callables). Never in `execution` or generative prompts.
-- The `.mk` **never** names a provider or model — only `tier:` (ADR 0003).
+- The `.mkl` **never** names a provider or model — only `tier:` (ADR 0003).
 - Host tools are **opaque names** + `(dict) → str`. Do not promote search/bash/FS into language syntax.
-- Generic **bash / filesystem** stay **out of core** (console: workspace `.mk` only; production I/O = plugins or external host).
+- Generic **bash / filesystem** stay **out of core** (console: workspace `.mkl` only; production I/O = plugins or external host).
 
 ---
 
 ## 2. Authoring checklist (every machine)
 
-Before shipping a `.mk`:
+Before shipping a `.mkl`:
 
 - [ ] Schema header + `mklang: "0.3"` when using 0.3 faces (`parse: list`, …).
 - [ ] Every non-terminal state ends with **`when: otherwise`** (last).
@@ -170,7 +170,7 @@ Never ask the model to “confirm the message was sent.” Gates should treat `s
 | **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` / `tools.fs.write` · Offline: `MKLANG_FS_BACKEND=stub` or `tools.fs.backend: stub` |
 
 Relative paths only; `..`, absolute paths, and dotfiles are refused; writes are
-capped, suffix-allowlisted (never `.mk`), atomic, mode 0600. See §13 for the
+capped, suffix-allowlisted (never `.mkl`), atomic, mode 0600. See §13 for the
 class model and rules.
 
 #### `calc`
@@ -199,7 +199,7 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 
 | Practice                             | Detail                                                                                                                                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use `tool: search`**               | `std_research` (stdlib, run by name), `research_web.mk`, `research_compress.mk`, `news_search.mk`                                     |
+| **Use `tool: search`**               | `std_research` (stdlib, run by name), `research_web.mkl`, `research_compress.mkl`, `news_search.mkl`                                     |
 | **Declare `today: ""`**              | Host fills ISO `YYYY-MM-DD` when still empty after inputs (CLI / MCP / console)                                                       |
 | **Declare `now: ""` for wall-clock** | Host fills local ISO datetime with offset (e.g. `2026-07-17T14:32:05+02:00`) — use for “what time is it?”, not for news recency alone |
 | **Prompt with calendar / clock**     | `Today is {{today}}` / `Current local time is {{now}}`; include year in queries when time-sensitive                                   |
@@ -219,7 +219,7 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 | **Produce length stop**      | Trace/events get `truncated: true` (ADR 0018)                                   | Prefer adequate `max_tokens` in runtime `params`; use `--on-truncate halt` for strict runs |
 | **Default policy**           | `report` continues with partial text                                            | Do not treat partial finalize as complete without checking trace                           |
 | **`parse: list` + truncate** | Halts `parse-list-truncated`                                                    | Keep planner outputs short and well-structured                                             |
-| **Produce `{{…}}` budget**   | Long values end with `…[truncated]` (ADR 0017)                                  | Compress notes before the next loop (`research_compress.mk`)                               |
+| **Produce `{{…}}` budget**   | Long values end with `…[truncated]` (ADR 0017)                                  | Compress notes before the next loop (`research_compress.mkl`)                               |
 | **Judge CONTEXT**            | Head+tail + `…[context_truncated]…`                                             | Put critical facts in **state output**, not only deep context                              |
 | **Console observation**      | Compact JSON: `truncated`, `result_truncated`, `…[truncated]` on clipped result | Brain/user must report cuts — never invent the missing tail                                |
 
@@ -278,8 +278,8 @@ keyless environments stick to `check` / `lint` / `test`.
   *persuasion* — the next two bullets still apply.
 - Prefer **hooks + HITL** before irreversible tools.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
-- Do not put secrets in `.mk` or context; keys stay in host env / `.env`.
-- Console: tool **consent** once per session; workspace confinement for authored `.mk` files.
+- Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
+- Console: tool **consent** once per session; workspace confinement for authored `.mkl` files.
 - Do not confuse **run trace / live events / ops logging** (§12) or turn arbitrary disk into a language feature (§13).
 
 ---
@@ -298,7 +298,7 @@ Three channels — do not merge them into one API.
 
 1. **Trace is the source of truth** for “what the machine did.” Events are a live
    shadow of the same story, not a second semantic model (ADR 0019).
-2. **Ops logging is host-only** — never a face of the `.mk`, never deposited on
+2. **Ops logging is host-only** — never a face of the `.mkl`, never deposited on
    the blackboard as “memory,” never a gate condition.
 3. **No `tool: log` in core.** Business audit that must be a side effect is a
    named host tool with ADR 0020 envelope + consent — not free-form logging.
@@ -336,7 +336,7 @@ Generic bash/FS stay **out of core**. When you need disk, pick the class:
 | Class                       | Examples                                         | Where it lives                            | Controls                                                              |
 | --------------------------- | ------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
 | **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir | CLI / host config                         | Operator-chosen paths; checkpoint mode `0600`                         |
-| **2. Workspace authoring**  | `write_machine` / `read_machine` (`.mk` only)    | Console surface (ADR 0015)                | Resolve under workspace; reject escape; confirm overwrite             |
+| **2. Workspace authoring**  | `write_machine` / `read_machine` (`.mkl` only)    | Console surface (ADR 0015)                | Resolve under workspace; reject escape; confirm overwrite             |
 | **3. Machine data I/O**     | Read CSV, write a report                         | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch |
 | **4. Arbitrary FS / shell** | `rm`, bash, git                                  | **Never core**; explicit sandboxed plugin | Default off; high friction                                            |
 
@@ -356,7 +356,7 @@ link here instead of maintaining a separate path policy.
 Console sessions always live under
 `$XDG_STATE_HOME/mklang/console/sessions/<id>/`.
 `mklang init --user` creates these roots and seeds the user `machines/` with a
-commented `hello.mk` sample plus its `hello.test.yaml` scenario (keyless first
+commented `hello.mkl` sample plus its `hello.test.yaml` scenario (keyless first
 run via `mklang test`).
 Local vs global (ADR 0023): `runtime.yaml` resolves first-hit-wins
 (project → user → `/etc` → bundled) for every entry point, `mklang-mcp`
@@ -374,7 +374,7 @@ ADR 0024). The reference posture is the coding-tool workspace model: reads are
 live by default under `--workspace` / `MKLANG_FS_ROOT` / cwd, disk writes need
 an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
 
-1. **Names only in the `.mk`** — `tool: read_file`, not path syntax in the language.
+1. **Names only in the `.mkl`** — `tool: read_file`, not path syntax in the language.
 2. **Relative paths in tool input**; host joins to the configured **workspace**
    root. Refuse path escape after `resolve` (same idea as console
    `_workspace_path`); `..`, absolute paths, and dotfile segments never resolve.
@@ -389,7 +389,7 @@ an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
 6. **Audit lightly** — log tool name + relative path + byte count at INFO; not
    full file contents.
 7. **Console stays non-IDE** — do not register general FS tools on the default
-   brain; keep workspace **`.mk` only** unless the operator opts into plugins.
+   brain; keep workspace **`.mkl` only** unless the operator opts into plugins.
 
 ### Memory & planning mapping
 
@@ -426,7 +426,7 @@ anti-pattern below structural, not just conventional.
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **CLI**     | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled   |
 | **MCP**     | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL                                                                                                          |
-| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mk` only** — no generic FS/bash |
+| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mkl` only** — no generic FS/bash |
 
 ### Console cancellation and shutdown (documentation SSOT)
 
@@ -452,7 +452,7 @@ anti-pattern below structural, not just conventional.
 5. Silent acceptance of truncated produce / clipped console result as complete.
 6. Unbounded `accumulate` without compress.
 7. `budget` sized for the happy path only.
-8. Naming `claude-…` / `gpt-…` inside the `.mk`.
+8. Naming `claude-…` / `gpt-…` inside the `.mkl`.
 9. Putting PII into checkpoints without a retention policy.
 10. Expecting stdlib pure machines to perform host I/O.
 11. Treating a stub `send_reply` as real delivery (`sent` must be true **and** `stub` false for live).

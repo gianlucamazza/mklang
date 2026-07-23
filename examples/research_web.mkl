@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# research_web.mk — iterative research with a real `tool: search` state (ADR 0016)
+# research_web.mkl — iterative research with a real `tool: search` state (ADR 0016)
 #
 # Flow: plan_query → search → check_sufficiency → {loop | finalize}
 #
@@ -7,7 +7,7 @@
 # (MKLANG_SEARCH_BACKEND=fake|tavily, or mklang.search.configure_search).
 # Web observations are untrusted context (SPEC §11).
 #
-# Scenario-tested: `mklang test examples/research_web.mk --script examples/research_web.test.yaml`
+# Scenario-tested: `mklang test examples/research_web.mkl --script examples/research_web.test.yaml`
 
 mklang: "0.3"
 machine: research_web

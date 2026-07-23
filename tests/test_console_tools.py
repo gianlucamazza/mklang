@@ -143,7 +143,7 @@ def test_close_is_optional_and_idempotent(tmp_path):
 
 
 def test_list_and_describe_include_workspace_machines(tools):
-    (tools.workspace / "approval.mk").write_text(HITL_SRC, encoding="utf-8")
+    (tools.workspace / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")
     listed = json.loads(tools.list_machines({}))
     names = {m["name"] for m in listed["machines"]}
     assert "std_cot" in names and "approval" in names
@@ -156,22 +156,22 @@ def test_list_and_describe_include_workspace_machines(tools):
 def test_write_machine_is_workspace_confined(tools):
     refused = json.loads(tools.write_machine({"name": "../evil", "source": "x"}))
     assert "escapes the workspace" in refused["error"]
-    assert not (tools.workspace.parent / "evil.mk").exists()
+    assert not (tools.workspace.parent / "evil.mkl").exists()
 
     ok = json.loads(tools.write_machine({"name": "approval", "source": HITL_SRC}))
-    assert ok["written"] == "approval.mk"
+    assert ok["written"] == "approval.mkl"
     assert ok["check"]["ok"] is True
 
     tools.bridge.yes = False  # decline overwrite
     declined = json.loads(tools.write_machine({"name": "approval", "source": "machine: x"}))
     assert "declined" in declined["error"]
-    assert "approval" in (tools.workspace / "approval.mk").read_text()
+    assert "approval" in (tools.workspace / "approval.mkl").read_text()
 
 
 def test_write_machine_derives_name_from_source(tools):
     ok = json.loads(tools.write_machine({"source": HITL_SRC}))
-    assert ok["written"] == "approval.mk"
-    assert (tools.workspace / "approval.mk").is_file()
+    assert ok["written"] == "approval.mkl"
+    assert (tools.workspace / "approval.mkl").is_file()
 
     bad_yaml = json.loads(tools.write_machine({"source": "states: [unclosed"}))
     assert "not valid YAML" in bad_yaml["error"]
@@ -200,7 +200,7 @@ def test_run_machine_by_name_and_events_flow(tools):
 
 
 def test_run_machine_hitl_brokered_to_bridge(tools):
-    (tools.workspace / "approval.mk").write_text(HITL_SRC, encoding="utf-8")
+    (tools.workspace / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "approval", "inputs": '{"request": "refund"}'}))
     assert out["status"] == "done"
     assert "approved" in out["result"]
@@ -209,7 +209,7 @@ def test_run_machine_hitl_brokered_to_bridge(tools):
 
 
 def test_run_machine_tool_consent(tools):
-    (tools.workspace / "tooly.mk").write_text(TOOLY_SRC, encoding="utf-8")
+    (tools.workspace / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "tooly", "inputs": "{}"}))
     assert out["status"] == "done"
     assert any("calc" in c for c in tools.bridge.confirms)
@@ -243,7 +243,7 @@ def test_run_machine_consent_grants_fs_writes(tools, tmp_path):
     fs.configure_fs(fs.LocalFSBackend(tmp_path / "data"))
     (tmp_path / "data").mkdir()
     assert fs.writes_allowed() is False
-    (tools.workspace / "writy.mk").write_text(WRITY_SRC, encoding="utf-8")
+    (tools.workspace / "writy.mkl").write_text(WRITY_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "writy", "inputs": "{}"}))
     assert out["status"] == "done"
     assert any("write_file" in c for c in tools.bridge.confirms)
@@ -259,7 +259,7 @@ def test_run_machine_tool_consent_declined(tmp_path):
         workspace=tmp_path / "ws",
         build_llm=echo_llm,
     )
-    (tools.workspace / "tooly.mk").write_text(TOOLY_SRC, encoding="utf-8")
+    (tools.workspace / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "tooly", "inputs": "{}"}))
     assert "declined" in out["error"]
 
@@ -296,7 +296,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "longy.mk").write_text(long_src, encoding="utf-8")
+    (tools.workspace / "longy.mkl").write_text(long_src, encoding="utf-8")
 
     def truncating_llm(prov=None):
         return MockLLM(
@@ -335,7 +335,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "big.mk").write_text(long_src, encoding="utf-8")
+    (tools.workspace / "big.mkl").write_text(long_src, encoding="utf-8")
     blob = "Z" * 2500
 
     def long_llm(prov=None):
@@ -371,7 +371,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "dated.mk").write_text(src, encoding="utf-8")
+    (tools.workspace / "dated.mkl").write_text(src, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "dated", "inputs": "{}"}))
     assert out["status"] == "done"
     # echo_llm returns the user prompt; the injected date is host-supplied,
@@ -398,7 +398,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "clocked.mk").write_text(src, encoding="utf-8")
+    (tools.workspace / "clocked.mkl").write_text(src, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "clocked", "inputs": "{}"}))
     assert out["status"] == "done"
     assert re.search(r"now is <data-\w+>\n20", out["result"])

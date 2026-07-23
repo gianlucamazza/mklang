@@ -1,5 +1,5 @@
-# Scenario tests for triage.mk — run with:
-#   mklang test examples/triage.mk --script examples/triage.test.yaml
+# Scenario tests for triage.mkl — run with:
+#   mklang test examples/triage.mkl --script examples/triage.test.yaml
 #
 # No provider or API key required: the LLM, the KB/send tools, and the gate
 # judges are all scripted, so the flow is fully deterministic. Each scenario

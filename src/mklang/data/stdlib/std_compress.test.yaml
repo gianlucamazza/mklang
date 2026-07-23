@@ -1,5 +1,5 @@
-# Scenario tests for std_compress.mk — run with:
-#   mklang test std_compress.mk --script std_compress.test.yaml
+# Scenario tests for std_compress.mkl — run with:
+#   mklang test std_compress.mkl --script std_compress.test.yaml
 #
 # compress's judge batch is [preserves-facts, dropped-or-invented] while the
 # repair gate has budget; once the single repair burns, the repair gate drops

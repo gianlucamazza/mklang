@@ -29,7 +29,7 @@ fan-out.
   budget-exhausted sub inside a branch stays a `[branch-error: …]` marker; the
   spine suspends, if at all, at the next loop-top.
 - **Envelope:** the CLI wraps frames in a JSON checkpoint file with `format: 1`,
-  machine name + path + **sha256 of the root `.mk`**, the suspend `reason`, and the
+  machine name + path + **sha256 of the root `.mkl`**, the suspend `reason`, and the
   cost budget. `mklang resume <checkpoint>` verifies the hash before any provider
   setup (`--force` to override, e.g. after deliberately raising `budget:`).
   `repair_left` tuple keys are encoded as `[state, gate_idx, remaining]` triples.
@@ -43,6 +43,6 @@ fan-out.
   uninterrupted run — verified by golden round-trip tests.
 - The `reason` field is the forward hook for HITL: a suspending `escalate` writes
   `reason: "escalated"` into the same envelope with no format change.
-- Limitation: only the root `.mk` is hashed; sub-machines are verified by name
+- Limitation: only the root `.mkl` is hashed; sub-machines are verified by name
   against the reloaded registry, so silent drift in a sub-machine file is not
   detected in v1.

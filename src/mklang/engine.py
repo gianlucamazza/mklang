@@ -453,7 +453,7 @@ def _run_impl(
     )
     ctx = dict(context)
     # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
-    # value is still the author's `.mk` literal; host-supplied or host-overridden
+    # value is still the author's `.mkl` literal; host-supplied or host-overridden
     # values are untrusted unless the embedder vouches via `trusted_keys`.
     tainted: set[str] = {k for k in ctx if machine.context.get(k) != ctx[k]} - set(
         trusted_keys or ()

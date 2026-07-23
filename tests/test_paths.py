@@ -115,8 +115,8 @@ def test_console_workspace_prefers_local_then_user_machines(tmp_path, monkeypatc
 
 def test_hitl_default_checkpoint_lands_in_the_state_root(tmp_path, monkeypatch):
     monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
-    first = cli._default_checkpoint("machines/hello.mk")
-    second = cli._default_checkpoint("machines/hello.mk")
+    first = cli._default_checkpoint("machines/hello.mkl")
+    second = cli._default_checkpoint("machines/hello.mkl")
     assert first.parent == tmp_path / "state" / "checkpoints"
     assert first.parent.is_dir()
     assert first.name.startswith("hello-") and first.suffix == ".json"
@@ -127,12 +127,12 @@ def test_user_machine_precedes_system_and_project_precedes_user(tmp_path, monkey
     monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
     user = tmp_path / "data" / "machines"
     user.mkdir(parents=True)
-    (user / "shared.mk").write_text(_machine("shared"), encoding="utf-8")
+    (user / "shared.mkl").write_text(_machine("shared"), encoding="utf-8")
     reg, sources = registry_with_sources()
     assert "shared" in reg and sources["shared"] == "user"
 
     project = tmp_path / "project"
     project.mkdir()
-    (project / "shared.mk").write_text(_machine("shared"), encoding="utf-8")
+    (project / "shared.mkl").write_text(_machine("shared"), encoding="utf-8")
     _, sources = registry_with_sources(project)
     assert sources["shared"] == "local"

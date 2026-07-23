@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/mklang.schema.json
-# hook_gates.mk — code-hook gates for exact policy (ADR 0006)
+# hook_gates.mkl — code-hook gates for exact policy (ADR 0006)
 #
 # Context carries structured fields; host hooks decide auto-approve vs escalate
 # without asking the LLM to parse numbers. The generative state still produces a

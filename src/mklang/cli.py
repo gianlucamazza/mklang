@@ -430,7 +430,7 @@ def cmd_test(args: argparse.Namespace) -> int:
 
 def cmd_machines(args: argparse.Namespace) -> int:
     """List commissionable machines as JSON: bundled stdlib, plugins, and the
-    .mk files of a project directory (which shadow same-named bundled ones)."""
+    .mkl files of a project directory (which shadow same-named bundled ones)."""
     from .registry import registry_with_sources
 
     if args.dir and not Path(args.dir).is_dir():
@@ -474,7 +474,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     templates = [
         (bundled_config(), config_target),
         (bundled_env_example(), env_target),
-        (bundled_sample_machine(), machines / "hello.mk"),
+        (bundled_sample_machine(), machines / "hello.mkl"),
         (bundled_sample_test(), machines / "hello.test.yaml"),
     ]
     # Both modes get the schema next to runtime.yaml so the example's
@@ -670,7 +670,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     machine_roots = [("project", project_machines)] if project_machines.is_dir() else []
     machine_roots += [(name, root) for name, root in reversed(machine_layers())]
     for lname, root in machine_roots:
-        count = len(list(root.glob("*.mk"))) if root.is_dir() else 0
+        count = len(list(root.glob("*.mkl"))) if root.is_dir() else 0
         items.append({"name": f"machines {lname} {root} · {count} file", "status": "ok"})
     items.append({"name": f"machines stdlib · {len(load_stdlib_registry())}", "status": "ok"})
     items.append({"name": f"state sessions {hp.sessions}", "status": "ok"})
@@ -724,9 +724,9 @@ def _getting_started() -> str:
         "\n"
         "Get started:\n"
         "  mklang init          scaffold config, .env, and a sample machine\n"
-        "  mklang test machines/hello.mk --script machines/hello.test.yaml\n"
+        "  mklang test machines/hello.mkl --script machines/hello.test.yaml\n"
         "                       run the sample's scripted scenarios (no API key)\n"
-        '  mklang run machines/hello.mk --set task="say hello"\n'
+        '  mklang run machines/hello.mkl --set task="say hello"\n'
         "  mklang console       interactive TUI\n"
         "  mklang doctor        check where config, keys, and machines resolve from\n"
         "\n"
@@ -742,9 +742,9 @@ def main(argv: list[str] | None = None) -> int:
         epilog=(
             "Typical workflow:\n"
             "  mklang init\n"
-            "  mklang test machines/hello.mk --script machines/hello.test.yaml\n"
-            "  mklang lint --strict machines/hello.mk\n"
-            "  mklang run machines/hello.mk --set task=hello"
+            "  mklang test machines/hello.mkl --script machines/hello.test.yaml\n"
+            "  mklang lint --strict machines/hello.mkl\n"
+            "  mklang run machines/hello.mkl --set task=hello"
         ),
         formatter_class=formatter,
     )
@@ -850,7 +850,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="new cost budget (total, including tokens spent before the suspend)",
     )
-    s.add_argument("--machine", default=None, help="machine path override (if the .mk moved)")
+    s.add_argument("--machine", default=None, help="machine path override (if the .mkl moved)")
     s.add_argument(
         "--checkpoint",
         dest="checkpoint_out",
@@ -882,7 +882,7 @@ def main(argv: list[str] | None = None) -> int:
     co.add_argument(
         "--agent",
         default=None,
-        metavar="FILE.mk",
+        metavar="FILE.mkl",
         help="swap the console's brain with your own machine (same tool contract)",
     )
     co.add_argument(
@@ -899,7 +899,7 @@ def main(argv: list[str] | None = None) -> int:
         "--dir",
         default=None,
         metavar="DIR",
-        help="also list the .mk machines of a project directory",
+        help="also list the .mkl machines of a project directory",
     )
     presentation_args(m)
     logging_args(m)

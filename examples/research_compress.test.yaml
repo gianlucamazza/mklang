@@ -1,5 +1,5 @@
-# Scenario tests for research_compress.mk
-#   mklang test examples/research_compress.mk --script examples/research_compress.test.yaml
+# Scenario tests for research_compress.mkl
+#   mklang test examples/research_compress.mkl --script examples/research_compress.test.yaml
 
 scenarios:
   # Notes good on first check → finalize (no compress).

@@ -7,9 +7,9 @@
 # accepts the best attempt once the repair budget is spent).
 #
 # Try it without any API key (scripted LLM):
-#   mklang test machines/hello.mk --script machines/hello.test.yaml
+#   mklang test machines/hello.mkl --script machines/hello.test.yaml
 # Run it for real (needs a provider key in .env):
-#   mklang run machines/hello.mk --set task="explain what a state machine is"
+#   mklang run machines/hello.mkl --set task="explain what a state machine is"
 # Or open the console TUI — where mklang lives — and ask it to run hello:
 #   mklang console
 

@@ -26,17 +26,17 @@ FORMATS = ("webm", "gif", "txt")
 
 # Only the files the two live demos actually exercise; editing one of these
 # should force a demo re-pin, nothing else. (agent → console + news_search live
-# web; language → react.mk + the calc tool via the CLI.)
+# web; language → react.mkl + the calc tool via the CLI.)
 SOURCE_PATTERNS = (
     "demos/tapes/*.tape",
     "demos/toolchain.conf",
     "scripts/demo_assets.py",
     "config/runtime.example.yaml",
-    "examples/react.mk",
-    "examples/news_search.mk",
+    "examples/react.mkl",
+    "examples/news_search.mkl",
     "src/mklang/search.py",
     "src/mklang/tools.py",
-    "src/mklang/data/console/agent.mk",
+    "src/mklang/data/console/agent.mkl",
     "src/mklang/cli.py",
     "src/mklang/config.py",
     "src/mklang/engine.py",
@@ -56,7 +56,7 @@ REQUIRED_TEXT = {
         "boil that down",
     ),
     "language": (
-        "OK examples/react.mk",
+        "OK examples/react.mkl",
         "findings=0",
         "DONE react",
         "provider deepseek",

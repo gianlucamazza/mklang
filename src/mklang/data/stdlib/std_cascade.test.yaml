@@ -1,5 +1,5 @@
-# Scenario tests for std_cascade.mk — run with:
-#   mklang test std_cascade.mk --script std_cascade.test.yaml
+# Scenario tests for std_cascade.mkl — run with:
+#   mklang test std_cascade.mkl --script std_cascade.test.yaml
 #
 # draft's judge batch is the single prose condition ("fully and correctly
 # answers"); `otherwise` never enters a batch. Judge 0 = condition true → END.

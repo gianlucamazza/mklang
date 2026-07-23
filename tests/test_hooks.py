@@ -173,9 +173,9 @@ def test_semantic_check_warns_undeclared_hook():
 def test_example_hook_gates_machine_validates():
     from mklang.loader import load_dict, load_machine, validate_dict
 
-    d = load_dict("examples/hook_gates.mk")
+    d = load_dict("examples/hook_gates.mkl")
     validate_dict(d)
-    m = load_machine("examples/hook_gates.mk")
+    m = load_machine("examples/hook_gates.mkl")
     r = run(
         m,
         dict(m.context),

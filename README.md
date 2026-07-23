@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-green)](./LICENSE)
 
 **A declarative language for LLM-driven state machines, with an agent-first
-console to author and run them.** A `.mk` file (mk = _machine_) describes an
+console to author and run them.** A `.mkl` file (mklang) describes an
 agent as a set of states; an LLM _is_ the runtime that executes generative
 steps. The document is the program; the [`mklang console`](#the-console) is how
 you drive it. The host supplies the interpreter, optional tools, and optional
@@ -47,8 +47,8 @@ Sticky policy goes in `execution`; turn data and `{{context}}` go in `prompt`.
 There is no `system:` keyword — see [Best practices §3](./docs/guides/best-practices.md).
 
 Real side effects (search, send, calc) are **`tool:` states** — host callables,
-not prose in `execution`. See [`examples/react.mk`](./examples/react.mk) and
-[`examples/triage.mk`](./examples/triage.mk).
+not prose in `execution`. See [`examples/react.mkl`](./examples/react.mkl) and
+[`examples/triage.mkl`](./examples/triage.mkl).
 
 The output of a state is stored in the shared context under its `output:` key, so
 later states read it via `{{key}}`. Four **optional** faces unlock richer reasoning:
@@ -89,9 +89,9 @@ mklang console
 ```
 
 The agent itself **is** a machine
-([`agent.mk`](./src/mklang/data/console/agent.mk)) — read it, lint it, swap it
-with `--agent your_brain.mk` (ADR 0015). It has no privileged powers the language
-lacks: it commissions the same `.mk` machines you write, over the same gates and
+([`agent.mkl`](./src/mklang/data/console/agent.mkl)) — read it, lint it, swap it
+with `--agent your_brain.mkl` (ADR 0015). It has no privileged powers the language
+lacks: it commissions the same `.mkl` machines you write, over the same gates and
 tiers. Sessions persist (`--continue`), agent replies render as Markdown, and the
 brain declares host clocks `today` / `now` for wall-clock questions. Details:
 [`docs/guides/console.md`](./docs/guides/console.md).
@@ -107,7 +107,7 @@ brain declares host clocks `today` / `now` for wall-clock questions. Details:
   is an empirical claim, not a free lunch.
 - **Prose, not types** — `structure` and gate conditions are natural language,
   judged by the LLM at runtime; optional `hook:` gates add host bool checks.
-- **Provider-agnostic** — a `.mk` never names a provider or model. States route by
+- **Provider-agnostic** — a `.mkl` never names a provider or model. States route by
   capability **tier** (`fast` / `balanced` / `reasoning`); the runtime maps each
   tier to a concrete model. Portability of the document is syntactic; whether
   different providers fire the same gates on the same run is measurable (see
@@ -150,7 +150,7 @@ authored examples.
 
 ## Runtime configuration
 
-The `.mk` picks a **tier**; a host-side config picks the **model**. This is the
+The `.mkl` picks a **tier**; a host-side config picks the **model**. This is the
 whole of "make it multi-provider":
 
 ```yaml
@@ -202,7 +202,7 @@ that needs **no API key** — is the
 [PKGBUILD](https://github.com/gianlucamazza/mklang/tree/main/packaging/arch)
 are also available.
 
-Editor validation for `.mk` files works out of the box via the JSON Schema —
+Editor validation for `.mkl` files works out of the box via the JSON Schema —
 point yaml-language-server at
 `https://raw.githubusercontent.com/gianlucamazza/mklang/main/schema/mklang.schema.json`.
 
@@ -215,23 +215,23 @@ same interpreter, same machines. Drive a checkout through
 ```bash
 git clone https://github.com/gianlucamazza/mklang && cd mklang
 cp .env.example .env            # set DEEPSEEK_API_KEY=… (or another provider key)
-uv run mklang check examples/self_consistency.mk
-uv run mklang lint examples/self_consistency.mk   # + static analysis
-uv run mklang run examples/self_consistency.mk \
+uv run mklang check examples/self_consistency.mkl
+uv run mklang lint examples/self_consistency.mkl   # + static analysis
+uv run mklang run examples/self_consistency.mkl \
   --set question.text="What is the capital of Australia?"
 # default provider is deepseek; override with --provider anthropic|openai|…
 
 # pause on budget, resume later (exit code 3 = suspended):
-uv run mklang run examples/self_consistency.mk --max-tokens 300 --checkpoint ck.json
+uv run mklang run examples/self_consistency.mkl --max-tokens 300 --checkpoint ck.json
 uv run mklang resume ck.json --max-tokens 5000
 
 # human-in-the-loop: escalate gates suspend; resume with the human decision:
-uv run mklang run examples/expense_approval.mk --checkpoint ck.json --hitl
+uv run mklang run examples/expense_approval.mkl --checkpoint ck.json --hitl
 uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
 Every command, flag, and exit code: [CLI reference](./docs/reference/cli.md).
-The `.mk` picks tiers; `config/runtime.example.yaml` maps them to models
+The `.mkl` picks tiers; `config/runtime.example.yaml` maps them to models
 (`active: deepseek` by default); the key comes from `.env`. Same machine, any
 provider.
 
@@ -243,7 +243,7 @@ deterministic, no provider or key. It pins the paths you care about _before_ you
 spend a token on a live run.
 
 ```bash
-uv run mklang test examples/triage.mk --script examples/triage.test.yaml
+uv run mklang test examples/triage.mkl --script examples/triage.test.yaml
 # PASS happy-path
 # PASS kb-empty-escalates
 ```
@@ -271,7 +271,7 @@ The server auto-discovers config and keys through the same chain as the CLI
 (project → user host → `/etc/mklang` → bundled example, ADR 0023); pass
 `--config` only to pin a specific file. It exposes commissioning tools
 (`run` / `resume`), discovery (`list_machines` / `describe_machine`), and `check`
-(ADR 0011 + 0013). `run` accepts inline `.mk` source or a path, with `inputs`
+(ADR 0011 + 0013). `run` accepts inline `.mkl` source or a path, with `inputs`
 merged into the context (host inputs are untrusted by provenance and reach
 prompts fenced — SPEC §6); `resume` takes an opaque handle or checkpoint file
 (e.g. `{"human.reply": "…"}` for HITL, injected values equally tainted). Live
@@ -283,9 +283,9 @@ keys resolve server-side from the environment, never over the wire.
 
 - [`SPEC.md`](./SPEC.md) — the full language specification.
 - [`schema/mklang.schema.json`](./schema/mklang.schema.json) — JSON Schema that
-  validates the structure of a `.mk` file (add
+  validates the structure of a `.mkl` file (add
   `# yaml-language-server: $schema=../schema/mklang.schema.json` at the top of a
-  `.mk` for editor validation).
+  `.mkl` for editor validation).
 - [`config/runtime.example.yaml`](./config/runtime.example.yaml) — host-side
   runtime config: the `tier → model` map for each provider
   ([schema](./config/runtime.schema.json)).
@@ -299,20 +299,20 @@ keys resolve server-side from the environment, never over the wire.
   [`demos.md`](./docs/demos.md), and the [ADR index](./docs/adr/README.md);
   plus [`ROADMAP.md`](./ROADMAP.md).
 - `examples/` — runnable machines:
-  - [`triage.mk`](./examples/triage.mk) — branching FSM + real `search_kb` / `send_reply` tools.
-  - [`research.mk`](./examples/research.mk) — looping FSM (iterative Q&A, training knowledge).
-  - [`research_web.mk`](./examples/research_web.mk) — research loop with `tool: search` (host-bound).
-  - [`research_compress.mk`](./examples/research_compress.mk) — same + explicit notes compression.
-  - [`news_search.mk`](./examples/news_search.mk) — topic → `tool: search` → news brief (`today` + recency).
-  - [`expense_approval.mk`](./examples/expense_approval.mk) — divergent terminals + `fail`.
-  - [`self_consistency.mk`](./examples/self_consistency.mk) — fan-out `sample` + reducer.
-  - [`map_reduce.mk`](./examples/map_reduce.mk) + [`summarize_doc.mk`](./examples/summarize_doc.mk) — `over` + `call`.
-  - [`react.mk`](./examples/react.mk) — reason/act/observe loop with `accumulate`.
-  - [`hook_gates.mk`](./examples/hook_gates.mk) — deterministic code-hook gates (exact policy).
+  - [`triage.mkl`](./examples/triage.mkl) — branching FSM + real `search_kb` / `send_reply` tools.
+  - [`research.mkl`](./examples/research.mkl) — looping FSM (iterative Q&A, training knowledge).
+  - [`research_web.mkl`](./examples/research_web.mkl) — research loop with `tool: search` (host-bound).
+  - [`research_compress.mkl`](./examples/research_compress.mkl) — same + explicit notes compression.
+  - [`news_search.mkl`](./examples/news_search.mkl) — topic → `tool: search` → news brief (`today` + recency).
+  - [`expense_approval.mkl`](./examples/expense_approval.mkl) — divergent terminals + `fail`.
+  - [`self_consistency.mkl`](./examples/self_consistency.mkl) — fan-out `sample` + reducer.
+  - [`map_reduce.mkl`](./examples/map_reduce.mkl) + [`summarize_doc.mkl`](./examples/summarize_doc.mkl) — `over` + `call`.
+  - [`react.mkl`](./examples/react.mkl) — reason/act/observe loop with `accumulate`.
+  - [`hook_gates.mkl`](./examples/hook_gates.mkl) — deterministic code-hook gates (exact policy).
 
 ## Stack
 
-- **Language spec:** `.mk` = YAML validated by a JSON Schema; semantics fixed by
+- **Language spec:** `.mkl` = YAML validated by a JSON Schema; semantics fixed by
   [`SPEC.md`](./SPEC.md) and an implementation-neutral
   [conformance suite](./conformance/README.md).
 - **Reference interpreter:** Python ≥ 3.11, dependencies `pyyaml`, `jsonschema`,
@@ -330,7 +330,7 @@ keys resolve server-side from the environment, never over the wire.
 
 ## Status
 
-**Language v0.3 / package 0.16.0** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 1.0.0** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`

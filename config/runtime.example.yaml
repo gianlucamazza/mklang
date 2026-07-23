@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=./runtime.schema.json
 #
-# mklang runtime configuration — HOST-SIDE, and deliberately NOT part of any .mk.
+# mklang runtime configuration — HOST-SIDE, and deliberately NOT part of any .mkl.
 # It maps the language's provider-neutral capability tiers (fast / balanced /
 # reasoning, see SPEC.md §2.1) to concrete provider models. Swap `active` (or the
-# tier maps) and the SAME .mk runs on a different backend with zero edits.
+# tier maps) and the SAME .mkl runs on a different backend with zero edits.
 #
 # Model IDs below are current as of 2026-07-16. Anthropic IDs are authoritative;
 # the others are the current best-in-class per provider and are host-updatable —
@@ -11,7 +11,7 @@
 #
 # Default `active` is DeepSeek: OpenAI-compatible, cheap for smoke/live tests, and
 # the path historically used to validate the reference interpreter end-to-end.
-# Swap to anthropic | openai | … (or pass --provider) without editing any .mk.
+# Swap to anthropic | openai | … (or pass --provider) without editing any .mkl.
 
 active: deepseek # deepseek | anthropic | openai | google | openrouter | xai | mistral | local
 

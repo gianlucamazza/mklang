@@ -100,7 +100,7 @@ def save_checkpoint(
     hitl: bool = False,
     machine_source: str | None = None,
 ) -> None:
-    """`machine_source` carries the inline `.mk` text for machines that have no
+    """`machine_source` carries the inline `.mkl` text for machines that have no
     file (MCP inline commissions), so a cross-process resume can rebuild them."""
     from . import __version__  # runtime import: __init__ imports engine imports this module
 

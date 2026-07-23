@@ -1,6 +1,6 @@
 # Authoring guide
 
-A compact recipe for writing a correct `.mk` — aimed at LLM agents and humans who
+A compact recipe for writing a correct `.mkl` — aimed at LLM agents and humans who
 want the happy path without reading the full [SPEC](../../SPEC.md) first. This page
 distills; it does not replace. Operating guidance lives in [Patterns](patterns.md);
 the full **do / don't checklist** is [Best practices](best-practices.md).
@@ -9,10 +9,10 @@ the full **do / don't checklist** is [Best practices](best-practices.md).
 
 1. Start from the skeleton below (or the closest [example](#which-example-to-copy)).
 2. Fill the faces state by state; every path must reach `END` within `budget`.
-3. Validate: `mklang check my.mk` (schema + semantics), then `mklang lint my.mk`
+3. Validate: `mklang check my.mkl` (schema + semantics), then `mklang lint my.mkl`
    (dead gates, unread outputs, typos).
-4. Pin behavior without keys: `mklang test my.mk --script my.test.yaml`.
-5. Run: `mklang run my.mk --set key=value` — or commission it from an MCP host
+4. Pin behavior without keys: `mklang test my.mkl --script my.test.yaml`.
+5. Run: `mklang run my.mkl --set key=value` — or commission it from an MCP host
    via the `run` tool (`mklang-mcp`, inline source or path).
 
 ## Skeleton
@@ -101,7 +101,7 @@ charges one step per branch at runtime but counts as 1 at check time.
 
 ## Hard rules
 
-- **Never name a provider or model in a `.mk`** — route by `tier:`
+- **Never name a provider or model in a `.mkl`** — route by `tier:`
   (`fast` / `balanced` / `reasoning`) only; the host config maps tiers to models
   (ADR 0003).
 - **No side effects in prose.** `execution` is policy, not action; anything that
@@ -111,7 +111,7 @@ charges one step per branch at runtime but counts as 1 at check time.
   only (`structure`/`execution` are **not** interpolated).
 - Every `{{key}}` must resolve: from `context:`, a previous state's `output:`,
   `human.*` (HITL resume), or `item`/`index` inside a fan-out state.
-- `call:` targets must exist as sibling `.mk` files (same directory), a bundled
+- `call:` targets must exist as sibling `.mkl` files (same directory), a bundled
   `std_*` name, or an entry-point machine — an inline MCP `source` machine can
   `call: std_*` but not arbitrary siblings unless the host registry includes them.
 - **Time-sensitive / web machines:** declare `today: ""` in `context:`; the host
@@ -130,7 +130,7 @@ charges one step per branch at runtime but counts as 1 at check time.
 ```text
 entry 'x' is not a state
 draft: gate -> unknown state 'sendd'            # typo in to:
-combine: call -> unknown machine 'summarize'    # missing sibling .mk
+combine: call -> unknown machine 'summarize'    # missing sibling .mkl
 no reachable path to END
 budget-infeasible: budget 2 is below the 4-step shortest path to END
 draft: no 'otherwise' catch-all gate            # warning
@@ -150,25 +150,25 @@ CoT, self-consistency, refine, ToT, debate, map-reduce and cascade ship as ready
 
 | Pattern                                    | Example                                                                                                                                                        |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Minimal single state                       | [`summarize_doc.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/summarize_doc.mk)                                                              |
-| Branching FSM + real tools + scenario test | [`triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                                                                            |
-| Reason/act/observe loop (`accumulate`)     | [`react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)                                                                              |
-| Iterative loop (training knowledge only)   | [`research.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mk)                                                                        |
-| Research + host `tool: search`             | [`research_web.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_web.mk); ready-made: `std_research` ([stdlib](../reference/stdlib.md)) |
-| Research + explicit notes compression      | [`research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk)                                                      |
-| News brief + `today` + search recency      | [`news_search.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/news_search.mk) (+ `.test.yaml`)                                                 |
-| Fan-out `sample` + reducer                 | [`self_consistency.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/self_consistency.mk)                                                        |
-| `over` + `call` orchestration              | [`map_reduce.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/map_reduce.mk)                                                                    |
-| Deterministic hook gates                   | [`hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                    |
-| Divergent terminals + `fail`               | [`expense_approval.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/expense_approval.mk)                                                        |
+| Minimal single state                       | [`summarize_doc.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/summarize_doc.mkl)                                                              |
+| Branching FSM + real tools + scenario test | [`triage.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mkl)                                                                            |
+| Reason/act/observe loop (`accumulate`)     | [`react.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mkl)                                                                              |
+| Iterative loop (training knowledge only)   | [`research.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/research.mkl)                                                                        |
+| Research + host `tool: search`             | [`research_web.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_web.mkl); ready-made: `std_research` ([stdlib](../reference/stdlib.md)) |
+| Research + explicit notes compression      | [`research_compress.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mkl)                                                      |
+| News brief + `today` + search recency      | [`news_search.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/news_search.mkl) (+ `.test.yaml`)                                                 |
+| Fan-out `sample` + reducer                 | [`self_consistency.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/self_consistency.mkl)                                                        |
+| `over` + `call` orchestration              | [`map_reduce.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/map_reduce.mkl)                                                                    |
+| Deterministic hook gates                   | [`hook_gates.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mkl)                                                                    |
+| Divergent terminals + `fail`               | [`expense_approval.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/expense_approval.mkl)                                                        |
 
 ## Pre-flight (copy this)
 
 ```text
-mklang check my.mk && mklang lint --strict my.mk
-mklang test my.mk --script my.test.yaml    # if scenarios exist
+mklang check my.mkl && mklang lint --strict my.mkl
+mklang test my.mkl --script my.test.yaml    # if scenarios exist
 # live only after scenarios are green:
-mklang run my.mk --set key=value
+mklang run my.mkl --set key=value
 ```
 
 ## Go deeper

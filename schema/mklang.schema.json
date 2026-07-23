@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://mklang.dev/schema/mklang.schema.json",
   "title": "mklang machine",
-  "description": "Structural schema for a .mk file (mklang state machine, language v0.2: generative|call|tool, hooks, tools). Validates shape only, not prose. See SPEC.md.",
+  "description": "Structural schema for a .mkl file (mklang state machine, language v0.2: generative|call|tool, hooks, tools). Validates shape only, not prose. See SPEC.md.",
   "type": "object",
   "required": [
     "machine",

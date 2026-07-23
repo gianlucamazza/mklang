@@ -1,5 +1,5 @@
-# Scenario tests for std_map_reduce.mk — run with:
-#   mklang test std_map_reduce.mk --script std_map_reduce.test.yaml
+# Scenario tests for std_map_reduce.mkl — run with:
+#   mklang test std_map_reduce.mkl --script std_map_reduce.test.yaml
 #
 # Scenarios run on the machine's context defaults (the harness cannot override
 # context), so the map fans out over the two placeholder items — MAP-form

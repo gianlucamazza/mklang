@@ -2,7 +2,7 @@
 
 mklang ships the reasoning architectures of the [cookbook](../../SPEC.md) as **ready,
 general-purpose machines** — parameterized by context, callable from your own
-machines, runnable by name. These are ordinary `.mk` documents bundled with the
+machines, runnable by name. These are ordinary `.mkl` documents bundled with the
 package (ADR 0012); discover them with `mklang machines` or the MCP
 `list_machines` / `describe_machine` tools.
 
@@ -41,7 +41,7 @@ states:
 > callee; any mixed template renders to text. From CLI/MCP, list parameters
 > (`items`, `personas`) are plain JSON via `--set` / `inputs`.
 
-Your machines always win: a project `.mk` that reuses a `std_*` name shadows
+Your machines always win: a project `.mkl` that reuses a `std_*` name shadows
 the bundled machine (with a warning). Third-party packages can add machines via
 the `mklang.machines` entry-point group.
 
@@ -68,13 +68,13 @@ Notes:
   static by design. `std_map_reduce`/`std_debate` scale with the length of the
   list you pass; keep it within the budget noted in each file.
 - Every machine ships a `*.test.yaml` next to it — scripted scenarios you can
-  run offline: `mklang test <path>/std_refine.mk --script <path>/std_refine.test.yaml`.
+  run offline: `mklang test <path>/std_refine.mkl --script <path>/std_refine.test.yaml`.
   The test suite pins all of them in CI.
 - `std_compress` is built to be **called mid-loop** by other machines
   (ADR 0017 Layer 1): a state like
   `{call: std_compress, input: {task: "{{task}}", notes: "{{notes}}"}, output: notes}`
   rewrites an accumulator short before the next round — see
-  [`examples/research_compress.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mk)
+  [`examples/research_compress.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/research_compress.mkl)
   for the inline version of the same pattern.
 - `std_research` is the one machine that uses a `tool:` state — the bundled
   host `search` tool (ADR 0016), which every mklang install ships. It grounds
@@ -86,9 +86,9 @@ Notes:
 
 | pattern            | blocker                                                                                                                                                                                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ReAct              | needs arbitrary host `tool:`s — tool names are static, so the host must author the machine around its own tools ([`examples/react.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mk)); `std_research` gets in only because `search` is bundled |
-| Router-of-experts  | routes to domain `call:` targets, which are static — see [`examples/triage.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mk)                                                                                                                 |
-| Exact policy gates | needs host `hook:`s — see [`examples/hook_gates.mk`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mk)                                                                                                                                        |
+| ReAct              | needs arbitrary host `tool:`s — tool names are static, so the host must author the machine around its own tools ([`examples/react.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mkl)); `std_research` gets in only because `search` is bundled |
+| Router-of-experts  | routes to domain `call:` targets, which are static — see [`examples/triage.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mkl)                                                                                                                 |
+| Exact policy gates | needs host `hook:`s — see [`examples/hook_gates.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/hook_gates.mkl)                                                                                                                                        |
 
 These stay as documented patterns: the [cookbook](../../SPEC.md) has the skeletons,
 the [authoring guide](../guides/authoring.md) the recipe, and

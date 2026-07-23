@@ -277,7 +277,7 @@ states:
 
 
 def test_envelope_save_load_and_hash(tmp_path):
-    mk = tmp_path / "demo.mk"
+    mk = tmp_path / "demo.mkl"
     mk.write_text(MK, encoding="utf-8")
     ck_path = tmp_path / "ck.json"
     frames = [
@@ -311,7 +311,7 @@ def test_checkpoint_written_owner_only(tmp_path):
 
     if os.name == "nt":  # POSIX permission bits are not meaningful on Windows
         pytest.skip("POSIX permissions only")
-    mk = tmp_path / "demo.mk"
+    mk = tmp_path / "demo.mkl"
     mk.write_text(MK, encoding="utf-8")
     ck_path = tmp_path / "ck.json"
     # Pre-create with wide permissions to prove save_checkpoint tightens them.
@@ -322,7 +322,7 @@ def test_checkpoint_written_owner_only(tmp_path):
 
 
 def test_cli_resume_guards(tmp_path, capsys, monkeypatch, caplog):
-    mk = tmp_path / "demo.mk"
+    mk = tmp_path / "demo.mkl"
     mk.write_text(MK, encoding="utf-8")
     ck_path = tmp_path / "ck.json"
     frames = [

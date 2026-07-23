@@ -141,7 +141,7 @@ def test_run_inputs_reach_context(monkeypatch, store):
 
 
 def test_run_requires_exactly_one_of_source_and_path(store):
-    both = srv.run_tool(store, DEFAULTS, source=HITL, path="examples/triage.mk")
+    both = srv.run_tool(store, DEFAULTS, source=HITL, path="examples/triage.mkl")
     neither = srv.run_tool(store, DEFAULTS)
     assert both["status"] == neither["status"] == "error"
     assert both["error"] == neither["error"] == "invalid-request"
@@ -226,7 +226,7 @@ def test_cost_suspend_and_resume_with_raised_budget(monkeypatch, store):
 
 def test_run_by_path_examples(monkeypatch, store):
     use_llm(monkeypatch, echo_llm)
-    out = srv.run_tool(store, DEFAULTS, path="examples/summarize_doc.mk", inputs={"doc": "x"})
+    out = srv.run_tool(store, DEFAULTS, path="examples/summarize_doc.mkl", inputs={"doc": "x"})
     assert out["status"] == "done"
 
 
@@ -245,7 +245,7 @@ def test_list_and_describe_machines(tmp_path, monkeypatch):
 
 
 def test_check_tool_structured_output():
-    ok = srv.check_tool(path="examples/triage.mk")
+    ok = srv.check_tool(path="examples/triage.mkl")
     assert ok["ok"] is True and ok["errors"] == []
     bad = srv.check_tool(
         source="machine: x\nentry: gone\nbudget: 2\nstates:\n  s:\n    structure: s\n    prompt: p\n    output: o\n    gates: [{when: otherwise, then: ok, to: END}]\n"

@@ -1,16 +1,16 @@
-# ADR 0003 — Provider-agnostic: no provider/model pinning in a `.mk`
+# ADR 0003 — Provider-agnostic: no provider/model pinning in a `.mkl`
 
 Status: Accepted
 
 ## Context
 
-A `.mk` is meant to be a portable artifact — "the document is the program". Naming a
+A `.mkl` is meant to be a portable artifact — "the document is the program". Naming a
 concrete provider or model id inside it (e.g. `model: claude-opus-4-8`) would bind
 the machine to one vendor and break portability the moment someone runs it elsewhere.
 
 ## Decision
 
-A `.mk` **never** names a provider or model. It references capability tiers only
+A `.mkl` **never** names a provider or model. It references capability tiers only
 (ADR 0001). Provider selection and the tier→model map live entirely in the host-side
 runtime config; keys live in `.env`. Explicit pinning is a documented non-goal.
 

@@ -7,14 +7,14 @@ a contributor's map, not language semantics — those live in the SPEC. The
 ## Execution pipeline
 
 ```
-.mk file ──▶ loader.py ──▶ model.py ──▶ engine.py ──▶ llm/ adapter ──▶ provider
+.mkl file ──▶ loader.py ──▶ model.py ──▶ engine.py ──▶ llm/ adapter ──▶ provider
              schema +      dataclasses   run loop:      produce/judge
              semantic      for machine   produce →
              checks        + states      judge gates →
                                          transition
 ```
 
-- `loader.py` — load and validate a `.mk`: JSON-Schema (structure, from
+- `loader.py` — load and validate a `.mkl`: JSON-Schema (structure, from
   `data/mklang.schema.json`) plus semantic checks.
 - `model.py` — dataclasses for a machine and its states, parsed from the plain
   dict post-YAML.
@@ -52,7 +52,7 @@ All surfaces commission runs through the same seam, `host.py`.
   (crash-tolerant persistence), `commands.py` (slash commands), `render.py`
   (safe conversation rendering), `widgets.py` (activity tree, inspector),
   `tools.py` (the brain machine's hands). The brain itself is a machine:
-  `data/console/agent.mk`.
+  `data/console/agent.mkl`.
 - `mcp/` — the stdio MCP server (ADR 0011/0013): `server.py` (commissioning +
   provenance, live events per ADR 0019), `sessions.py` (suspended runs keyed by
   opaque handles).
@@ -66,7 +66,7 @@ Plugins hook in via entry-point groups; builtins register the same way.
 | `providers.py` | `mklang.providers` | LLM adapter factory                          |
 | `tools.py`     | `mklang.tools`     | `(dict) -> str` host tool for `tool:` states |
 | `hooks.py`     | `mklang.hooks`     | `(context, output) -> bool` gate hook        |
-| `registry.py`  | `mklang.machines`  | directory of `.mk` machines                  |
+| `registry.py`  | `mklang.machines`  | directory of `.mkl` machines                  |
 
 ## Supporting modules
 

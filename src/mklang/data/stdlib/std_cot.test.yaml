@@ -1,5 +1,5 @@
-# Scenario tests for std_cot.mk — run with:
-#   mklang test std_cot.mk --script std_cot.test.yaml
+# Scenario tests for std_cot.mkl — run with:
+#   mklang test std_cot.mkl --script std_cot.test.yaml
 #
 # The single state has only an `otherwise` gate, so no judge is ever called;
 # both scenarios pin the produce → deposit → END path.

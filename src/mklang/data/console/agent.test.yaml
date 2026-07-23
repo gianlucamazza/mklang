@@ -1,5 +1,5 @@
-# Scenario tests for agent.mk — run with:
-#   mklang test agent.mk --script agent.test.yaml
+# Scenario tests for agent.mkl — run with:
+#   mklang test agent.mkl --script agent.test.yaml
 #
 # decide's judge batch is the five action conditions [DISCOVER=0, RUN=1,
 # CLARIFY=2, AUTHOR=3, REPLY=4] (`otherwise` never enters a batch); action
@@ -99,14 +99,14 @@ scenarios:
         - "RUN: haiku with topic 'sea'"
         - '{"target": "haiku", "inputs": {"topic": "sea"}}'
         - "REPLY: authored and ran the haiku machine."
-        - "Created haiku.mk and ran it: 'old silent sea...'"
+        - "Created haiku.mkl and ran it: 'old silent sea...'"
       judge: [3, 1, 4]
     tools:
-      write_machine: ['{"written": "haiku.mk", "check": {"ok": true, "errors": []}}']
+      write_machine: ['{"written": "haiku.mkl", "check": {"ok": true, "errors": []}}']
       run_machine: ['{"status": "done", "result": "old silent sea..."}']
     expect:
       status: done
-      result: "Created haiku.mk and ran it: 'old silent sea...'"
+      result: "Created haiku.mkl and ran it: 'old silent sea...'"
       trace:
         - { state: decide, policy: ok, to: author }
         - { state: author, policy: ok, to: save }
@@ -129,15 +129,15 @@ scenarios:
         - "AUTHOR: fix the entry state — it must exist in states."
         - "machine: summarizer\nentry: s\n..."
         - "REPLY: authored the summarizer after one fix."
-        - "summarizer.mk is saved and valid (one validation round-trip)."
+        - "summarizer.mkl is saved and valid (one validation round-trip)."
       judge: [3, 3, 4]
     tools:
       write_machine:
-        - '{"written": "summarizer.mk", "check": {"ok": false, "errors": ["entry ''gone'' is not a state"]}}'
-        - '{"written": "summarizer.mk", "check": {"ok": true, "errors": []}}'
+        - '{"written": "summarizer.mkl", "check": {"ok": false, "errors": ["entry ''gone'' is not a state"]}}'
+        - '{"written": "summarizer.mkl", "check": {"ok": true, "errors": []}}'
     expect:
       status: done
-      result: "summarizer.mk is saved and valid (one validation round-trip)."
+      result: "summarizer.mkl is saved and valid (one validation round-trip)."
       trace:
         - { state: decide, policy: ok, to: author }
         - { state: author, policy: ok, to: save }

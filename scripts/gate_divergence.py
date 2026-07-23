@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure cross-provider gate agreement on a fixed machine + inputs.
 
-Syntactic portability ("same .mk, any provider") does not imply semantic
+Syntactic portability ("same .mkl, any provider") does not imply semantic
 agreement on which prose gate fires. This script runs a small routing machine
 once per provider (with API key) and reports pairwise agreement on the
 gate-trace signature.

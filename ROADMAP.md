@@ -1,11 +1,11 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **0.16.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **1.0.0**, language **0.3**) and where it can grow —
 technical **and** organizational. Items are marked **[next]** (clear near-term),
 **[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
 [`docs/adr/`](./docs/adr) record decisions as they're made.
 
-## Where we are (language 0.3 / package 0.16.0)
+## Where we are (language 0.3 / package 1.0.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -23,7 +23,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   gates suspend; `mklang resume --set human.reply=…` injects the decision.
 - **0.5.0:** **language-grade rigor** — conformance suite (ADR 0009),
   `mklang lint`, provider entry-point plugins, CI + docs site, public packaging.
-- **0.5.1:** showcase honesty (`triage.mk` real tool states), silent judge-clamp
+- **0.5.1:** showcase honesty (`triage.mkl` real tool states), silent judge-clamp
   fix, normative judge protocol, threat model (§11), gate-divergence scaffold.
 - **0.5.2 (second remediation pass):** gate judging **follows the state tier** by
   default (§2.1; `judge:` becomes an opt-in override) — an observable-behavior
@@ -59,7 +59,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
 - **0.9.3:** documentation alignment for package status, live evidence, and XDG
   session paths.
 - **0.10.0:** first-run experience (ADR 0021 phase 3) — `mklang init` seeding
-  `hello.mk`, provider key gate, shell completions, `scripts/install.sh` (pipx),
+  `hello.mkl`, provider key gate, shell completions, `scripts/install.sh` (pipx),
   the Arch/AUR recipe, and a lean sdist.
 - **0.11.0:** global/local config separation (ADR 0023) — per-key `.env`
   layering, `mklang-mcp` config auto-discovery, XDG fallbacks for workspace and
@@ -99,7 +99,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   tool/call inputs stay raw by design. Dual-channel / CaMeL-style control
   stays open (§9).
 - **[later] Formal types for `structure`** — optional typed I/O before spending tokens.
-- **[maybe] Determinism knobs** — portable seed / temperature in the `.mk`.
+- **[maybe] Determinism knobs** — portable seed / temperature in the `.mkl`.
 
 ## Runtime
 
@@ -180,14 +180,17 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   environment and provider secrets.
 - **[later] Editor tooling** — LSP / syntax highlighting beyond the YAML
   schema; `mklang lint` is the first brick.
-- **[maybe] Rename `.mk` extension** — collides with Makefile includes /
-  GitHub Linguist; cost of rename is low today, high after adoption (SPEC §9).
+- **[shipped] Rename `.mk` → `.mkl`** — the `.mk` suffix collided with Makefile
+  includes / GitHub Linguist; renamed to `.mkl` (mklang) while adoption is still
+  ~nil (hard cut: discovery matches `*.mkl`). The suffix is a discovery
+  convention, not a language contract
+  ([ADR 0027](./docs/adr/0027-adopt-mkl-extension.md), SPEC §9).
 
 ## Integrations & extensions
 
 - **Shipped — web search host tool** ([ADR 0016](./docs/adr/0016-host-web-search-tool.md)
   Accepted) — structured `search` stub default; fake/tavily backends;
-  optional `days`/`topic`/`published_date`; `research_web.mk` + scenario tests;
+  optional `days`/`topic`/`published_date`; `research_web.mkl` + scenario tests;
   host `context.today` convention for time-sensitive machines; `std_research`
   shipped in 0.12.0; `runtime.yaml` `tools:` block shipped (env > config >
   default, doctor reports the deciding source).
@@ -196,7 +199,7 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   backends; honest default `send_reply` (`sent: false`).
 - **Shipped — context rendering Layer 0–1** ([ADR 0017](./docs/adr/0017-context-content-management.md)
   Accepted) — judge CONTEXT marker; produce-prompt value cap; console
-  `history_for_brain`; compress pattern (`research_compress.mk`). **[later]**
+  `history_for_brain`; compress pattern (`research_compress.mkl`). **[later]**
   language faces / `std_compress`.
 - **Shipped — output anti-cutoff** ([ADR 0018](./docs/adr/0018-output-truncation-anti-cutoff.md)
   Accepted) — detect/trace/events; `report`/`halt` on CLI · MCP · console ·
@@ -259,14 +262,19 @@ The 0.13–0.15 cycle shifted from feature growth to **maturity**: quality gates
 untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
 "mature framework" are stability and evidence, not more surface:
 
-- **[next] Path to 1.0** — resolve the open questions in [SPEC §9](./SPEC.md)
-  (close each as decided, or record it as a permanent non-goal via an ADR), a
-  stated **stability & deprecation policy** for the package and the `mklang:`
-  spec version, then drop the `Development Status :: 4 - Beta` classifier. This
-  is the explicit blocker the maturity assessment named.
+- **[shipped] Path to 1.0 — prep** — every open question in [SPEC §9](./SPEC.md)
+  is closed as a permanent non-goal, deferred with rationale, or resolved by
+  measurement ([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md),
+  [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md)), and a stated
+  **stability & deprecation policy** pins the package / spec-version contract
+  ([guide](./docs/guides/stability.md), ADR 0026). Spec stays **0.3**.
+- **[next] Cut 1.0.0** — drop the `Development Status :: 4 - Beta` classifier,
+  bump the package to **1.0.0** (spec stays 0.3), and run the live release gate
+  (DeepSeek + OpenAI agreement 1.0; Anthropic re-runs when credits allow). The
+  last explicit item the maturity assessment named.
 - **[shipped] Showcase refresh** — the demo suite was refocused and pruned to
   the two product surfaces: **`agent`** (console TUI) and **`language`**
-  (`react.mk`); the peripheral recordings (`cli`, `search`, `console`,
+  (`react.mkl`); the peripheral recordings (`cli`, `search`, `console`,
   `orchestrate`, `hitl`, `test`) are gone, the README leads with the two
   surfaces, and `check-drift` also fails on orphan asset files.
 - **[shipped] gate-divergence at scale** — the four-machine suite ran live

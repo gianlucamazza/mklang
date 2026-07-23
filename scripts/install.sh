@@ -124,7 +124,7 @@ mklang is installed. Next steps:
      (needs register-python-argcomplete on PATH — e.g. pacman -S python-argcomplete;
       zsh/fish: see the install guide)
   4. Or try it without a key (scripted, deterministic):
-       mklang test $data_dir/machines/hello.mk \\
+       mklang test $data_dir/machines/hello.mkl \\
          --script $data_dir/machines/hello.test.yaml
 
 Docs: https://gianlucamazza.github.io/mklang/getting-started/

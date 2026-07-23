@@ -1,0 +1,3 @@
+# mklang machine files are YAML — override the Linguist Makefile default.
+# Shed by renaming .mk -> .mkl (ADR 0027); keeps GitHub highlighting correct.
+*.mkl linguist-language=YAML

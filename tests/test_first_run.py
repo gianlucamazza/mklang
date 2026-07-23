@@ -40,15 +40,15 @@ def test_init_scaffolds_project_with_sample(tmp_path, capsys):
     assert cli.main(["init", "--dir", str(target), "--format", "json"]) == 0
     first = json.loads(capsys.readouterr().out)
     names = {item["name"]: item["status"] for item in first["items"]}
-    assert names[str(target / "machines" / "hello.mk")] == "ok"
+    assert names[str(target / "machines" / "hello.mkl")] == "ok"
     assert names[str(target / "machines" / "hello.test.yaml")] == "ok"
-    sample = (target / "machines" / "hello.mk").read_text(encoding="utf-8")
+    sample = (target / "machines" / "hello.mkl").read_text(encoding="utf-8")
 
     assert cli.main(["init", "--dir", str(target), "--format", "json"]) == 0
     second = json.loads(capsys.readouterr().out)
     names = {item["name"]: item["status"] for item in second["items"]}
-    assert names[str(target / "machines" / "hello.mk")] == "exists"
-    assert (target / "machines" / "hello.mk").read_text(encoding="utf-8") == sample
+    assert names[str(target / "machines" / "hello.mkl")] == "exists"
+    assert (target / "machines" / "hello.mkl").read_text(encoding="utf-8") == sample
 
 
 def test_init_user_mode_scaffolds_sample(tmp_path, monkeypatch, capsys):
@@ -61,7 +61,7 @@ def test_init_user_mode_scaffolds_sample(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
     assert cli.main(["init", "--user", "--format", "json"]) == 0
     capsys.readouterr()
-    assert (tmp_path / "data" / "mklang" / "machines" / "hello.mk").is_file()
+    assert (tmp_path / "data" / "mklang" / "machines" / "hello.mkl").is_file()
     assert (tmp_path / "data" / "mklang" / "machines" / "hello.test.yaml").is_file()
     # The schema lands next to runtime.yaml so its yaml-language-server
     # header validates in the user host too.
@@ -72,7 +72,7 @@ def test_init_sample_passes_its_own_scenarios(tmp_path, capsys):
     target = tmp_path / "project"
     assert cli.main(["init", "--dir", str(target)]) == 0
     capsys.readouterr()
-    machine = str(target / "machines" / "hello.mk")
+    machine = str(target / "machines" / "hello.mkl")
     script = str(target / "machines" / "hello.test.yaml")
     assert cli.main(["test", machine, "--script", script, "--format", "json"]) == 0
     payload = json.loads(capsys.readouterr().out)

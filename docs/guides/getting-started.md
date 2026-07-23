@@ -36,7 +36,7 @@ This scaffolds the XDG user host, never overwriting existing files:
 | What                                                | Where                             |
 | --------------------------------------------------- | --------------------------------- |
 | runtime config, its schema, + `.env`                | `~/.config/mklang/`               |
-| your machines, incl. a scaffolded `hello.mk` sample | `~/.local/share/mklang/machines/` |
+| your machines, incl. a scaffolded `hello.mkl` sample | `~/.local/share/mklang/machines/` |
 | console sessions, checkpoints                       | `~/.local/state/mklang/`          |
 
 (Inside a project directory, plain `mklang init` scaffolds the same layout
@@ -83,13 +83,13 @@ the [Console guide](./console.md).
 fully deterministic. The scaffolded sample ships with its own script:
 
 ```bash
-mklang test ~/.local/share/mklang/machines/hello.mk \
+mklang test ~/.local/share/mklang/machines/hello.mkl \
   --script ~/.local/share/mklang/machines/hello.test.yaml
 # PASS accepted-first-try
 # PASS repair-fires-then-accepted
 ```
 
-Open `hello.mk` next to it — it is a readable, commented tour of the language's
+Open `hello.mkl` next to it — it is a readable, commented tour of the language's
 signature move: a generative state whose exit is decided by an LLM-judged prose
 gate, with a bounded repair loop.
 

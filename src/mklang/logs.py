@@ -3,7 +3,7 @@
 Configures the ``mklang.*`` logger hierarchy with a single named stderr
 handler. Two invariants: host logs go to stderr only (never to MCP logging
 notifications — those carry ``mklang.event`` run events), and logging is
-never a ``.mk`` language face. Run semantics stay on trace/events.
+never a ``.mkl`` language face. Run semantics stay on trace/events.
 
 Level resolution: ``--log-level`` flag > ``MKLANG_LOG_LEVEL`` env > WARNING.
 """

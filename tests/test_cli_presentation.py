@@ -8,11 +8,11 @@ from mklang import cli
 
 
 def test_check_json_has_stable_envelope(capsys):
-    rc = cli.main(["check", "examples/triage.mk", "--format", "json"])
+    rc = cli.main(["check", "examples/triage.mkl", "--format", "json"])
     payload = json.loads(capsys.readouterr().out)
     assert rc == 0
     assert payload["command"] == "check" and payload["ok"] is True
-    assert payload["items"][0]["path"] == "examples/triage.mk"
+    assert payload["items"][0]["path"] == "examples/triage.mkl"
 
 
 def test_machines_auto_keeps_json_when_stdout_is_not_a_tty(capsys):

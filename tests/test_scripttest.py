@@ -72,7 +72,7 @@ states:
 
 
 def test_cli_test_passes(tmp_path, capsys):
-    mk = _write(tmp_path, "gate.mk", _MK)
+    mk = _write(tmp_path, "gate.mkl", _MK)
     script = _write(
         tmp_path,
         "gate.test.yaml",
@@ -90,7 +90,7 @@ scenarios:
 
 
 def test_cli_test_wrong_expect_fails_with_readable_diff(tmp_path, capsys):
-    mk = _write(tmp_path, "gate.mk", _MK)
+    mk = _write(tmp_path, "gate.mkl", _MK)
     script = _write(
         tmp_path,
         "gate.test.yaml",
@@ -110,6 +110,6 @@ scenarios:
 
 
 def test_cli_test_missing_scenarios_key(tmp_path):
-    mk = _write(tmp_path, "gate.mk", _MK)
+    mk = _write(tmp_path, "gate.mkl", _MK)
     script = _write(tmp_path, "empty.test.yaml", "notscenarios: []\n")
     assert main(["test", mk, "--script", script]) == 2

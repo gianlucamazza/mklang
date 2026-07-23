@@ -55,7 +55,7 @@ explicit grant in headless surfaces.
    `_workspace_path` pattern), and the **resolved** target is re-checked
    against the dotfile policy — a visible symlink cannot smuggle in `.env` or
    a target outside the root, and `list` omits such children. Writes: suffix
-   allowlist of data formats (**no `.mk`** — that stays with the console's
+   allowlist of data formats (**no `.mkl`** — that stays with the console's
    `write_machine`), no delete tool, overwrite only with `overwrite: true`,
    byte caps on read and write, atomic unique-tempfile+`os.replace` writes at
    mode 0600 (the checkpoint precedent),
@@ -86,7 +86,7 @@ this via `configure_fs`) and per-path allow/deny rules (the `Read(...)` /
 ## Consequences
 
 - A machine can read its project's data and write reports with zero setup:
-  `cd project && mklang run report.mk -- --allow-write`. Confinement, not
+  `cd project && mklang run report.mkl -- --allow-write`. Confinement, not
   ceremony, is the safety boundary — write gating matches coding-agent
   practice, read confinement is deliberately stricter (see the comparison
   above).

@@ -16,7 +16,7 @@ from mklang.scripttest import match_expectation, run_scenario
 
 CONFIG = "config/runtime.example.yaml"
 STDLIB_DIR = Path(__file__).resolve().parents[1] / "src" / "mklang" / "data" / "stdlib"
-STDLIB_FILES = sorted(STDLIB_DIR.glob("*.mk"))
+STDLIB_FILES = sorted(STDLIB_DIR.glob("*.mkl"))
 EXPECTED = {
     "std_cascade",
     "std_compress",
@@ -99,7 +99,7 @@ def test_user_machine_shadows_stdlib_with_warning(tmp_path):
         "states:\n  s:\n    structure: s\n    prompt: 'my own cot'\n    output: answer\n"
         "    gates: [{when: otherwise, then: ok, to: END}]\n"
     )
-    f = tmp_path / "std_cot.mk"
+    f = tmp_path / "std_cot.mkl"
     f.write_text(shadow, encoding="utf-8")
     p = host.prepare_path(CONFIG, None, str(f), build_llm=build_llm)
     assert p.registry["std_cot"] is p.machine  # the user machine wins
@@ -147,7 +147,7 @@ def test_cli_machines_lists_stdlib(capsys, tmp_path, monkeypatch):
     assert names["std_cot"]["source"] == "stdlib"
     assert names["std_refine"]["context"]["criteria"] == "clear, correct, and complete"
 
-    (tmp_path / "mine.mk").write_text(
+    (tmp_path / "mine.mkl").write_text(
         "machine: mine\nentry: s\nbudget: 3\nstates:\n  s:\n    structure: s\n"
         "    prompt: p\n    output: o\n    gates: [{when: otherwise, then: ok, to: END}]\n",
         encoding="utf-8",
