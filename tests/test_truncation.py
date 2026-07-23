@@ -128,7 +128,17 @@ def test_openai_compat_length_finish_reason():
 
     llm = OpenAICompatLLM.__new__(OpenAICompatLLM)
     llm.max_retries = 0
-    llm.client = type("C", (), {"chat": type("Ch", (), {"completions": type("Co", (), {"create": staticmethod(lambda **k: _Resp())})()})()})()
+    llm.client = type(
+        "C",
+        (),
+        {
+            "chat": type(
+                "Ch",
+                (),
+                {"completions": type("Co", (), {"create": staticmethod(lambda **k: _Resp())})()},
+            )()
+        },
+    )()
     p = llm.produce("m", "sys", "user")
     assert p.truncated is True
     assert p.finish_reason == "length"

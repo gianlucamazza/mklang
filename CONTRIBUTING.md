@@ -9,9 +9,10 @@ operating rules in [`docs/guides/best-practices.md`](./docs/guides/best-practice
 ## Dev setup
 
 ```bash
-uv run --extra dev --extra mcp pytest -q --cov=mklang  # unit + conformance (no network — MockLLM); coverage gate ≥88%
+uv run --extra dev --extra mcp pytest -q --cov=mklang  # unit + conformance (no network — MockLLM); coverage gate ≥90% (needs --extra mcp: mcp/server.py counts toward the total)
 MKLANG_LIVE=1 uv run --extra dev pytest -q tests/test_live.py  # opt-in live smoke (active provider; MKLANG_LIVE_PROVIDER=… to override)
-uv run --extra dev ruff check src tests
+uv run --extra dev ruff check src tests scripts
+uv run --extra dev ruff format --check src tests scripts  # formatting (CI-gated); drop --check to fix
 uv run --all-extras mypy              # static types (zero suppressions)
 uv run mklang check examples/*.mkl     # schema + semantic validation
 uv run mklang lint --strict examples/*.mkl   # + static analysis
@@ -66,8 +67,11 @@ A change to the **language** must land as a coherent set — in this order:
    where gate paths matter, a sibling `*.test.yaml` for `mklang test` is welcome.
 6. **Tests** — deterministic coverage with `MockLLM` in `tests/`; keep `ruff`
    **and `mypy`** clean (zero suppressions) and coverage above the
-   `fail_under = 88` gate.
+   `fail_under = 90` gate.
 7. **Docs** — `README.md`, `docs/guides/patterns.md`, `CHANGELOG.md`, and `ROADMAP.md`.
+
+Keep `ruff format` clean too — the format check is CI-gated (`ruff format --check`),
+not only `ruff check`.
 
 A change to the **interpreter only** (no language change) skips steps 1–2 and 4
 unless the host tooling surface needs a new conformance-facing scripted binding.
@@ -99,6 +103,19 @@ live-provider gate;
 only its previously tested artifacts reach PyPI through the protected `pypi`
 environment and Trusted Publishing. Do not upload a locally rebuilt artifact for
 an existing tag.
+
+**Tag ↔ CHANGELOG invariant.** Every `CHANGELOG.md` entry from **0.5.3** upward
+must carry a matching `v<version>` git tag; entries at or below **0.5.2** are
+pre-distribution history and are exempt (the first PyPI release was 0.5.4). This
+is enforced offline by `tests/test_release.py`
+(`test_changelog_entries_from_distribution_cutoff_are_tagged`) — so a CHANGELOG
+entry that was never released fails CI. Either tag it or drop it.
+
+**Publish cadence.** A git tag is enough for a personal checkpoint; a **PyPI
+publish is not free** — it is a durable, irreversible artifact others may depend
+on. Publish to PyPI on a **user-visible change** (or a fixed interval, whichever
+is slower), not on every internal checkpoint. Batch churn between real releases
+behind local tags.
 
 ## Non-goals (don't propose these)
 

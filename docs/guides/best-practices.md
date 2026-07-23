@@ -266,6 +266,19 @@ Runs, the console, and `lint --llm` sit behind an upfront provider-key gate:
 they fail fast naming the exact `.env` variable to set (`local` is exempt), so
 keyless environments stick to `check` / `lint` / `test`.
 
+**Static checks are not behavioural correctness.** `check` (schema + semantics)
+and `lint` (static smells) prove a machine is _well-formed_ — not that it _does
+the right thing_. A document that passes both can still route a gate on the wrong
+distinction, size a `budget` too tight for its own shortest path, or wire a
+`tool:` state to the wrong input key. Only a **scenario run** exercises behaviour
+(`mklang test … --script …`, no keys). This gap matters most for a machine an
+**agent authored** — the console / MCP self-authoring loop (ADR 0015). There the
+loop's `check` verdict tells the agent the document is _valid_; it never tells it
+the document is _correct_. Freeze a hand-written `*.test.yaml` acceptance scenario
+for the behaviours the machine must exhibit and run it before trusting an authored
+machine — treat "check-clean" as a precondition for testing, not a substitute for
+it.
+
 ---
 
 ## 11. Security (SPEC §11) — operational minimum
@@ -280,6 +293,12 @@ keyless environments stick to `check` / `lint` / `test`.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
 - Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
 - Console: tool **consent** once per session; workspace confinement for authored `.mkl` files.
+- MCP: **read-only to disk by design.** The server can author, validate (`check`)
+  and run inline machines, but exposes **no persist/write tool** — headless hosts
+  gain no general filesystem-write authority (ADR 0011/0013; the only disk write is
+  an explicit per-call `checkpoint_path`). The console's guard model (workspace confinement,
+  human `confirm` on overwrite) assumes an interactive human and does **not**
+  transfer to a headless host — so it isn't granted there.
 - Do not confuse **run trace / live events / ops logging** (§12) or turn arbitrary disk into a language feature (§13).
 
 ---
@@ -425,7 +444,7 @@ anti-pattern below structural, not just conventional.
 | Surface     | Best practice                                                                                                                                                                                                                           |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **CLI**     | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled   |
-| **MCP**     | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL                                                                                                          |
+| **MCP**     | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL; **read-only to disk** — author/validate/run inline, no persist tool (§11, ADR 0011/0013)                    |
 | **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mkl` only** — no generic FS/bash |
 
 ### Console cancellation and shutdown (documentation SSOT)
@@ -465,6 +484,9 @@ anti-pattern below structural, not just conventional.
     default levels (§12).
 15. Generic filesystem/bash in core, or treating console workspace as full disk
     access (§13).
+16. Trusting a machine as _correct_ because `check` / `lint` passed — that proves
+    well-formedness, not behaviour. Run a scenario (`mklang test`), especially for
+    agent-authored machines (§10).
 
 ---
 

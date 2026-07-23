@@ -16,6 +16,11 @@ In scope:
 
 - The reference interpreter (`src/mklang/`): engine, adapters, CLI, MCP
   server, console, host tools (fs workspace confinement, write grants).
+  - The MCP server is **read-only to disk by design**: it can author, validate
+    (`check`) and run inline machines, but exposes no persist/write tool —
+    headless hosts gain no general filesystem-write authority ([ADR 0011](./docs/adr/0011-mcp-server-surface.md),
+    [ADR 0013](./docs/adr/0013-mcp-surface-completion.md); persistence is an
+    explicit per-call checkpoint opt-in only).
 - The delimiting guarantees of SPEC §6 (a way to make untrusted content
   escape its `<data-NONCE>` fence, forge a closing tag, or launder taint).
 - Checkpoint handling (0600 files, resume taint fail-safe).
