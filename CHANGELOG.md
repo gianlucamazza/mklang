@@ -8,9 +8,13 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `0.13.0`).
+  `pyproject.toml` (currently `0.14.0`).
 
-## [Unreleased]
+## [0.14.0] — 2026-07-23
+
+Untrusted-context delimiting (SPEC §6, ADR 0025) and the CI quality gates
+(mypy zero-suppression, coverage, multi-platform matrix) — language stays
+**0.3**.
 
 ### Added
 
@@ -46,6 +50,12 @@ All notable changes to mklang are documented here. The format follows
 gate-missing-to` / `repair-missing-budget` labels when a hand-built
   `Machine` bypasses schema validation (schema-validated machines are
   unaffected — the schema already requires `to` and a repair budget).
+
+### Fixed
+
+- The atomic replace in the fs write path retries transient Windows sharing
+  violations (concurrent `os.replace` onto the same target) — caught by the
+  new Windows CI leg; POSIX behavior unchanged.
 
 ## [0.13.0] — 2026-07-23
 
