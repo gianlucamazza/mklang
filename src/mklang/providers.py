@@ -14,21 +14,22 @@ from collections.abc import Callable
 from importlib.metadata import entry_points
 
 from .config import ProviderConfig
+from .llm.base import LLM
 
 ENTRY_POINT_GROUP = "mklang.providers"
 
 _log = logging.getLogger("mklang.providers")
 
-ProviderFactory = Callable[[ProviderConfig], object]
+ProviderFactory = Callable[[ProviderConfig], LLM]
 
 
-def anthropic(prov: ProviderConfig):
+def anthropic(prov: ProviderConfig) -> LLM:
     from .llm.anthropic import AnthropicLLM
 
     return AnthropicLLM(prov.api_key, prov.base_url)
 
 
-def openai_compat(prov: ProviderConfig):
+def openai_compat(prov: ProviderConfig) -> LLM:
     from .llm.openai_compat import OpenAICompatLLM
 
     return OpenAICompatLLM(prov.api_key, prov.base_url)
@@ -46,7 +47,7 @@ def load_entry_point_providers(group: str = ENTRY_POINT_GROUP) -> dict[str, Prov
     reg: dict[str, ProviderFactory] = {}
     try:
         eps = entry_points()
-        selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
+        selected = eps.select(group=group)
     except Exception as e:
         _log.warning("could not read entry points (%s): %s", group, e)
         return reg
@@ -72,6 +73,6 @@ def load_provider_registry(
     return reg
 
 
-def build_llm(prov: ProviderConfig):
+def build_llm(prov: ProviderConfig) -> LLM:
     """Resolve the provider name to a factory; default to the OpenAI-compatible adapter."""
     return load_provider_registry().get(prov.name, openai_compat)(prov)

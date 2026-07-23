@@ -115,5 +115,5 @@ def tree_preview(preview: str, limit: int = PREVIEW_MAX) -> Text:
     return Text(text, style="dim")
 
 
-def tree_branch(index) -> Text:
+def tree_branch(index: object) -> Text:
     return Text(f"· branch {index}")

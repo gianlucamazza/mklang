@@ -55,7 +55,15 @@ class ScriptedLLM:
         self._tin, self._tout = spec.get("tokens", [0, 0])
         self._lock = threading.Lock()
 
-    def produce(self, model, system, user, reason=False, temperature=0.4, params=None) -> Produced:
+    def produce(
+        self,
+        model: str,
+        system: str,
+        user: str,
+        reason: bool = False,
+        temperature: float = 0.4,
+        params: dict | None = None,
+    ) -> Produced:
         with self._lock:
             if self._map is not None:
                 for key, text in self._map.items():
@@ -72,7 +80,14 @@ class ScriptedLLM:
             output_tokens=self._tout,
         )
 
-    def judge(self, model, conditions, output, context, reasoning=None) -> int:
+    def judge(
+        self,
+        model: str,
+        conditions: list[str],
+        output: str,
+        context: dict,
+        reasoning: str | None = None,
+    ) -> int:
         if self._judge == "unparseable":
             raise JudgeUnparseable("scripted")
         with self._lock:
@@ -100,14 +115,14 @@ class _ScriptedSeq:
 class _ScriptedHook(_ScriptedSeq):
     """A gate hook `(ctx, output) -> bool` driven by a scripted boolean sequence."""
 
-    def __call__(self, _ctx, _output) -> bool:
+    def __call__(self, _ctx: dict, _output: object) -> bool:
         return bool(self._next())
 
 
 class _ScriptedTool:
     """A tool `(dict) -> str`: a sequential list, or a {input-substring: output} map."""
 
-    def __init__(self, name: str, spec):
+    def __init__(self, name: str, spec: dict | list):
         self.name = name
         self._map = dict(spec) if isinstance(spec, dict) else None
         self._seq = None if self._map is not None else _ScriptedSeq(name, list(spec))
@@ -119,6 +134,8 @@ class _ScriptedTool:
                 if key in blob:
                     return str(out)
             raise AssertionError(f"tool {self.name!r}: no scripted output for input {inp!r}")
+        # Exactly one of _map/_seq is set (see __init__).
+        assert self._seq is not None
         return str(self._seq._next())
 
 

@@ -10,11 +10,18 @@ user text and LLM output previews never ride Rich markup interpolation.
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
 from rich.syntax import Syntax
 from rich.table import Table
 from textual.containers import Vertical
 from textual.widgets import RichLog, Static, TabbedContent, TabPane, Tree
+
+if TYPE_CHECKING:
+    from textual.widgets.tree import TreeNode
+
+    from ..engine import RunResult
+    from .session import Session as ConsoleSession
 
 from . import render as log_render
 
@@ -31,6 +38,12 @@ class ActivityTree(Tree):
         self._turn_node = None
         self._reset_maps()
 
+    _turn_node: "TreeNode | None"
+    _brain_open: "TreeNode | None"
+    _run_nodes: dict[tuple, "TreeNode"]
+    _state_nodes: dict[tuple, "TreeNode"]
+    _state_kinds: dict[tuple, str]
+
     def _reset_maps(self) -> None:
         self._brain_open = None  # the brain state currently in flight
         self._run_nodes = {}  # (tag, depth) -> run node
@@ -43,7 +56,7 @@ class ActivityTree(Tree):
         self._reset_maps()
         self._turn_node = self.root.add(log_render.tree_turn(title), expand=True)
 
-    def _parent_for(self, e: dict):
+    def _parent_for(self, e: dict) -> "TreeNode | None":
         tag = e.get("run")
         depth = e.get("depth", 0)
         if tag is None:  # brain event
@@ -55,7 +68,7 @@ class ActivityTree(Tree):
         )
 
     @staticmethod
-    def _enable_expand(node) -> None:
+    def _enable_expand(node: "TreeNode | None") -> None:
         """Textual defaults allow_expand=True even for empty leaves — only opt in
         when a node actually gains children (nested run, preview, branch)."""
         if node is not None and not node.allow_expand:
@@ -67,6 +80,7 @@ class ActivityTree(Tree):
         tag = e.get("run")
         depth = e.get("depth", 0)
         kind = e["type"]
+        node: TreeNode | None
         if kind == "run-start":
             parent = self._parent_for(e)
             if parent is None:
@@ -80,6 +94,8 @@ class ActivityTree(Tree):
             self._run_nodes[(tag, depth)] = node
         elif kind == "state-start":
             parent = self._run_nodes.get((tag, depth)) or self._turn_node
+            if parent is None:  # cannot happen: the top of feed sets the turn node
+                return
             # Leaves until something nests under them (commissioned run / preview).
             node = parent.add(
                 log_render.tree_state_start(
@@ -150,7 +166,7 @@ class Inspector(Vertical):
             with TabPane("Session", id="tab-session"):
                 yield Static("", id="inspector-session")
 
-    def show_result(self, res) -> None:
+    def show_result(self, res: RunResult) -> None:
         ctx_log = self.query_one("#inspector-context", RichLog)
         ctx_log.clear()
         payload = json.dumps(res.context, ensure_ascii=False, indent=2, default=str)
@@ -171,7 +187,9 @@ class Inspector(Vertical):
             )
         trace_log.write(table)
 
-    def show_session(self, session, spent_in: int, spent_out: int, consented) -> None:
+    def show_session(
+        self, session: "ConsoleSession", spent_in: int, spent_out: int, consented: set
+    ) -> None:
         self.query_one("#inspector-session", Static).update(
             f"session: {session.id}\n"
             f"dir: {session.dir}\n"

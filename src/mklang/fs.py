@@ -14,9 +14,12 @@ import logging
 import os
 import tempfile
 from pathlib import Path, PurePosixPath
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .tool_obs import tool_obs
+
+if TYPE_CHECKING:
+    from .toolconfig import ToolsConfig
 
 _log = logging.getLogger("mklang.fs")
 
@@ -163,7 +166,7 @@ class LocalFSBackend:
         norm, target = self._resolve(rel, allow_empty=True)
         if not target.is_dir():
             raise FSError(f"no such directory: {rel!r}")
-        entries = []
+        entries: list[dict[str, str | int]] = []
         for child in sorted(target.iterdir(), key=lambda p: p.name):
             if child.name.startswith(".") or not self._confined(child.resolve()):
                 continue
@@ -237,7 +240,7 @@ def allow_writes(enabled: bool | None) -> None:
     _writes_allowed = enabled
 
 
-def writes_allowed_with_source(tc=None) -> tuple[bool, str]:
+def writes_allowed_with_source(tc: "ToolsConfig | None" = None) -> tuple[bool, str]:
     """Write grant + source: runtime grant > set env > config > off.
 
     A *set, non-empty* ``MKLANG_FS_WRITE`` decides either way, so
@@ -260,7 +263,7 @@ def writes_allowed() -> bool:
     return writes_allowed_with_source()[0]
 
 
-def resolve_workspace_with_source(tc=None) -> tuple[Path, str]:
+def resolve_workspace_with_source(tc: "ToolsConfig | None" = None) -> tuple[Path, str]:
     """Workspace root + source: ``MKLANG_FS_ROOT`` > ``tools.fs.workspace`` > cwd."""
     from .toolconfig import current_tools
 
@@ -277,7 +280,7 @@ def resolve_workspace() -> Path:
     return resolve_workspace_with_source()[0]
 
 
-def resolve_backend_name(tc=None) -> tuple[str, str]:
+def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
     """Backend name + source: env > ``tools.fs.backend`` config > local (ADR 0024).
 
     Unknown names degrade to ``stub`` — an unrecognized value must never

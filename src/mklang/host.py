@@ -13,8 +13,11 @@ from pathlib import Path
 import jsonschema
 import yaml
 
+from collections.abc import Callable
+
 from .config import ProviderConfig, load_provider
 from .engine import RunResult
+from .llm.base import LLM
 from .loader import check_tiers, load_machine, semantic_check, validate_dict
 from .model import Machine, parse_machine
 from .registry import base_registry, load_registry
@@ -36,7 +39,7 @@ class PrepareError(Exception):
 @dataclass
 class Prepared:
     prov: ProviderConfig
-    llm: object
+    llm: LLM
     registry: dict[str, Machine]
     machine: Machine
     tools: dict
@@ -44,7 +47,12 @@ class Prepared:
     warnings: list[str]
 
 
-def _default_build_llm(prov):
+# A host may swap the LLM factory (tests, embedders); the default builds the
+# configured provider adapter.
+BuildLLM = Callable[["ProviderConfig"], "LLM"]
+
+
+def _default_build_llm(prov: ProviderConfig) -> LLM:
     from .providers import build_llm
 
     return build_llm(prov)
@@ -66,8 +74,8 @@ def missing_key_message(prov: ProviderConfig) -> str | None:
 
 
 def _provider(
-    config: str | None, provider: str | None, build_llm
-) -> tuple[ProviderConfig, object, list[str]]:
+    config: str | None, provider: str | None, build_llm: BuildLLM | None
+) -> tuple[ProviderConfig, LLM, list[str]]:
     try:
         prov = load_provider(config, provider)
     except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
@@ -79,7 +87,13 @@ def _provider(
     return prov, llm, []
 
 
-def _check(prov, machine, registry, strict, warnings: list[str]) -> tuple[dict, dict]:
+def _check(
+    prov: ProviderConfig,
+    machine: Machine,
+    registry: dict[str, Machine],
+    strict: bool,
+    warnings: list[str],
+) -> tuple[dict, dict]:
     """Semantic/tier checks + tool/hook registries. Appends to `warnings`, raises on errors."""
     errors, more = semantic_check(machine, registry, strict=strict)
     errors.extend(check_tiers(machine, prov.tiers))
@@ -136,6 +150,8 @@ def check_machine(
             machine = _parse_source(source, [])
             registry = {**base, machine.name: machine}
         else:
+            # Callers pass exactly one of source/path.
+            assert path is not None
             registry = {**base, **load_registry(Path(path).parent, validate=False)}
             machine = load_machine(path)
             registry[machine.name] = machine
@@ -158,7 +174,7 @@ def prepare_path(
     machine_path: str,
     *,
     strict: bool = False,
-    build_llm=None,
+    build_llm: BuildLLM | None = None,
 ) -> Prepared:
     """Load a machine from disk with sibling-`.mk` registry discovery, layered on
     the bundled stdlib. `machine_path` may also be a bare registry name (e.g.
@@ -197,7 +213,7 @@ def prepare_source(
     source: str,
     *,
     strict: bool = False,
-    build_llm=None,
+    build_llm: BuildLLM | None = None,
 ) -> Prepared:
     """Load a machine from an inline `.mk` source string; the registry holds it plus
     the bundled stdlib (`call: std_*` works), so a `call:` to any other unsupplied
@@ -327,7 +343,7 @@ def describe_machine(m: Machine, source: str | None = None) -> dict:
     return out
 
 
-def set_path(ctx: dict, dotted_key: str, value) -> None:
+def set_path(ctx: dict, dotted_key: str, value: object) -> None:
     """Assign `value` at a dotted path in `ctx`, creating intermediate dicts."""
     cur = ctx
     parts = dotted_key.split(".")

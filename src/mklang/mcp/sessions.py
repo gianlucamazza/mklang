@@ -12,6 +12,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 from ..config import ProviderConfig
+from ..llm.base import LLM
 from ..model import Machine
 
 MAX_ENTRIES = 64
@@ -21,7 +22,7 @@ MAX_ENTRIES = 64
 class Session:
     machine: Machine
     registry: dict[str, Machine]
-    llm: object
+    llm: LLM
     prov: ProviderConfig
     tools: dict
     hooks: dict

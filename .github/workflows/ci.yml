@@ -5,46 +5,15 @@ on:
   pull_request:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.3.2
-      - name: Lint
-        run: uv run --extra dev ruff check src tests scripts
-      - name: Unit tests (MockLLM — no network, incl. MCP surface)
-        run: uv run --extra dev --extra mcp pytest -q
-      - name: Reject stale or modified demo assets
-        run: uv run python scripts/demo_assets.py check-drift
-      - name: Validate example machines against the schema
-        run: >
-          uv run --with check-jsonschema
-          check-jsonschema --default-filetype yaml
-          --schemafile schema/mklang.schema.json examples/*.mk
-      - name: Validate the runtime config against its schema
-        run: >
-          uv run --with check-jsonschema
-          check-jsonschema --default-filetype yaml
-          --schemafile config/runtime.schema.json config/runtime.example.yaml
-      - name: Semantic check + static analysis on examples, stdlib, and init sample
-        run: |
-          uv run mklang check examples/*.mk src/mklang/data/stdlib/*.mk src/mklang/data/init/*.mk
-          uv run mklang lint --strict examples/*.mk src/mklang/data/stdlib/*.mk src/mklang/data/init/*.mk
-      - name: Deterministic scenario tests (scripted LLM — no API keys)
-        run: |
-          uv run mklang test examples/triage.mk --script examples/triage.test.yaml
-          uv run mklang test src/mklang/data/init/hello.mk --script src/mklang/data/init/hello.test.yaml
-      - name: Shellcheck the install script
-        run: shellcheck scripts/install.sh
-      - name: Build sdist + wheel
-        run: uv build
+  quality:
+    uses: ./.github/workflows/quality.yml
 
   live-smoke:
     # Low-budget smoke against real providers; each test skips itself when its
     # key is absent, so forks without secrets stay green.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: test
+    needs: quality
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

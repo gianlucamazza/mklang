@@ -23,13 +23,28 @@ class MockLLM:
         self.calls: list[dict] = []  # records produce calls (for assertions)
         self.judge_calls: list[dict] = []  # records judge calls (model per gate eval)
 
-    def produce(self, model, system, user, reason=False, temperature=0.4, params=None) -> Produced:
+    def produce(
+        self,
+        model: str,
+        system: str,
+        user: str,
+        reason: bool = False,
+        temperature: float = 0.4,
+        params: dict | None = None,
+    ) -> Produced:
         self.calls.append({"model": model, "reason": reason, "params": params or {}})
         if self._produce:
             return self._produce(model, system, user, reason)
         return Produced(text="ok", reasoning=("thought" if reason else None))
 
-    def judge(self, model, conditions, output, context, reasoning=None) -> int:
+    def judge(
+        self,
+        model: str,
+        conditions: list[str],
+        output: str,
+        context: dict,
+        reasoning: str | None = None,
+    ) -> int:
         self.judge_calls.append({"model": model, "conditions": list(conditions)})
         if self._judge:
             # Pass reasoning only when the callback accepts it (existing tests use *a / 4 args).
@@ -43,5 +58,12 @@ class MockLLM:
 class UnparseableJudgeLLM(MockLLM):
     """Judge always raises JudgeUnparseable (for engine fallback tests)."""
 
-    def judge(self, model, conditions, output, context, reasoning=None) -> int:
+    def judge(
+        self,
+        model: str,
+        conditions: list[str],
+        output: str,
+        context: dict,
+        reasoning: str | None = None,
+    ) -> int:
         raise JudgeUnparseable("not a choice")

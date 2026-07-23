@@ -15,8 +15,11 @@ from uuid import uuid4
 
 from . import __version__, host
 from .checkpoint import load_checkpoint, save_checkpoint, verify_hash
-from .engine import run
+from .config import ProviderConfig
+from .engine import RunResult, run
+from .llm.base import LLM
 from .loader import load_machine, semantic_check
+from .model import Machine
 from .logs import LEVELS, setup_process_logging
 from .registry import base_registry, load_registry
 from .presentation import (
@@ -39,7 +42,7 @@ def _build_llm(prov):
     return build_llm(prov)
 
 
-def _coerce(value: str):
+def _coerce(value: str) -> object:
     """JSON-parse a --set value (so lists/objects/numbers work); fall back to str."""
     try:
         return json.loads(value)
@@ -58,7 +61,9 @@ def _apply_sets(ctx: dict, sets: list[str]) -> dict:
     return ctx
 
 
-def _prepare(args, machine_path: str):
+def _prepare(
+    args: argparse.Namespace, machine_path: str
+) -> tuple[ProviderConfig, LLM, dict, Machine, dict, dict] | int:
     """Shared run/resume setup. Returns (prov, llm, registry, machine, tools, hooks) or exit code."""
     try:
         p = host.prepare_path(
@@ -97,11 +102,21 @@ def _prepare(args, machine_path: str):
 
 
 def _emit(
-    res, checkpoint_path, machine, machine_path, cost_budget, args, provider, hitl=False
+    res: RunResult,
+    checkpoint_path: str | Path | None,
+    machine: Machine,
+    machine_path: str,
+    cost_budget: int | None,
+    args: argparse.Namespace,
+    provider: str,
+    hitl: bool = False,
 ) -> int:
     """Print the result JSON; write a checkpoint on suspension. Exit: 0 done, 3 suspended, 1 halt."""
     out = host.build_output(res)
     if res.status == "suspended":
+        # A suspended run always carries reason + frames, and the callers only
+        # enable suspension when a checkpoint path is set.
+        assert checkpoint_path is not None and res.error is not None and res.frames is not None
         save_checkpoint(
             checkpoint_path, machine.name, machine_path, res.error, res.frames, cost_budget, hitl
         )
@@ -130,7 +145,7 @@ def _default_checkpoint(machine_path: str) -> Path:
     return directory / f"{Path(machine_path).stem}-{stamp}-{uuid4().hex[:6]}.json"
 
 
-def _bind_fs(args) -> str | None:
+def _bind_fs(args: argparse.Namespace) -> str | None:
     """Apply --workspace / --allow-write to the fs tools; error message on bad root."""
     from .fs import LocalFSBackend, allow_writes, configure_fs
 
@@ -144,7 +159,7 @@ def _bind_fs(args) -> str | None:
     return None
 
 
-def cmd_run(args) -> int:
+def cmd_run(args: argparse.Namespace) -> int:
     fs_err = _bind_fs(args)
     if fs_err:
         return _input_error(args, fs_err)
@@ -192,7 +207,7 @@ def cmd_run(args) -> int:
     )
 
 
-def cmd_resume(args) -> int:
+def cmd_resume(args: argparse.Namespace) -> int:
     if args.max_tokens is not None and args.max_tokens <= 0:
         return _input_error(args, "--max-tokens must be a positive integer")
     try:
@@ -257,7 +272,7 @@ def cmd_resume(args) -> int:
     return _emit(res, out_path, machine, machine_path, cost_budget, args, prov.name, hitl=hitl)
 
 
-def _input_error(args, message: str, *, hint: str = "") -> int:
+def _input_error(args: argparse.Namespace, message: str, *, hint: str = "") -> int:
     result = CommandResult(
         command=args.cmd,
         ok=False,
@@ -268,7 +283,7 @@ def _input_error(args, message: str, *, hint: str = "") -> int:
     return 2
 
 
-def cmd_lint(args) -> int:
+def cmd_lint(args: argparse.Namespace) -> int:
     from .lint import lint_machine
 
     llm = prov = None
@@ -312,7 +327,7 @@ def cmd_lint(args) -> int:
         item["warnings"].extend(warnings)
         item["errors"].extend(errors)
         item["findings"].extend(findings)
-        if llm is not None and not errors:
+        if llm is not None and prov is not None and not errors:
             from .llmlint import llm_lint_machine
 
             for f in llm_lint_machine(
@@ -343,7 +358,7 @@ def cmd_lint(args) -> int:
     return 1 if (args.strict and findings_total) else 0
 
 
-def cmd_test(args) -> int:
+def cmd_test(args: argparse.Namespace) -> int:
     """Run scenario tests against a machine with a scripted LLM (no API keys)."""
     import yaml
 
@@ -400,17 +415,17 @@ def cmd_test(args) -> int:
             {"scenario": name, "status": "fail", "mismatches": [str(m) for m in mismatches]}
         )
     passed = sum(i["status"] == "pass" for i in items)
-    result = CommandResult(
+    cmd_result = CommandResult(
         command="test",
         ok=all_pass,
         items=items,
         summary={"passed": passed, "failed": len(items) - passed},
     )
-    emit_result(result, fmt=output_format(args.format), color=args.color)
+    emit_result(cmd_result, fmt=output_format(args.format), color=args.color)
     return 0 if all_pass else 1
 
 
-def cmd_machines(args) -> int:
+def cmd_machines(args: argparse.Namespace) -> int:
     """List commissionable machines as JSON: bundled stdlib, plugins, and the
     .mk files of a project directory (which shadow same-named bundled ones)."""
     from .registry import registry_with_sources
@@ -426,7 +441,7 @@ def cmd_machines(args) -> int:
     return 0
 
 
-def cmd_init(args) -> int:
+def cmd_init(args: argparse.Namespace) -> int:
     """Scaffold a project or user host without overwriting existing files."""
     from .paths import (
         bundled_config,
@@ -491,7 +506,7 @@ def _resolve_workspace(workspace: str | None) -> str:
     return str(host_paths().user_machines)
 
 
-def cmd_console(args) -> int:
+def cmd_console(args: argparse.Namespace) -> int:
     """Launch the agent-first console TUI (ADR 0015; needs the [console] extra)."""
     try:
         from .console.app import main as console_main
@@ -518,7 +533,7 @@ def cmd_console(args) -> int:
     )
 
 
-def cmd_doctor(args) -> int:
+def cmd_doctor(args: argparse.Namespace) -> int:
     """Diagnose the resolved setup: which layer wins for config, env, keys, machines."""
     import jsonschema
     import yaml
@@ -664,7 +679,7 @@ def cmd_doctor(args) -> int:
     return 0 if ok else 1
 
 
-def cmd_check(args) -> int:
+def cmd_check(args: argparse.Namespace) -> int:
     ok = True
     items: list[dict] = []
     for path in args.machines:

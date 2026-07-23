@@ -122,7 +122,7 @@ class OpenAICompatLLM:
 _parse_choice = parse_choice
 
 
-def _usage(response) -> tuple[int, int]:
+def _usage(response: object) -> tuple[int, int]:
     u = getattr(response, "usage", None)
     if not u:
         return 0, 0

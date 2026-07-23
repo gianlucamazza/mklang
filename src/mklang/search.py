@@ -12,7 +12,7 @@ import os
 import urllib.error
 import urllib.request
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from .tool_obs import tool_obs
 
@@ -41,7 +41,7 @@ def _obs(
     error: str | None = None,
     *,
     stub: bool,
-    **extra,
+    **extra: object,
 ) -> str:
     return tool_obs(
         "search",
@@ -109,7 +109,7 @@ class TavilySearchBackend:
         *,
         endpoint: str = "https://api.tavily.com/search",
         timeout: float = 15.0,
-        opener=None,
+        opener: Callable[..., Any] | None = None,
     ):
         self.api_key = api_key
         self.endpoint = endpoint
@@ -237,6 +237,9 @@ def search(inp: dict) -> str:
 
     is_fake = isinstance(backend, FakeSearchBackend)
     try:
+        # Widened to Any: third-party backends may violate the protocol, and
+        # the isinstance guards below are the boundary that catches it.
+        results: Any
         try:
             results = backend.search(query, max_results=max_results, days=days, topic=topic)
         except TypeError:

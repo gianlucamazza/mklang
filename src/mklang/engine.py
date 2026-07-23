@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 
 from .checkpoint import decode_repair, make_frame
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render, resolve
+from .llm.base import LLM
 from .model import Gate, Machine, State
 
 MAX_CALL_DEPTH = 8
@@ -64,7 +66,7 @@ def _system(state: State) -> str:
 class _Ctx:
     """Shared execution dependencies threaded through the run."""
 
-    llm: object
+    llm: LLM
     tiers: dict
     # Global judge-model override (config `judge:`). None → judging follows each
     # state's tier (SPEC §2.1). See `_judge_model_for`.
@@ -83,7 +85,7 @@ class _Ctx:
     # Optional live-observability callback (ADR 0015). Events mirror the trace;
     # terminal outcomes stay on RunResult. Must be thread-safe (fan-out branches
     # emit from worker threads) and is isolated: its exceptions never reach the run.
-    on_event: object = None
+    on_event: Callable[[dict], None] | None = None
     # Output anti-cutoff policy (ADR 0018): "report" annotates the trace;
     # "halt" aborts with state-error: output-truncated. Default report preserves
     # existing machine behavior while making cutoff observable.
@@ -93,10 +95,10 @@ class _Ctx:
     prompt_value_chars: int | None = None
     # Cooperative cancellation, checked between states. The active provider
     # call is never interrupted mid-response.
-    cancel_requested: object = None
+    cancel_requested: Callable[[], object] | None = None
 
 
-def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields) -> None:
+def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields: object) -> None:
     if deps.on_event is None:
         return
     try:
@@ -105,7 +107,7 @@ def _emit(deps: "_Ctx", type_: str, machine: str, depth: int, **fields) -> None:
         pass
 
 
-def _preview(value, limit: int = 200) -> str:
+def _preview(value: object, limit: int = 200) -> str:
     text = value if isinstance(value, str) else fmt(value)
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
@@ -114,7 +116,7 @@ def _is_otherwise(gate: Gate) -> bool:
     return gate.when.strip().lower() == "otherwise"
 
 
-def _call_hook(gate: Gate, ctx: dict, result, hooks: dict) -> bool:
+def _call_hook(gate: Gate, ctx: dict, result: object, hooks: dict) -> bool:
     fn = hooks.get(gate.hook)
     if fn is None:
         raise KeyError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
@@ -123,7 +125,7 @@ def _call_hook(gate: Gate, ctx: dict, result, hooks: dict) -> bool:
 
 def _select_gate(
     eligible: list[tuple[int, Gate]],
-    result,
+    result: object,
     ctx: dict,
     deps: _Ctx,
     judge_reasoning: str | None,
@@ -210,7 +212,7 @@ def _exec_one(
     machine: Machine,
     depth: int,
     resume: list[dict] | None = None,
-):
+) -> tuple[object, list[dict] | None, str | None, tuple[int, int], dict]:
     """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
 
     ``meta`` carries produce-side annotations (ADR 0018 truncation). Empty for
@@ -265,7 +267,7 @@ def _exec_one(
     p = deps.llm.produce(
         model, _system(state), user, reason=state.reason, temperature=temperature, params=params
     )
-    meta = {}
+    meta: dict = {}
     if getattr(p, "truncated", False):
         meta["truncated"] = True
         if getattr(p, "finish_reason", None):
@@ -361,7 +363,7 @@ def _branch_contexts(state: State, ctx: dict) -> list[dict]:
     return out
 
 
-def _pick_otherwise(eligible: list[tuple[int, object]]) -> tuple[int, object] | None:
+def _pick_otherwise(eligible: list[tuple[int, Gate]]) -> tuple[int, Gate] | None:
     for i, g in eligible:
         if g.when.strip().lower() == "otherwise":
             return i, g
@@ -372,7 +374,7 @@ def _run_impl(
     machine: Machine,
     context: dict,
     registry: dict,
-    llm,
+    llm: LLM,
     tiers: dict,
     judge: str | None = None,
     depth: int = 0,
@@ -384,10 +386,10 @@ def _run_impl(
     suspendable: bool = False,
     escalate_suspend: bool = False,
     resume: list[dict] | None = None,
-    on_event=None,
+    on_event: Callable[[dict], None] | None = None,
     on_truncate: str = "report",
     prompt_value_chars: int | None = None,
-    cancel_requested=None,
+    cancel_requested: Callable[[], object] | None = None,
 ) -> RunResult:
     if depth > MAX_CALL_DEPTH:
         return RunResult("halt", [], dict(context), error="call-depth-exceeded")
@@ -563,7 +565,7 @@ def _run_impl(
                     outs = list(ex.map(lambda b: _safe_exec(S, b, deps, machine, depth), branches))
             else:
                 outs = []
-            result = [o[0] for o in outs]
+            result: object = [o[0] for o in outs]
             subs = [o[1] for o in outs if o[1] is not None]
             step["branches"] = [o[0] if isinstance(o[0], str) else fmt(o[0]) for o in outs]
             if subs:
@@ -706,25 +708,42 @@ def _run_impl(
         # 4) TRANSITION
         if gate.kind == "fail":
             return RunResult("halt", trace, ctx, error="gate-fail", at=state_id, usage=usage())
+        to = gate.to
+        if to is None:
+            # Schema requires `to` on every non-fail gate; only a hand-built
+            # Machine that bypassed validation can get here.
+            return RunResult(
+                "halt", trace, ctx, error="state-error: gate-missing-to", at=state_id, usage=usage()
+            )
         if gate.kind == "repair":
+            if gate.repair is None:
+                # Same schema invariant: repair gates always carry a budget ≥ 1.
+                return RunResult(
+                    "halt",
+                    trace,
+                    ctx,
+                    error="state-error: repair-missing-budget",
+                    at=state_id,
+                    usage=usage(),
+                )
             repair_left[(state_id, i)] = repair_left.get((state_id, i), gate.repair) - 1
             feedback = f"The previous attempt did not satisfy: '{gate.when}'. Fix it."
-        if gate.kind == "escalate" and deps.escalate_suspend and gate.to != "END":
+        if gate.kind == "escalate" and deps.escalate_suspend and to != "END":
             # HITL: pause before the handler runs; a resume can drop the human
             # reply into ctx so the handler state sees it (ADR 0008).
-            state_id = gate.to
+            state_id = to
             return suspended("escalated")
-        if gate.to == "END":
+        if to == "END":
             rv = ctx.get(machine.result) if machine.result else result
             return RunResult("done", trace, ctx, result=rv, usage=usage())
-        state_id = gate.to
+        state_id = to
 
 
 def run(
     machine: Machine,
     context: dict,
     registry: dict,
-    llm,
+    llm: LLM,
     tiers: dict,
     judge: str | None = None,
     depth: int = 0,
@@ -736,10 +755,10 @@ def run(
     suspendable: bool = False,
     escalate_suspend: bool = False,
     resume: list[dict] | None = None,
-    on_event=None,
+    on_event: Callable[[dict], None] | None = None,
     on_truncate: str = "report",
     prompt_value_chars: int | None = None,
-    cancel_requested=None,
+    cancel_requested: Callable[[], object] | None = None,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 

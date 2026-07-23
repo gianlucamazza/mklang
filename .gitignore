@@ -4,6 +4,9 @@
 !.env.example
 
 # Python
+.coverage
+.coverage.*
+htmlcov/
 __pycache__/
 *.py[cod]
 *.egg-info/

@@ -19,21 +19,28 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-try:
-    # Real Context enables FastMCP's ctx injection; the annotation must resolve
-    # from module globals because `from __future__ import annotations` stringifies
-    # it. The fallback keeps `import mklang.mcp.server` working without the extra
-    # (main() then shows the friendly install hint).
-    from mcp.server.fastmcp import Context
-except ImportError:  # pragma: no cover - exercised by the no-extra install
+if TYPE_CHECKING:
+    from mcp.server.fastmcp import Context, FastMCP
+else:
+    try:
+        # Real Context enables FastMCP's ctx injection; the annotation must resolve
+        # from module globals because `from __future__ import annotations` stringifies
+        # it. The fallback keeps `import mklang.mcp.server` working without the extra
+        # (main() then shows the friendly install hint).
+        from mcp.server.fastmcp import Context
+    except ImportError:  # pragma: no cover - exercised by the no-extra install
 
-    class Context:  # placeholder type so annotations resolve; never instantiated
-        pass
+        class Context:  # placeholder type so annotations resolve; never instantiated
+            pass
 
+
+from collections.abc import Callable
 
 from .. import fs, host
 from ..checkpoint import load_checkpoint, save_checkpoint, verify_hash
+from ..engine import RunResult
 from ..engine import run as run_machine
 from ..logs import LEVELS, setup_process_logging
 from ..registry import base_registry, load_stdlib_registry
@@ -90,7 +97,7 @@ def _event_forwarder(ctx):
 
 def _finish(
     store: SessionStore,
-    res,
+    res: RunResult,
     warnings: list[str],
     session: Session,
     checkpoint_path: str | None = None,
@@ -98,6 +105,8 @@ def _finish(
     out = host.build_output(res)
     out["warnings"] = warnings
     if res.status == "suspended":
+        # A suspended run always carries reason + frames.
+        assert res.error is not None and res.frames is not None
         session.frames = res.frames
         session.reason = res.error
         out["checkpoint"] = store.put(session)
@@ -118,10 +127,10 @@ def _finish(
 
 def _session_from(
     p: host.Prepared,
-    cost_budget,
-    hitl,
-    origin_path,
-    origin_source,
+    cost_budget: int | None,
+    hitl: bool,
+    origin_path: str | None,
+    origin_source: str | None,
     on_truncate: str = "report",
 ) -> Session:
     return Session(
@@ -153,7 +162,7 @@ def run_tool(
     hitl: bool = False,
     strict: bool = False,
     checkpoint_path: str | None = None,
-    on_event=None,
+    on_event: Callable[[dict], None] | None = None,
     on_truncate: str = "report",
 ) -> dict:
     if (source is None) == (path is None):
@@ -169,6 +178,8 @@ def run_tool(
         if source is not None:
             p = host.prepare_source(cfg, prov_name, source, strict=strict, build_llm=_build_llm)
         else:
+            # The exactly-one check above already returned for neither/both.
+            assert path is not None
             p = host.prepare_path(cfg, prov_name, path, strict=strict, build_llm=_build_llm)
     except host.PrepareError as e:
         return _error("prepare-failed", e.errors, e.warnings)
@@ -196,7 +207,13 @@ def run_tool(
     return _finish(store, res, p.warnings, session, checkpoint_path)
 
 
-def _rerun(session: Session, frames: list[dict], budget, on_event=None, on_truncate=None) -> object:
+def _rerun(
+    session: Session,
+    frames: list[dict],
+    budget: int | None,
+    on_event: Callable[[dict], None] | None = None,
+    on_truncate: str | None = None,
+) -> RunResult:
     return run_machine(
         session.machine,
         dict(session.machine.context),
@@ -216,7 +233,7 @@ def _rerun(session: Session, frames: list[dict], budget, on_event=None, on_trunc
     )
 
 
-def _budget_warning(reason, old, new) -> list[str]:
+def _budget_warning(reason: str | None, old: int | None, new: int | None) -> list[str]:
     if reason == "cost-exhausted" and new is not None and old is not None and new <= old:
         return [
             f"cost budget {new} is not above the exhausted {old} — "
@@ -233,7 +250,7 @@ def _resume_from_file(
     cost_budget: int | None,
     checkpoint_path: str | None,
     force: bool,
-    on_event=None,
+    on_event: Callable[[dict], None] | None = None,
     on_truncate: str = "report",
 ) -> dict:
     try:
@@ -286,7 +303,7 @@ def resume_tool(
     defaults: dict | None = None,
     checkpoint_path: str | None = None,
     force: bool = False,
-    on_event=None,
+    on_event: Callable[[dict], None] | None = None,
     on_truncate: str | None = None,
 ) -> dict:
     defaults = defaults or {"config": DEFAULT_CONFIG, "provider": None}
@@ -360,7 +377,7 @@ def check_tool(source: str | None = None, path: str | None = None, strict: bool 
     return host.check_machine(source, path, strict=strict)
 
 
-def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None):
+def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None) -> "FastMCP":
     """Build the FastMCP server. Requires the `mcp` package (`pip install mklang[mcp]`)."""
     from mcp.server.fastmcp import FastMCP
 
@@ -380,7 +397,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         strict: bool = False,
         checkpoint_path: str | None = None,
         on_truncate: str = "report",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> dict:
         """Commission an mklang machine and return its result with full provenance
         (trace + usage). Pass the machine as inline `.mk` YAML via `source`, OR via
@@ -421,7 +438,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         checkpoint_path: str | None = None,
         force: bool = False,
         on_truncate: str | None = None,
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> dict:
         """Resume a suspended run. `checkpoint` is either the opaque single-use
         handle from this server's `run`, or the path of a checkpoint FILE written

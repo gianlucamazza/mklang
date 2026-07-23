@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import functools
 import logging
+from collections.abc import Sequence
 from importlib.metadata import entry_points
+from importlib.resources.abc import Traversable
 from pathlib import Path
 
 import yaml
@@ -38,6 +40,8 @@ def load_stdlib_registry() -> dict[str, Machine]:
     pip-installed), else the repo tree. Schema validation is pinned by the test
     suite, not repeated per run."""
     reg: dict[str, Machine] = {}
+    # Traversable covers both the package copy and the repo-tree Path fallback.
+    entries: Sequence[Traversable]
     try:
         from importlib.resources import files
 
@@ -65,7 +69,7 @@ def load_entry_point_machines(group: str = ENTRY_POINT_GROUP) -> dict[str, Machi
     reg: dict[str, Machine] = {}
     try:
         eps = entry_points()
-        selected = eps.select(group=group) if hasattr(eps, "select") else eps.get(group, [])
+        selected = eps.select(group=group)
     except Exception as e:
         _log.warning("could not read entry points (%s): %s", group, e)
         return reg

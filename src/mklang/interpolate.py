@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 _PAT = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
 
@@ -12,7 +13,7 @@ _PAT = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
 PROMPT_VALUE_CHARS = 20_000
 
 
-def lookup(ctx: dict, path: str):
+def lookup(ctx: dict, path: str) -> Any:
     """Resolve a dotted path into a nested dict; return None if missing."""
     cur = ctx
     for part in path.split("."):
@@ -33,7 +34,7 @@ def _clip(text: str, max_chars: int) -> str:
     return text[: max_chars - len(marker)] + marker
 
 
-def fmt(value, *, max_chars: int | None = None) -> str:
+def fmt(value: object, *, max_chars: int | None = None) -> str:
     """Render a context value for inclusion in a prompt.
 
     Lists become a readable numbered enumeration (what a reducer wants to see).
@@ -71,7 +72,7 @@ def render(text: str | None, ctx: dict, *, value_chars: int | None = None) -> st
 _WHOLE = re.compile(r"^\s*\{\{\s*([\w.]+)\s*\}\}\s*$")
 
 
-def resolve(value, ctx: dict):
+def resolve(value: Any, ctx: dict) -> Any:
     """Resolve an `input:` map value (SPEC §4.8/§4.9, 0.3).
 
     A value that is exactly one `{{path}}` placeholder resolves to the RAW
