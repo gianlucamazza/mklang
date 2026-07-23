@@ -47,6 +47,14 @@ All notable changes to mklang are documented here. The format follows
   `--strict` minus `disallow_any_generics`, the documented JSON idiom);
   the tier is add-only.
 
+### Fixed
+
+- Release-gate regression in the cross-provider gate-divergence harness
+  (`scripts/gate_divergence.py`): `_ci_errors` counted machine-less
+  skipped-provider rows toward the distinct-machine total, inflating the
+  per-provider expected run count and failing the release matrix even with
+  perfect agreement whenever an optional provider lacked a key.
+
 ## [0.15.0] — 2026-07-23
 
 The console ships by default, and the ADR 0025 follow-up audit closes —
