@@ -185,8 +185,11 @@ mklang console [--workspace DIR] [--agent FILE.mkl] [--continue | --session ID]
 ```
 
 The agent-first TUI (bundled by default since 0.15.0). `--workspace` confines
-machine writes (default: `./machines` when present, else the XDG user machines
-dir); `--agent` swaps the console's brain with your own machine;
+machine writes (default: the absolute directory from which the console was
+launched); the selected root is injected into the brain as `workspace_root`,
+and repeated by the snapshot and workspace-tool results (tool paths remain
+relative and confined);
+`--agent` swaps the console's brain with your own machine;
 `--continue`/`--session` reopen sessions. Full guide:
 [Console](../guides/console.md).
 

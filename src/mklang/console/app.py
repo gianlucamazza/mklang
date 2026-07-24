@@ -645,7 +645,9 @@ def build_app(
         def slash_resume(self, ck: dict) -> None:
             steps = ck["frames"][0].get("steps", 0)
             machine = dc_replace(brain, budget=steps + 8)
-            res = self._run_brain(machine, dict(machine.context), resume=ck["frames"])
+            res = self._run_brain(
+                machine, self._inject_workspace_context(dict(machine.context)), resume=ck["frames"]
+            )
             if not self.shutting_down:
                 self.call_from_thread(self.finish_turn, "(resumed turn)", res)
 
@@ -687,6 +689,11 @@ def build_app(
                 cancel_requested=self.cancel_event.is_set,
             )
 
+        def _inject_workspace_context(self, ctx: dict) -> dict:
+            """Add host-selected workspace facts to every brain execution path."""
+            ctx["workspace_root"] = str(self.tools.workspace)
+            return ctx
+
         def turn(self, user_message: str) -> None:
             # Full history stays on the session for audit; only a windowed view
             # is injected into the brain (ADR 0017 console history budget).
@@ -694,15 +701,17 @@ def build_app(
 
             from .. import host as host_mod
 
-            ctx = {
-                **brain.context,
-                "user_message": user_message,
-                "history": history_for_brain(self.history),
-                "observation": [],
-                "workspace_context": self.tools.workspace_context(),
-                "workspace_brief": "",
-                "workspace_required": requires_workspace_inspection(user_message),
-            }
+            ctx = self._inject_workspace_context(
+                {
+                    **brain.context,
+                    "user_message": user_message,
+                    "history": history_for_brain(self.history),
+                    "observation": [],
+                    "workspace_context": self.tools.workspace_context(),
+                    "workspace_brief": "",
+                    "workspace_required": requires_workspace_inspection(user_message),
+                }
+            )
             host_mod.inject_host_defaults(ctx)  # brain may declare context.today
             machine = brain
             res = self._run_brain(machine, ctx)
@@ -718,7 +727,11 @@ def build_app(
                     )
                     break
                 machine = dc_replace(machine, budget=machine.budget + 8)
-                res = self._run_brain(machine, dict(machine.context), resume=res.frames)
+                res = self._run_brain(
+                    machine,
+                    self._inject_workspace_context(dict(machine.context)),
+                    resume=res.frames,
+                )
             if not self.shutting_down:
                 self.call_from_thread(self.finish_turn, user_message, res)
 

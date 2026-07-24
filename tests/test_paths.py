@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 
 from mklang import cli
 from mklang.config import load_env_files
@@ -102,14 +101,14 @@ def test_user_env_fills_gaps_behind_the_project_env(tmp_path, monkeypatch):
     assert os.environ["MK_TEST_USER_ONLY"] == "user"
 
 
-def test_console_workspace_prefers_local_then_user_machines(tmp_path, monkeypatch):
+def test_console_workspace_defaults_to_current_directory(tmp_path, monkeypatch):
     monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
     cwd = tmp_path / "somewhere"
     cwd.mkdir()
     monkeypatch.chdir(cwd)
-    assert cli._resolve_workspace(None) == str(tmp_path / "data" / "machines")
+    assert cli._resolve_workspace(None) == str(cwd.resolve())
     (cwd / "machines").mkdir()
-    assert cli._resolve_workspace(None) == str(Path("./machines"))
+    assert cli._resolve_workspace(None) == str(cwd.resolve())
     assert cli._resolve_workspace("custom/dir") == "custom/dir"
 
 

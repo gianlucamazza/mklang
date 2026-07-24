@@ -132,6 +132,7 @@ def test_brain_turn_fences_the_user_message(tmp_path):
             await _wait_input_enabled(app, pilot)
             fenced = [u for u in calls if re.search(r"<data-\w+>\n2\+2\?\n</data-\w+>", u)]
             assert fenced, f"user_message never arrived fenced; prompts: {calls!r}"
+            assert any(str(tmp_path / "ws") in u for u in calls)
             # and never bare outside a fence in the same prompts
             for u in fenced:
                 bare = re.sub(r"<data-(\w+)>\n.*?\n</data-\1>", "", u, flags=re.S)

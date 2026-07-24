@@ -26,6 +26,7 @@ def test_agent_machine_is_clean():
     assert errors == [] and warnings == []
     assert lint_machine(m) == []
     assert m.result == "reply"
+    assert "workspace_root" in m.context
     assert {
         "list_machines",
         "run_machine",

@@ -218,9 +218,13 @@ declares both — see [Brain prompt assembly](#brain-prompt-assembly).
 ## Security model
 
 The console inherits the SPEC §11 posture: authored machines and read-only
-project inspection are **confined to the workspace** (`--workspace`, default
-`./machines` when present, else the XDG user machines dir — path-resolved, no
-traversal); running a machine whose states invoke host tools (including
+project inspection are **confined to the workspace** (`--workspace`, or the
+absolute directory from which the console was launched by default — path-resolved,
+no traversal); the selected root is injected into the brain as `workspace_root`.
+The snapshot and every workspace-tool result repeat that absolute root, while
+file arguments remain relative and confined to it.
+Global and user machines remain available through discovery but do not change this
+inspection root. Running a machine whose states invoke host tools (including
 `search` if a machine uses it) asks consent once per tool set (remembered per
 session); provider keys stay in the host environment. The console cannot edit
 files outside the workspace, run shell commands, or touch git — it is an

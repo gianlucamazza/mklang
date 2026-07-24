@@ -8,13 +8,27 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.6`).
+  `pyproject.toml` (currently `1.0.7`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.7] — 2026-07-24
+
+Console workspace resolution and brain context are now explicit and automatic.
+
+### Changed
+
+- The console defaults its workspace to the launch directory and injects the
+  absolute `workspace_root` into every brain execution path; `--workspace`
+  remains the explicit override, including resumed turns.
+- Workspace snapshots and every read-only workspace-tool observation now repeat
+  that absolute root while keeping requested file paths relative and confined.
+- The live language demo uses the repository interpreter directly in its tape,
+  with real check, lint, and provider-backed execution markers.
 
 ## [1.0.6] — 2026-07-24
 

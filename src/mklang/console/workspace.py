@@ -199,7 +199,7 @@ class WorkspaceInspector:
             markers = markers[: self.MAX_SNAPSHOT_MARKERS]
             truncated = True
         return {
-            "root": ".",
+            "root": str(self.root),
             "entries": entries[: self.MAX_LIST_ENTRIES],
             "entries_truncated": len(entries) > self.MAX_LIST_ENTRIES,
             "markers": sorted(set(markers)),
@@ -259,6 +259,7 @@ class WorkspaceInspector:
             entries.append(row)
         return {
             "tool": "list_workspace",
+            "workspace_root": str(self.root),
             "path": self._relative(path),
             "depth": bounded_depth,
             "entries": entries[: self.MAX_LIST_ENTRIES],
@@ -300,6 +301,7 @@ class WorkspaceInspector:
             return self._error("read_workspace_file", relative, str(exc), content="")
         return {
             "tool": "read_workspace_file",
+            "workspace_root": str(self.root),
             "path": relative,
             "content": text,
             "bytes": size,
@@ -363,6 +365,7 @@ class WorkspaceInspector:
                 break
         return {
             "tool": "search_workspace",
+            "workspace_root": str(self.root),
             "query": needle_raw,
             "matches": matches,
             "truncated": truncated,
@@ -371,10 +374,10 @@ class WorkspaceInspector:
             "error": None,
         }
 
-    @staticmethod
-    def _error(tool: str, path: object, message: str, **fields: object) -> dict:
+    def _error(self, tool: str, path: object, message: str, **fields: object) -> dict:
         return {
             "tool": tool,
+            "workspace_root": str(self.root),
             "path": str(path or ""),
             **fields,
             "truncated": False,

@@ -54,17 +54,21 @@ tools:
   - name: list_workspace
     description: >
       Read-only listing of visible project files and directories. Input is a
-      JSON request string {"path": "", "depth": 1}. Paths are relative to the
-      configured workspace; hidden/build/vendor directories are excluded.
+      JSON request string {"path": "", "depth": 1}. Paths in requests and
+      results are relative to the configured workspace; every result also
+      reports the absolute workspace_root. Hidden/build/vendor directories are
+      excluded.
   - name: read_workspace_file
     description: >
       Read one visible UTF-8 project file without writing. Input is a JSON
       request string {"path": "README.md", "max_bytes": 120000}. The result
-      reports truncation; never infer omitted content.
+      reports the absolute workspace_root and truncation; never infer omitted
+      content.
   - name: search_workspace
     description: >
       Search visible UTF-8 project files without shell access. Input is a JSON
-      request string {"query": "...", "path": "", "max_results": 40}.
+      request string {"query": "...", "path": "", "max_results": 40}; the
+      result reports the absolute workspace_root.
 
 context:
   user_message: ""
@@ -72,6 +76,7 @@ context:
   observation: [] # tool observations of THIS turn (accumulated)
   today: "" # host fills ISO date when empty
   now: "" # host fills local ISO datetime when empty
+  workspace_root: "" # absolute host-selected inspection root
   workspace_context: {} # host-provided deterministic snapshot of this folder
   workspace_brief: "" # compact evidence summary for multi-step analysis
   workspace_required: false # host classification for explicit project analysis
@@ -102,12 +107,16 @@ states:
       For wall-clock date/time questions, REPLY using the host today/now values
       in the user message — do not AUTHOR a machine only for the clock, and do
       not invent a time from training data.
+      For directory questions, report the injected Workspace root exactly;
+      distinguish it from global/user machine discovery and session storage.
       If a tool returned search unbound, say how to enable it (TAVILY_API_KEY or
       MKLANG_SEARCH_BACKEND). If an observation has truncated: true or
       result_truncated: true, report the cutoff and do not invent the missing
       part. No side effects in this generative state.
     prompt: |
       Today is {{today}}. Current local time is {{now}} (host clock).
+
+      Workspace root: {{workspace_root}}
 
       Workspace snapshot: {{workspace_context}}
       Workspace evidence brief: {{workspace_brief}}

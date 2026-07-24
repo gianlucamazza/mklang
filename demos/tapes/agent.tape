@@ -1,7 +1,7 @@
 Output docs/assets/demos/agent.webm
 Output docs/assets/demos/agent.txt
 
-Require uv
+Require python
 
 Set Shell "bash"
 Set Width 1200
@@ -24,7 +24,7 @@ Type "rm -rf /tmp/mklang-agent-state /tmp/mklang-agent-machines && mkdir -p /tmp
 Enter
 Show
 
-Type "uv run mklang console --provider deepseek --workspace /tmp/mklang-agent-machines"
+Type "PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines"
 Enter
 Wait+Screen@30s /Ready/
 Sleep 1s

@@ -317,6 +317,7 @@ def test_workspace_context_exposes_markers_and_excludes_build_dirs(tools):
     (tools.workspace / "node_modules").mkdir()
     (tools.workspace / "node_modules" / "bad.js").write_text("secret", encoding="utf-8")
     snapshot = tools.workspace_context()
+    assert snapshot["root"] == str(tools.workspace)
     assert "README.md" in snapshot["markers"]
     assert "AGENTS.md" in snapshot["instruction_files"]
     assert all(row["path"] != "node_modules" for row in snapshot["entries"])
@@ -329,12 +330,14 @@ def test_workspace_listing_reading_and_search_are_confined(tools):
     (tools.workspace / ".env").write_text("SECRET=1", encoding="utf-8")
 
     listed = json.loads(tools.list_workspace({"request": '{"path": ""}'}))
+    assert listed["workspace_root"] == str(tools.workspace)
     assert {row["path"] for row in listed["entries"]} == {"README.md", "src"}
     deep = json.loads(tools.list_workspace({"request": '{"path": "", "depth": 2}'}))
     assert "src/main.py" in {row["path"] for row in deep["entries"]}
     read = json.loads(
         tools.read_workspace_file({"request": '{"path": "README.md", "max_bytes": 5}'})
     )
+    assert read["workspace_root"] == str(tools.workspace)
     assert read["content"] == "alpha"
     assert read["truncated"] is True
     assert (
@@ -342,6 +345,7 @@ def test_workspace_listing_reading_and_search_are_confined(tools):
         in json.loads(tools.read_workspace_file({"request": '{"path": "../README.md"}'}))["error"]
     )
     found = json.loads(tools.search_workspace({"request": '{"query": "needle"}'}))
+    assert found["workspace_root"] == str(tools.workspace)
     assert {match["path"] for match in found["matches"]} == {"README.md", "src/main.py"}
 
 

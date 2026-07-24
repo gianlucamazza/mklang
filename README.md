@@ -336,7 +336,7 @@ keys resolve server-side from the environment, never over the wire.
 
 ## Status
 
-**Language v0.3 / package 1.0.6** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 1.0.7** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`

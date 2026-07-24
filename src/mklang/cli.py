@@ -501,15 +501,10 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 
 def _resolve_workspace(workspace: str | None) -> str:
-    """Local ./machines when present, else the global XDG user machines root."""
+    """Resolve the console workspace, defaulting to the launch directory."""
     if workspace is not None:
         return workspace
-    local = Path("./machines")
-    if local.is_dir():
-        return str(local)
-    from .paths import host_paths
-
-    return str(host_paths().user_machines)
+    return str(Path.cwd().resolve())
 
 
 def cmd_console(args: argparse.Namespace) -> int:
@@ -941,7 +936,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         metavar="DIR",
         help="where authored machines live; writes are confined here "
-        "(default: ./machines when present, else the XDG user machines dir)",
+        "(default: the current directory)",
     )
     co.add_argument(
         "--agent",
