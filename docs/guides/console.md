@@ -62,14 +62,27 @@ display path renders Markdown. Square brackets in model output (`array[0]`,
 ## The agent
 
 One user turn = one run of `agent.mkl` (ReAct-shaped): `decide` routes between
+**WORKSPACE_SCAN / SEARCH / READ / ANALYZE** (read-only project inspection),
 **DISCOVER** (list machines), **RUN** (commission one), **CLARIFY** (ask you),
 **AUTHOR** (write a new `.mkl` into the workspace, validate it, repair on
-errors) and **REPLY**. Escalations from a commissioned machine, tool-consent
-prompts and turn-budget exhaustion all come back to you through the input line.
+errors) and **REPLY**. A project-analysis request must inspect the workspace
+before replying; the final answer is expected to distinguish observed facts,
+inferences and uninspected areas. Escalations from a commissioned machine,
+tool-consent prompts and turn-budget exhaustion all come back to you through the
+input line.
 
-Swap the brain with `--agent your_brain.mkl` — any machine honoring the same
-tool contract (`list_machines`, `describe_machine`, `read_machine`,
-`check_machine`, `write_machine`, `run_machine`, `ask_user`).
+The default brain can use `list_workspace`, `read_workspace_file` and
+`search_workspace` for visible UTF-8 project files. Reads are relative to the
+configured workspace and exclude hidden, build, vendor and cache directories;
+they never grant shell or write access. Each operation is bounded (400 listing
+entries, 120,000 bytes per read, 80 search matches, 2,000 files and 64 MiB per
+search), skips obvious credentials/keys/databases, and reports truncation or
+skipped content. Explicit project-analysis turns are host-guarded: the brain
+cannot finish until workspace evidence and an evidence brief exist. Swap the
+brain with `--agent your_brain.mkl` — custom brains
+that want project inspection should declare and use the same workspace tools in
+addition to the existing contract (`list_machines`, `describe_machine`,
+`read_machine`, `check_machine`, `write_machine`, `run_machine`, `ask_user`).
 
 ### Brain prompt assembly
 
@@ -80,7 +93,7 @@ Generative states on the brain follow the host mapping
 | ----------- | --------------------------------------------------------------------------------------------- |
 | `structure` | Output shape of this step (e.g. one-line DISCOVER/RUN/…, final reply)                         |
 | `execution` | Sticky policy (no fake web search, truncation honesty, clock REPLY rules)                     |
-| `prompt`    | Turn data only: `{{today}}` / `{{now}}`, `{{history}}`, `{{user_message}}`, `{{observation}}` |
+| `prompt`    | Turn data only: `{{today}}` / `{{now}}`, `{{history}}`, `{{user_message}}`, `{{workspace_context}}`, `{{workspace_brief}}`, `{{observation}}` |
 
 Wall-clock questions (“che ore sono?”) use host-filled `now` via **REPLY** — the
 brain must not AUTHOR a machine solely to read the clock.
@@ -182,14 +195,15 @@ declares both — see [Brain prompt assembly](#brain-prompt-assembly).
 
 ## Security model
 
-The console inherits the SPEC §11 posture: authored machines are **confined to
-the workspace** (`--workspace`, default `./machines` when present, else the
-XDG user machines dir — path-resolved, no traversal); running a machine whose states invoke host tools (including
+The console inherits the SPEC §11 posture: authored machines and read-only
+project inspection are **confined to the workspace** (`--workspace`, default
+`./machines` when present, else the XDG user machines dir — path-resolved, no
+traversal); running a machine whose states invoke host tools (including
 `search` if a machine uses it) asks consent once per tool set (remembered per
 session); provider keys stay in the host environment. The console cannot edit
 files outside the workspace, run shell commands, or touch git — it is an
-operational surface, not an IDE (ADR 0015). Workspace FS is **class 2** (`.mkl`
-authoring only); generic data FS / bash are **out of core** (host plugins only —
+operational surface, not an IDE (ADR 0015). Workspace FS is **class 2**:
+read-only inspection plus `.mkl` authoring; generic data FS / bash are **out of core** (host plugins only —
 [Best practices §13](best-practices.md)). Session `transcript.jsonl` is surface
 audit, not a substitute for host ops logging ([§12](best-practices.md)).
 

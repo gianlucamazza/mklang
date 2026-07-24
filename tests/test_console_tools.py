@@ -108,6 +108,9 @@ def test_tool_registry_names(tools):
         "write_machine",
         "run_machine",
         "ask_user",
+        "list_workspace",
+        "read_workspace_file",
+        "search_workspace",
     }
 
 
@@ -275,6 +278,69 @@ def test_run_machine_bad_inputs_and_unknown_target(tools):
 def test_ask_user_passthrough(tools):
     assert tools.ask_user({"question": "which env?"}) == "approved"
     assert tools.bridge.questions[-1] == "which env?"
+
+
+def test_workspace_context_exposes_markers_and_excludes_build_dirs(tools):
+    (tools.workspace / "README.md").write_text("project", encoding="utf-8")
+    (tools.workspace / "AGENTS.md").write_text("rules", encoding="utf-8")
+    (tools.workspace / "src").mkdir()
+    (tools.workspace / "src" / "main.py").write_text("print(1)", encoding="utf-8")
+    (tools.workspace / "node_modules").mkdir()
+    (tools.workspace / "node_modules" / "bad.js").write_text("secret", encoding="utf-8")
+    snapshot = tools.workspace_context()
+    assert "README.md" in snapshot["markers"]
+    assert "AGENTS.md" in snapshot["instruction_files"]
+    assert all(row["path"] != "node_modules" for row in snapshot["entries"])
+
+
+def test_workspace_listing_reading_and_search_are_confined(tools):
+    (tools.workspace / "README.md").write_text("alpha\nneedle here\n", encoding="utf-8")
+    (tools.workspace / "src").mkdir()
+    (tools.workspace / "src" / "main.py").write_text("needle = 1\n", encoding="utf-8")
+    (tools.workspace / ".env").write_text("SECRET=1", encoding="utf-8")
+
+    listed = json.loads(tools.list_workspace({"request": '{"path": ""}'}))
+    assert {row["path"] for row in listed["entries"]} == {"README.md", "src"}
+    deep = json.loads(tools.list_workspace({"request": '{"path": "", "depth": 2}'}))
+    assert "src/main.py" in {row["path"] for row in deep["entries"]}
+    read = json.loads(
+        tools.read_workspace_file({"request": '{"path": "README.md", "max_bytes": 5}'})
+    )
+    assert read["content"] == "alpha"
+    assert read["truncated"] is True
+    assert (
+        "unavailable"
+        in json.loads(tools.read_workspace_file({"request": '{"path": "../README.md"}'}))["error"]
+    )
+    found = json.loads(tools.search_workspace({"request": '{"query": "needle"}'}))
+    assert {match["path"] for match in found["matches"]} == {"README.md", "src/main.py"}
+
+
+def test_workspace_tools_report_binary_and_missing_files(tools):
+    (tools.workspace / "image.bin").write_bytes(b"\x00\xff")
+    binary = json.loads(tools.read_workspace_file({"request": '{"path": "image.bin"}'}))
+    assert "binary" in binary["error"]
+    missing = json.loads(tools.read_workspace_file({"request": '{"path": "missing.txt"}'}))
+    assert "unavailable" in missing["error"]
+
+
+def test_workspace_inspector_skips_sensitive_files(tools):
+    (tools.workspace / "credentials.json").write_text('{"token": "secret"}', encoding="utf-8")
+    (tools.workspace / "private.pem").write_text("PRIVATE KEY", encoding="utf-8")
+    listed = json.loads(tools.list_workspace({}))
+    assert {row["path"] for row in listed["entries"]} == set()
+    denied = json.loads(tools.read_workspace_file({"path": "credentials.json"}))
+    assert denied["skipped_sensitive"] is True
+    assert "secret" not in json.dumps(denied)
+
+
+def test_workspace_search_reports_resource_limits(tools):
+    for index in range(3):
+        (tools.workspace / f"file-{index}.txt").write_text("needle\n", encoding="utf-8")
+    tools.inspector.MAX_SEARCH_RESULTS = 2
+    found = json.loads(tools.search_workspace({"query": "needle"}))
+    assert len(found["matches"]) == 2
+    assert found["truncated"] is True
 
 
 def test_run_machine_observation_propagates_produce_truncation(tools):

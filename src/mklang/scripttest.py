@@ -171,6 +171,13 @@ def run_scenario(
     delimiting. Judging follows each state's tier (SPEC §2.1); with the
     collapsed `TIERS` map every tier resolves to one model.
     """
+    hooks = scripted_hooks(scenario.get("hooks"))
+    if machine.name == "console_agent":
+        # The bundled brain uses one host-side readiness guard; scenario tests
+        # should exercise the same built-in contract as the real console.
+        from .hooks import BUILTINS
+
+        hooks = {**BUILTINS, **hooks}
     return run(
         machine,
         {**machine.context, **(scenario.get("input") or {})},
@@ -179,7 +186,7 @@ def run_scenario(
         tiers or TIERS,
         None,  # no global judge override — judging follows each state's tier
         tools=scripted_tools(scenario.get("tools")),
-        hooks=scripted_hooks(scenario.get("hooks")),
+        hooks=hooks,
         **(scenario.get("run") or {}),
     )
 

@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=../../../../schema/mklang.schema.json
 # agent.mkl — the console's brain (ADR 0015): one run per user turn.
 #
-# Flow: decide → {discover | prepare_run → do_run | clarify |
-#                 author → save | reply → END}
+# Flow: decide → {workspace scan/search/read/analyze | discover |
+#                 prepare_run → do_run | clarify | author → save | reply → END}
 #       (every action loops back to decide; the budget bounds the turn)
 # Shows: the console's intelligence as an ordinary, auditable machine — swap it
 # with `mklang console --agent your_brain.mkl` as long as the tool contract
@@ -23,6 +23,12 @@ entry: decide
 budget: 24
 default_tier: balanced
 result: reply
+
+hooks:
+  - name: console_workspace_ready
+    description: >
+      Host guard: required project-analysis turns may reply only after a
+      workspace observation and an evidence brief exist.
 
 tools:
   - name: list_machines
@@ -45,6 +51,20 @@ tools:
       Save an authored .mkl into the workspace (filename derived from its
       machine: field) and return the validation verdict.
       Input: {"source": "<the full .mkl document>"}.
+  - name: list_workspace
+    description: >
+      Read-only listing of visible project files and directories. Input is a
+      JSON request string {"path": "", "depth": 1}. Paths are relative to the
+      configured workspace; hidden/build/vendor directories are excluded.
+  - name: read_workspace_file
+    description: >
+      Read one visible UTF-8 project file without writing. Input is a JSON
+      request string {"path": "README.md", "max_bytes": 120000}. The result
+      reports truncation; never infer omitted content.
+  - name: search_workspace
+    description: >
+      Search visible UTF-8 project files without shell access. Input is a JSON
+      request string {"query": "...", "path": "", "max_results": 40}.
 
 context:
   user_message: ""
@@ -52,15 +72,19 @@ context:
   observation: [] # tool observations of THIS turn (accumulated)
   today: "" # host fills ISO date when empty
   now: "" # host fills local ISO datetime when empty
+  workspace_context: {} # host-provided deterministic snapshot of this folder
+  workspace_brief: "" # compact evidence summary for multi-step analysis
+  workspace_required: false # host classification for explicit project analysis
 
 states:
   decide: # the ReAct "think" step
     structure: >
-      One line starting with exactly one of DISCOVER, RUN, CLARIFY, AUTHOR or
+      One line starting with exactly one of WORKSPACE_SCAN, WORKSPACE_SEARCH,
+      WORKSPACE_READ, WORKSPACE_ANALYZE, DISCOVER, RUN, CLARIFY, AUTHOR or
       REPLY, followed by the details: for RUN the machine name and the inputs
-      to pass; for CLARIFY the question to ask the user; for AUTHOR the full
-      requirements of the machine to create; for REPLY the substance of the
-      answer.
+      to pass; for workspace actions the JSON request; for CLARIFY the question
+      to ask the user; for AUTHOR the full requirements of the machine to
+      create; for REPLY the substance of the answer.
     execution: |
       You are the mklang console agent: satisfy the user by commissioning
       machines (self-contained LLM state machines) and reporting honestly.
@@ -68,6 +92,13 @@ states:
       machine can (especially tool: search). Never invent search results or
       answer live-web questions from training knowledge alone.
       Prefer existing stdlib/workspace machines over AUTHOR when one fits.
+      When the user asks to analyze, inspect, review, understand, audit or
+      summarize a project/folder, do not REPLY from memory: first choose
+      WORKSPACE_SCAN, then search/read the relevant files, then
+      WORKSPACE_ANALYZE. Read applicable AGENTS.md, CLAUDE.md or CONTRIBUTING.md
+      before making project-wide claims. Report paths actually consulted and
+      distinguish observed facts from inference. The workspace tools are
+      read-only and their exclusions/truncation are authoritative.
       For wall-clock date/time questions, REPLY using the host today/now values
       in the user message — do not AUTHOR a machine only for the clock, and do
       not invent a time from training data.
@@ -78,11 +109,22 @@ states:
     prompt: |
       Today is {{today}}. Current local time is {{now}} (host clock).
 
+      Workspace snapshot: {{workspace_context}}
+      Workspace evidence brief: {{workspace_brief}}
+
       Conversation so far: {{history}}
       User request: {{user_message}}
       Observations this turn: {{observation}}
 
       Choose the single next action:
+      - WORKSPACE_SCAN — list the project root or a relevant directory before
+        analyzing a folder/project.
+      - WORKSPACE_SEARCH — find symbols, files or project instructions after a
+        scan; provide a JSON request with query/path/max_results.
+      - WORKSPACE_READ — read a specific relevant file; provide a JSON request
+        with path/max_bytes.
+      - WORKSPACE_ANALYZE — synthesize the observed workspace evidence into a
+        brief with file references, facts, inferences and coverage limits.
       - DISCOVER — list the available machines (only if you don't already know
         a suitable one from the observations).
       - RUN — commission a machine now: name it and spell out its inputs.
@@ -114,9 +156,100 @@ states:
       - when: the output chooses REPLY
         then: ok
         to: reply
+      - when: the output chooses WORKSPACE_SCAN
+        then: ok
+        to: prepare_workspace_scan
+      - when: the output chooses WORKSPACE_SEARCH
+        then: ok
+        to: prepare_workspace_search
+      - when: the output chooses WORKSPACE_READ
+        then: ok
+        to: prepare_workspace_read
+      - when: the output chooses WORKSPACE_ANALYZE
+        then: ok
+        to: analyze_workspace
       - when: otherwise
         then: ok
         to: reply
+
+  prepare_workspace_scan:
+    structure: 'A JSON object {"path": ""} and nothing else.'
+    execution: Output only the JSON object, without markdown or commentary.
+    prompt: |
+      Convert the workspace scan decision into JSON.
+      Decision: {{thought}}
+      Workspace snapshot: {{workspace_context}}
+    tier: fast
+    output: workspace_request
+    gates: [{ when: otherwise, then: ok, to: workspace_scan }]
+
+  workspace_scan:
+    tool: list_workspace
+    input: { request: "{{workspace_request}}" }
+    output: observation
+    accumulate: true
+    gates: [{ when: otherwise, then: ok, to: decide }]
+
+  prepare_workspace_search:
+    structure: 'A JSON object {"query": "...", "path": "", "max_results": 40} and nothing else.'
+    execution: Output only the JSON object, without markdown or commentary.
+    prompt: |
+      Convert the workspace search decision into JSON.
+      Decision: {{thought}}
+    tier: fast
+    output: workspace_request
+    gates: [{ when: otherwise, then: ok, to: workspace_search }]
+
+  workspace_search:
+    tool: search_workspace
+    input: { request: "{{workspace_request}}" }
+    output: observation
+    accumulate: true
+    gates: [{ when: otherwise, then: ok, to: decide }]
+
+  prepare_workspace_read:
+    structure: 'A JSON object {"path": "...", "max_bytes": 120000} and nothing else.'
+    execution: Output only the JSON object, without markdown or commentary.
+    prompt: |
+      Convert the workspace read decision into JSON.
+      Decision: {{thought}}
+    tier: fast
+    output: workspace_request
+    gates: [{ when: otherwise, then: ok, to: workspace_read }]
+
+  workspace_read:
+    tool: read_workspace_file
+    input: { request: "{{workspace_request}}" }
+    output: observation
+    accumulate: true
+    gates: [{ when: otherwise, then: ok, to: decide }]
+
+  analyze_workspace:
+    structure: >
+      A compact evidence brief for the current project analysis. Include facts
+      with relative file paths, separate inferences, and list any uninspected
+      or truncated areas.
+    execution: |
+      Use only workspace snapshot and tool observations. Never claim a file was
+      read unless its content appears in the observations. Keep the brief below
+      3000 words and preserve exact relative paths.
+    prompt: |
+      Analyze the workspace evidence collected so far.
+      Workspace snapshot: {{workspace_context}}
+      Observations: {{observation}}
+      Previous brief: {{workspace_brief}}
+      Produce an evidence-grounded brief with sections FACTS, INFERENCES and
+      LIMITS. Do not invent missing files or implementation details.
+    tier: reasoning
+    output: workspace_brief
+    gates: [{ when: otherwise, then: ok, to: decide }]
+
+  workspace_guard:
+    tool: list_workspace
+    input: { request: '{"path": "", "depth": 1}' }
+    output: observation
+    accumulate: true
+    gates: [{ when: otherwise, then: ok, to: analyze_workspace }]
 
   discover:
     tool: list_machines
@@ -246,6 +379,10 @@ states:
       Write the final reply to the user.
     output: reply
     gates:
-      - when: otherwise
+      - when: the required workspace analysis is complete
+        hook: console_workspace_ready
         then: ok
         to: END
+      - when: otherwise
+        then: ok
+        to: workspace_guard

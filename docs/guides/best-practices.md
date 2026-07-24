@@ -15,14 +15,14 @@ This page answers: _what should I always do, never do, and where does each rule 
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | **Language (`.mkl`)** | Control flow, prose contracts, portable structure                                                                                     | states, gates, tiers, `tool:` _names_, `parse: list`                                                                |
 | **Host runtime**     | Bindings, budgets, clocks, truncation _policy_, LLM adapters, produce/judge prompt assembly, **ops logging**, FS data roots for tools | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py`, process loggers, plugin FS tools |
-| **Surface**          | UX, consent, compact observations, chrome vs content rendering, session audit                                                         | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, workspace **`.mkl` only**               |
+| **Surface**          | UX, consent, compact observations, chrome vs content rendering, session audit                                                         | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, read-only workspace inspection and `.mkl` authoring |
 
 **Rules**
 
 - Side effects live only in **`tool:` states** (host callables). Never in `execution` or generative prompts.
 - The `.mkl` **never** names a provider or model — only `tier:` (ADR 0003).
 - Host tools are **opaque names** + `(dict) → str`. Do not promote search/bash/FS into language syntax.
-- Generic **bash / filesystem** stay **out of core** (console: workspace `.mkl` only; production I/O = plugins or external host).
+- Generic **bash / filesystem** stay **out of core** (console: bounded read-only workspace inspection plus `.mkl` authoring; production I/O = plugins or external host).
 
 ---
 
@@ -377,7 +377,7 @@ Generic bash/FS stay **out of core**. When you need disk, pick the class:
 | Class                       | Examples                                         | Where it lives                            | Controls                                                              |
 | --------------------------- | ------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
 | **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir | CLI / host config                         | Operator-chosen paths; checkpoint mode `0600`                         |
-| **2. Workspace authoring**  | `write_machine` / `read_machine` (`.mkl` only)    | Console surface (ADR 0015)                | Resolve under workspace; reject escape; confirm overwrite             |
+| **2. Workspace console**    | `list_workspace` / `read_workspace_file` / `search_workspace` (read-only) plus `write_machine` / `read_machine` (`.mkl`) | Console surface (ADR 0015) | Relative paths; reject escape, hidden/build/vendor/sensitive paths; bounded file/byte budgets; report truncation; confirm `.mkl` overwrite |
 | **3. Machine data I/O**     | Read CSV, write a report                         | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch |
 | **4. Arbitrary FS / shell** | `rm`, bash, git                                  | **Never core**; explicit sandboxed plugin | Default off; high friction                                            |
 
@@ -429,8 +429,10 @@ an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
    plugins with strong confirmation.
 6. **Audit lightly** — log tool name + relative path + byte count at INFO; not
    full file contents.
-7. **Console stays non-IDE** — do not register general FS tools on the default
-   brain; keep workspace **`.mkl` only** unless the operator opts into plugins.
+7. **Console stays non-IDE** — the default brain may inspect visible UTF-8 project
+   files read-only, but must not receive generic write, shell or git tools. An
+   explicit project-analysis turn must have workspace evidence and a brief
+   before the brain can return its final answer.
 
 ### Memory & planning mapping
 
@@ -441,7 +443,7 @@ use — each level has exactly one home:
 | ----------------------------------------- | ----------------------------------------------------------------- | ----- |
 | Working memory (in-run)                   | Blackboard `context` + `accumulate` (SPEC §4.6) — never on disk   | —     |
 | Session state / resume                    | Checkpoints (`0600`) and console `state.json` — outside workspace | 1     |
-| Project memory (`AGENTS.md`, `CLAUDE.md`) | Non-dotted files in the workspace, read via `read_file`           | 3     |
+| Project memory (`AGENTS.md`, `CLAUDE.md`) | Non-dotted files in the workspace, read via `read_workspace_file` in the console or `read_file` in a machine | 2/3 |
 | Plans / reports the machine produces      | `write_file` under the workspace, behind the write grant          | 3     |
 | Global config / memory hierarchy          | XDG roots + precedence (ADR 0021/0023)                            | 1     |
 
@@ -467,7 +469,7 @@ anti-pattern below structural, not just conventional.
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **CLI**     | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled   |
 | **MCP**     | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL; **read-only to disk** — author/validate/run inline, no persist tool (§11, ADR 0011/0013)                    |
-| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace **`.mkl` only** — no generic FS/bash |
+| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace inspection is read-only and `.mkl` authoring is the default write path — no generic FS/bash |
 
 ### Console cancellation and shutdown (documentation SSOT)
 

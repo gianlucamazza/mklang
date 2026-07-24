@@ -96,6 +96,12 @@ tiers. Sessions persist (`--continue`), agent replies render as Markdown, and th
 brain declares host clocks `today` / `now` for wall-clock questions. Details:
 [`docs/guides/console.md`](./docs/guides/console.md).
 
+For project or folder analysis, the default brain first inspects the configured
+workspace through bounded read-only tools (`list_workspace`,
+`search_workspace`, `read_workspace_file`). It excludes hidden/build/vendor
+directories, reports truncation, and separates observed facts from inferences;
+it still has no shell, git, or generic write access.
+
 ## Design commitments
 
 - **Document-first** — readable without the interpreter; prose-first for the

@@ -11,6 +11,46 @@
 # different intended outputs.
 
 scenarios:
+  # Workspace analysis: scan → search → read → evidence synthesis → reply.
+  # The action indexes are DISCOVER=0, RUN=1, CLARIFY=2, AUTHOR=3,
+  # REPLY=4, WORKSPACE_SCAN=5, WORKSPACE_SEARCH=6, WORKSPACE_READ=7,
+  # WORKSPACE_ANALYZE=8.
+  - name: workspace-analysis
+    llm:
+      produce:
+        - "WORKSPACE_SCAN: inspect the project root"
+        - '{"path": ""}'
+        - "WORKSPACE_SEARCH: find the architecture entrypoint"
+        - '{"query": "architecture", "max_results": 10}'
+        - "WORKSPACE_READ: read docs/reference/architecture.md"
+        - '{"path": "docs/reference/architecture.md", "max_bytes": 120000}'
+        - "WORKSPACE_ANALYZE: synthesize the observed files"
+        - "FACTS: docs/reference/architecture.md describes the interpreter. INFERENCES: the engine is the core. LIMITS: only selected files were read."
+        - "REPLY: analyzed the project from the workspace evidence."
+        - "analyzed the project from the workspace evidence."
+      judge: [5, 6, 7, 8, 4]
+    tools:
+      list_workspace: ['{"tool": "list_workspace", "entries": [{"path": "docs", "kind": "directory"}], "truncated": false}']
+      search_workspace: ['{"tool": "search_workspace", "matches": [{"path": "docs/reference/architecture.md", "line": 1, "text": "# Interpreter architecture"}], "truncated": false}']
+      read_workspace_file: ['{"tool": "read_workspace_file", "path": "docs/reference/architecture.md", "content": "# Interpreter architecture", "bytes": 27, "truncated": false}']
+    expect:
+      status: done
+      result: "analyzed the project from the workspace evidence."
+      trace:
+        - { state: decide, policy: ok, to: prepare_workspace_scan }
+        - { state: prepare_workspace_scan, policy: ok, to: workspace_scan }
+        - { state: workspace_scan, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: prepare_workspace_search }
+        - { state: prepare_workspace_search, policy: ok, to: workspace_search }
+        - { state: workspace_search, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: prepare_workspace_read }
+        - { state: prepare_workspace_read, policy: ok, to: workspace_read }
+        - { state: workspace_read, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: analyze_workspace }
+        - { state: analyze_workspace, policy: ok, to: decide }
+        - { state: decide, policy: ok, to: reply }
+        - { state: reply, policy: ok, to: END }
+
   # Direct answer: no tool needed — decide chooses REPLY (judge 4), reply ends.
   - name: direct-reply
     llm:

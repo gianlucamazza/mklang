@@ -21,10 +21,12 @@ import yaml
 from ..checkpoint import save_checkpoint
 from ..engine import RunResult
 from ..engine import run as run_engine
+from ..hooks import load_hook_registry
 from ..loader import validate_dict
 from ..model import Machine, parse_machine
 from . import render as log_render
 from .tools import ConsoleTools
+from .workspace import requires_workspace_inspection
 
 if TYPE_CHECKING:
     from textual.app import App
@@ -576,6 +578,7 @@ def build_app(
                 self.tools.prov.judge_override(),
                 tier_params=self.tools.prov.params,
                 tools=self.tools.as_tool_registry(),
+                hooks=load_hook_registry(),
                 suspendable=True,
                 resume=resume,
                 on_event=self.bridge.emit,
@@ -594,6 +597,9 @@ def build_app(
                 "user_message": user_message,
                 "history": history_for_brain(self.history),
                 "observation": [],
+                "workspace_context": self.tools.workspace_context(),
+                "workspace_brief": "",
+                "workspace_required": requires_workspace_inspection(user_message),
             }
             host_mod.inject_host_defaults(ctx)  # brain may declare context.today
             machine = brain

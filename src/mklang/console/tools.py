@@ -26,6 +26,7 @@ from ..config import load_provider
 from ..engine import run as run_machine_engine
 from ..llm.base import LLM
 from ..registry import base_registry, load_registry
+from .workspace import WorkspaceInspector
 
 
 class Bridge(Protocol):
@@ -66,6 +67,7 @@ class ConsoleTools:
     def __post_init__(self):
         self.workspace = Path(self.workspace).resolve()
         self.workspace.mkdir(parents=True, exist_ok=True)
+        self.inspector = WorkspaceInspector(self.workspace)
         self.prov = load_provider(self.config, self.provider)
         self.llm = (self.build_llm or _default_build_llm)(self.prov)
 
@@ -94,7 +96,48 @@ class ConsoleTools:
             "write_machine": self.write_machine,
             "run_machine": self.run_machine,
             "ask_user": self.ask_user,
+            "list_workspace": self.list_workspace,
+            "read_workspace_file": self.read_workspace_file,
+            "search_workspace": self.search_workspace,
         }
+
+    # -- read-only project inspection -------------------------------------
+
+    def workspace_context(self, _input: dict | None = None) -> dict:
+        """Return a compact deterministic snapshot for the console brain."""
+        return self.inspector.snapshot()
+
+    @staticmethod
+    def _decode_workspace_request(input: dict) -> dict:
+        raw = input.get("request") if isinstance(input, dict) else None
+        if isinstance(raw, dict):
+            return raw
+        if isinstance(raw, str) and raw.strip():
+            try:
+                value = json.loads(raw)
+            except ValueError:
+                return {"path": raw}
+            return value if isinstance(value, dict) else {}
+        return input if isinstance(input, dict) else {}
+
+    def list_workspace(self, input: dict) -> str:
+        request = self._decode_workspace_request(input)
+        return _obs(self.inspector.list(request.get("path", ""), request.get("depth", 1)))
+
+    def read_workspace_file(self, input: dict) -> str:
+        request = self._decode_workspace_request(input)
+        return _obs(self.inspector.read(request.get("path", ""), request.get("max_bytes")))
+
+    def search_workspace(self, input: dict) -> str:
+        request = self._decode_workspace_request(input)
+        return _obs(
+            self.inspector.search(
+                request.get("query", ""),
+                request.get("path", ""),
+                request.get("max_results"),
+                request.get("case_sensitive", False),
+            )
+        )
 
     # -- discovery ---------------------------------------------------------
 

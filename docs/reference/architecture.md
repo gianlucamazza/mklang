@@ -51,7 +51,9 @@ All surfaces commission runs through the same seam, `host.py`.
 - `console/` — the TUI (ADR 0015): `app.py` (Textual app), `session.py`
   (crash-tolerant persistence), `commands.py` (slash commands), `render.py`
   (safe conversation rendering), `widgets.py` (activity tree, inspector),
-  `tools.py` (the brain machine's hands). The brain itself is a machine:
+  `tools.py` (the brain machine's hands, including bounded read-only workspace
+  listing, search and file reads), `workspace.py` (workspace policy, budgets and
+  inspection). The brain itself is a machine:
   `data/console/agent.mkl`.
 - `mcp/` — the stdio MCP server (ADR 0011/0013): `server.py` (commissioning +
   provenance, live events per ADR 0019), `sessions.py` (suspended runs keyed by

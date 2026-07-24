@@ -52,9 +52,16 @@ entry points):
 | `write_machine`                      | write a `.mkl` **inside the workspace only** (confirm on overwrite)                                                                              |
 | `run_machine`                        | commission a machine (name/path/source + inputs JSON + budget); the run's events stream to the UI; suspensions are brokered to the user (below) |
 | `ask_user`                           | direct clarification — blocks the machine on a UI reply                                                                                         |
+| `list_workspace`                     | bounded read-only listing of visible workspace files/directories; excludes hidden, build, vendor and cache paths                               |
+| `read_workspace_file`                 | bounded read-only UTF-8 file read relative to the workspace; reports binary files and truncation                                                |
+| `search_workspace`                   | bounded literal text search over visible UTF-8 workspace files; returns relative paths, line numbers and previews                               |
 
 Structured tool inputs ride as JSON strings (tool inputs are rendered strings
-by contract); the tools parse them. Nothing here needs a language change —
+by contract); the tools parse them. Workspace inspection is an operational
+console capability, not a new language face: it is read-only, path-confined and
+does not expose shell, git, checkpoints or generic write access. The host also
+guards explicit project-analysis turns so the brain cannot finish without a
+workspace observation and an evidence brief. Nothing here needs a language change —
 the brain is an ordinary 0.3 machine.
 
 ### 2. Engine event seam (prerequisite, host-visible only)

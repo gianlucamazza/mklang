@@ -8,6 +8,8 @@ from mklang.lint import lint_machine
 from mklang.loader import semantic_check, validate_dict
 from mklang.model import parse_machine
 from mklang.scripttest import match_expectation, run_scenario
+from mklang.hooks import console_workspace_ready
+from mklang.console.workspace import requires_workspace_inspection
 
 AGENT_DIR = Path(__file__).resolve().parents[1] / "src" / "mklang" / "data" / "console"
 
@@ -24,9 +26,14 @@ def test_agent_machine_is_clean():
     assert errors == [] and warnings == []
     assert lint_machine(m) == []
     assert m.result == "reply"
-    assert {t for t in ("list_machines", "run_machine", "ask_user")} <= {
-        s.tool for s in m.states.values() if s.kind == "tool"
-    }
+    assert {
+        "list_machines",
+        "run_machine",
+        "ask_user",
+        "list_workspace",
+        "read_workspace_file",
+        "search_workspace",
+    } <= {s.tool for s in m.states.values() if s.kind == "tool"}
 
 
 def test_agent_scenarios_pass():
@@ -38,3 +45,20 @@ def test_agent_scenarios_pass():
         result = run_scenario(m, {m.name: m}, sc)
         mismatches = match_expectation(result, sc["expect"])
         assert not mismatches, f"{sc['name']}: {mismatches[0]}"
+
+
+def test_workspace_intent_and_readiness_guard():
+    assert requires_workspace_inspection("analizza l'architettura del progetto") is True
+    assert requires_workspace_inspection("quanto fa 2 + 2?") is False
+    assert console_workspace_ready({"workspace_required": True}, None) is False
+    assert (
+        console_workspace_ready(
+            {
+                "workspace_required": True,
+                "workspace_brief": "FACTS: README.md",
+                "observation": ['{"tool": "read_workspace_file", "path": "README.md"}'],
+            },
+            None,
+        )
+        is True
+    )

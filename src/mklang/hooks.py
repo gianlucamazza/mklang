@@ -8,6 +8,7 @@ Optional `hook: <name>` on a gate evaluates the named predicate without the LLM
 from __future__ import annotations
 
 import logging
+import json
 from collections.abc import Callable
 from importlib.metadata import entry_points
 from typing import Any
@@ -48,12 +49,38 @@ def auto_approve_ok(ctx: dict, output: Any) -> bool:
     return has_receipt(ctx, output) and amount_le_100(ctx, output)
 
 
+def console_workspace_ready(ctx: dict, _output: Any) -> bool:
+    """Allow the console brain to reply only after required workspace evidence."""
+    if not ctx.get("workspace_required"):
+        return True
+    if not ctx.get("workspace_brief"):
+        return False
+    observations = ctx.get("observation")
+    if not isinstance(observations, list):
+        return False
+    for observation in observations:
+        if not isinstance(observation, str):
+            continue
+        try:
+            payload = json.loads(observation)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(payload, dict) and payload.get("tool") in {
+            "list_workspace",
+            "read_workspace_file",
+            "search_workspace",
+        }:
+            return True
+    return False
+
+
 BUILTINS: dict[str, HookFn] = {
     "always_true": always_true,
     "always_false": always_false,
     "amount_le_100": amount_le_100,
     "has_receipt": has_receipt,
     "auto_approve_ok": auto_approve_ok,
+    "console_workspace_ready": console_workspace_ready,
 }
 
 
