@@ -1,61 +1,61 @@
 {
   "assets": {
     "docs/assets/demos/agent.gif": {
-      "bytes": 1228933,
+      "bytes": 1333709,
       "codec": "gif",
-      "duration_seconds": 21.0,
+      "duration_seconds": 24.5,
       "height": 540,
-      "sha256": "8ab17b0cde524d6ba2238aac27eaa803e69df7cc4b4993d9d410c6792a7fae2b",
+      "sha256": "3740f607f609e40bbda416f1c42dd0e48bd7a4a1a96de550d2aa2ff66e77adbd",
       "width": 960
     },
     "docs/assets/demos/agent.txt": {
-      "bytes": 4713,
-      "sha256": "3948d99d565780898796ccc1be13ff488da3ca8ce5dd5ca5ae8ee1260dfdf518"
+      "bytes": 4857,
+      "sha256": "b65c5d268f2504bdab218bbe7f4c5d056df384f729592a86da898eb423262e41"
     },
     "docs/assets/demos/agent.webm": {
-      "bytes": 324904,
+      "bytes": 373714,
       "codec": "vp9",
-      "duration_seconds": 20.96,
+      "duration_seconds": 24.48,
       "height": 675,
-      "sha256": "da3f3fc88523df0b6ca65dc8671c582695fb7ebaebbcadf16d0a914cee7c668a",
+      "sha256": "b80e8ac20e398c41cc3c9e2e32d99a6f8e92787c5a9b7bd15cd9ec7a876d5f3a",
       "width": 1200
     },
     "docs/assets/demos/language.gif": {
-      "bytes": 916584,
+      "bytes": 1054049,
       "codec": "gif",
-      "duration_seconds": 30.16,
+      "duration_seconds": 28.25,
       "height": 540,
-      "sha256": "3df3ff11dff861a92bd062bbb33b55425a54185c4e10a44dcd0ef71f54048133",
+      "sha256": "8bd581df5ed37e1f4214251c0343313dc715107fc15b96ec780fe5719f14b78e",
       "width": 960
     },
     "docs/assets/demos/language.txt": {
-      "bytes": 18343,
-      "sha256": "7ab680a8ab4f682f97c05faae2d65429628925a08d21d88fa3db96df6cc65d95"
+      "bytes": 18652,
+      "sha256": "b096b44595e4ec111b6e08a5d34f928ef7da01385febe27ca3c5ff36ed65bf80"
     },
     "docs/assets/demos/language.webm": {
-      "bytes": 590489,
+      "bytes": 702930,
       "codec": "vp9",
-      "duration_seconds": 30.2,
+      "duration_seconds": 28.28,
       "height": 675,
-      "sha256": "fabf6bedb2213dd469657dcb6b1d938b25010396c8a2549c83e583cfbfcfbcb9",
+      "sha256": "6923ca385600e21aa35a16c9e68155e9c55c9f3940df23d20a63d24e70094a88",
       "width": 1200
     }
   },
-  "generated_at": "2026-07-24T12:37:26.630106+00:00",
-  "generated_from": "263852b3450f41089c9b34518d1d151f74d8632b",
+  "generated_at": "2026-07-24T22:10:24.094885+00:00",
+  "generated_from": "4316902d248ad27477f6bf8f7140a1c77c429a81",
   "models": {
-    "balanced": "deepseek-chat",
-    "fast": "deepseek-chat",
-    "reasoning": "deepseek-reasoner"
+    "balanced": "deepseek-v4-flash",
+    "fast": "deepseek-v4-flash",
+    "reasoning": "deepseek-v4-flash"
   },
-  "package_version": "1.0.7",
+  "package_version": "1.0.8",
   "provider": "deepseek",
   "schema": 2,
   "source": {
     "files": {
-      "config/runtime.example.yaml": "d4b84eba6ba29894e5fe8aed30c52357260c73f11c2849324abf24e908c19ecc",
+      "config/runtime.example.yaml": "67afcb45ff214943080be187f12995a2f8ed72196448d1aeb15fa03c93ea14aa",
       "demos/tapes/agent.tape": "933df4f8482094bd72167b6d8d3f5b3e4a1b2485745acfa1190f7250b3edd8ad",
-      "demos/tapes/language.tape": "1bb1357d8a98fa91f4cd7b9ddad53aea0c575366a8ca7c90eedf13d55c5ad57f",
+      "demos/tapes/language.tape": "b7f41e7da11a1183691e689ab54f86ce2caa6d7e8734fc50cb0b3f9d016a1e18",
       "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
       "examples/news_search.mkl": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mkl": "c2fabb98ec3458cb6454f25ea1ef3cbc4c6dbd28797b5825fa13433c2696a7bc",
@@ -77,14 +77,14 @@
       "src/mklang/llm/base.py": "f64fdbf7057b672a7edc55b149583eed515229915ddc60b3bd71c187606415ea",
       "src/mklang/llm/context_view.py": "ff6d745ef7e78c544a57bc5a92cd1ebd48e413c84b47aa525af2eef0dae237eb",
       "src/mklang/llm/mock.py": "a631787aaab1cd4660e8807efa7b2afbfdf687795fc9dce2662fbe42cae9ef7f",
-      "src/mklang/llm/openai_compat.py": "26c632fb6a8e4c93f015f411379747040dcd50d7f01518692d48d146f23b0e20",
+      "src/mklang/llm/openai_compat.py": "80791caf59d0289e05bcfbb200c9a2f199b1c461f5a2375e51833292f9394fe1",
       "src/mklang/llm/prompts.py": "80e849690c73783d9a52d0790c11b405772c3537db57628f56a6809b6e851239",
       "src/mklang/presentation.py": "ef64505e39d42cd7cb3d5dfb3a53ae71cdfa9c9de59c4c121095a8cc073e3320",
       "src/mklang/providers.py": "f885d259680d2233cbdc92c8d4551a04bf9f8df6f33a6fbbc1561d9b991c4e18",
       "src/mklang/search.py": "f1c073b95fdc81b9c120848d35f9d94af7e4c23572f5f919f1d96515dd1c6fca",
       "src/mklang/tools.py": "2ac751ef995dbcade7eef2bb2e3d34af472ca4d190f6aade453d94f3cdb03fb2"
     },
-    "sha256": "60e11f07563a1dc84a170225fe07bd6c1a2d26371fdf77a16f1266ed6cbac77b"
+    "sha256": "08cf6e9f5f5dd19c4bde150741aad42773647b5c335199e41e4c3d915444ad19"
   },
   "toolchain": {
     "font": {
