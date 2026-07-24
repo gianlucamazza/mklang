@@ -1,0 +1,3167 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative language for LLM-driven state machines.">
+      
+      
+      
+        <link rel="canonical" href="https://gianlucamazza.github.io/mklang/best-practices/">
+      
+      
+        <link rel="prev" href="../authoring/">
+      
+      
+        <link rel="next" href="../stability/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Best practices - mklang</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#best-practices" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="mklang" class="md-header__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mklang
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Best practices
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="mklang" class="md-nav__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mklang
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SPEC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conformance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conformance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-layer-discipline-do-not-mix-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Layer discipline (do not mix layers)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-authoring-checklist-every-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Authoring checklist (every machine)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-prompt-assembly-system-vs-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Prompt assembly (system vs user)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-gates-and-reliability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Gates and reliability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-tools-host-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Tools (host contracts)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Tools (host contracts)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-observation-envelope-adr-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Observation envelope (ADR 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-recommended-host-tool-contracts-reference-interpreter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Recommended host tool contracts (reference interpreter)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.3 Recommended host tool contracts (reference interpreter)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-adr-0016-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search (ADR 0016 / 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search_kb-adr-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search_kb (ADR 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send_reply-adr-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        send_reply (ADR 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list_files-read_file-write_file-adr-0024" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_files / read_file / write_file (ADR 0024)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-what-not-to-bake-into-the-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 What not to bake into the language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-capability-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Capability policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-web-time-and-knowledge-cutoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Web, time, and knowledge cutoff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-output-cutoff-and-context-budgets-anti-cutoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Output cutoff and context budgets (anti-cutoff)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-memory-and-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Memory and composition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-budgets-and-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Budgets and cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-testing-and-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Testing and CI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-security-spec-11-operational-minimum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Security (SPEC §11) — operational minimum
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-observability-trace-vs-events-vs-process-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Observability: trace vs events vs process logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Observability: trace vs events vs process logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anti-patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-filesystem-four-classes-not-one-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Filesystem: four classes, not one tool
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Filesystem: four classes, not one tool">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-host-layout-documentation-ssot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current host layout (documentation SSOT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rules-for-class-3-data-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules for class 3 (data tools)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-planning-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory &amp; planning mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anti-patterns_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anti-patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-surfaces-quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Surfaces quick reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14. Surfaces quick reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-cancellation-and-shutdown-documentation-ssot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console cancellation and shutdown (documentation SSOT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-anti-patterns-quick-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Anti-patterns (quick list)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-language-vs-host-what-may-become-language-later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Language vs host: what may become language later
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stability policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live demos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Machine stdlib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpreter architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/gate-divergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gate divergence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/authoring-blind-spot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring blind_spot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/validation-report-2026-07-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/distribution-five-reader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Five-reader distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-layer-discipline-do-not-mix-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Layer discipline (do not mix layers)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-authoring-checklist-every-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Authoring checklist (every machine)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-prompt-assembly-system-vs-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Prompt assembly (system vs user)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-gates-and-reliability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Gates and reliability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-tools-host-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Tools (host contracts)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Tools (host contracts)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-observation-envelope-adr-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Observation envelope (ADR 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-recommended-host-tool-contracts-reference-interpreter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Recommended host tool contracts (reference interpreter)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.3 Recommended host tool contracts (reference interpreter)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-adr-0016-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search (ADR 0016 / 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search_kb-adr-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search_kb (ADR 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send_reply-adr-0020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        send_reply (ADR 0020)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list_files-read_file-write_file-adr-0024" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_files / read_file / write_file (ADR 0024)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-what-not-to-bake-into-the-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 What not to bake into the language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-capability-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Capability policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-web-time-and-knowledge-cutoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Web, time, and knowledge cutoff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-output-cutoff-and-context-budgets-anti-cutoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Output cutoff and context budgets (anti-cutoff)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-memory-and-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Memory and composition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-budgets-and-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Budgets and cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-testing-and-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Testing and CI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-security-spec-11-operational-minimum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Security (SPEC §11) — operational minimum
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-observability-trace-vs-events-vs-process-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Observability: trace vs events vs process logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Observability: trace vs events vs process logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anti-patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-filesystem-four-classes-not-one-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Filesystem: four classes, not one tool
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Filesystem: four classes, not one tool">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-host-layout-documentation-ssot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current host layout (documentation SSOT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rules-for-class-3-data-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules for class 3 (data tools)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-planning-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory &amp; planning mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anti-patterns_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anti-patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-surfaces-quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Surfaces quick reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14. Surfaces quick reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-cancellation-and-shutdown-documentation-ssot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console cancellation and shutdown (documentation SSOT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-anti-patterns-quick-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Anti-patterns (quick list)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-language-vs-host-what-may-become-language-later" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Language vs host: what may become language later
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="best-practices">Best practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h1>
+<p>Canonical checklist for writing, running, and hosting mklang machines.
+<strong>How to author a correct file:</strong> <a href="../authoring/">Authoring</a>.<br />
+<strong>How to tune reliability and cost:</strong> <a href="../patterns/">Patterns</a>.<br />
+<strong>What the language guarantees:</strong> <a href="../SPEC/">SPEC</a> (cookbook §10, threat model §11).</p>
+<p>This page answers: <em>what should I always do, never do, and where does each rule live?</em></p>
+<hr />
+<h2 id="1-layer-discipline-do-not-mix-layers">1. Layer discipline (do not mix layers)<a class="headerlink" href="#1-layer-discipline-do-not-mix-layers" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Owns</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Language (<code>.mkl</code>)</strong></td>
+<td>Control flow, prose contracts, portable structure</td>
+<td>states, gates, tiers, <code>tool:</code> <em>names</em>, <code>parse: list</code></td>
+</tr>
+<tr>
+<td><strong>Host runtime</strong></td>
+<td>Bindings, budgets, clocks, truncation <em>policy</em>, LLM adapters, produce/judge prompt assembly, <strong>ops logging</strong>, FS data roots for tools</td>
+<td><code>tools={…}</code>, hooks, <code>on_truncate</code>, <code>context.today</code> / <code>now</code> fill, <code>llm/prompts.py</code>, process loggers, plugin FS tools</td>
+</tr>
+<tr>
+<td><strong>Surface</strong></td>
+<td>UX, consent, compact observations, chrome vs content rendering, session audit</td>
+<td>CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, read-only workspace inspection and <code>.mkl</code> authoring</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rules</strong></p>
+<ul>
+<li>Side effects live only in <strong><code>tool:</code> states</strong> (host callables). Never in <code>execution</code> or generative prompts.</li>
+<li>The <code>.mkl</code> <strong>never</strong> names a provider or model — only <code>tier:</code> (ADR 0003).</li>
+<li>Host tools are <strong>opaque names</strong> + <code>(dict) → str</code>. Do not promote search/bash/FS into language syntax.</li>
+<li>Generic <strong>bash / filesystem</strong> stay <strong>out of core</strong> (console: bounded read-only workspace inspection plus <code>.mkl</code> authoring; production I/O = plugins or external host).</li>
+</ul>
+<hr />
+<h2 id="2-authoring-checklist-every-machine">2. Authoring checklist (every machine)<a class="headerlink" href="#2-authoring-checklist-every-machine" title="Permanent link">&para;</a></h2>
+<p>Before shipping a <code>.mkl</code>:</p>
+<ul>
+<li>[ ] Schema header + <code>mklang: "0.3"</code> when using 0.3 faces (<code>parse: list</code>, …).</li>
+<li>[ ] Every non-terminal state ends with <strong><code>when: otherwise</code></strong> (last).</li>
+<li>[ ] At least one path reaches <strong><code>END</code></strong>; <code>budget</code> ≥ shortest path (+ headroom).</li>
+<li>[ ] Every <code>{{path}}</code> root is <code>context:</code>, a state <code>output:</code>, HITL <code>human.*</code>, or fan-out <code>item</code>/<code>index</code>.</li>
+<li>[ ] Exact policy (amounts, allowlists, formats) uses <strong><code>hook:</code></strong>, not prose alone.</li>
+<li>[ ] Real I/O uses <strong><code>tool:</code></strong> + top-level <code>tools:</code> declarations for documentation.</li>
+<li>[ ] Time-sensitive machines declare <strong><code>today: ""</code></strong> (and <strong><code>now: ""</code></strong> for wall-clock) in <code>context:</code> and use <code>Today is {{today}}</code> / <code>Current local time is {{now}}</code> in prompts.</li>
+<li>[ ] Irreversible actions sit behind <strong><code>escalate</code></strong> (and HITL in production).</li>
+<li>[ ] <code>mklang check</code> clean; <code>mklang lint</code> clean (use <code>--strict</code> in CI).</li>
+<li>[ ] Scenario tests cover happy path <strong>and</strong> escape hatches (<code>mklang test</code>).</li>
+<li>[ ] Sticky policy lives in <strong><code>execution</code></strong> (system channel); turn data and
+      <code>{{…}}</code> live in <strong><code>prompt</code></strong> (user channel) — see §3.</li>
+</ul>
+<hr />
+<h2 id="3-prompt-assembly-system-vs-user">3. Prompt assembly (system vs user)<a class="headerlink" href="#3-prompt-assembly-system-vs-user" title="Permanent link">&para;</a></h2>
+<p>The reference interpreter builds LLM calls from language faces. There is <strong>no</strong>
+<code>system:</code> keyword in the language (that would be a 0.4 ADR). Map faces to
+channels:</p>
+<table>
+<thead>
+<tr>
+<th>Face / artifact</th>
+<th>LLM channel</th>
+<th>Interpolated?</th>
+<th>Put here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>structure</code></td>
+<td><strong>system</strong> (produce)</td>
+<td>No</td>
+<td>Output contract / shape for this state</td>
+</tr>
+<tr>
+<td><code>execution</code></td>
+<td><strong>system</strong> (produce)</td>
+<td>No</td>
+<td>Sticky operational policy (never side effects)</td>
+</tr>
+<tr>
+<td><code>prompt</code></td>
+<td><strong>user</strong> (produce)</td>
+<td><strong>Yes</strong> <code>{{…}}</code></td>
+<td>This turn’s task + data — tainted values arrive <code>&lt;data-NONCE&gt;</code>-fenced (SPEC §6)</td>
+</tr>
+<tr>
+<td><code>when:</code> conditions</td>
+<td>judge <strong>user</strong></td>
+<td>No (prose)</td>
+<td>Gate selection only — stay bare (author-trusted)</td>
+</tr>
+<tr>
+<td>Host <code>JUDGE_SYSTEM</code></td>
+<td>judge <strong>system</strong></td>
+<td>fixed</td>
+<td>Choice protocol <code>{"choice": n}</code> — not authorable</td>
+</tr>
+</tbody>
+</table>
+<p>The judge user payload always presents OUTPUT / REASONING / CONTEXT as fenced
+data (shared <code>build_judge_user</code>, ADR 0025); the produce system message gains an
+untrusted-data rule only when the user message actually carries a fence.</p>
+<p><strong>Rules</strong></p>
+<ol>
+<li><strong>Durable vs turn data.</strong> Role, hard constraints, “never invent search” →
+   <code>execution</code>. Instance values (<code>{{user_message}}</code>, <code>{{today}}</code>, <code>{{now}}</code>,
+   <code>{{history}}</code>, tool notes) → <code>prompt</code>.</li>
+<li><strong>Do not put <code>{{…}}</code> in <code>structure</code> / <code>execution</code>.</strong> They are not rendered;
+   braces stay literal.</li>
+<li><strong>Untrusted text stays out of system</strong> (user text, web snippets, history) —
+   SPEC §11. System is for host-stable contract + policy. In the user channel
+   the runtime additionally delimits tainted values structurally (SPEC §6) —
+   discipline and delimiting stack, they do not replace each other.</li>
+<li><strong><code>execution</code> is not a tool.</strong> Side effects only via <code>tool:</code> states.</li>
+<li><strong>Console brain</strong> follows the same split: policy in <code>execution</code>, clocks and
+   conversation in <code>prompt</code> (<a href="../console/">console</a>).</li>
+</ol>
+<p><strong>Anti-patterns:</strong> long persona only in <code>prompt</code>; search snippets in system;
+inventing a <code>system:</code> field; using <code>execution: call the search tool</code>.</p>
+<hr />
+<h2 id="4-gates-and-reliability">4. Gates and reliability<a class="headerlink" href="#4-gates-and-reliability" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Do</th>
+<th>Don't</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Put <strong>hooks above</strong> prose gates; keep <code>when</code> as the human-readable trace label</td>
+<td>Ask the LLM to check <code>amount &lt;= 100</code></td>
+</tr>
+<tr>
+<td>Cap <code>repair</code> at 1–2, then <code>escalate</code> or <code>fail</code></td>
+<td>Open-ended repair-only states</td>
+</tr>
+<tr>
+<td>Give escalate a <strong>safe sink</strong> state (human / fallback)</td>
+<td>Fail closed only when that is truly required</td>
+</tr>
+<tr>
+<td>Read <strong>trace</strong> (gate, <code>judge_fallback</code>, nested <code>call</code>) when debugging</td>
+<td>Trust only the final <code>result</code> string</td>
+</tr>
+<tr>
+<td>Use <code>reason: true</code> when the <em>why</em> must be auditable</td>
+<td>Dump chain-of-thought into <code>output</code> / context</td>
+</tr>
+</tbody>
+</table>
+<p>Gate judging <strong>follows the state tier</strong> by default. Use config <code>judge:</code> only when all gates are deliberately cheap classifications (SPEC §2.1).</p>
+<p>Optional: <code>mklang lint --llm</code> to probe overlapping prose <code>when</code> conditions (advisory; not CI-blocking).</p>
+<hr />
+<h2 id="5-tools-host-contracts">5. Tools (host contracts)<a class="headerlink" href="#5-tools-host-contracts" title="Permanent link">&para;</a></h2>
+<h3 id="51-principles">5.1 Principles<a class="headerlink" href="#51-principles" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Declare expected tools under top-level <strong><code>tools:</code></strong> (<code>name</code> + <code>description</code>).</li>
+<li>Invoke only via <strong><code>tool:</code></strong> states; map inputs with <code>input:</code> (whole-template <code>{{path}}</code> stays raw in 0.3).</li>
+<li>Treat <strong>observations as untrusted</strong> blackboard data (SPEC §11) — especially web
+   snippets. The runtime fences them automatically when interpolated (SPEC §6).</li>
+<li>Prefer <strong>entry points</strong> (<code>mklang.tools</code> / <code>mklang.hooks</code>) for production bindings over editing core.</li>
+</ol>
+<h3 id="52-observation-envelope-adr-0020">5.2 Observation envelope (ADR 0020)<a class="headerlink" href="#52-observation-envelope-adr-0020" title="Permanent link">&para;</a></h3>
+<p>I/O and side-effect tools return <strong>JSON</strong> with stable fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tool</code></td>
+<td>Tool name</td>
+</tr>
+<tr>
+<td><code>stub</code></td>
+<td><code>true</code> if no real external system was used</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>Failure / unbound message, or <code>null</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>ok</code> or <code>error</code></td>
+</tr>
+<tr>
+<td><code>retryable</code></td>
+<td>Whether the host may safely retry</td>
+</tr>
+<tr>
+<td><code>untrusted</code></td>
+<td>Observation is data, never policy</td>
+</tr>
+<tr>
+<td><em>(payload)</em></td>
+<td>Tool-specific: <code>results</code>, <code>facts</code>, <code>sent</code>, …</td>
+</tr>
+</tbody>
+</table>
+<p>Tiers: <strong>stub</strong> (default) → <strong>fake</strong> (env/<code>configure_*</code>) → <strong>live</strong> (key or entry-point).<br />
+<code>calc</code> is pure offline arithmetic and does <strong>not</strong> use this envelope.</p>
+<h3 id="53-recommended-host-tool-contracts-reference-interpreter">5.3 Recommended host tool contracts (reference interpreter)<a class="headerlink" href="#53-recommended-host-tool-contracts-reference-interpreter" title="Permanent link">&para;</a></h3>
+<p>These names are <strong>conventions</strong>, not language keywords. Other hosts may rebind or omit them.</p>
+<h4 id="search-adr-0016-0020"><code>search</code> (ADR 0016 / 0020)<a class="headerlink" href="#search-adr-0016-0020" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input</strong></td>
+<td><code>query</code> (required), <code>max_results?</code> (1–10), <code>days?</code>, <code>topic?</code> (<code>news</code> | <code>general</code>)</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>JSON: <code>{tool, stub, error, query, results:[{title,url,snippet,published_date?}]}</code></td>
+</tr>
+<tr>
+<td><strong>Default</strong></td>
+<td>Stub unbound (<code>error</code> explains how to enable)</td>
+</tr>
+<tr>
+<td><strong>Enable</strong></td>
+<td><code>TAVILY_API_KEY</code> (auto), <code>MKLANG_SEARCH_BACKEND=fake\|tavily\|stub</code>, or <code>runtime.yaml</code> <code>tools.search.backend</code> (env wins)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Practice:</strong> plan → <code>tool: search</code> → check sufficiency → finalize grounded <strong>only</strong> in notes. Never “search the web” only in prose. This exact pattern ships ready-made as the <a href="../stdlib/"><code>std_research</code></a> stdlib machine — reach for it before authoring your own.</p>
+<h4 id="search_kb-adr-0020"><code>search_kb</code> (ADR 0020)<a class="headerlink" href="#search_kb-adr-0020" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input</strong></td>
+<td><code>query</code> (or <code>q</code>)</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>JSON: <code>{tool, stub, error, query, facts: [str, …], note?}</code></td>
+</tr>
+<tr>
+<td><strong>Default</strong></td>
+<td>Demo policy facts, always <code>stub: true</code></td>
+</tr>
+<tr>
+<td><strong>Fake</strong></td>
+<td><code>MKLANG_KB_BACKEND=fake</code>, <code>tools.kb.backend: fake</code>, or <code>mklang.kb.configure_kb</code></td>
+</tr>
+</tbody>
+</table>
+<p>Replace with real RAG via entry points in production.</p>
+<h4 id="send_reply-adr-0020"><code>send_reply</code> (ADR 0020)<a class="headerlink" href="#send_reply-adr-0020" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input</strong></td>
+<td><code>body</code> (or <code>draft</code>), <code>to?</code></td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>JSON: <code>{tool, stub, sent, recorded, delivery, to, chars, preview, error, note?}</code></td>
+</tr>
+<tr>
+<td><strong>Default stub</strong></td>
+<td><code>sent: false</code>, <code>delivery: "stub"</code> — <strong>does not</strong> claim real mail left the host</td>
+</tr>
+<tr>
+<td><strong>Fake</strong></td>
+<td><code>MKLANG_MAIL_BACKEND=fake</code> (or <code>tools.mail.backend: fake</code>) → in-memory outbox, <code>delivery: "fake"</code>, <code>sent: true</code>, still <code>stub: true</code></td>
+</tr>
+</tbody>
+</table>
+<p>Never ask the model to “confirm the message was sent.” Gates should treat <code>sent: false</code> as no delivery.</p>
+<h4 id="list_files-read_file-write_file-adr-0024"><code>list_files</code> / <code>read_file</code> / <code>write_file</code> (ADR 0024)<a class="headerlink" href="#list_files-read_file-write_file-adr-0024" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input</strong></td>
+<td><code>list_files</code>: <code>path?</code> · <code>read_file</code>: <code>path</code>, <code>max_bytes?</code> · <code>write_file</code>: <code>path</code>, <code>content</code>, <code>overwrite?</code></td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>JSON: <code>{tool, stub, error, path, …}</code> — <code>entries/count/truncated</code>, <code>content/bytes/truncated</code>, <code>bytes/written/existed</code></td>
+</tr>
+<tr>
+<td><strong>Default</strong></td>
+<td><strong>Live reads</strong> confined to the workspace (<code>MKLANG_FS_ROOT</code> or cwd); writes refused without a grant</td>
+</tr>
+<tr>
+<td><strong>Enable</strong></td>
+<td>Workspace: <code>--workspace</code> / <code>MKLANG_FS_ROOT</code> / <code>tools.fs.workspace</code> / cwd · Writes: <code>--allow-write</code> / <code>MKLANG_FS_WRITE=1</code> / <code>tools.fs.write</code> · Offline: <code>MKLANG_FS_BACKEND=stub</code> or <code>tools.fs.backend: stub</code></td>
+</tr>
+</tbody>
+</table>
+<p>Relative paths only; <code>..</code>, absolute paths, and dotfiles are refused; writes are
+capped, suffix-allowlisted (never <code>.mkl</code>), atomic, mode 0600. See §13 for the
+class model and rules.</p>
+<h4 id="calc"><code>calc</code><a class="headerlink" href="#calc" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input</strong></td>
+<td><code>expr</code> (or <code>query</code>): arithmetic expression</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Decimal string, or <code>error: …</code> (not the I/O envelope)</td>
+</tr>
+</tbody>
+</table>
+<p>Safe subset only (no <code>eval</code> of Python). Use for ReAct demos and numeric observations.</p>
+<h3 id="54-what-not-to-bake-into-the-language">5.4 What not to bake into the language<a class="headerlink" href="#54-what-not-to-bake-into-the-language" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Temptation</th>
+<th>Keep as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Web search, HTTP, email, payments</td>
+<td>Host <code>tool:</code></td>
+</tr>
+<tr>
+<td>Shell / arbitrary FS / git</td>
+<td>Host plugin (sandboxed), never core</td>
+</tr>
+<tr>
+<td>Console <code>write_machine</code> / <code>run_machine</code></td>
+<td>Console surface only</td>
+</tr>
+<tr>
+<td>“Current date/time” as <code>$now</code> keyword</td>
+<td>Declared <code>context.today</code> / <code>context.now</code> + host fill</td>
+</tr>
+</tbody>
+</table>
+<h3 id="55-capability-policy">5.5 Capability policy<a class="headerlink" href="#55-capability-policy" title="Permanent link">&para;</a></h3>
+<p>A machine may request a tool, but only the host grants a capability. Interactive
+grants should be scoped at least by <code>machine:tool</code>; production side effects
+should additionally scope operation, path, quantity, duration, and
+reversibility. Unknown third-party tools default to conservative high-risk
+metadata (<code>external_egress</code>, <code>irreversible</code>, <code>sensitivity=unknown</code>).</p>
+<p>The console records scoped grants such as <code>machine:tool</code> and exposes conservative
+risk metadata during discovery. A machine cannot grant itself a capability, and
+a consent prompt must not be treated as a replacement for host policy.</p>
+<hr />
+<h2 id="6-web-time-and-knowledge-cutoff">6. Web, time, and knowledge cutoff<a class="headerlink" href="#6-web-time-and-knowledge-cutoff" title="Permanent link">&para;</a></h2>
+<p>Live or news-like questions fail in predictable ways if the machine relies on model training data.</p>
+<table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Use <code>tool: search</code></strong></td>
+<td><code>std_research</code> (stdlib, run by name), <code>research_web.mkl</code>, <code>research_compress.mkl</code>, <code>news_search.mkl</code></td>
+</tr>
+<tr>
+<td><strong>Declare <code>today: ""</code></strong></td>
+<td>Host fills ISO <code>YYYY-MM-DD</code> when still empty after inputs (CLI / MCP / console)</td>
+</tr>
+<tr>
+<td><strong>Declare <code>now: ""</code> for wall-clock</strong></td>
+<td>Host fills local ISO datetime with offset (e.g. <code>2026-07-17T14:32:05+02:00</code>) — use for “what time is it?”, not for news recency alone</td>
+</tr>
+<tr>
+<td><strong>Prompt with calendar / clock</strong></td>
+<td><code>Today is {{today}}</code> / <code>Current local time is {{now}}</code>; include year in queries when time-sensitive</td>
+</tr>
+<tr>
+<td><strong>Recency inputs</strong></td>
+<td>Prefer <code>days</code> + <code>topic: news</code> for news machines</td>
+</tr>
+<tr>
+<td><strong>Ground finalize</strong></td>
+<td>Cite titles/URLs/<code>published_date</code> from notes only</td>
+</tr>
+<tr>
+<td><strong>Forbid fill-in</strong></td>
+<td>Explicitly ban inventing facts or answering from pre-training when notes are empty/thin</td>
+</tr>
+<tr>
+<td><strong>Honest failures</strong></td>
+<td>If stub says search unbound, tell the operator how to enable it — do not fabricate hits</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Language note:</strong> there is no primitive that “disables knowledge cutoff.” Discipline is host clock + tools + prose + gates.</p>
+<hr />
+<h2 id="7-output-cutoff-and-context-budgets-anti-cutoff">7. Output cutoff and context budgets (anti-cutoff)<a class="headerlink" href="#7-output-cutoff-and-context-budgets-anti-cutoff" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What happens</th>
+<th>Practice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Produce length stop</strong></td>
+<td>Trace/events get <code>truncated: true</code> (ADR 0018)</td>
+<td>Prefer adequate <code>max_tokens</code> in runtime <code>params</code>; use <code>--on-truncate halt</code> for strict runs</td>
+</tr>
+<tr>
+<td><strong>Default policy</strong></td>
+<td><code>report</code> continues with partial text</td>
+<td>Do not treat partial finalize as complete without checking trace</td>
+</tr>
+<tr>
+<td><strong><code>parse: list</code> + truncate</strong></td>
+<td>Halts <code>parse-list-truncated</code></td>
+<td>Keep planner outputs short and well-structured</td>
+</tr>
+<tr>
+<td><strong>Produce <code>{{…}}</code> budget</strong></td>
+<td>Long values end with <code>…[truncated]</code> (ADR 0017)</td>
+<td>Compress notes before the next loop (<code>research_compress.mkl</code>)</td>
+</tr>
+<tr>
+<td><strong>Judge CONTEXT</strong></td>
+<td>Head+tail + <code>…[context_truncated]…</code></td>
+<td>Put critical facts in <strong>state output</strong>, not only deep context</td>
+</tr>
+<tr>
+<td><strong>Console observation</strong></td>
+<td>Compact JSON: <code>truncated</code>, <code>result_truncated</code>, <code>…[truncated]</code> on clipped result; accumulated search fields are bounded with the same marker</td>
+<td>Brain/user must report cuts — never invent the missing tail; compress long research notes</td>
+</tr>
+</tbody>
+</table>
+<p>Continue-stitching after length stop is <strong>deferred</strong> (not default).</p>
+<hr />
+<h2 id="8-memory-and-composition">8. Memory and composition<a class="headerlink" href="#8-memory-and-composition" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Practice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Growing <code>accumulate</code> lists</td>
+<td>Explicit <strong>compress</strong> generative state; do not rely on silent host summary</td>
+</tr>
+<tr>
+<td>Plan → map</td>
+<td>Planner uses <code>parse: list</code>; executor <code>over: "{{steps}}"</code></td>
+</tr>
+<tr>
+<td>Pass lists into <code>call</code>/<code>tool</code></td>
+<td>Whole-template <code>input: { x: "{{list}}" }</code> (0.3 raw resolution)</td>
+</tr>
+<tr>
+<td>Reuse architecture</td>
+<td>Prefer <strong><code>std_*</code></strong> (<code>call: std_refine</code>, …) over copy-paste</td>
+</tr>
+<tr>
+<td>Host-dependent patterns</td>
+<td>ReAct / router / hooks stay authored examples, not pure stdlib</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-budgets-and-cost">9. Budgets and cost<a class="headerlink" href="#9-budgets-and-cost" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Step <code>budget</code>:</strong> worst-case path × loops + fan-out width; leave repair headroom.</li>
+<li><strong>Fan-out:</strong> charges <code>max(1, len(branches))</code> at runtime; static check counts fan-out as 1.</li>
+<li><strong>Token cost:</strong> <code>--max-tokens</code> / <code>cost_budget</code> shared with <code>call</code> children.</li>
+<li><strong>Tiers:</strong> default <code>balanced</code>; cascade <code>fast</code> → escalate → <code>reasoning</code> for mostly-easy work.</li>
+<li><strong>Sample diversity:</strong> temperature and/or <code>{{index}}</code> in the prompt; do not assume all reasoners sample.</li>
+</ul>
+<hr />
+<h2 id="10-testing-and-ci">10. Testing and CI<a class="headerlink" href="#10-testing-and-ci" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Command</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Schema + semantics</td>
+<td><code>mklang check</code></td>
+<td>Blocking shape/graph</td>
+</tr>
+<tr>
+<td>Static smells</td>
+<td><code>mklang lint</code> (<code>--strict</code> in CI)</td>
+<td>Typos, dead gates, unread outputs</td>
+</tr>
+<tr>
+<td>Prose gate overlap</td>
+<td><code>mklang lint --llm</code></td>
+<td>Advisory only</td>
+</tr>
+<tr>
+<td>Path pinning</td>
+<td><code>mklang test … --script …</code></td>
+<td>No API keys; escape hatches</td>
+</tr>
+<tr>
+<td>Language contract</td>
+<td><code>pytest</code> + <code>conformance/</code></td>
+<td>Interpreter semantics</td>
+</tr>
+<tr>
+<td>Live smoke</td>
+<td><code>MKLANG_LIVE=1 pytest tests/test_live.py</code></td>
+<td>Opt-in providers</td>
+</tr>
+</tbody>
+</table>
+<p>Keep <code>machine.test.yaml</code> beside the machine. Cover escalate, repair exhaustion, empty tool results, and search-unbound paths for web machines.</p>
+<p>Runs, the console, and <code>lint --llm</code> sit behind an upfront provider-key gate:
+they fail fast naming the exact <code>.env</code> variable to set (<code>local</code> is exempt), so
+keyless environments stick to <code>check</code> / <code>lint</code> / <code>test</code>.</p>
+<p><strong>Static checks are not behavioural correctness.</strong> <code>check</code> (schema + semantics)
+and <code>lint</code> (static smells) prove a machine is <em>well-formed</em> — not that it <em>does
+the right thing</em>. A document that passes both can still route a gate on the wrong
+distinction, size a <code>budget</code> too tight for its own shortest path, or wire a
+<code>tool:</code> state to the wrong input key. Only a <strong>scenario run</strong> exercises behaviour
+(<code>mklang test … --script …</code>, no keys). This gap matters most for a machine an
+<strong>agent authored</strong> — the console / MCP self-authoring loop (ADR 0015). There the
+loop's <code>check</code> verdict tells the agent the document is <em>valid</em>; it never tells it
+the document is <em>correct</em>. Freeze a hand-written <code>*.test.yaml</code> acceptance scenario
+for the behaviours the machine must exhibit and run it before trusting an authored
+machine — treat "check-clean" as a precondition for testing, not a substitute for
+it.</p>
+<p><strong>Console vs MCP authoring.</strong> The console can <code>write_machine</code> into a workspace
+(with human overwrite consent). MCP deliberately has <strong>no persist tool</strong> (ADR
+0011/0013) — headless hosts author and <code>run(source=…)</code> / <code>check(source=…)</code>
+inline, or pass an explicit <code>checkpoint_path</code>. Do not expect MCP to mirror the
+console's "save to disk → re-run by name" loop; that model needs the console (or
+a host that owns the filesystem).</p>
+<p><strong>Authoring-turn budget.</strong> <code>agent.mkl</code> uses one shared step budget for
+discover/run/author/static-repair/reply (currently 24). There is no separate
+language-level repair pool: a turn that explores and then authors with multiple
+check failures can exhaust the budget. Prefer tight authoring contracts and a
+frozen scenario test over lengthening the loop indefinitely.</p>
+<p><strong><code>escalate</code> is control-flow-critical.</strong> Prose <code>escalate</code> gates are non-deterministic
+under provider and repeats (measured: <code>severity_escalate</code> agreement <strong>0.667</strong> on
+2026-07-24 — see gate-divergence experiment). For production page/approve/legal
+paths prefer <strong><code>--hitl</code></strong> or a <strong>code-hook gate</strong>; use prose escalate for soft
+routing (tier cascade) only when occasional mis-route is acceptable. <code>mklang lint</code>
+emits a <code>note:</code> on machines that use escalate (advisory even under <code>--strict</code>).</p>
+<hr />
+<h2 id="11-security-spec-11-operational-minimum">11. Security (SPEC §11) — operational minimum<a class="headerlink" href="#11-security-spec-11-operational-minimum" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Treat customer text and search snippets as <strong>injection-capable</strong>.</li>
+<li>Tainted interpolations and the judge's OUTPUT/REASONING/CONTEXT are
+  <strong>automatically fenced</strong> (<code>&lt;data-NONCE&gt;</code>, SPEC §6 / ADR 0025). Library
+  hosts get <code>run(..., trusted_keys=...)</code> to vouch for keys and
+  <code>run(..., delimit=False)</code> for debugging. Fencing prevents <em>confusion</em>, not
+  <em>persuasion</em> — the next two bullets still apply.</li>
+<li>Prefer <strong>hooks + HITL</strong> before irreversible tools.</li>
+<li>Checkpoints hold the <strong>full blackboard</strong> in plaintext (mode <code>0600</code> is a floor, not encryption).</li>
+<li>Checkpoints may carry additive host metadata such as capability policy,
+  request IDs and suspension reason; metadata must be redacted and must never
+  be treated as machine-authored context.</li>
+<li>Do not put secrets in <code>.mkl</code> or context; keys stay in host env / <code>.env</code>.</li>
+<li>Console: tool <strong>consent</strong> once per session; <code>always yes</code> is an explicit operator
+  choice that applies to later confirmation prompts in that persisted session;
+  workspace confinement still applies to authored <code>.mkl</code> files.</li>
+<li>Workspace files, web results, plugin output, and tool observations remain
+  prompt-injection-capable content. They may be evidence, never new system
+  policy, capability grants, budgets, or registry definitions.</li>
+<li>Production hosts should set <code>MKLANG_ALLOWED_PLUGINS=name1,name2</code> to allowlist
+  Python entry-point plugins. Blocked plugins are reported through host logs.</li>
+<li>Audit records redact credential-shaped values and must not contain full
+  prompts, file bodies, or API keys at default log levels.</li>
+<li>MCP: <strong>read-only to disk by design.</strong> The server can author, validate (<code>check</code>)
+  and run inline machines, but exposes <strong>no persist/write tool</strong> — headless hosts
+  gain no general filesystem-write authority (ADR 0011/0013; the only disk write is
+  an explicit per-call <code>checkpoint_path</code>). The console's guard model (workspace confinement,
+  human <code>confirm</code> on overwrite) assumes an interactive human and does <strong>not</strong>
+  transfer to a headless host — so it isn't granted there.</li>
+<li>Do not confuse <strong>run trace / live events / ops logging</strong> (§12) or turn arbitrary disk into a language feature (§13).</li>
+</ul>
+<hr />
+<h2 id="12-observability-trace-vs-events-vs-process-logging">12. Observability: trace vs events vs process logging<a class="headerlink" href="#12-observability-trace-vs-events-vs-process-logging" title="Permanent link">&para;</a></h2>
+<p>Three channels — do not merge them into one API.</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Purpose</th>
+<th>Consumer</th>
+<th>Persistence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Run trace</strong></td>
+<td>Semantic record: state, gate, policy, tokens, <code>truncated</code></td>
+<td>Authors, tests, checkpoints</td>
+<td><code>RunResult.trace</code>, checkpoint JSON</td>
+</tr>
+<tr>
+<td><strong>Live events</strong></td>
+<td>In-flight progress (<code>on_event</code>)</td>
+<td>Console activity tree; MCP <code>mklang.event</code> (ADR 0019)</td>
+<td>Ephemeral; console may append to <code>transcript.jsonl</code></td>
+</tr>
+<tr>
+<td><strong>Process / ops logging</strong></td>
+<td>Host diagnostics: adapter HTTP, retries, config, plugin errors</td>
+<td>Operators, developers</td>
+<td>stderr / host log file / future OTel</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rules">Rules<a class="headerlink" href="#rules" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Trace is the source of truth</strong> for “what the machine did.” Events are a live
+   shadow of the same story, not a second semantic model (ADR 0019).</li>
+<li><strong>Ops logging is host-only</strong> — never a face of the <code>.mkl</code>, never deposited on
+   the blackboard as “memory,” never a gate condition.</li>
+<li><strong>No <code>tool: log</code> in core.</strong> Business audit that must be a side effect is a
+   named host tool with ADR 0020 envelope + consent — not free-form logging.</li>
+<li><strong>Observer isolation.</strong> A failing log sink or event listener must not abort
+   the run (same rule as <code>on_event</code> / MCP forwarder).</li>
+<li><strong>Secrets.</strong> Never log API keys. Prefer no full produce/judge bodies at
+   default levels; DEBUG only when explicitly enabled.</li>
+<li><strong>Levels.</strong> The host logs on the <code>mklang.*</code> hierarchy (<code>mklang.registry</code>,
+   <code>mklang.fs</code>, <code>mklang.cli</code>, …) to stderr — <code>--log-level</code> or
+   <code>MKLANG_LOG_LEVEL</code>, default <code>warning</code>, format <code>LEVEL name: message</code> (no
+   timestamps; journald/CI add their own). <code>DEBUG</code> adapters/raw HTTP; <code>INFO</code>
+   coarse host lifecycle (e.g. the fs audit lines); <code>WARNING</code> plugin-load
+   failures, stub tools, truncation, <code>judge_fallback</code>; <code>ERROR</code> halts. Do
+   <strong>not</strong> INFO-log every state (events already cover that).</li>
+<li><strong>Console separation.</strong> Conversation pane ≠ ops log. UI stays Rich/Markdown;
+   diagnostics go to stderr or a host log path.</li>
+<li><strong>MCP.</strong> Keep <code>mklang.event</code> for run vocabulary only. Host stack traces use a
+   different logger name (e.g. <code>mklang.host</code>), not the event stream.</li>
+<li><strong>OTel (optional, later).</strong> Spans are a <strong>projection</strong> of the trace for
+   platforms; they do not replace <code>RunResult.trace</code> (<a href="../ROADMAP/">ROADMAP</a>).</li>
+</ol>
+<h3 id="anti-patterns">Anti-patterns<a class="headerlink" href="#anti-patterns" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>print()</code> in the engine; log-spam every token at INFO.</li>
+<li>Putting log lines or file tails into context so gates “read the log.”</li>
+<li>Overloading MCP logging notifications with host debug (breaks clients that
+  treat <code>mklang.event</code> as the run UI feed).</li>
+</ul>
+<hr />
+<h2 id="13-filesystem-four-classes-not-one-tool">13. Filesystem: four classes, not one tool<a class="headerlink" href="#13-filesystem-four-classes-not-one-tool" title="Permanent link">&para;</a></h2>
+<p>Generic bash/FS stay <strong>out of core</strong>. When you need disk, pick the class:</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Examples</th>
+<th>Where it lives</th>
+<th>Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Host-owned paths</strong></td>
+<td><code>runtime.yaml</code>, checkpoints, console session dir</td>
+<td>CLI / host config</td>
+<td>Operator-chosen paths; checkpoint mode <code>0600</code></td>
+</tr>
+<tr>
+<td><strong>2. Workspace console</strong></td>
+<td><code>list_workspace</code> / <code>read_workspace_file</code> / <code>search_workspace</code> (read-only) plus <code>write_machine</code> / <code>read_machine</code> (<code>.mkl</code>)</td>
+<td>Console surface (ADR 0015)</td>
+<td>Root defaults to the launch cwd and is injected as absolute <code>workspace_root</code>; <code>--workspace</code> overrides it; relative paths; reject escape, hidden/build/vendor/sensitive paths; bounded file/byte budgets; report truncation; confirm <code>.mkl</code> overwrite</td>
+</tr>
+<tr>
+<td><strong>3. Machine data I/O</strong></td>
+<td>Read CSV, write a report</td>
+<td>Builtins <code>mklang.fs</code> (ADR 0024)</td>
+<td>Workspace confinement, size/type limits, write grant, stub off-switch</td>
+</tr>
+<tr>
+<td><strong>4. Arbitrary FS / shell</strong></td>
+<td><code>rm</code>, bash, git</td>
+<td><strong>Never core</strong>; explicit sandboxed plugin</td>
+<td>Default off; high friction</td>
+</tr>
+</tbody>
+</table>
+<h3 id="current-host-layout-documentation-ssot">Current host layout (documentation SSOT)<a class="headerlink" href="#current-host-layout-documentation-ssot" title="Permanent link">&para;</a></h3>
+<p>This section is the documentation source of truth for current host-owned paths;
+ADR 0021 records the decision and rollout history, while surface guides should
+link here instead of maintaining a separate path policy.</p>
+<table>
+<thead>
+<tr>
+<th>Root</th>
+<th>Current location</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Config</td>
+<td><code>$XDG_CONFIG_HOME/mklang</code> (default <code>~/.config/mklang</code>)</td>
+<td><code>runtime.yaml</code>, <code>.env</code></td>
+</tr>
+<tr>
+<td>Data</td>
+<td><code>$XDG_DATA_HOME/mklang</code> (default <code>~/.local/share/mklang</code>)</td>
+<td>user <code>machines/</code></td>
+</tr>
+<tr>
+<td>State</td>
+<td><code>$XDG_STATE_HOME/mklang</code> (default <code>~/.local/state/mklang</code>)</td>
+<td><code>console/sessions/&lt;id&gt;/</code> and checkpoints</td>
+</tr>
+<tr>
+<td>System</td>
+<td><code>/etc/mklang</code>, <code>/usr/share/mklang/machines</code></td>
+<td>system config and machines</td>
+</tr>
+</tbody>
+</table>
+<p>Console sessions always live under
+<code>$XDG_STATE_HOME/mklang/console/sessions/&lt;id&gt;/</code>.
+<code>mklang init --user</code> creates these roots and seeds the user <code>machines/</code> with a
+commented <code>hello.mkl</code> sample plus its <code>hello.test.yaml</code> scenario (keyless first
+run via <code>mklang test</code>).
+Local vs global (ADR 0023): <code>runtime.yaml</code> resolves first-hit-wins
+(project → user → <code>/etc</code> → bundled) for every entry point, <code>mklang-mcp</code>
+included; <code>.env</code> layers per key — real environment &gt; project <code>.env</code> &gt; user
+<code>.env</code>; <code>mklang doctor</code> shows which layer won.
+<code>MKLANG_CONFIG_DIR</code>, <code>MKLANG_DATA_DIR</code>, and <code>MKLANG_STATE_DIR</code> override the
+corresponding user roots; <code>MKLANG_CONFIG</code> selects one runtime config file
+directly. The implementation authority is <code>mklang.paths</code>; changes to it must
+update this table and the console guide in the same commit.</p>
+<h3 id="rules-for-class-3-data-tools">Rules for class 3 (data tools)<a class="headerlink" href="#rules-for-class-3-data-tools" title="Permanent link">&para;</a></h3>
+<p>Implemented by <code>mklang.fs</code> (<code>list_files</code> / <code>read_file</code> / <code>write_file</code>, §5.3;
+ADR 0024). The reference posture is the coding-tool workspace model: reads are
+live by default under <code>--workspace</code> / <code>MKLANG_FS_ROOT</code> / cwd, disk writes need
+an explicit grant (<code>--allow-write</code> / <code>MKLANG_FS_WRITE=1</code> / console consent).</p>
+<ol>
+<li><strong>Names only in the <code>.mkl</code></strong> — <code>tool: read_file</code>, not path syntax in the language.</li>
+<li><strong>Relative paths in tool input</strong>; host joins to the configured <strong>workspace</strong>
+   root. Refuse path escape after <code>resolve</code> (same idea as console
+   <code>_workspace_path</code>); <code>..</code>, absolute paths, and dotfile segments never resolve.</li>
+<li><strong>ADR 0020 envelope</strong> — <code>{tool, stub, error, …}</code>; <code>MKLANG_FS_BACKEND=stub</code>
+   forces the offline refusal tier (reads default to live per ADR 0024 — the
+   one sanctioned amendment to stub-by-default).</li>
+<li><strong>File bodies are untrusted observations</strong> (SPEC §11). Do not put them in the
+   produce <strong>system</strong> channel; treat like web snippets (interpolations arrive
+   fenced per SPEC §6).</li>
+<li><strong>No recursive delete / shell in core.</strong> Destructive ops only as explicit
+   plugins with strong confirmation.</li>
+<li><strong>Audit lightly</strong> — log tool name + relative path + byte count at INFO; not
+   full file contents.</li>
+<li><strong>Console stays non-IDE</strong> — the default brain may inspect visible UTF-8 project
+   files read-only, but must not receive generic write, shell or git tools. An
+   explicit project-analysis turn must have workspace evidence and a brief
+   before the brain can return its final answer.</li>
+</ol>
+<h3 id="memory-planning-mapping">Memory &amp; planning mapping<a class="headerlink" href="#memory-planning-mapping" title="Permanent link">&para;</a></h3>
+<p>The class model gives machines the same memory layering native coding agents
+use — each level has exactly one home:</p>
+<table>
+<thead>
+<tr>
+<th>Agent memory level</th>
+<th>mklang home</th>
+<th>Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Working memory (in-run)</td>
+<td>Blackboard <code>context</code> + <code>accumulate</code> (SPEC §4.6) — never on disk</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Session state / resume</td>
+<td>Checkpoints (<code>0600</code>) and console <code>state.json</code> — outside workspace</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Project memory (<code>AGENTS.md</code>, <code>CLAUDE.md</code>)</td>
+<td>Non-dotted files in the workspace, read via <code>read_workspace_file</code> in the console or <code>read_file</code> in a machine</td>
+<td>2/3</td>
+</tr>
+<tr>
+<td>Plans / reports the machine produces</td>
+<td><code>write_file</code> under the workspace, behind the write grant</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Global config / memory hierarchy</td>
+<td>XDG roots + precedence (ADR 0021/0023)</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>For machine authors: keep durable machine memory in non-dotted data files in
+the workspace (e.g. <code>memory/notes.md</code>); update it with read → <code>write_file</code>
+<code>overwrite: true</code>. Host state (checkpoints, sessions) is unreachable from
+class-3 tools by construction — the dotfile ban makes the "data lake"
+anti-pattern below structural, not just conventional.</p>
+<h3 id="anti-patterns_1">Anti-patterns<a class="headerlink" href="#anti-patterns_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Language face <code>file:</code> / <code>$path</code> without ADR + conformance.</li>
+<li><code>execution: write the result to disk</code>.</li>
+<li>Widening <code>write_machine</code> to arbitrary extensions/paths.</li>
+<li>Using session/transcript directories as a machine “data lake.”</li>
+<li>Absolute paths from the model without canonicalize + root check.</li>
+</ul>
+<hr />
+<h2 id="14-surfaces-quick-reference">14. Surfaces quick reference<a class="headerlink" href="#14-surfaces-quick-reference" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Best practice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CLI</strong></td>
+<td><code>init</code> once, <code>doctor</code> when in doubt, then <code>check</code> → <code>lint</code> → <code>test</code> → <code>run</code>; <code>--on-truncate halt</code> for strict research; <code>--hitl</code> for human gates (auto-checkpoints; <code>--checkpoint</code> to choose the path); ops log on stderr when enabled</td>
+</tr>
+<tr>
+<td><strong>MCP</strong></td>
+<td>Commission by name/path/source; stream <strong>run</strong> events as <code>mklang.event</code> only; durable <code>checkpoint_path</code> for multi-process HITL; <strong>read-only to disk</strong> — author/validate/run inline, no persist tool (§11, ADR 0011/0013)</td>
+</tr>
+<tr>
+<td><strong>Console</strong></td>
+<td>Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content (<a href="../console/#conversation-rendering">console rendering</a>); workspace inspection is read-only and <code>.mkl</code> authoring is the default write path — no generic FS/bash</td>
+</tr>
+</tbody>
+</table>
+<h3 id="console-cancellation-and-shutdown-documentation-ssot">Console cancellation and shutdown (documentation SSOT)<a class="headerlink" href="#console-cancellation-and-shutdown-documentation-ssot" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Ctrl+G</code> requests cooperative cancellation between states and keeps the
+  console open; an active provider response is allowed to finish.</li>
+<li><code>Ctrl+C</code> and <code>/quit</code> close the surface. During an active run, shutdown sets
+  the cancellation signal, releases pending human input, invokes the optional
+  provider <code>close()</code> hook to interrupt in-flight I/O, waits for the backing
+  worker thread, and then tears down Textual.</li>
+<li>Provider plugins remain compatible without <code>close()</code>, but network-backed
+  adapters should implement it so console shutdown cannot wait for an SDK
+  timeout. Shutdown hooks must be idempotent and must suppress late UI/session
+  callbacks after teardown begins.</li>
+</ul>
+<hr />
+<h2 id="15-anti-patterns-quick-list">15. Anti-patterns (quick list)<a class="headerlink" href="#15-anti-patterns-quick-list" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>execution: use the search tool</code> on a generative state.</li>
+<li>Asking the model to confirm a side effect it cannot perform.</li>
+<li>Prose-only money/policy thresholds.</li>
+<li>Answering “what happened this week?” without <code>tool: search</code> and <code>today</code>.</li>
+<li>Silent acceptance of truncated produce / clipped console result as complete.</li>
+<li>Unbounded <code>accumulate</code> without compress.</li>
+<li><code>budget</code> sized for the happy path only.</li>
+<li>Naming <code>claude-…</code> / <code>gpt-…</code> inside the <code>.mkl</code>.</li>
+<li>Putting PII into checkpoints without a retention policy.</li>
+<li>Expecting stdlib pure machines to perform host I/O.</li>
+<li>Treating a stub <code>send_reply</code> as real delivery (<code>sent</code> must be true <strong>and</strong> <code>stub</code> false for live).</li>
+<li>Interpolating user/LLM text into Rich markup in a TUI (<code>[b]…[/b]</code>) — use
+    Markdown renderables for agent prose and plain/fenced text for everything
+    else (<a href="../console/#conversation-rendering">Console</a>).</li>
+<li>Putting sticky role/policy only in <code>prompt</code> (user) instead of <code>execution</code>
+    (system), or putting <code>{{user_message}}</code> / history into <code>structure</code>.</li>
+<li>Mixing ops logging with run trace/events, or logging secrets/full prompts at
+    default levels (§12).</li>
+<li>Generic filesystem/bash in core, or treating console workspace as full disk
+    access (§13).</li>
+<li>Trusting a machine as <em>correct</em> because <code>check</code> / <code>lint</code> passed — that proves
+    well-formedness, not behaviour. Run a scenario (<code>mklang test</code>), especially for
+    agent-authored machines (§10).</li>
+</ol>
+<hr />
+<h2 id="16-language-vs-host-what-may-become-language-later">16. Language vs host: what may become language later<a class="headerlink" href="#16-language-vs-host-what-may-become-language-later" title="Permanent link">&para;</a></h2>
+<p>Candidates for a future <strong>0.4</strong> (need ADR + conformance) — <strong>not</strong> current practice requirements:</p>
+<table>
+<thead>
+<tr>
+<th>Candidate</th>
+<th>Why it might become language</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parse: json</code> / object</td>
+<td>Structured composition beyond lists</td>
+</tr>
+<tr>
+<td>Machine/state <code>on_truncate</code> policy</td>
+<td>Portable anti-cutoff in the document</td>
+</tr>
+<tr>
+<td>Context zones / pin (ADR 0017 L2)</td>
+<td>Authorable trust zones — runtime provenance taint already ships (ADR 0025)</td>
+</tr>
+<tr>
+<td>Per-gate <code>hitl:</code></td>
+<td>Finer HITL than run-level</td>
+</tr>
+<tr>
+<td>Budget split (steps vs fan-out width)</td>
+<td>Clearer volume caps</td>
+</tr>
+</tbody>
+</table>
+<p>Until then: use <strong>host policy + patterns + this checklist</strong>. Do <strong>not</strong> invent ad-hoc syntax outside the schema.</p>
+<hr />
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../getting-started/">Getting started</a></td>
+<td>First-run path: install → init → key → console</td>
+</tr>
+<tr>
+<td><a href="../install/">Install</a></td>
+<td>pipx / AUR install, host layout, completions</td>
+</tr>
+<tr>
+<td><a href="../authoring/">Authoring</a></td>
+<td>Recipe + skeleton + faces → LLM channels</td>
+</tr>
+<tr>
+<td><a href="../patterns/">Patterns</a></td>
+<td>Tiers, reliability, clocks, <code>execution</code> usage</td>
+</tr>
+<tr>
+<td><a href="../stdlib/">Stdlib</a></td>
+<td>Ready <code>std_*</code> architectures</td>
+</tr>
+<tr>
+<td><a href="../console/">Console</a></td>
+<td>TUI, rendering, brain clocks, consent, workspace FS</td>
+</tr>
+<tr>
+<td><a href="../SPEC/">SPEC §4–§6</a></td>
+<td>Faces + produce/judge semantics, normative §6 delimiting</td>
+</tr>
+<tr>
+<td><a href="../SPEC/">SPEC §8</a></td>
+<td>Trace / observability</td>
+</tr>
+<tr>
+<td><a href="../SPEC/">SPEC §11</a></td>
+<td>Threat model (injection, checkpoints at rest)</td>
+</tr>
+<tr>
+<td><a href="../adr/0015-console-surface/">ADR 0015</a></td>
+<td>Console scope (not an IDE)</td>
+</tr>
+<tr>
+<td><a href="../adr/0019-mcp-live-events/">ADR 0019</a></td>
+<td><code>mklang.event</code> vs ops log</td>
+</tr>
+<tr>
+<td><a href="../adr/0020-host-tool-stub-architecture/">ADR 0020</a></td>
+<td>Tool envelope for I/O (incl. future FS tools)</td>
+</tr>
+<tr>
+<td><a href="../ROADMAP/">ROADMAP</a></td>
+<td>OTel maybe; no bash/FS in core</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

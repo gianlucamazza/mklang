@@ -1,0 +1,1889 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative language for LLM-driven state machines.">
+      
+      
+      
+        <link rel="canonical" href="https://gianlucamazza.github.io/mklang/console/">
+      
+      
+        <link rel="prev" href="../patterns/">
+      
+      
+        <link rel="next" href="../demos/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Console - mklang</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#console" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="mklang" class="md-header__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mklang
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Console
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="mklang" class="md-nav__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mklang
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SPEC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conformance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conformance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stability policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversation-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation rendering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#brain-prompt-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Brain prompt assembly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slash-commands-bypass-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slash commands (bypass the agent)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sessions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-search-from-the-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web search from the console
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observations-from-run_machine-anti-cutoff-honesty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observations from run_machine (anti-cutoff honesty)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#for-other-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For other clients
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live demos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Machine stdlib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpreter architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/gate-divergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gate divergence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/authoring-blind-spot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring blind_spot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/validation-report-2026-07-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/distribution-five-reader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Five-reader distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversation-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation rendering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#brain-prompt-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Brain prompt assembly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slash-commands-bypass-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slash commands (bypass the agent)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sessions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-search-from-the-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web search from the console
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observations-from-run_machine-anti-cutoff-honesty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observations from run_machine (anti-cutoff honesty)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#for-other-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For other clients
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="console">Console<a class="headerlink" href="#console" title="Permanent link">&para;</a></h1>
+<p><code>mklang console</code> is the agent-first front door: type what you want, the
+console's agent picks — or authors — a machine, commissions it, and streams the
+run state by state. The agent itself <strong>is</strong> a machine
+(<a href="https://github.com/gianlucamazza/mklang/blob/main/src/mklang/data/console/agent.mkl"><code>agent.mkl</code></a>):
+read it, <code>check</code> it, <code>lint --llm</code> it, scenario-test it, or swap it out entirely.</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>mklang<span class="w">  </span><span class="c1"># the console ships by default since 0.15.0</span>
+mklang<span class="w"> </span>console<span class="w">                 </span><span class="c1"># DeepSeek by default; --provider anthropic|openai|…</span>
+</code></pre></div>
+<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌ mklang console ──────────────────────────────┬─ inspector (F2) ────────┐
+│ READY · deepseek · tokens 922+212 · session …│                         │
+│ you: create a machine that triages my CSV    │ [Context|Trace|Session] │
+│ agent: created triage_csv.mkl and ran it: …   │ …                       │
+│ ▼ console_agent                              │                         │
+│ │  ● decide [ok] → author                    │                         │
+│ │  ● author [ok] → save                      │                         │
+│ │  ● save   [ok] → decide                    │                         │
+│ │  ● do_run ┬ ▼ triage_csv …                 │                         │
+├──────────────────────────────────────────────┴─────────────────────────┤
+│ &gt; _                                                                    │
+└────────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p>Conversation is the primary workspace, with the bounded live <strong>activity tree</strong>
+of the current turn beneath it
+(brain states under <code>console_agent</code>; Textual draws a single expand toggle ▶/▼
+per expandable row — run labels are the machine name only). Each commissioned
+run nests under the state that launched it; <code>call:</code> sub-runs by depth; fan-out
+branches as leaves. The status strip reports provider, session token spend, and
+current phase; <code>READY</code>, <code>RUNNING</code>, <code>WAITING</code>, <code>STOPPING</code>, and <code>ERROR</code> are
+distinct operator states.
+Normal state output stays in the inspector; only exceptional/truncated previews
+expand the tree. <code>F2</code> toggles the inspector (docked at 100+ columns, full workspace
+below that), <code>ctrl+t</code> toggles activity, <code>ctrl+g</code> requests a cooperative stop after
+the current state, and <code>ctrl+l</code> clears the conversation.</p>
+<p>The shell uses semantic operator states rather than color alone: <code>● READY</code>,
+<code>◐ RUNNING</code>, <code>⏸ WAITING</code>, <code>■ STOPPING</code>, and <code>! ERROR</code>. The input border changes
+to an amber answer mode for consent, HITL, and budget questions; disabled input
+means the worker is still active. The inspector starts with explicit empty
+states, then exposes the latest context, trace, and session facts. On narrow
+terminals <code>F2</code> changes the inspector from a docked panel into the full workspace.</p>
+<h2 id="conversation-rendering">Conversation rendering<a class="headerlink" href="#conversation-rendering" title="Permanent link">&para;</a></h2>
+<p>The log and activity tree separate <strong>UI chrome</strong> from <strong>untrusted content</strong>
+(user text, agent prose, tool observations, event previews) — same discipline as
+<a href="../best-practices/">best practices</a> (surface layer, no Rich-markup interpolation
+of model/user text):</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>How it is shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent reply (<code>status=done</code>)</td>
+<td>CommonMark via Rich (<code>**bold**</code>, lists, fenced code, links)</td>
+</tr>
+<tr>
+<td>User / HITL answers</td>
+<td>Plain text (no Rich markup interpretation)</td>
+</tr>
+<tr>
+<td>Slash results (<code>/run</code>, <code>/check</code>)</td>
+<td>Fenced <code>json</code> (not full-document Markdown)</td>
+</tr>
+<tr>
+<td><code>/read</code> machine source</td>
+<td>Fenced <code>yaml</code></td>
+</tr>
+<tr>
+<td>Labels (<code>you:</code>, <code>agent:</code>, errors)</td>
+<td>Rich markup <strong>only</strong> for internal chrome strings</td>
+</tr>
+<tr>
+<td>Activity tree (turn title, machine, state, <strong>output preview</strong>)</td>
+<td>Plain <code>Text</code> segments with fixed styles — previews are <strong>not</strong> Markdown</td>
+</tr>
+</tbody>
+</table>
+<p>Session history and the JSONL transcript stay <strong>plain text</strong> for audit; only the
+display path renders Markdown. Square brackets in model output (<code>array[0]</code>,
+<code>[b]…[/b]</code>) are not treated as Rich tags on either the log or the tree.</p>
+<h2 id="the-agent">The agent<a class="headerlink" href="#the-agent" title="Permanent link">&para;</a></h2>
+<p>One user turn = one run of <code>agent.mkl</code> (ReAct-shaped): <code>decide</code> routes between
+<strong>WORKSPACE_SCAN / SEARCH / READ / ANALYZE</strong> (read-only project inspection),
+<strong>DISCOVER</strong> (list machines), <strong>RUN</strong> (commission one), <strong>CLARIFY</strong> (ask you),
+<strong>AUTHOR</strong> (write a new <code>.mkl</code> into the workspace, validate it, repair on
+errors) and <strong>REPLY</strong>. A project-analysis request must inspect the workspace
+before replying; the final answer is expected to distinguish observed facts,
+inferences and uninspected areas. Escalations from a commissioned machine,
+tool-consent prompts and turn-budget exhaustion all come back to you through the
+input line.</p>
+<p>The default brain can use <code>list_workspace</code>, <code>read_workspace_file</code> and
+<code>search_workspace</code> for visible UTF-8 project files. Reads are relative to the
+configured workspace and exclude hidden, build, vendor and cache directories;
+they never grant shell or write access. Each operation is bounded (400 listing
+entries, 120,000 bytes per read, 80 search matches, 2,000 files and 64 MiB per
+search), skips obvious credentials/keys/databases, and reports truncation or
+skipped content. Explicit project-analysis turns are host-guarded: the brain
+cannot finish until workspace evidence and an evidence brief exist. Swap the
+brain with <code>--agent your_brain.mkl</code> — custom brains
+that want project inspection should declare and use the same workspace tools in
+addition to the existing contract (<code>list_machines</code>, <code>describe_machine</code>,
+<code>read_machine</code>, <code>check_machine</code>, <code>write_machine</code>, <code>run_machine</code>, <code>ask_user</code>).</p>
+<p>Tool consent is scoped to the commissioned machine and tool (<code>machine:tool</code>),
+not only to a global tool name. Machine discovery exposes conservative risk
+metadata (<code>read_only</code>, <code>external_egress</code>, <code>irreversible</code>, <code>sensitivity</code>,
+<code>idempotent</code>); these are host policy hints and cannot be self-granted by the
+brain.</p>
+<h3 id="brain-prompt-assembly">Brain prompt assembly<a class="headerlink" href="#brain-prompt-assembly" title="Permanent link">&para;</a></h3>
+<p>Generative states on the brain follow the host mapping
+(<a href="../best-practices/">Best practices §3</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Face</th>
+<th>Role for the console agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>structure</code></td>
+<td>Output shape of this step (e.g. one-line DISCOVER/RUN/…, final reply)</td>
+</tr>
+<tr>
+<td><code>execution</code></td>
+<td>Sticky policy (no fake web search, truncation honesty, clock REPLY rules)</td>
+</tr>
+<tr>
+<td><code>prompt</code></td>
+<td>Turn data only: <code>{{today}}</code> / <code>{{now}}</code>, <code>{{history}}</code>, <code>{{user_message}}</code>, <code>{{workspace_context}}</code>, <code>{{workspace_brief}}</code>, <code>{{observation}}</code></td>
+</tr>
+</tbody>
+</table>
+<p>Wall-clock questions (“che ore sono?”) use host-filled <code>now</code> via <strong>REPLY</strong> — the
+brain must not AUTHOR a machine solely to read the clock.</p>
+<h2 id="slash-commands-bypass-the-agent">Slash commands (bypass the agent)<a class="headerlink" href="#slash-commands-bypass-the-agent" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>command</th>
+<th>effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/machines</code></td>
+<td>list commissionable machines with contracts</td>
+</tr>
+<tr>
+<td><code>/run &lt;name&gt; [k=v…]</code></td>
+<td>commission directly (<code>--set</code>-style JSON coercion)</td>
+</tr>
+<tr>
+<td><code>/check &lt;name&gt;</code> / <code>/read &lt;name&gt;</code></td>
+<td>validate / show a workspace machine</td>
+</tr>
+<tr>
+<td><code>/budget &lt;n&gt;</code></td>
+<td>default token budget for commissioned runs</td>
+</tr>
+<tr>
+<td><code>/resume [n]</code></td>
+<td>list / finish the session's parked turns</td>
+</tr>
+<tr>
+<td><code>/session</code></td>
+<td>current session facts</td>
+</tr>
+<tr>
+<td><code>/help</code> · <code>/quit</code></td>
+<td>help · exit</td>
+</tr>
+</tbody>
+</table>
+<p><code>Ctrl+C</code> performs a clean shutdown: an active run is cancelled, any pending
+human prompt is released, and the console waits for the provider worker to stop
+before returning to the shell. <code>Ctrl+G</code> only requests cancellation of the
+current run and keeps the console open. The lifecycle contract is maintained in
+<a href="../best-practices/#console-cancellation-and-shutdown-documentation-ssot">Best practices §14</a>.</p>
+<p>Slash commands use shell-style quoting, so <code>/run demo task="hello world"</code> keeps
+the value together. Every <code>/run</code> argument must be <code>key=value</code>; malformed
+arguments are rejected before the worker starts. Command names are suggested
+while typing, and <code>/help</code> includes copyable examples.</p>
+<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h2>
+<p>Every conversation persists under
+<code>$XDG_STATE_HOME/mklang/console/sessions/&lt;id&gt;/</code> (default
+<code>~/.local/state/mklang/console/sessions/&lt;id&gt;/</code>):
+<code>state.json</code> (history, spend, tool consents, and the session's <code>always yes</code>
+choice — rewritten atomically per turn),
+<code>transcript.jsonl</code> (turns + every engine event, streaming append), and
+<code>checkpoints/</code> for turns parked on budget exhaustion. <code>--continue</code> reopens the
+latest session and replays recoverable user, agent, and slash-result records into
+the conversation pane; a torn final transcript line is ignored. Unexpected
+worker errors are shown as actionable <code>ERROR</code> state and re-enable the prompt.
+<code>--session &lt;id&gt;</code> reopens a specific one. The canonical host layout is
+maintained in
+<a href="../best-practices/#current-host-layout-documentation-ssot">Best practices §13</a>.</p>
+<p><strong>History for the brain is windowed</strong> (ADR 0017): the full conversation remains
+in the session audit / transcript, but only a tail of recent turns (and a char
+cap) is injected as <code>{{history}}</code> into <code>agent.mkl</code>, with an explicit
+<code>…[history_truncated…]…</code> marker when anything is dropped. This keeps long sessions
+from exploding the brain prompt.</p>
+<h2 id="web-search-from-the-console">Web search from the console<a class="headerlink" href="#web-search-from-the-console" title="Permanent link">&para;</a></h2>
+<p>Live web/news questions need a machine with a real <code>tool: search</code> state (not
+generative prose that pretends to search). Host binding:</p>
+<table>
+<thead>
+<tr>
+<th>Setup</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TAVILY_API_KEY=…</code> in <code>.env</code></td>
+<td>Tavily auto-enabled for the <code>search</code> tool</td>
+</tr>
+<tr>
+<td><code>MKLANG_SEARCH_BACKEND=fake</code></td>
+<td>Deterministic offline hits (demos/tests)</td>
+</tr>
+<tr>
+<td><code>MKLANG_SEARCH_BACKEND=stub</code></td>
+<td>Force offline even if a Tavily key is set</td>
+</tr>
+<tr>
+<td>unset key + unset backend</td>
+<td>Structured stub: <code>"no external search bound…"</code></td>
+</tr>
+</tbody>
+</table>
+<p>Example workspace machine: <code>machines/news_search.mkl</code> (topic → search → brief).
+The stdlib <code>std_research</code> (search → ground) is always runnable by name.
+Pattern references: <code>examples/research_web.mkl</code>, <code>examples/research_compress.mkl</code>.</p>
+<p><strong>Tool consent is not an error.</strong> The first time a machine uses host tools
+(<code>search</code>, <code>calc</code>, …) the console pauses with a yellow prompt and asks you to
+allow it for the session. Type <strong><code>y</code></strong> / <strong><code>yes</code></strong> / <strong><code>sì</code></strong> and Enter.
+Type <strong><code>always yes</code></strong> to approve this and future low-risk confirmation prompts
+in the session, including budget-continuation prompts. High-risk prompts for
+external egress, writes, irreversible actions, or unknown third-party tools are
+always shown again. The choice is
+persisted when the session is reopened with <code>--continue</code> or <code>--session</code>.
+Afterwards tool consent is remembered in the session (inspector: consented
+tools). Enter alone means <strong>no</strong>.</p>
+<h2 id="observations-from-run_machine-anti-cutoff-honesty">Observations from <code>run_machine</code> (anti-cutoff honesty)<a class="headerlink" href="#observations-from-run_machine-anti-cutoff-honesty" title="Permanent link">&para;</a></h2>
+<p>The brain sees a <strong>compact</strong> JSON observation of each commissioned run, not the
+full engine trace. That observation is still honest about cutoff:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>truncated</code></td>
+<td>A produce step hit max_tokens/length (ADR 0018)</td>
+</tr>
+<tr>
+<td><code>finish_reason</code></td>
+<td>Provider stop reason when known</td>
+</tr>
+<tr>
+<td><code>trace</code></td>
+<td><code>{steps, truncated, truncated_steps:[{state, finish_reason?}]}</code></td>
+</tr>
+<tr>
+<td><code>result_truncated</code></td>
+<td>Observation budget clipped a long <code>result</code> string</td>
+</tr>
+<tr>
+<td><code>result</code></td>
+<td>May end with <code>…[truncated]</code> when clipped (ADR 0017 style)</td>
+</tr>
+</tbody>
+</table>
+<p>Full events still stream to the activity tree / session transcript. The agent is
+instructed not to invent the missing tail of a truncated result, and not to
+answer live-web questions from training knowledge alone.</p>
+<p>Search observations are also bounded before they are accumulated into a
+machine's working notes: titles are capped at 300 characters, URLs at 500, and
+snippets at 800. A field shortened at that boundary ends with
+<code>…[truncated]</code>. This keeps a second search batch from displacing the first
+batch from the prompt while preserving the JSON envelope and the cutoff signal.
+For larger research loops, use the <code>research_compress</code> pattern to rewrite notes
+between searches.</p>
+<p>Time-sensitive workspace machines should declare <code>context.today: ""</code>; the host
+fills today's ISO date before the run (same convention as CLI/MCP). Wall-clock
+questions need <code>context.now: ""</code> (local ISO datetime). The bundled brain already
+declares both — see <a href="#brain-prompt-assembly">Brain prompt assembly</a>.</p>
+<h2 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
+<p>The console inherits the SPEC §11 posture: authored machines and read-only
+project inspection are <strong>confined to the workspace</strong> (<code>--workspace</code>, or the
+absolute directory from which the console was launched by default — path-resolved,
+no traversal); the selected root is injected into the brain as <code>workspace_root</code>.
+The snapshot and every workspace-tool result repeat that absolute root, while
+file arguments remain relative and confined to it.
+Global and user machines remain available through discovery but do not change this
+inspection root. Running a machine whose states invoke host tools (including
+<code>search</code> if a machine uses it) asks consent once per tool set (remembered per
+session); provider keys stay in the host environment. The console cannot edit
+files outside the workspace, run shell commands, or touch git — it is an
+operational surface, not an IDE (ADR 0015). Workspace FS is <strong>class 2</strong>:
+read-only inspection plus <code>.mkl</code> authoring; generic data FS / bash are <strong>out of core</strong> (host plugins only —
+<a href="../best-practices/">Best practices §13</a>). Session <code>transcript.jsonl</code> is surface
+audit, not a substitute for host ops logging (<a href="../best-practices/">§12</a>).</p>
+<h2 id="for-other-clients">For other clients<a class="headerlink" href="#for-other-clients" title="Permanent link">&para;</a></h2>
+<p>The same live events the console renders are available to every MCP client:
+<code>mklang-mcp</code>'s <code>run</code>/<code>resume</code> stream them as <code>mklang.event</code> logging
+notifications (ADR 0019) — an external front-end needs nothing more.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

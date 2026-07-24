@@ -1,0 +1,702 @@
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
+vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
+vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
+vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
+# warning: machine 'expense_approval' shadows the bundled stdlib machine
+# warning: machine 'hook_gates' shadows the bundled stdlib machine
+# warning: machine 'map_reduce' shadows the bundled stdlib machine
+# warning: machine 'news_search' shadows the bundled stdlib machine
+# warning: machine 'react' shadows the bundled stdlib machine
+# warning: machine 'research' shadows the bundled stdlib machine
+# warning: machine 'research_compress' shadows the bundled stdlib machine
+# warning: machine 'research_web' shadows the bundled stdlib machine
+# warning: machine 'self_consistency' shadows the bundled stdlib machine
+# warning: machine 'summarize_doc' shadows the bundled stdlib machine
+# warning: machine 'triage' shadows the bundled stdlib machine
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
+DONE react · provider deepseek
+╭─────────────────────────────────── Result ───────────────────────────────────╮
+│ 153                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+tokens 1499+303 · steps 10
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
+vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
+# warning: machine 'expense_approval' shadows the bundled stdlib machine
+# warning: machine 'hook_gates' shadows the bundled stdlib machine
+# warning: machine 'map_reduce' shadows the bundled stdlib machine
+# warning: machine 'news_search' shadows the bundled stdlib machine
+# warning: machine 'react' shadows the bundled stdlib machine
+# warning: machine 'research' shadows the bundled stdlib machine
+# warning: machine 'research_compress' shadows the bundled stdlib machine
+# warning: machine 'research_web' shadows the bundled stdlib machine
+# warning: machine 'self_consistency' shadows the bundled stdlib machine
+# warning: machine 'summarize_doc' shadows the bundled stdlib machine
+# warning: machine 'triage' shadows the bundled stdlib machine
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
+DONE react · provider deepseek
+╭─────────────────────────────────── Result ───────────────────────────────────╮
+│ 153                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+tokens 1499+303 · steps 10
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
+vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
+# warning: machine 'expense_approval' shadows the bundled stdlib machine
+# warning: machine 'hook_gates' shadows the bundled stdlib machine
+# warning: machine 'map_reduce' shadows the bundled stdlib machine
+# warning: machine 'news_search' shadows the bundled stdlib machine
+# warning: machine 'react' shadows the bundled stdlib machine
+# warning: machine 'research' shadows the bundled stdlib machine
+# warning: machine 'research_compress' shadows the bundled stdlib machine
+# warning: machine 'research_web' shadows the bundled stdlib machine
+# warning: machine 'self_consistency' shadows the bundled stdlib machine
+# warning: machine 'summarize_doc' shadows the bundled stdlib machine
+# warning: machine 'triage' shadows the bundled stdlib machine
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
+DONE react · provider deepseek
+╭─────────────────────────────────── Result ───────────────────────────────────╮
+│ 153                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+tokens 1499+303 · steps 10
+>
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
+vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
+# warning: machine 'expense_approval' shadows the bundled stdlib machine
+# warning: machine 'hook_gates' shadows the bundled stdlib machine
+# warning: machine 'map_reduce' shadows the bundled stdlib machine
+# warning: machine 'news_search' shadows the bundled stdlib machine
+# warning: machine 'react' shadows the bundled stdlib machine
+# warning: machine 'research' shadows the bundled stdlib machine
+# warning: machine 'research_compress' shadows the bundled stdlib machine
+# warning: machine 'research_web' shadows the bundled stdlib machine
+# warning: machine 'self_consistency' shadows the bundled stdlib machine
+# warning: machine 'summarize_doc' shadows the bundled stdlib machine
+# warning: machine 'triage' shadows the bundled stdlib machine
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
+DONE react · provider deepseek
+╭─────────────────────────────────── Result ───────────────────────────────────╮
+│ 153                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+tokens 1499+303 · steps 10
+> clear
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+OK examples/react.mkl
+╭─────────────────────────────────── check ────────────────────────────────────╮
+│ files=1                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+OK examples/react.mkl
+╭─────────────────────────────────── check ────────────────────────────────────╮
+│ files=1                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+OK examples/react.mkl
+╭─────────────────────────────────── check ────────────────────────────────────╮
+│ files=1                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+> PYTHONPATH=src python -m mklang.cli lint --strict examples/react.mkl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+OK examples/react.mkl
+╭─────────────────────────────────── check ────────────────────────────────────╮
+│ files=1                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+> PYTHONPATH=src python -m mklang.cli lint --strict examples/react.mkl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+OK examples/react.mkl
+╭─────────────────────────────────── check ────────────────────────────────────╮
+│ files=1                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+> PYTHONPATH=src python -m mklang.cli lint --strict examples/react.mkl
+OK examples/react.mkl
+╭──────────────────────────────────── lint ────────────────────────────────────╮
+│ files=1 · findings=0                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> PYTHONPATH=src python -m mklang.cli check examples/react.mkl
+OK examples/react.mkl
+╭─────────────────────────────────── check ────────────────────────────────────╮
+│ files=1                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+> PYTHONPATH=src python -m mklang.cli lint --strict examples/react.mkl
+OK examples/react.mkl
+╭──────────────────────────────────── lint ────────────────────────────────────╮
+│ files=1 · findings=0                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+>
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

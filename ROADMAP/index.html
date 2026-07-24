@@ -1,0 +1,1792 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative language for LLM-driven state machines.">
+      
+      
+      
+        <link rel="canonical" href="https://gianlucamazza.github.io/mklang/ROADMAP/">
+      
+      
+        <link rel="prev" href="../experiments/distribution-five-reader/">
+      
+      
+        <link rel="next" href="../CHANGELOG/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Roadmap - mklang</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mklang-roadmap-improvement-areas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="mklang" class="md-header__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mklang
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Roadmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="mklang" class="md-nav__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mklang
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SPEC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conformance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conformance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stability policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live demos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Machine stdlib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpreter architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/gate-divergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gate divergence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/authoring-blind-spot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring blind_spot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/validation-report-2026-07-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/distribution-five-reader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Five-reader distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-we-are-language-03-package-108" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where we are (language 0.3 / package 1.0.8)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organizational" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organizational
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integrations-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integrations &amp; extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#near-term-after-0150" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Near-term after 0.15.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-we-are-language-03-package-108" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where we are (language 0.3 / package 1.0.8)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organizational" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organizational
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integrations-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integrations &amp; extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#near-term-after-0150" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Near-term after 0.15.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mklang-roadmap-improvement-areas">mklang — Roadmap &amp; improvement areas<a class="headerlink" href="#mklang-roadmap-improvement-areas" title="Permanent link">&para;</a></h1>
+<p>Where mklang stands (package <strong>1.0.8</strong>, language <strong>0.3</strong>) and where it can grow —
+technical <strong>and</strong> organizational. Items are marked <strong>[next]</strong> (clear near-term),
+<strong>[later]</strong> (valuable, not urgent), or <strong>[maybe]</strong> (worth evaluating). ADRs in
+<a href="https://github.com/gianlucamazza/mklang/tree/main/docs/adr"><code>docs/adr/</code></a> record decisions as they're made.</p>
+<h2 id="where-we-are-language-03-package-108">Where we are (language 0.3 / package 1.0.8)<a class="headerlink" href="#where-we-are-language-03-package-108" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Language core complete: states + gates + prose, tiers, <code>reason</code>, <code>accumulate</code>,
+  fan-out (<code>sample</code>/<code>over</code>), sub-machine <code>call</code>, <code>tool</code> states, <strong>code-hook gates</strong>.
+  Cookbook in <a href="../SPEC/"><code>SPEC.md §10</code></a>.</li>
+<li>JSON Schema + semantic checks; multi-provider interpreter; nested trace; CLI.</li>
+<li><strong>0.2.1 hardening:</strong> call-halt, shared cost budget, judge reasoning, judge-unparseable,
+  Anthropic parity, tier validation, strict <code>over</code>, error taxonomy (MockLLM unit suite;
+  full offline coverage today is unit + conformance + <code>mklang test</code> — see pytest).</li>
+<li><strong>0.2.2:</strong> code-hook gates (ADR 0006); tool/hook <strong>entry-point plugins</strong>; default
+  <code>active: deepseek</code> with live smoke re-verified.</li>
+<li><strong>0.3.0:</strong> <strong>resumable runs / checkpoints</strong> (ADR 0007) — budget exhaustion suspends
+  into a JSON checkpoint (<code>--checkpoint</code>), <code>mklang resume</code> continues as if
+  uninterrupted; foundation for HITL.</li>
+<li><strong>0.4.0:</strong> <strong>human-in-the-loop</strong> (ADR 0008) — <code>--hitl</code> makes fired <code>escalate</code>
+  gates suspend; <code>mklang resume --set human.reply=…</code> injects the decision.</li>
+<li><strong>0.5.0:</strong> <strong>language-grade rigor</strong> — conformance suite (ADR 0009),
+  <code>mklang lint</code>, provider entry-point plugins, CI + docs site, public packaging.</li>
+<li><strong>0.5.1:</strong> showcase honesty (<code>triage.mkl</code> real tool states), silent judge-clamp
+  fix, normative judge protocol, threat model (§11), gate-divergence scaffold.</li>
+<li><strong>0.5.2 (second remediation pass):</strong> gate judging <strong>follows the state tier</strong> by
+  default (§2.1; <code>judge:</code> becomes an opt-in override) — an observable-behavior
+  change; strict judge-reply parsing (<code>bare</code>/<code>last-number</code>, traced <code>judge_parse</code>);
+  <code>{{index}}</code> in <code>sample</code> branches; <code>unresolved-interpolation</code> lint; <code>--strict</code>
+  rejects unsupported <code>mklang:</code> versions; <code>0600</code> checkpoints + §11 at-rest note;
+  conformance now covers hook precedence and <code>tool</code> states.</li>
+<li><strong>0.5.3 (third remediation pass):</strong> <strong><code>mklang test</code></strong> — deterministic scenario
+  testing with a scripted LLM, no API keys, sharing one matcher module
+  (<code>scripttest.py</code>) with the conformance runner; static budget-feasibility check
+  (<code>budget-infeasible</code>); dotted-segment lint on inline context maps (completes F7);
+  schema-copy identity test; ADR 0010 (LLM-assisted lint, later Accepted).</li>
+<li><strong>0.5.4 (release readiness):</strong> reproducible GitHub Release → PyPI Trusted
+  Publishing; clean-wheel smoke; DeepSeek + OpenAI blocking live matrix; optional
+  provider report; enforceable gate-divergence thresholds.</li>
+<li><strong>0.6.0:</strong> language <strong>0.3</strong> (<code>parse: list</code>, raw whole-template <code>input:</code>);
+  MCP surface + discovery; machine stdlib (<code>std_*</code>); authoring guide.</li>
+<li><strong>0.7.0:</strong> console M1–M3; MCP live events (ADR 0019); web <code>search</code> (ADR 0016);
+  output anti-cutoff (ADR 0018); context Layer 0–1 (ADR 0017); <code>lint --llm</code>
+  (ADR 0010 Accepted).</li>
+<li><strong>0.8.0:</strong> host tool stub architecture (ADR 0020); console observation honesty
+  for truncation; <code>context.today</code> host convention; search recency fields; best
+  practices guide; OpenAI-compat default <code>max_tokens=4096</code>.</li>
+<li><strong>0.8.1:</strong> host <code>context.now</code>; console chrome/content Markdown rendering;
+  sectioned produce system (<code>llm/prompts.py</code>) + BP §3; agent sticky policy in
+  <code>execution</code>.</li>
+<li><strong>0.8.2:</strong> best-practices filesystem/observability guidance, console activity
+  glyph cleanup, and optional-dependency CI guard.</li>
+<li><strong>0.9.0:</strong> XDG/config/discovery phases 1–2 (ADR 0021), responsive Rich CLI and
+  console experience (ADR 0022), and connection-error retries.</li>
+<li><strong>0.9.1–0.9.2:</strong> release-check stabilization followed by clean console
+  shutdown with pending provider or human-input work.</li>
+<li><strong>0.9.3:</strong> documentation alignment for package status, live evidence, and XDG
+  session paths.</li>
+<li><strong>0.10.0:</strong> first-run experience (ADR 0021 phase 3) — <code>mklang init</code> seeding
+  <code>hello.mkl</code>, provider key gate, shell completions, <code>scripts/install.sh</code> (pipx),
+  the Arch/AUR recipe, and a lean sdist.</li>
+<li><strong>0.11.0:</strong> global/local config separation (ADR 0023) — per-key <code>.env</code>
+  layering, <code>mklang-mcp</code> config auto-discovery, XDG fallbacks for workspace and
+  HITL checkpoints, <code>mklang doctor</code>, dead <code>run:</code> block and legacy <code>~/.mklang</code>
+  fallback removed.</li>
+<li><strong>0.12.0:</strong> class-3 fs data tools (ADR 0024) — <code>list_files</code>/<code>read_file</code>/
+  <code>write_file</code> builtins with a coding-tool workspace model — and the
+  <code>std_research</code> search → ground stdlib machine.</li>
+<li><strong>0.13.0:</strong> <code>runtime.yaml</code> <code>tools:</code> block (ADR 0016 completed), process
+  logging hygiene (<code>mklang.*</code> hierarchy, <code>--log-level</code>/<code>MKLANG_LOG_LEVEL</code>),
+  and the <code>std_compress</code> composable stdlib utility.</li>
+<li><strong>0.14.0:</strong> untrusted-context delimiting (ADR 0025) — provenance taint +
+  <code>&lt;data-NONCE&gt;</code> fences in produce/judge prompts, normative in SPEC §6 — and
+  the CI quality gates: mypy (zero suppressions), coverage <code>fail_under = 88</code>,
+  ubuntu 3.11–3.13 + macOS + Windows matrix in a reusable <code>quality.yml</code>.</li>
+<li><strong>0.15.0:</strong> console TUI in the core install (textual promoted from the
+  <code>[console]</code> extra; actionable hint when it is somehow missing), test
+  hermeticity against installed-host layers, ADR 0025 follow-up audit
+  closed, SECURITY.md + issue/PR templates + dependabot.</li>
+<li><strong>0.16.0:</strong> quality ratchet (coverage gate 88 → <strong>90</strong>, mypy strict
+  tier — add-only — for eleven leaf modules, targeted tests for the three
+  weakest modules lifting total coverage to <strong>92%</strong>) and the gate-divergence
+  harness widened from one synthetic machine to a <strong>four-machine suite</strong>.</li>
+<li><strong>Live (release 0.14.0 &amp; 0.15.0 matrices):</strong> DeepSeek + OpenAI live smoke
+  and cross-provider gate agreement <strong>1.0</strong> green through both release
+  pipelines (PyPI Trusted Publishing). Anthropic remains unit-tested; live
+  e2e still billing-blocked (credits, not a missing key).</li>
+</ul>
+<h2 id="language">Language<a class="headerlink" href="#language" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Shipped:</strong> code-hook gates (<code>hook:</code>, <code>hooks:</code>, host bool predicates).</li>
+<li><strong>Shipped:</strong> untrusted-context delimiting — provenance taint + <code>&lt;data-NONCE&gt;</code>
+  fences in produce and judge prompts (SPEC §6,
+  <a href="../adr/0025-untrusted-context-delimiting/">ADR 0025</a>). Follow-up
+  audit closed: the console brain is covered via <code>engine.run</code> (fence
+  regression test), <code>llmlint</code> probes use author faces only, and <code>resolve()</code>
+  tool/call inputs stay raw by design. Dual-channel / CaMeL-style control
+  stays open (§9).</li>
+<li><strong>[later] Formal types for <code>structure</code></strong> — optional typed I/O before spending tokens.</li>
+<li><strong>[maybe] Determinism knobs</strong> — portable seed / temperature in the <code>.mkl</code>.</li>
+</ul>
+<h2 id="runtime">Runtime<a class="headerlink" href="#runtime" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Shipped:</strong> structured judge, error taxonomy, shared cost budget, call-failed,
+  Anthropic parity, tier validation, tool/hook plugin registries via entry points.</li>
+<li><strong>[later] Judge confidence score</strong> — numeric confidence alongside choice.</li>
+<li><strong>[maybe] Budget split</strong> — a fan-out charges <code>max(1, len(branches))</code> steps, so the
+  single <code>budget:</code> couples the loop guard with a fan-out volume cap (SPEC §7). A v0.3
+  ADR could split it into a transition <code>budget</code> and a separate <code>branch_budget</code> for
+  fan-out width; decide via ADR, keep one number in v0.2.</li>
+<li><strong>[later] Async concurrency</strong> — asyncio fan-out beyond <code>ThreadPoolExecutor(5)</code>.</li>
+<li><strong>Shipped (0.5.0):</strong> provider adapter registry — <code>mklang.providers</code> entry
+  points; OpenAI-compatible stays the default for unregistered names.</li>
+<li><strong>[later] Caching / reproducibility</strong> — per-state memoization.</li>
+<li><strong>[later] Sub-machine project manifest</strong> — <code>mklang.toml</code>.</li>
+<li><strong>Shipped (0.3.0):</strong> resumable runs / checkpoints — blackboard + position
+  pause/resume on budget exhaustion (ADR 0007), foundation for real HITL.</li>
+</ul>
+<h2 id="quality">Quality<a class="headerlink" href="#quality" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Shipped:</strong> CI quality gates — mypy (zero suppressions, every function in
+  <code>src/mklang</code> annotated) with an <strong>add-only strict tier</strong> for eleven leaf
+  modules (full <code>--strict</code> minus <code>disallow_any_generics</code>, the documented JSON
+  idiom — modules may only ever be added to the tier, the inverse of a
+  relaxation list); pytest-cov with a <code>fail_under = 90</code> coverage gate (92%
+  measured; ratchet up, never down); and an offline test matrix (ubuntu
+  3.11–3.13 + macOS + Windows) in a reusable <code>quality.yml</code> workflow shared by
+  <code>ci.yml</code> and <code>release.yml</code> (pinned to the release tag).</li>
+<li><strong>Shipped:</strong> gated live smoke tests — provider-agnostic, opt-in via
+  <code>MKLANG_LIVE=1</code> (<code>MKLANG_LIVE_PROVIDER=&lt;name&gt;</code> to override the config's
+  <code>active</code>); skips cleanly when the key is missing. Anthropic goes through the
+  same path as every other provider.</li>
+<li><strong>Shipped:</strong> cross-provider <strong>gate-divergence</strong> harness —
+  <a href="https://github.com/gianlucamazza/mklang/blob/main/scripts/gate_divergence.py"><code>scripts/gate_divergence.py</code></a> +
+  <a href="../experiments/gate-divergence/"><code>docs/experiments/gate-divergence.md</code></a>
+  — now a <strong>four-machine suite</strong>, each stressing a different gate shape
+  (multi-way <code>ok</code> routing, borderline judgement, control-flow <code>escalate</code>,
+  <code>repair</code> grounding). <code>--machines</code> selects the set (default the single
+  <code>gate_divergence</code> for release-gate comparability, or <code>all</code>); agreement and
+  the <code>--min-agreement</code> release floor are computed <strong>per-machine</strong> (cross-machine
+  signatures differ by construction). The harness is offline-testable via an
+  injectable <code>build_llm</code>. Document portability stays syntactic until agreement
+  is measured live at scale.</li>
+<li><strong>Shipped (results, 2026-07-16):</strong> first gate-divergence table —
+  deepseek×openai, 3 repeats each, <strong>agreement rate 1.0</strong> on the single spam
+  machine (tier-following judges). Dated row in
+  <a href="../experiments/gate-divergence/"><code>docs/experiments/gate-divergence.md</code></a>.
+  Re-run at suite scale when credits allow; Anthropic still billing-blocked.</li>
+<li><strong>Shipped:</strong> LLM-assisted lint (<code>mklang lint --llm</code>,
+  <a href="../adr/0010-llm-assisted-lint/">ADR 0010</a>, Accepted) — opt-in probe of
+  ambiguous / overlapping prose <code>when</code> conditions with the real gate judge
+  (K synthetic outputs × R judge repeats per multi-gate state). Advisory only:
+  never a <code>--strict</code> error source, never in the offline CI path.</li>
+<li><strong>Shipped (multi-provider live, 0.14.0 &amp; 0.15.0 release matrices):</strong> DeepSeek +
+  <strong>OpenAI</strong> live smoke and gate agreement green through both release pipelines.
+  <strong>Anthropic</strong> adapter remains unit-tested; live e2e blocked by <strong>account
+  billing/credits</strong>, not by a missing key (key present; API returns a
+  purchase-credits error).</li>
+</ul>
+<h2 id="organizational">Organizational<a class="headerlink" href="#organizational" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Shipped (0.5.0):</strong> docs site (mkdocs-material on GitHub Pages, assembled
+  from the repo's canonical markdown) and <code>mklang lint</code> (static analysis
+  beyond <code>check</code>); conformance suite as the language contract (ADR 0009).</li>
+<li><strong>Shipped:</strong> <a href="../best-practices/">best practices</a> — layer discipline
+  (language / host / surface), tool contracts, web+time+cutoff checklist,
+  anti-patterns, and explicit non-goals for core (bash/FS, knowledge-cutoff magic).</li>
+<li><strong>Shipped:</strong> community &amp; security hygiene — <code>SECURITY.md</code> (private GitHub
+  Security Advisories, scope aligned with SPEC §11 — persuasion of fenced
+  content and checkpoint-at-rest are documented limitations, not
+  vulnerabilities), issue forms (bug asks for a scripted <code>mklang test</code> repro;
+  feature asks for the layer), a default PR template with the quality-gate
+  checklist, and dependabot (grouped uv deps + GitHub Actions, weekly).</li>
+<li><strong>0.5.4 release path:</strong> a published GitHub Release builds and tests one artifact
+  set, requires DeepSeek + OpenAI live agreement, then publishes through PyPI
+  Trusted Publishing (OIDC, no long-lived package token). The one-time external
+  setup is the <code>mklang</code> pending publisher plus the protected GitHub <code>pypi</code>
+  environment and provider secrets.</li>
+<li><strong>[later] Editor tooling</strong> — LSP / syntax highlighting beyond the YAML
+  schema; <code>mklang lint</code> is the first brick.</li>
+<li><strong>[shipped] Rename <code>.mk</code> → <code>.mkl</code></strong> — the <code>.mk</code> suffix collided with Makefile
+  includes / GitHub Linguist; renamed to <code>.mkl</code> (mklang) while adoption is still
+  ~nil (hard cut: discovery matches <code>*.mkl</code>). The suffix is a discovery
+  convention, not a language contract
+  (<a href="../adr/0027-adopt-mkl-extension/">ADR 0027</a>, SPEC §9).</li>
+</ul>
+<h2 id="integrations-extensions">Integrations &amp; extensions<a class="headerlink" href="#integrations-extensions" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Shipped — web search host tool</strong> (<a href="../adr/0016-host-web-search-tool/">ADR 0016</a>
+  Accepted) — structured <code>search</code> stub default; fake/tavily backends;
+  optional <code>days</code>/<code>topic</code>/<code>published_date</code>; <code>research_web.mkl</code> + scenario tests;
+  host <code>context.today</code> convention for time-sensitive machines; <code>std_research</code>
+  shipped in 0.12.0; <code>runtime.yaml</code> <code>tools:</code> block shipped (env &gt; config &gt;
+  default, doctor reports the deciding source).</li>
+<li><strong>Shipped — host tool stub architecture</strong> (<a href="../adr/0020-host-tool-stub-architecture/">ADR 0020</a>)
+  — uniform JSON envelope for I/O tools; <code>search_kb</code> / <code>send_reply</code> stub+fake
+  backends; honest default <code>send_reply</code> (<code>sent: false</code>).</li>
+<li><strong>Shipped — context rendering Layer 0–1</strong> (<a href="../adr/0017-context-content-management/">ADR 0017</a>
+  Accepted) — judge CONTEXT marker; produce-prompt value cap; console
+  <code>history_for_brain</code>; compress pattern (<code>research_compress.mkl</code>). <strong>[later]</strong>
+  language faces / <code>std_compress</code>.</li>
+<li><strong>Shipped — output anti-cutoff</strong> (<a href="../adr/0018-output-truncation-anti-cutoff/">ADR 0018</a>
+  Accepted) — detect/trace/events; <code>report</code>/<code>halt</code> on CLI · MCP · console ·
+  scripttest; adapter fixtures. <strong>[later]</strong> <code>continue</code> stitching.</li>
+<li><strong>Shipped:</strong> tool plugin registry (<code>mklang.tools</code> entry points) and hook plugins
+  (<code>mklang.hooks</code>); builtins remain available offline.</li>
+<li><strong>Shipped (0.4.0):</strong> human-in-the-loop — <code>escalate</code> suspends (<code>--hitl</code>) and
+  resumes on reply (<code>resume --set</code>), ADR 0008. A per-gate <code>hitl:</code> field is the
+  natural [maybe] extension if run-level opt-in proves too coarse.</li>
+<li><strong>Shipped:</strong> MCP server surface (<code>mklang-mcp</code>, extra <code>mklang[mcp]</code>,
+  <a href="../adr/0011-mcp-server-surface/">ADR 0011</a>) — optional stdio MCP host so
+  agentic clients can commission a machine (<code>run</code>/<code>resume</code>, inline source or path)
+  and get <code>trace</code> + <code>usage</code> back, without embedding the library. Suspended runs
+  hold their frames in an in-memory session store behind opaque single-use
+  handles; the core install stays offline with no <code>mcp</code> present.</li>
+<li><strong>Shipped:</strong> machine stdlib (<a href="../adr/0012-machine-stdlib/">ADR 0012</a>) —
+  ten bundled general-purpose <code>std_*</code> architecture machines (CoT,
+  self-consistency, refine, ToT, debate, map-reduce, cascade, plan-execute,
+  research, compress), present in every
+  registry with user-wins precedence, runnable by name from CLI/MCP, extensible
+  via the <code>mklang.machines</code> entry-point group. Catalog: <code>docs/reference/stdlib.md</code>.</li>
+<li><strong>Shipped (0.3):</strong> structured list outputs — <code>parse: list</code> deposits a parsed
+  JSON array and whole-template <code>input:</code> values pass raw across <code>call:</code>/<code>tool:</code>
+  (<a href="../adr/0014-structured-list-outputs/">ADR 0014</a>); Plan-and-Execute
+  ships as <code>std_plan_execute</code>.</li>
+<li><strong>Shipped (M1–M3):</strong> console surface (<code>mklang console</code>,
+  <a href="../adr/0015-console-surface/">ADR 0015</a>, <a href="../console/">docs/guides/console.md</a>)
+  — agent-first Textual TUI; authoring loop; sessions/<code>--continue</code>; activity
+  tree + inspector; slash commands + <code>/resume</code>; brain history windowed for
+  prompts (ADR 0017).</li>
+<li><strong>Shipped (package polish):</strong> console <strong>conversation rendering</strong> — agent
+  replies as CommonMark; slash/JSON/YAML fenced; user text and activity-tree
+  labels/previews as plain styled <code>Text</code> (no Rich-markup injection of untrusted
+  content). Docs: <a href="../console/#conversation-rendering">console</a>,
+  <a href="../best-practices/">best practices</a> anti-pattern #12.</li>
+<li><strong>Shipped:</strong> live engine events on the MCP transport
+  (<a href="../adr/0019-mcp-live-events/">ADR 0019</a>) — <code>run</code>/<code>resume</code> stream the
+  <code>on_event</code> sequence as <code>mklang.event</code> logging notifications; any MCP client
+  can render run progress without touching the engine.</li>
+<li><strong>[maybe] External console client</strong> — an OpenTUI/Ink-class front-end as a
+  separate project speaking MCP; needs nothing new server-side (ADR 0019).</li>
+<li><strong>[maybe] Interop</strong> — LangGraph export/import.</li>
+<li><strong>[maybe] Observability export</strong> — OpenTelemetry spans from the trace
+  (projection of the run trace; process logging stays host-side — see
+  <a href="../best-practices/">best practices §12</a>).</li>
+<li><strong>[shipped] Process logging hygiene</strong> — <code>mklang.*</code> <code>logging</code> hierarchy on
+  stderr, <code>MKLANG_LOG_LEVEL</code> / <code>--log-level</code> (CLI and <code>mklang-mcp</code>); never
+  replaces trace/events (BP §12).</li>
+<li><strong>[shipped] FS data tools (ADR 0024)</strong> — class-3 <code>list_files</code>/<code>read_file</code>/
+  <code>write_file</code> builtins with a coding-tool workspace model: live reads confined
+  to <code>--workspace</code>/<code>MKLANG_FS_ROOT</code>/cwd, grant-gated writes; not console brain
+  defaults; not language faces (BP §13).</li>
+<li><strong>[maybe] FS multi-root and path rules</strong> — <code>--add-dir</code>/<code>writable_roots</code>
+  analog and per-path allow/deny rules (<code>Read(...)</code>/<code>Edit(...)</code> syntax shared
+  by Claude Code and Grok); ADR 0024 defers both until a real use case appears.</li>
+</ul>
+<h2 id="near-term-after-0150">Near-term after 0.15.0<a class="headerlink" href="#near-term-after-0150" title="Permanent link">&para;</a></h2>
+<p>The 0.13–0.15 cycle shifted from feature growth to <strong>maturity</strong>: quality gates,
+untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
+"mature framework" are stability and evidence, not more surface:</p>
+<ul>
+<li><strong>[shipped] Path to 1.0 — prep</strong> — every open question in <a href="../SPEC/">SPEC §9</a>
+  is closed as a permanent non-goal, deferred with rationale, or resolved by
+  measurement (<a href="../adr/0026-stability-and-deprecation-policy/">ADR 0026</a>,
+  <a href="../adr/0027-adopt-mkl-extension/">ADR 0027</a>), and a stated
+  <strong>stability &amp; deprecation policy</strong> pins the package / spec-version contract
+  (<a href="../stability/">guide</a>, ADR 0026). Spec stays <strong>0.3</strong>.</li>
+<li><strong>[shipped] Cut 1.0.0</strong> — drop the <code>Development Status :: 4 - Beta</code> classifier,
+  bump the package to <strong>1.0.0</strong> (spec stays 0.3), and run the live release gate
+  (DeepSeek + OpenAI agreement 1.0; Anthropic re-runs when credits allow). The
+  last explicit item the maturity assessment named.</li>
+<li><strong>[shipped] 1.0.1 validation follow-ups</strong> — authoring-loop
+  <code>blind_spot = 0.0167</code> (no <code>test_machine</code>), ADR 0028 provisional 1.0 posture,
+  <code>cmd_doctor</code> CC cut, CI format-check + tag↔CHANGELOG enforcement; protocol for
+  the five-reader distribution test. Anthropic live re-run still open.</li>
+<li><strong>[shipped] Showcase refresh</strong> — the demo suite was refocused and pruned to
+  the two product surfaces: <strong><code>agent</code></strong> (console TUI) and <strong><code>language</code></strong>
+  (<code>react.mkl</code>); the peripheral recordings (<code>cli</code>, <code>search</code>, <code>console</code>,
+  <code>orchestrate</code>, <code>hitl</code>, <code>test</code>) are gone, the README leads with the two
+  surfaces, and <code>check-drift</code> also fails on orphan asset files.</li>
+<li><strong>[shipped] gate-divergence at scale</strong> — four-machine suite on DeepSeek +
+  OpenAI (×3). First full run (2026-07-23): <strong>1.0 per machine</strong>. 1.0.1 re-run
+  (2026-07-24): three machines still <strong>1.0</strong>, <code>severity_escalate</code> at <strong>0.667</strong>
+  (contestability under repeats). Release gate (single machine) stays <strong>1.0</strong>.
+  Dated table in
+  <a href="../experiments/gate-divergence/">docs/experiments/gate-divergence.md</a>.</li>
+<li><strong>[next] Live-verify Anthropic</strong> — needs <code>ANTHROPIC_API_KEY</code> in local <code>.env</code>
+  <strong>and</strong> GitHub Actions secrets (currently absent from both) plus account
+  credit; already wired in the live matrix and divergence harness.</li>
+<li><strong>[later] Truncation <code>continue</code> stitching</strong> (ADR 0018).</li>
+<li><strong>[later] Editor tooling / LSP</strong>; <strong>[maybe]</strong> budget split, async fan-out,
+  per-state caching, external console client, OTel export, LangGraph interop.</li>
+</ul>
+<p>Defer: context Layer 2 zones/pin.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

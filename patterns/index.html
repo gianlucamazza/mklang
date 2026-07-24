@@ -1,0 +1,1789 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative language for LLM-driven state machines.">
+      
+      
+      
+        <link rel="canonical" href="https://gianlucamazza.github.io/mklang/patterns/">
+      
+      
+        <link rel="prev" href="../stability/">
+      
+      
+        <link rel="next" href="../console/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Patterns - mklang</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#recommended-configurations-flows" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="mklang" class="md-header__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mklang
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Patterns
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="mklang" class="md-nav__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mklang
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SPEC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conformance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conformance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stability policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tiers-route-by-cost-escalate-for-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tiers — route by cost, escalate for quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reliability-gates-are-the-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reliability — gates are the safety net
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-pin-the-gates-before-you-spend-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing — pin the gates before you spend a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reasoning-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reasoning &amp; observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composite-flows-which-pattern-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composite flows (which pattern when)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-boundaries-quick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer boundaries (quick)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live demos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Machine stdlib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpreter architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/gate-divergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gate divergence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/authoring-blind-spot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring blind_spot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/validation-report-2026-07-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/distribution-five-reader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Five-reader distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tiers-route-by-cost-escalate-for-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tiers — route by cost, escalate for quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reliability-gates-are-the-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reliability — gates are the safety net
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-pin-the-gates-before-you-spend-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing — pin the gates before you spend a token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reasoning-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reasoning &amp; observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composite-flows-which-pattern-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composite flows (which pattern when)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-boundaries-quick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer boundaries (quick)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="recommended-configurations-flows">Recommended configurations &amp; flows<a class="headerlink" href="#recommended-configurations-flows" title="Permanent link">&para;</a></h1>
+<p>Operating guidance for building good machines. The <strong>cookbook</strong> (<a href="../SPEC/"><code>SPEC.md §10</code></a>)
+maps <em>architectures</em> to constructs; this page is about configuring them <em>well</em>.</p>
+<p><strong>Canonical checklist</strong> (do / don't / layers / tool contracts / anti-patterns):
+<a href="../best-practices/">Best practices</a>. <strong>Correct-file recipe:</strong> <a href="../authoring/">Authoring</a>.</p>
+<h2 id="tiers-route-by-cost-escalate-for-quality">Tiers — route by cost, escalate for quality<a class="headerlink" href="#tiers-route-by-cost-escalate-for-quality" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Use <code>fast</code> for</th>
+<th>Use <code>balanced</code> for</th>
+<th>Use <code>reasoning</code> for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>classify, route, extract</td>
+<td>most generative states</td>
+<td>validation, synthesis, critical gates</td>
+</tr>
+<tr>
+<td>high-volume fan-out branches</td>
+<td>drafting</td>
+<td>final answers, policy judgements</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Default <code>default_tier: balanced</code>.</strong> Override per state; don't reach for
+  <code>reasoning</code> reflexively — it's the expensive tier.</li>
+<li><strong>Gate judging follows the state's tier by default</strong> (SPEC §2.1): a <code>reasoning</code>
+  state's high-stakes gates (refund thresholds, legal matters, human escalation) are
+  judged by the reasoning model, not silently downgraded. The <code>judge:</code> config key is
+  an <strong>opt-in global override</strong> that forces one model for <em>all</em> gate judging — a
+  cost/latency optimization that also downgrades your most critical gates, so reach
+  for it only when your gates really are uniform, cheap classifications.</li>
+<li><strong>Speculative cascade</strong> beats a flat <code>reasoning</code> machine on cost: draft at <code>fast</code>,
+  and let an <code>escalate</code> gate promote only the low-confidence cases to a <code>reasoning</code>
+  state. Same answers, a fraction of the tokens.</li>
+</ul>
+<h2 id="reliability-gates-are-the-safety-net">Reliability — gates are the safety net<a class="headerlink" href="#reliability-gates-are-the-safety-net" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Use code-hook gates for exact checks</strong> (<code>hook: name</code> → host <code>(ctx, output) -&gt; bool</code>).
+  Amounts, equality, allowlists: do <strong>not</strong> ask the LLM. Put hooks <strong>above</strong> prose
+  gates; keep <code>when</code> as the trace label. See <code>examples/hook_gates.mkl</code> and ADR 0006.
+  Custom tools/hooks: package entry points <code>mklang.tools</code> / <code>mklang.hooks</code> (see
+  CONTRIBUTING).</li>
+<li><strong>Never put real I/O in generative states.</strong> Searching, sending mail, charging a
+  card: use <code>tool:</code> states (host callables). Do not write <code>execution: use tool X</code>
+  on a generative state — the model cannot call tools there and will invent
+  observations. Do not ask the model to "confirm the message was sent."</li>
+<li><strong>Honest stub observations (ADR 0020).</strong> Reference I/O tools return JSON with
+  <code>tool</code>, <code>stub</code>, <code>error</code>. Default <code>send_reply</code> has <code>sent: false</code>; default
+  <code>search</code> is unbound until Tavily/fake is enabled. Read <code>stub</code>/<code>error</code> before
+  treating an observation as live data (<a href="../best-practices/">Best practices §4</a>).</li>
+<li><strong>Web search is a host tool, not a model skill.</strong> Builtin <code>search</code> is a
+  structured stub until a backend is bound. <strong><code>TAVILY_API_KEY</code> alone auto-enables
+  Tavily</strong>; or set <code>MKLANG_SEARCH_BACKEND=fake|tavily|stub</code>. Never put "search
+  the web" only in generative <code>prompt</code>/<code>execution</code> — the model will invent hits.
+  Use <code>tool: search</code> — ready-made as the <code>std_research</code> stdlib machine, or see
+  <code>examples/research_web.mkl</code>, <code>machines/news_search.mkl</code>.
+  Optional tool inputs: <code>days</code>, <code>topic</code> (<code>news</code>|<code>general</code>); results may include
+  <code>published_date</code>. Snippets are <strong>untrusted</strong> (SPEC §11).</li>
+<li><strong><code>execution</code> for sticky policy.</strong> The reference interpreter puts <code>structure</code> +
+  <code>execution</code> on the <strong>system</strong> channel and <code>prompt</code> on <strong>user</strong>. Prefer
+  durable guardrails in <code>execution</code> (no inventing search, honesty on truncation)
+  and keep <code>{{…}}</code> data in <code>prompt</code> (<a href="../best-practices/">Best practices §3</a>).</li>
+<li><strong>Host clock convention (<code>today</code> / <code>now</code>).</strong> Declare empty keys in <code>context:</code>;
+  CLI / MCP / console fill them only when declared — they never invent
+  undeclared keys. This is host convention + authoring discipline, not a
+  language primitive.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Fill</th>
+<th>Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>today: ""</code></td>
+<td>ISO date <code>YYYY-MM-DD</code></td>
+<td>News/recency, knowledge-cutoff framing</td>
+</tr>
+<tr>
+<td><code>now: ""</code></td>
+<td>Local ISO datetime with offset</td>
+<td>Wall-clock (“what time is it?”)</td>
+</tr>
+</tbody>
+</table>
+<p>Prompts should say <code>Today is {{today}}</code> / <code>Current local time is {{now}}</code>,
+  prefer recent sources, and <strong>forbid filling gaps with pre-training knowledge</strong>
+  older than that date.</p>
+<ul>
+<li><strong>Watch for output cutoff.</strong> When a produce hits max_tokens, the runtime sets
+  <code>truncated: true</code> on the trace step and on live <code>state-done</code> events (ADR 0018).
+  Default policy is <code>report</code> (annotate and continue); use <code>--on-truncate halt</code>
+  or <code>run(..., on_truncate="halt")</code> (also on MCP/console) for strict runs.
+  Prefer raising tier <code>max_tokens</code> params over relying on auto-continue
+  (continue stitching is deferred, not the default). Console <code>run_machine</code>
+  observations <strong>propagate</strong> produce truncation and mark clipped results with
+  <code>…[truncated]</code> + <code>result_truncated</code> — never treat a cut observation as complete.</li>
+<li><strong>Bound growing blackboards (working memory vs archive).</strong> Long <code>accumulate</code>
+  / research loops explode prompts. Prefer an explicit <strong>compress</strong> generative
+  state that rewrites a key shorter before the next loop — see
+  <code>examples/research_compress.mkl</code>. The host does <strong>not</strong> summarize for you: it
+  only caps judge CONTEXT (head+tail marker), per-value produce interpolation
+  (high default, <code>…[truncated]</code>), and console brain history (last N turns /
+  chars). Transcript and full <code>Session.history</code> stay the audit archive; only
+  the prompt view is windowed (ADR 0017).</li>
+<li><strong>Treat <code>{{context}}</code> as untrusted</strong> when it may contain customer or web text.
+  The runtime delimits tainted interpolations automatically — host inputs, tool
+  observations, and deposits render inside <code>&lt;data-NONCE&gt;</code> fences, and the judge
+  always sees OUTPUT/REASONING/CONTEXT as fenced data (SPEC §6, ADR 0025) — but
+  that is a mitigation, not a proof: fenced content can still <em>persuade</em>. Prefer
+  hooks + HITL before irreversible tools (SPEC §11).</li>
+<li><strong>End every non-terminal state with an <code>otherwise</code> gate.</strong> Without it, a run can
+  <code>halt</code> with <code>no-gate-matched</code> — and if the judge returns garbage, the runtime
+  <strong>hard-halts</strong> with <code>judge-unparseable</code> unless <code>otherwise</code> is eligible (soft
+  fallback is recorded as <code>judge_fallback</code> in the trace). <code>mklang check</code> warns when
+  the catch-all is missing.</li>
+<li><strong>Guarantee a reachable <code>END</code>.</strong> <code>mklang check</code> errors if none exists.</li>
+<li><strong>Fix <code>unresolved-interpolation</code> lint before shipping.</strong> <code>mklang lint</code> flags any
+  <code>{{path}}</code> whose first segment no <code>context:</code> key, state <code>output:</code>, or (inside a
+  fan-out) <code>item</code>/<code>index</code> provides — a typo (<code>{{kb_answr}}</code>) otherwise renders to an
+  empty string and silently degrades the prompt. Under <code>--strict</code> it fails the run.
+  If a host injects extra context keys at run time, declare them in <code>context:</code> with
+  placeholder values so the reference to them resolves and the lint stays quiet.
+  (When the root is an <strong>inline <code>context:</code> map</strong> — <code>ticket: {body: …}</code> — the second
+  segment is checked too, so <code>{{ticket.bod}}</code> is caught. Deeper tails, and roots
+  whose shape isn't statically known (state outputs, runtime <code>human</code>/<code>item</code>/<code>index</code>),
+  are not verified against prose <code>structure</code>.)</li>
+<li><strong>Cap <code>repair</code>.</strong> A <code>repair: N</code> with a modest <code>N</code> (1–2) plus a following
+  <code>escalate</code>/<code>fail</code> gate prevents an endless self-correction loop.</li>
+<li><strong>Give escalation a safe sink.</strong> Route hard cases to a terminal <code>human_review</code>
+  state rather than failing — it's a graceful degrade, not a crash. With
+  <code>--hitl</code> the run actually <strong>pauses</strong> on a fired escalate (checkpoint under
+  <code>$XDG_STATE_HOME/mklang/checkpoints/</code>, or wherever <code>--checkpoint</code> points) and
+  <code>mklang resume --set human.reply="…"</code> feeds the decision to the handler
+  (ADR 0008).</li>
+<li><strong>Size <code>budget</code> to the worst case.</strong> Roughly: longest path × loop iterations, plus
+  the width of any fan-out (a <code>sample: N</code> costs N steps). Leave headroom; hitting the
+  budget is a <code>halt</code>.</li>
+<li><strong>Let <code>mklang check</code>/<code>lint</code> catch impossible budgets.</strong> If <code>budget</code> is below the
+  shortest path (in states) from <code>entry</code> to a gate <code>to: END</code>, validation reports
+  error <code>budget-infeasible</code> — a guaranteed <code>budget-exhausted</code> before the first
+  provider call. <code>budget &lt; shortest + 2</code> is a warning (no headroom for a single
+  repair). Fan-out states count as <strong>1</strong> in this static check (branch width is
+  data-dependent), so a machine can still exhaust budget on a wide map even after
+  the check passes (SPEC §7).</li>
+<li><strong>Map-reduce: size <code>budget</code> against data cardinality.</strong> A fan-out charges
+  <code>max(1, len(branches))</code> steps (SPEC §7), so <code>budget</code> is also a volume cap — an
+  <code>over</code> on 30 items with <code>budget: 25</code> halts <code>budget-exhausted</code> before the reducer.
+  Set <code>budget ≥ expected branches + machine overhead</code>, or bound the list before the
+  fan-out. If the item count is unknown at authoring time, size for the worst case.</li>
+<li><strong>Use <code>--max-tokens</code> (cost budget) on long <code>call</code> trees.</strong> The remaining budget is
+  shared with sub-machines so a runaway child cannot burn tokens unbounded.</li>
+<li><strong>Fan-out concurrency</strong> is a <code>ThreadPoolExecutor</code> with <code>max_workers=5</code> today —
+  fine for modest <code>sample</code>/<code>over</code> widths; very wide maps should stay small or wait
+  for the async roadmap item.</li>
+</ul>
+<h2 id="testing-pin-the-gates-before-you-spend-a-token">Testing — pin the gates before you spend a token<a class="headerlink" href="#testing-pin-the-gates-before-you-spend-a-token" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Write scenario tests for every gate you would be embarrassed to see misfire.</strong>
+  <code>mklang test machine.mkl --script machine.test.yaml</code> runs the machine against a
+  <strong>scripted LLM</strong> (produce texts + judge picks) and scripted tools/hooks — no
+  provider, no API key, fully deterministic. Each scenario is a named case in the
+  conformance format (<code>llm</code>/<code>tools</code>/<code>hooks</code>/<code>input</code>/<code>run</code> + <code>expect</code>), and the runner
+  shares its matcher with the <a href="../conformance/">conformance suite</a>, so a
+  green scenario means the <em>interpreter</em> would route your machine exactly that way.</li>
+<li><strong>Cover both the happy path and the escape hatches.</strong> The value is in the
+  branches you hope never fire: the escalate-to-human path, the repair loop giving
+  up, the empty-tool-result fallback. Script the judge pick that steers into each
+  and assert the <code>trace</code> skeleton (<code>state</code> → <code>to</code>, <code>policy</code>) lands where you think.
+  See <a href="https://github.com/gianlucamazza/mklang/blob/main/examples/triage.test.yaml"><code>examples/triage.test.yaml</code></a> (happy path +
+  KB-empty escalation).</li>
+<li><strong>Keep scenarios next to the machine</strong> (<code>triage.mkl</code> → <code>triage.test.yaml</code>) and
+  run them in CI — a <code>.mkl</code> edit that reroutes a gate fails the scenario, not a
+  customer.</li>
+</ul>
+<h2 id="reasoning-observability">Reasoning &amp; observability<a class="headerlink" href="#reasoning-observability" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Use <code>reason: true</code> on states whose <em>why</em> matters</strong> (diagnosis, judgement,
+  synthesis). The chain-of-thought lands in the trace, not the context — you get
+  auditability without polluting downstream prompts. On reasoner models it maps to
+  native thinking for free.</li>
+<li><strong>Read the trace, not just the result.</strong> Every transition records the gate that
+  fired and (for fan-out/<code>call</code>) the nested detail. When a run goes wrong, the trace
+  says exactly where and why.</li>
+</ul>
+<h2 id="composite-flows-which-pattern-when">Composite flows (which pattern when)<a class="headerlink" href="#composite-flows-which-pattern-when" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Reach for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One high-stakes answer, want robustness</td>
+<td><strong>Self-consistency</strong> (<code>sample</code> → vote)</td>
+</tr>
+<tr>
+<td>Many similar items (docs, tickets, rows)</td>
+<td><strong>Map-Reduce</strong> (<code>over</code> → reducer)</td>
+</tr>
+<tr>
+<td>Quality-critical prose</td>
+<td><strong>Reflexion</strong> (<code>repair</code> loop, or a critic)</td>
+</tr>
+<tr>
+<td>Distinct request types → distinct handling</td>
+<td><strong>Router-of-experts</strong> (classify → <code>call</code>)</td>
+</tr>
+<tr>
+<td>Mostly-easy workload, occasional hard case</td>
+<td><strong>Speculative cascade</strong> (fast → escalate)</td>
+</tr>
+<tr>
+<td>Open-ended tool-using task</td>
+<td><strong>ReAct</strong> (think → <code>tool</code> state → <code>accumulate</code> loop)</td>
+</tr>
+<tr>
+<td>Explore several partial solutions, keep the best</td>
+<td><strong>Tree-of-Thought</strong> (<code>sample</code> → select → loop)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="provider-notes">Provider notes<a class="headerlink" href="#provider-notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The <code>.mkl</code> never names a model — only tiers. Pick models in
+  <a href="https://github.com/gianlucamazza/mklang/blob/main/config/runtime.example.yaml"><code>config/runtime.example.yaml</code></a> (default
+  <code>active: deepseek</code>); keys come from <code>.env</code> (<code>DEEPSEEK_API_KEY</code>, …). Switching
+  provider is a one-line <code>active:</code> change or <code>mklang run --provider …</code>.</li>
+<li><strong>Diversity for <code>sample</code></strong> comes from temperature; keep the sampling state on a
+  model that honors it (most chat models do — some reasoner models ignore it). Each
+  sample branch also sees its own <code>{{index}}</code> (0-based), so you can drive diversity
+  explicitly — "you are branch {{index}}, take a different approach" (Tree-of-Thought,
+  debate), not temperature alone.</li>
+<li><strong><code>reason: true</code></strong> yields a captured chain only on models that expose thinking
+  (Anthropic adaptive, DeepSeek V4 with <code>thinking.type: enabled</code>, o-series). On plain models the
+  model still reasons internally; the trace just won't hold the scratchpad.</li>
+<li><strong>Per-tier <code>params</code> are applied</strong> to each generation: <code>effort</code>/<code>thinking</code> on
+  Anthropic, <code>reasoning_effort</code> on OpenAI/xAI, etc. They're best-effort — a param a
+  provider doesn't support is dropped and the call retried, so mixing providers never
+  breaks. Put them under <code>providers.&lt;name&gt;.params.&lt;tier&gt;</code> in the runtime config.
+  Prefer setting a healthy <code>max_tokens</code> on balanced/reasoning tiers so produce is
+  less likely to hit a length stop (ADR 0018); truncation is still traced when it
+  happens.</li>
+</ul>
+<h2 id="layer-boundaries-quick">Layer boundaries (quick)<a class="headerlink" href="#layer-boundaries-quick" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Put in the <code>.mkl</code></th>
+<th>Keep on the host / surface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gates, tiers, <code>tool:</code> / <code>hook:</code> <em>names</em></td>
+<td>Tool/hook <em>implementations</em>, API keys</td>
+</tr>
+<tr>
+<td><code>parse: list</code>, compress <em>states</em></td>
+<td><code>on_truncate</code> default, search backend</td>
+</tr>
+<tr>
+<td>Declared <code>context.today: ""</code> / <code>now: ""</code></td>
+<td>Filling <code>today</code> (date) / <code>now</code> (local datetime)</td>
+</tr>
+<tr>
+<td>Scenario tests next to the machine</td>
+<td>Console consent, MCP sessions, bash/FS plugins</td>
+</tr>
+<tr>
+<td>Trace / live events / ops logs mixed</td>
+<td>Keep channels separate (<a href="../best-practices/">Best practices §12</a>)</td>
+</tr>
+<tr>
+<td>Generic read/write disk in core</td>
+<td>Class-3 host tools with root + stub only (<a href="../best-practices/">§13</a>)</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../best-practices/">Best practices §1 and §13</a> for the full layer map and what
+may become language 0.4 later (not current syntax).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

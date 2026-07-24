@@ -1,0 +1,5053 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative language for LLM-driven state machines.">
+      
+      
+      
+        <link rel="canonical" href="https://gianlucamazza.github.io/mklang/CHANGELOG/">
+      
+      
+        <link rel="prev" href="../ROADMAP/">
+      
+      
+        <link rel="next" href="../CONTRIBUTING/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Changelog - mklang</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="mklang" class="md-header__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mklang
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="mklang" class="md-nav__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mklang
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SPEC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conformance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conformance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stability policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live demos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Machine stdlib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpreter architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/gate-divergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gate divergence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/authoring-blind-spot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring blind_spot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/validation-report-2026-07-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/distribution-five-reader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Five-reader distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[Unreleased]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#108-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.8] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.8] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#107-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.7] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.7] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#106-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.6] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.6] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#105-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.5] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.5] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#104-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.4] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.4] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#103-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.3] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.3] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#102-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.2] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.2] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#101-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.1] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.1] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0160-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.16.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.16.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0150-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.15.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0140-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.14.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0130-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.13.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.13.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0120-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.12.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.12.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2026-07-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.11.0] — 2026-07-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.11.0] — 2026-07-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0100-2026-07-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.10.0] — 2026-07-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.0] — 2026-07-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#093-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.3] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.3] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#092-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.2] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.2] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#091-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.1] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.1] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#090-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#082-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.8.2] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.2] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#081-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.8.1] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.1] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#080-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.8.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.7.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.7.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.6.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.6.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added-language-03-adr-0014" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — language 0.3 (ADR 0014)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-surfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — surfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#054-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.4] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.4] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#053-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.3] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.3] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#052-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.2] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.2] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed-observable-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed (observable behavior)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.1] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.1] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.0] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.0] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.4.0] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.0] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.3.0] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.0] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#022-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.2] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.2] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.1] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.1] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-core-v02-reference-interpreter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.0] — core v0.2 + reference interpreter
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.0] — core v0.2 + reference interpreter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#01-language-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1] — language definition
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1] — language definition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[Unreleased]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#108-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.8] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.8] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#107-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.7] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.7] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#106-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.6] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.6] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#105-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.5] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.5] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#104-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.4] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.4] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#103-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.3] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.3] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#102-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.2] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.2] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#101-2026-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.1] — 2026-07-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.1] — 2026-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.0.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0160-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.16.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.16.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0150-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.15.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0140-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.14.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0130-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.13.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.13.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0120-2026-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.12.0] — 2026-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.12.0] — 2026-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2026-07-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.11.0] — 2026-07-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.11.0] — 2026-07-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0100-2026-07-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.10.0] — 2026-07-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.0] — 2026-07-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#093-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.3] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.3] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#092-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.2] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.2] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#091-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.1] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.1] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#090-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.9.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#082-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.8.2] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.2] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#081-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.8.1] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.1] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#080-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.8.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.7.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.7.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2026-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.6.0] — 2026-07-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.6.0] — 2026-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added-language-03-adr-0014" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — language 0.3 (ADR 0014)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-surfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — surfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#054-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.4] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.4] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#053-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.3] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.3] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#052-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.2] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.2] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed-observable-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed (observable behavior)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.1] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.1] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.5.0] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.0] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.4.0] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.0] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.3.0] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.0] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#022-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.2] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.2] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.1] — 2026-07-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.1] — 2026-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-core-v02-reference-interpreter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.0] — core v0.2 + reference interpreter
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.0] — core v0.2 + reference interpreter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#01-language-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1] — language definition
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1] — language definition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<p>All notable changes to mklang are documented here. The format follows
+<a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>.</p>
+<p><strong>Two version lines</strong> are tracked separately:</p>
+<ul>
+<li><strong>Spec version</strong> — the language, declared per-file via the <code>mklang:</code> field
+  (currently <code>"0.3"</code>; <code>"0.2"</code> documents remain valid).</li>
+<li><strong>Package version</strong> — the reference interpreter / tooling, SemVer in
+  <code>pyproject.toml</code> (currently <code>1.0.8</code>).</li>
+</ul>
+<h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
+<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
+<h2 id="108-2026-07-24">[1.0.8] — 2026-07-24<a class="headerlink" href="#108-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>DeepSeek V4 model migration without compatibility fallbacks.</p>
+<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Replace retired <code>deepseek-chat</code> / <code>deepseek-reasoner</code> aliases with the
+  canonical <code>deepseek-v4-flash</code> model and explicit per-tier thinking settings.</li>
+<li>Forward OpenAI-compatible <code>thinking</code> parameters through <code>extra_body</code> and
+  omit unsupported temperature on DeepSeek thinking requests.</li>
+<li>Improve model-not-found diagnostics with the configured model ID.</li>
+</ul>
+<h2 id="107-2026-07-24">[1.0.7] — 2026-07-24<a class="headerlink" href="#107-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Console workspace resolution and brain context are now explicit and automatic.</p>
+<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The console defaults its workspace to the launch directory and injects the
+  absolute <code>workspace_root</code> into every brain execution path; <code>--workspace</code>
+  remains the explicit override, including resumed turns.</li>
+<li>Workspace snapshots and every read-only workspace-tool observation now repeat
+  that absolute root while keeping requested file paths relative and confined.</li>
+<li>The live language demo uses the repository interpreter directly in its tape,
+  with real check, lint, and provider-backed execution markers.</li>
+</ul>
+<h2 id="106-2026-07-24">[1.0.6] — 2026-07-24<a class="headerlink" href="#106-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Console safety, recovery, and host-policy hardening.</p>
+<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Scoped console capabilities (<code>machine:tool</code>) with conservative risk metadata,
+  redacted audit records, checkpoint metadata, and an entry-point plugin
+  allowlist via <code>MKLANG_ALLOWED_PLUGINS</code>.</li>
+<li>Uniform observation fields (<code>status</code>, <code>retryable</code>, and <code>untrusted</code>) for host
+  tool boundaries, plus high-risk confirmation handling that cannot be bypassed
+  by <code>always yes</code>.</li>
+<li>Console recovery and operator-state improvements: transcript replay,
+  actionable worker errors, strict <code>/run</code> assignments, and responsive inspector
+  states.</li>
+</ul>
+<h3 id="changed_3">Changed<a class="headerlink" href="#changed_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Console, workspace, session, rendering, and checkpoint behavior are now
+  covered by deterministic regression and security tests; documentation defines
+  the host-policy boundary for prompt-injection-capable content.</li>
+</ul>
+<h2 id="105-2026-07-24">[1.0.5] — 2026-07-24<a class="headerlink" href="#105-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Console confirmation and web-research context handling improvements.</p>
+<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Console confirmation prompts accept <code>always yes</code> for the remainder of the
+  persisted session, including later tool, overwrite, and budget confirmations.</li>
+<li>Documentation now describes the confirmation scope, persistence, and search
+  observation limits.</li>
+</ul>
+<h3 id="changed_4">Changed<a class="headerlink" href="#changed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Accumulated search titles, URLs, and snippets are bounded with an explicit
+  <code>…[truncated]</code> marker so later research batches remain visible to the model.</li>
+</ul>
+<h2 id="104-2026-07-24">[1.0.4] — 2026-07-24<a class="headerlink" href="#104-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Engine core structure: <code>_Runner</code> class replaces the monolithic <code>_run_impl</code>,
+and <code>mklang.engine</code> joins the mypy strict tier. No language or behaviour change.</p>
+<h3 id="changed_5">Changed<a class="headerlink" href="#changed_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>_Runner</code> refactor:</strong> main loop, execute, judge, and transition are class
+  methods; <code>_exec_one</code> splits into call/tool/produce; <code>_select_gate</code> uses prose
+  batch helpers. Cyclomatic complexity: <code>_run_impl</code> 53 (F) → gone; highest
+  remaining engine symbols are B (≤10). Public API remains <code>run</code> / <code>RunResult</code>.</li>
+<li><strong>mypy strict ratchet:</strong> <code>mklang.engine</code> added (<code>tiers: dict[str, str]</code>,
+  typed <code>_safe_exec</code> / <code>ExecOut</code>).</li>
+</ul>
+<h2 id="103-2026-07-24">[1.0.3] — 2026-07-24<a class="headerlink" href="#103-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Internal structure (P2 architecture inventory): thinner engine/loader entry
+points and a wider mypy strict ratchet. No language or behaviour change.</p>
+<h3 id="changed_6">Changed<a class="headerlink" href="#changed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Engine / loader structure:</strong> extract fan-out execution, deposit, and
+  gate-transition helpers from <code>_run_impl</code> (CC 82→53); split <code>semantic_check</code>
+  into state/version/reachability/budget helpers. Behaviour unchanged.</li>
+<li><strong>mypy strict ratchet:</strong> <code>model</code>, <code>interpolate</code>, <code>registry</code>, <code>checkpoint</code>,
+  <code>hooks</code>, <code>loader</code> added to the strict tier (type fixes for checkpoint hash
+  and loader dict loads).</li>
+</ul>
+<h2 id="102-2026-07-24">[1.0.2] — 2026-07-24<a class="headerlink" href="#102-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Reliability honesty after the architecture inventory: release gate measures the
+hard escalate case, SPEC/docs match measured agreement, authoring budget and
+lint guidance for prose escalate.</p>
+<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Release gate</strong> now measures <code>severity_escalate</code> alongside <code>gate_divergence</code>,
+  with a per-machine agreement floor (<code>--min-agreement-by-machine</code>) so the
+  control-flow-critical path cannot stay unmeasured.</li>
+<li><strong><code>lint</code> note</strong> on machines that use <code>escalate</code> (advisory under <code>--strict</code>)
+  pointing at SPEC §11 / gate-divergence evidence.</li>
+<li>Best-practices notes: escalate non-determinism, console vs MCP authoring
+  parity, authoring-turn budget.</li>
+</ul>
+<h3 id="changed_7">Changed<a class="headerlink" href="#changed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SPEC §9</strong> gate-agreement claim updated for the 2026-07-24 four-machine
+  re-run (<code>severity_escalate</code> 0.667; release-gate distinction).</li>
+<li><strong><code>agent.mkl</code> budget</strong> 16 → 24 (shared headroom for up to two static authoring
+  repairs in a turn).</li>
+</ul>
+<h2 id="101-2026-07-24">[1.0.1] — 2026-07-24<a class="headerlink" href="#101-2026-07-24" title="Permanent link">&para;</a></h2>
+<p>Validation follow-ups after 1.0.0: measured the authoring-loop blind_spot, recorded the
+1.0 provisional posture, tightened CI, and reduced doctor complexity. Spec stays <strong>0.3</strong>.</p>
+<h3 id="added_4">Added<a class="headerlink" href="#added_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>ADR 0028</strong> — provisional posture of package 1.0.0 (SemVer-stable freeze, falsifiable
+  2.0 conditions; no retraction).</li>
+<li><strong>Authoring-loop blind_spot experiment</strong> — frozen corpus
+  (<code>docs/experiments/authoring-corpus.yaml</code>), harness
+  (<code>scripts/authoring_blind_spot.py</code>), and the 2026-07-23 DeepSeek measurement
+  (<code>blind_spot = 0.0167</code> → do not build <code>test_machine</code>).</li>
+<li><strong>Five-reader distribution protocol</strong> — <code>docs/experiments/distribution-five-reader.md</code>
+  (execution remains external).</li>
+<li><strong>CI:</strong> <code>ruff format --check</code> in the quality gate; full-history checkout so the
+  tag↔CHANGELOG release invariant is enforced.</li>
+</ul>
+<h3 id="changed_8">Changed<a class="headerlink" href="#changed_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>mklang doctor</code>:</strong> extract helpers from <code>cmd_doctor</code> (cyclomatic complexity 41 → 8);
+  behaviour unchanged.</li>
+<li><strong>Validation report</strong> — follow-up register filled for A1–A4, B1/B2, C1/C2; open items
+  remain Anthropic live re-run (C3) and the five-reader test (D1).</li>
+</ul>
+<h2 id="100-2026-07-23">[1.0.0] — 2026-07-23<a class="headerlink" href="#100-2026-07-23" title="Permanent link">&para;</a></h2>
+<p><strong>mklang 1.0.0</strong> — the interpreter and tooling are declared stable. The language
+spec stays <strong>0.3</strong>, frozen as the 1.0 surface
+(<a href="../adr/0026-stability-and-deprecation-policy/">ADR 0026</a>).</p>
+<h3 id="added_5">Added<a class="headerlink" href="#added_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Stability &amp; deprecation policy</strong> — SemVer for the package from 1.0.0, spec
+  <strong>0.3</strong> frozen as the 1.0 language surface, a stated deprecation cycle for
+  future breaking changes, and the spec-version / package-version contract
+  (<a href="../adr/0026-stability-and-deprecation-policy/">ADR 0026</a>,
+  <a href="../stability/">guide</a>).</li>
+<li><strong>SPEC §9 triaged</strong> — every open question closed as a permanent non-goal,
+  deferred with rationale, or resolved by measurement. Cross-provider gate
+  agreement is now measured at <strong>1.0</strong> on the four-machine suite (DeepSeek +
+  OpenAI); Anthropic remains billing-blocked
+  (<a href="../experiments/gate-divergence/">docs/experiments/gate-divergence.md</a>).</li>
+</ul>
+<h3 id="changed_9">Changed<a class="headerlink" href="#changed_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Breaking: machine file extension renamed <code>.mk</code> → <code>.mkl</code></strong> (mklang; hard cut
+  — directory discovery matches <code>*.mkl</code> only). The Makefile / GitHub Linguist
+  collision is shed. Bundled machines, the console <code>write_machine</code>, examples,
+  tests, packaging, and docs move together; <code>.mk</code> machines stay loadable by
+  explicit path but are no longer auto-discovered by directory. See
+  <a href="../adr/0027-adopt-mkl-extension/">ADR 0027</a>.</li>
+<li><strong>Production/Stable</strong> — <code>Development Status :: 4 - Beta</code> →
+  <code>5 - Production/Stable</code>; package <code>0.16.0</code> → <code>1.0.0</code>.</li>
+</ul>
+<h2 id="0160-2026-07-23">[0.16.0] — 2026-07-23<a class="headerlink" href="#0160-2026-07-23" title="Permanent link">&para;</a></h2>
+<h3 id="added_6">Added<a class="headerlink" href="#added_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Targeted offline tests for the three weakest-covered modules: the
+  OpenAI-compat adapter (produce mapping, param split/drop-and-retry,
+  fenced judge prompt), the text emitters, and registry plugin/stdlib
+  resilience — total coverage 92%.</li>
+<li>Extended the cross-provider gate-divergence harness
+  (<code>scripts/gate_divergence.py</code>) from one synthetic machine to a suite of
+  four, each stressing a different gate shape (multi-way <code>ok</code> routing,
+  borderline judgement, control-flow <code>escalate</code>, <code>repair</code> grounding). New
+  <code>--machines</code> selector (default the single <code>gate_divergence</code> for
+  release-gate comparability, or <code>all</code>); agreement and the <code>--min-agreement</code>
+  release floor are computed per-machine with a <code>per_machine</code> breakdown.
+  Offline-tested end to end via an injectable <code>build_llm</code>.</li>
+</ul>
+<h3 id="changed_10">Changed<a class="headerlink" href="#changed_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Demo showcase refocused and pruned to the two product surfaces: <strong><code>agent</code></strong>
+  (console TUI — natural-language commissioning, tool consent, live trace) and
+  <strong><code>language</code></strong> (<code>react.mk</code>: gates + <code>tool</code> observation + <code>accumulate</code> loop +
+  tier escalation). The peripheral recordings (<code>cli</code>, <code>search</code>, <code>console</code>,
+  <code>orchestrate</code>, <code>hitl</code>, <code>test</code>) are gone; the README leads with those two, and
+  the CLI/MCP/test sections are framed as scaffolding. <code>check-drift</code> now also
+  fails on orphan asset files left outside <code>DEMOS</code>.</li>
+<li>Quality ratchet: the coverage gate rises to <code>fail_under = 90</code> (from 88),
+  and eleven leaf modules are promoted to a mypy strict tier (full
+  <code>--strict</code> minus <code>disallow_any_generics</code>, the documented JSON idiom);
+  the tier is add-only.</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Release-gate regression in the cross-provider gate-divergence harness
+  (<code>scripts/gate_divergence.py</code>): <code>_ci_errors</code> counted machine-less
+  skipped-provider rows toward the distinct-machine total, inflating the
+  per-provider expected run count and failing the release matrix even with
+  perfect agreement whenever an optional provider lacked a key.</li>
+</ul>
+<h2 id="0150-2026-07-23">[0.15.0] — 2026-07-23<a class="headerlink" href="#0150-2026-07-23" title="Permanent link">&para;</a></h2>
+<p>The console ships by default, and the ADR 0025 follow-up audit closes —
+language stays <strong>0.3</strong>.</p>
+<h3 id="changed_11">Changed<a class="headerlink" href="#changed_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The console TUI ships by default</strong>: <code>textual</code> moved from the <code>console</code>
+  extra into the core dependencies, and the Arch PKGBUILD promotes
+  <code>python-textual</code> from optdepends to depends. The <code>console</code> extra remains
+  as an empty no-op so <code>pip install "mklang[console]"</code> from older docs keeps
+  working; <code>scripts/install.sh</code> defaults to the <code>mcp</code> extra only.</li>
+</ul>
+<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>mklang console</code> without <code>textual</code> installed now prints the actionable
+  install hint again: the hint guarded only the <code>console.app</code> import, but
+  textual is imported lazily inside <code>build_app</code>, so the real failure escaped
+  to the generic <code>ERROR No module named 'textual'</code> handler.</li>
+<li>The test suite is hermetic against a real mklang installation on the host:
+  a pacman/AUR install ships <code>/etc/mklang</code> + <code>/usr/share/mklang</code> and <code>mklang
+init --user</code> creates <code>~/.config/mklang</code>, all of which leaked into config
+  and machine discovery (CI runners are clean, so only dev machines saw it).
+  System paths are module constants now, sandboxed by an autouse fixture.</li>
+</ul>
+<h2 id="0140-2026-07-23">[0.14.0] — 2026-07-23<a class="headerlink" href="#0140-2026-07-23" title="Permanent link">&para;</a></h2>
+<p>Untrusted-context delimiting (SPEC §6, ADR 0025) and the CI quality gates
+(mypy zero-suppression, coverage, multi-platform matrix) — language stays
+<strong>0.3</strong>.</p>
+<h3 id="added_7">Added<a class="headerlink" href="#added_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>Untrusted-context delimiting</strong> (SPEC §6, ADR 0025): the engine tracks
+  provenance taint per top-level context key (host inputs, tool observations,
+  and every deposit are tainted; author <code>context:</code> literals stay trusted) and
+  fences tainted interpolations in produce prompts as
+  <code>&lt;data-NONCE&gt;…&lt;/data-NONCE&gt;</code> with a fresh per-call nonce, adding an
+  untrusted-data rule to the system message. Judge prompts (shared
+  <code>build_judge_user</code>, deduplicated across adapters) always fence
+  OUTPUT/REASONING/CONTEXT. Taint survives checkpoints (<code>"tainted"</code> frame
+  field; missing field resumes all-tainted) and resume-injected values are
+  tainted. New: <code>run(..., delimit=..., trusted_keys=...)</code>, scenario <code>input:</code>
+  key, four <code>taint-*</code> conformance cases, <code>tests/test_taint.py</code>.</p>
+</li>
+<li>
+<p>CI quality gates: static type checking with <strong>mypy</strong> (zero suppressions —
+  <code>check_untyped_defs</code>, <code>disallow_incomplete_defs</code>, <code>strict_equality</code>, warn
+  flags; every function in <code>src/mklang</code> is annotated) and <strong>coverage</strong> via
+  pytest-cov with a <code>fail_under = 88</code> gate (90.2% measured at introduction).</p>
+</li>
+<li>CI test matrix: Python 3.11/3.12/3.13 on ubuntu plus macOS and Windows legs
+  (3.13), with the console extra installed so Textual tests run in CI. The
+  shared checks live in a reusable <code>quality.yml</code> workflow called by both
+  <code>ci.yml</code> and <code>release.yml</code> (pinned to the release tag).</li>
+</ul>
+<h3 id="changed_12">Changed<a class="headerlink" href="#changed_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Behavior change:</strong> produce prompts of machines fed host inputs or tool
+  observations now carry <code>&lt;data-NONCE&gt;</code> fences and one extra system
+  paragraph; judge user messages always fence their data sections. Machines
+  interpolating only author literals are byte-identical. Escape hatch:
+  <code>run(..., delimit=False)</code> (produce side only).</li>
+<li>Engine transition step now halts with explicit <code>state-error:
+gate-missing-to</code> / <code>repair-missing-budget</code> labels when a hand-built
+  <code>Machine</code> bypasses schema validation (schema-validated machines are
+  unaffected — the schema already requires <code>to</code> and a repair budget).</li>
+</ul>
+<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The atomic replace in the fs write path retries transient Windows sharing
+  violations (concurrent <code>os.replace</code> onto the same target) — caught by the
+  new Windows CI leg; POSIX behavior unchanged.</li>
+</ul>
+<h2 id="0130-2026-07-23">[0.13.0] — 2026-07-23<a class="headerlink" href="#0130-2026-07-23" title="Permanent link">&para;</a></h2>
+<p>Declarative tool-backend bindings, process logging hygiene, and the
+<code>std_compress</code> stdlib machine — language stays <strong>0.3</strong>.</p>
+<h3 id="added_8">Added<a class="headerlink" href="#added_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>std_compress</code> — composable working-memory compression in the stdlib
+  (ADR 0017 Layer 1): one judge-verified compress state (repair ×1) any
+  machine can <code>call:</code> mid-loop to rewrite an accumulator short. Contract:
+  <code>task</code> + <code>notes</code> → <code>answer</code>; notes are marked untrusted in the prompt.</li>
+<li>Optional <code>tools:</code> block in <code>runtime.yaml</code> (ADR 0016): declarative backend
+  bindings for the builtin host tools — <code>tools.search.backend</code>
+  (<code>stub|fake|tavily</code>), <code>tools.kb.backend</code>, <code>tools.mail.backend</code>, and
+  <code>tools.fs.{backend, workspace, write}</code>. Precedence per knob: programmatic
+  <code>configure_*()</code> &gt; explicit <code>MKLANG_*</code> env var &gt; config &gt; built-in default
+  (so <code>tools.search.backend: stub</code> is a persistent off-switch that beats the
+  <code>TAVILY_API_KEY</code> auto-select). No <code>api_key</code> knob by design — secrets stay
+  in the layered <code>.env</code> (ADR 0023).</li>
+<li>
+<p><code>mklang doctor</code> reports each tool backend <strong>with its deciding source</strong>
+  (<code>env</code> / <code>config</code> / <code>default</code>) through the same resolvers the runtime
+  uses, instead of re-deriving state from the environment.</p>
+</li>
+<li>
+<p>Process logging hygiene (best practices §12): the host now logs on the
+  <code>mklang.*</code> logger hierarchy to stderr — <code>--log-level</code> on every CLI
+  subcommand and <code>mklang-mcp</code>, or <code>MKLANG_LOG_LEVEL</code> (flag wins; default
+  <code>warning</code>, format <code>LEVEL name: message</code>, no timestamps). Host logs never
+  ride MCP logging notifications.</p>
+</li>
+</ul>
+<h3 id="changed_13">Changed<a class="headerlink" href="#changed_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A <em>set</em> <code>MKLANG_FS_WRITE</code> now decides the write grant either way:
+  <code>MKLANG_FS_WRITE=0</code> is an explicit off that beats a config
+  <code>tools.fs.write: true</code> (previously a falsy value was indistinguishable
+  from unset). <code>--allow-write</code> still beats everything.</li>
+<li>Plugin/stdlib load failures (machines, hooks, providers, tools) and the
+  resume ops advisories (<code>--force</code> hash divergence, non-increasing cost
+  budget) are <code>WARNING mklang.&lt;module&gt;: …</code> log lines instead of ad-hoc
+  <code># warning:</code> stderr prints. Message bodies are unchanged.</li>
+</ul>
+<h3 id="fixed_3">Fixed<a class="headerlink" href="#fixed_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The fs data tools' "INFO audit line" (0.12.0) was never visible: no
+  handler existed, so INFO records were dropped. The audit lines are now
+  real — run with <code>--log-level info</code> to see them.</li>
+</ul>
+<h2 id="0120-2026-07-23">[0.12.0] — 2026-07-23<a class="headerlink" href="#0120-2026-07-23" title="Permanent link">&para;</a></h2>
+<p>Filesystem data tools (<a href="../adr/0024-fs-data-tools/">ADR 0024</a>) and the
+<code>std_research</code> stdlib machine — language stays <strong>0.3</strong>.</p>
+<h3 id="added_9">Added<a class="headerlink" href="#added_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>list_files</code> / <code>read_file</code> / <code>write_file</code> builtin host tools (<code>mklang.fs</code>)
+  with a coding-tool workspace model: reads live by default, confined to a
+  workspace resolved as <code>--workspace</code> &gt; <code>MKLANG_FS_ROOT</code> &gt; cwd; disk writes
+  need an explicit grant (<code>--allow-write</code> / <code>MKLANG_FS_WRITE=1</code> / console
+  consent). Relative paths only, dotfile and escape refusal after resolve
+  (re-checked on the resolved target, so symlinks cannot smuggle targets in
+  or out), size caps, data-suffix allowlist (never <code>.mk</code>), atomic 0600
+  writes via unique tempfiles, INFO audit line. <code>MKLANG_FS_BACKEND=stub</code> is
+  the offline off-switch.</li>
+<li><code>mklang run</code> and <code>mklang-mcp</code> gain <code>--workspace</code> / <code>--allow-write</code>;
+  <code>mklang doctor</code> reports the resolved workspace and write grant; the
+  console asks consent once per session for writes.</li>
+<li><code>std_research</code> — search → ground stdlib machine over the bundled
+  <a href="../adr/0016-host-web-search-tool/">ADR 0016</a> <code>search</code> tool:
+  <code>plan_query → search (accumulate) → check → {loop | finalize | no_search}</code>.
+  Answers only from search observations (prompts mark them as untrusted
+  content), with a grounding repair gate at reasoning tier and an honest
+  <code>no_search</code> state when no backend is bound; dogfoods host-filled
+  <code>context.today</code>. Ships scripted scenarios like the rest of the stdlib.</li>
+</ul>
+<h2 id="0110-2026-07-18">[0.11.0] — 2026-07-18<a class="headerlink" href="#0110-2026-07-18" title="Permanent link">&para;</a></h2>
+<p>Global vs local configuration separation
+(<a href="../adr/0023-global-local-config-separation/">ADR 0023</a>) — language
+stays <strong>0.3</strong>.</p>
+<h3 id="added_10">Added<a class="headerlink" href="#added_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>mklang doctor</code> — diagnose the resolved setup: winning config file and layer
+  (project / user / system / bundled), schema validation of the resolved config
+  (stale keys surface as warnings), which <code>.env</code> files loaded, per-provider
+  key status (active-provider gaps are errors, <code>local</code> exempt), tool backends
+  (<code>search</code>/<code>kb</code>/<code>mail</code>), machine roots with counts, and the state paths.
+  Exit 1 when the active provider cannot run.</li>
+<li><code>mklang init --user</code> now also copies <code>runtime.schema.json</code> next to the user
+  <code>runtime.yaml</code> (parity with project mode; editor validation works in both).</li>
+<li><code>run --hitl</code> without <code>--checkpoint</code> suspends into
+  <code>$XDG_STATE_HOME/mklang/checkpoints/</code> instead of erroring; the suspension
+  message prints the generated path.</li>
+</ul>
+<h3 id="changed_14">Changed<a class="headerlink" href="#changed_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>.env</code> now layers <strong>per key</strong>: real environment &gt; project <code>.env</code> &gt; user
+  <code>~/.config/mklang/.env</code>. Previously any project <code>.env</code> hid the user file
+  entirely, even for keys it did not define.</li>
+<li><code>mklang-mcp</code> resolves its config through the same chain as the CLI
+  (project → user → <code>/etc</code> → bundled) instead of pinning the checkout-relative
+  bundled example — MCP clients no longer need an explicit <code>--config</code>.</li>
+<li>The console workspace defaults to <code>./machines</code> only when it exists, falling
+  back to the XDG user machines dir seeded by <code>mklang init --user</code>.</li>
+</ul>
+<h3 id="removed">Removed<a class="headerlink" href="#removed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The dead <code>run:</code> block (<code>max_repair_per_gate</code>, <code>trace</code>) from the example
+  config and its schema: the runtime never read it — repair budgets live in
+  each gate (<code>repair: N</code>, SPEC §7) and the trace is always part of the run
+  result. <code>mklang doctor</code> flags it as a stale key in existing configs.</li>
+<li>The legacy <code>~/.mklang/console/sessions</code> read fallback: sessions live only
+  under the XDG state root (ADR 0021's migration window is over).</li>
+</ul>
+<h2 id="0100-2026-07-18">[0.10.0] — 2026-07-18<a class="headerlink" href="#0100-2026-07-18" title="Permanent link">&para;</a></h2>
+<p>First-run experience (language stays <strong>0.3</strong>).</p>
+<h3 id="added_11">Added<a class="headerlink" href="#added_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="../getting-started/">Getting started guide</a> — one linear
+  install → init → key → console path, first in the docs nav.</li>
+<li><code>mklang --version</code>, and a getting-started nudge (exit 0) on bare <code>mklang</code>
+  instead of a usage error.</li>
+<li><code>mklang init</code> seeds <code>machines/</code> with a commented <code>hello.mk</code> sample and its
+  <code>hello.test.yaml</code> scenario script (keyless first run via <code>mklang test</code>).</li>
+<li>Upfront provider key gate: runs, the console, and <code>lint --llm</code> fail fast
+  with the exact <code>.env</code> variable to set instead of dying inside the provider
+  SDK (<code>local</code> stays exempt).</li>
+<li>Shell completions via argcomplete (<code>[completions]</code> extra).</li>
+<li>ADR 0021 phase 3 packaging: <code>scripts/install.sh</code> (pipx + <code>mklang init
+--user</code>, with <code>--uninstall</code>) and an Arch Linux recipe in <code>packaging/arch/</code>;
+  the optional MCP user service is deferred (stdio-only server).</li>
+</ul>
+<h3 id="changed_15">Changed<a class="headerlink" href="#changed_15" title="Permanent link">&para;</a></h3>
+<ul>
+<li>README install/quickstart restructured: pipx path first, checkout/<code>uv</code>
+  workflow kept as the from-checkout section.</li>
+<li>Lean sdist: exclude media assets, <code>site/</code>, <code>demos/</code>, <code>dist/</code>, and <code>.github/</code>
+  from the source distribution (the AUR recipe builds from it).</li>
+</ul>
+<h2 id="093-2026-07-17">[0.9.3] — 2026-07-17<a class="headerlink" href="#093-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Documentation-alignment patch (language stays <strong>0.3</strong>).</p>
+<h3 id="fixed_4">Fixed<a class="headerlink" href="#fixed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Make the best-practices guide the documentation SSOT for current XDG host
+  paths and console lifecycle behavior.</li>
+<li>Align the console session path with ADR 0021 while retaining the legacy path
+  as a documented read fallback.</li>
+<li>Bring the README live-matrix status and roadmap history up to date through
+  the 0.9.2 release, and mark ADR 0015's original path as superseded.</li>
+</ul>
+<h2 id="092-2026-07-17">[0.9.2] — 2026-07-17<a class="headerlink" href="#092-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Console shutdown patch (language stays <strong>0.3</strong>).</p>
+<h3 id="fixed_5">Fixed<a class="headerlink" href="#fixed_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Shut down the console cleanly when <code>Ctrl+C</code> is pressed during an active run:
+  request cooperative cancellation, release pending human prompts, close the
+  provider client, and wait for the backing thread before returning to the shell.</li>
+<li>Prevent late UI callbacks and session writes after console shutdown starts.</li>
+</ul>
+<h2 id="091-2026-07-17">[0.9.1] — 2026-07-17<a class="headerlink" href="#091-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Release-pipeline patch (language stays <strong>0.3</strong>).</p>
+<h3 id="fixed_6">Fixed<a class="headerlink" href="#fixed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Keep fatal CLI diagnostics on one stable line when stdout/stderr is not a TTY.</li>
+<li>Skip the console-session CLI test when the optional Textual extra is absent.</li>
+</ul>
+<h2 id="090-2026-07-17">[0.9.0] — 2026-07-17<a class="headerlink" href="#090-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Feature release (language stays <strong>0.3</strong>). Every local surface now works outside
+a repository checkout, preserves automation-safe output, and presents a
+responsive operational workspace in the terminal.</p>
+<h3 id="added_12">Added<a class="headerlink" href="#added_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Responsive console and CLI presentation (ADR 0022).</strong> Rich human output with
+  stable piped JSON, shared diagnostics, responsive inspector/activity layout,
+  slash-command quoting/suggestions, operational status, cooperative stop, and
+  additive <code>run-finished</code> events.</li>
+<li><strong>ADR 0021 phases 1–2.</strong> XDG host paths, bundled config fallback,
+  idempotent <code>mklang init</code>, legacy console-session reads, and system/user/project
+  machine discovery with source labels.</li>
+</ul>
+<h3 id="fixed_7">Fixed<a class="headerlink" href="#fixed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Connection errors now retry.</strong> Provider <code>_create</code> loops treated only HTTP
+  <code>TRANSIENT_STATUS</code> as retryable; SDK connection failures carry no
+  <code>status_code</code>, so a network blip halted the run with <code>provider-error</code> on the
+  first try. <code>is_connection_error</code> (matched by class name — the SDKs are
+  lazy-imported) classifies <code>APIConnectionError</code> / <code>APITimeoutError</code> as
+  transient with the same exponential backoff, for both the Anthropic and
+  OpenAI-compat adapters.</li>
+</ul>
+<h2 id="082-2026-07-17">[0.8.2] — 2026-07-17<a class="headerlink" href="#082-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Package patch (language stays <strong>0.3</strong>). Documentation growth (best practices
+§12–§13) plus a console glyph fix and a CI test guard.</p>
+<h3 id="added_13">Added<a class="headerlink" href="#added_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Best practices §12–§13</strong> — observability (trace vs live events vs process
+  logging) and filesystem taxonomy (host paths / workspace <code>.mk</code> / data tools /
+  no bash in core). Cross-links from console security and patterns.</li>
+</ul>
+<h3 id="fixed_8">Fixed<a class="headerlink" href="#fixed_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Console activity tree double expand icon.</strong> Run rows no longer prefix <code>▶</code>
+  in the label — Textual Tree already draws the ▶/▼ toggle.</li>
+<li><strong>CI: console render tests skip without <code>rich</code>.</strong> <code>test_console_render.py</code>
+  now uses <code>pytest.importorskip("rich")</code> like the other console tests, so the
+  no-console-extra CI matrix collects cleanly.</li>
+</ul>
+<h2 id="081-2026-07-17">[0.8.1] — 2026-07-17<a class="headerlink" href="#081-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Package patch (language stays <strong>0.3</strong>). Console rendering safety, host wall-clock,
+and produce system-prompt assembly — surface/host polish only.</p>
+<h3 id="added_14">Added<a class="headerlink" href="#added_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Host clock convention <code>context.now</code>.</strong> When a machine declares top-level
+  <code>now</code> and it is still empty after inputs, CLI / MCP / console fill a local
+  ISO datetime with offset (same opt-in pattern as <code>today</code>). Console
+  <code>agent.mk</code> declares <code>now</code> and is instructed to REPLY wall-clock questions
+  from the host values (no AUTHOR for the clock alone).</li>
+<li><strong>Produce system prompt assembly</strong> (<code>llm/prompts.py</code>): sectioned system
+  message from <code>structure</code> + <code>execution</code>; documented as Best practices §3
+  (system vs user). Console <code>agent.mk</code> puts sticky policy in <code>execution</code> and
+  turn data in <code>prompt</code>.</li>
+</ul>
+<h3 id="changed_16">Changed<a class="headerlink" href="#changed_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Console conversation rendering (chrome vs content).</strong> Agent replies render
+  as CommonMark in the log; user/HITL text and slash observations stay plain or
+  fenced (<code>json</code> / <code>yaml</code>). Activity tree turn titles, machine names, and
+  output previews use plain styled <code>Text</code> (no Rich-markup injection). Helpers
+  live in <code>console/render.py</code>; log uses <code>markup=False</code>.</li>
+<li><strong>Docs:</strong> SPEC §4–§6 non-normative notes (produce system/user assembly, host
+  clocks); Best practices §3; authoring faces table; console brain prompt
+  assembly; README faces/status; ADR 0016 <code>now</code> checklist.</li>
+</ul>
+<h2 id="080-2026-07-17">[0.8.0] — 2026-07-17<a class="headerlink" href="#080-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Package feature release (language stays <strong>0.3</strong>). Host tools gain a uniform stub
+architecture; console anti-cutoff observations stay honest; time-sensitive
+machines get a host <code>today</code> convention and richer search.</p>
+<h3 id="fixed_9">Fixed<a class="headerlink" href="#fixed_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Console <code>run_machine</code> observation honesty (anti-cutoff chain).</strong> Produce
+  truncation (ADR 0018) is propagated as <code>truncated</code> / <code>finish_reason</code> plus a
+  compact <code>trace</code> summary; long results are clipped with an explicit
+  <code>…[truncated]</code> marker and <code>result_truncated</code> — no more silent 2k cuts that
+  invited the brain to invent the missing tail.</li>
+</ul>
+<h3 id="added_15">Added<a class="headerlink" href="#added_15" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Host convention <code>context.today</code>.</strong> When a machine declares top-level
+  <code>today</code> and it is still empty after inputs, CLI / MCP / console fill the
+  host ISO date (<code>YYYY-MM-DD</code>). Never invents undeclared keys.</li>
+<li><strong>Search recency fields</strong> (ADR 0016 addendum): optional tool inputs <code>days</code> /
+  <code>topic</code>; optional <code>published_date</code> on results (Tavily when provided).</li>
+<li>Research / news patterns and <code>agent.mk</code> instruct grounding in notes/today and
+  forbid filling gaps with pre-training knowledge; console docs document the
+  observation shape.</li>
+<li><strong>Best practices guide</strong> (<code>docs/best-practices.md</code>) — layer discipline, authoring
+  checklist, recommended tool contracts, web/time/cutoff rules, anti-patterns,
+  and what must stay host-side vs candidate language 0.4.</li>
+<li><strong>Host tool stub architecture</strong> (ADR 0020): shared JSON envelope
+  (<code>tool</code> / <code>stub</code> / <code>error</code>) for I/O tools; <code>search_kb</code> and <code>send_reply</code> use
+  structured observations; default <code>send_reply</code> has <code>sent: false</code> (no fake
+  delivery); fake backends via <code>MKLANG_KB_BACKEND</code> / <code>MKLANG_MAIL_BACKEND</code> and
+  <code>configure_kb</code> / <code>configure_mail</code>; modules <code>tool_obs</code>, <code>kb</code>, <code>mail</code>.</li>
+<li><strong><code>news_search</code> scenario tests</strong> (<code>examples/news_search.test.yaml</code>) — happy path
+  and search-unbound → <code>no_search</code>.</li>
+<li>OpenAI-compatible produce defaults <strong><code>max_tokens=4096</code></strong> when tier params omit
+  it (parity with Anthropic; reduces silent length stops; still overridable /
+  droppable per provider).</li>
+</ul>
+<h3 id="changed_17">Changed<a class="headerlink" href="#changed_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Breaking (host observation shape only):</strong> builtin <code>search_kb</code> / <code>send_reply</code>
+  no longer return free-text <code>[kb stub]…</code> / <code>[sent]…</code> strings — they return ADR
+  0020 JSON. Scripted scenario tools are unaffected. <code>search</code> adds <code>tool</code> +
+  <code>stub</code> fields (additive).</li>
+</ul>
+<h2 id="070-2026-07-17">[0.7.0] — 2026-07-17<a class="headerlink" href="#070-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>Package feature release (language stays <strong>0.3</strong>). Console becomes a full
+operational front door; host tools and runtime budgets close the agent loop.</p>
+<h3 id="added_16">Added<a class="headerlink" href="#added_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Console M1–M3</strong> (ADR 0015 Accepted). Agent-first Textual TUI
+  (<code>mklang[console]</code>) whose brain is the bundled, user-swappable <code>agent.mk</code>:
+  authoring loop (write → validate → repair), persistent sessions
+  (<code>--continue</code> / <code>--session</code>), budget-exhaustion park/<code>/resume</code>, live activity
+  tree, F2 inspector, slash commands. Docs: <code>docs/console.md</code>.</li>
+<li><strong>Live engine events on the MCP transport</strong> (ADR 0019): <code>run</code>/<code>resume</code> stream
+  <code>on_event</code> as <code>mklang.event</code> logging notifications.</li>
+<li><strong>Web search tool</strong> (ADR 0016 Accepted): structured JSON <code>search</code> observations;
+  offline stub by default; opt-in <code>fake</code>/<code>tavily</code> backends;
+  <code>examples/research_web.mk</code> + scenario tests.</li>
+<li><strong>Output anti-cutoff</strong> (ADR 0018 Accepted): <code>Produced.truncated</code> / <code>finish_reason</code>;
+  trace + events; <code>report</code>|<code>halt</code> on CLI (<code>--on-truncate</code>), MCP, console,
+  scripttest. Truncated <code>parse: list</code> → <code>parse-list-truncated</code>.</li>
+<li><strong>Context management Layer 0–1</strong> (ADR 0017 Accepted): judge CONTEXT head+tail
+  marker; produce-prompt per-value cap; console <code>history_for_brain</code>; compress
+  pattern <code>examples/research_compress.mk</code>.</li>
+<li><strong>LLM-assisted lint</strong> (<code>mklang lint --llm</code>, ADR 0010 Accepted): advisory only.</li>
+</ul>
+<h2 id="060-2026-07-17">[0.6.0] — 2026-07-17<a class="headerlink" href="#060-2026-07-17" title="Permanent link">&para;</a></h2>
+<p>The language moves to <strong>0.3</strong> (additive; every 0.2 document remains valid) and
+the agent-facing surfaces land: MCP host, machine stdlib, discovery, authoring
+guide.</p>
+<h3 id="added-language-03-adr-0014">Added — language 0.3 (ADR 0014)<a class="headerlink" href="#added-language-03-adr-0014" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>parse: list</code></strong> — a generative state can deposit a parsed JSON array
+  (markdown fences tolerated) instead of text; unparseable output halts cleanly
+  with <code>state-error: parse-list</code>. This makes Plan-and-Execute a pure machine.</li>
+<li><strong>Raw whole-template <code>input:</code> resolution</strong> — an <code>input:</code> value that is exactly
+  one <code>{{path}}</code> placeholder passes the raw context value (lists included)
+  across <code>call:</code>/<code>tool:</code> boundaries; mixed templates render as before.</li>
+<li>Conformance cases <code>parse-list</code>, <code>parse-list-invalid</code>, <code>raw-input-passthrough</code>;
+  the JSON Schema (both copies) gains the <code>parse</code> enum; <code>check</code> warns when a 0.2
+  document uses the new face.</li>
+</ul>
+<h3 id="added-surfaces">Added — surfaces<a class="headerlink" href="#added-surfaces" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>MCP server surface</strong> (ADR 0011, now Accepted). Optional stdio MCP host —
+  extra <code>mklang[mcp]</code>, console script <code>mklang-mcp</code> — exposing exactly two tools:
+  <code>run</code> (machine as inline <code>.mk</code> source or filesystem path, <code>inputs</code> merged into
+  the context, optional <code>cost_budget</code>/<code>hitl</code>) and <code>resume</code> (opaque single-use
+  checkpoint handle, HITL reply injection, new budget). Results return the same
+  <code>{status, error, result, usage, trace, at?}</code> shape the CLI prints. Suspended
+  runs hold their frames in a process-scoped in-memory session store; nothing is
+  written to disk. Core install is unaffected (<code>mcp</code> is not a core dependency).</li>
+<li><strong>Public host seam</strong> <code>mklang.host</code> — <code>prepare_path</code> / <code>prepare_source</code> (inline
+  source loading is new) / <code>build_output</code> / <code>set_path</code>, with structured
+  <code>PrepareError</code> instead of printed diagnostics. The CLI now wraps this seam, so
+  CLI and MCP semantics cannot drift.</li>
+<li><strong>Agent authoring guide</strong> (<code>docs/authoring.md</code>) — a compact recipe for writing
+  a correct <code>.mk</code> with the <code>check</code>/<code>lint</code> loop, distilled from SPEC with the real
+  validator messages.</li>
+<li><strong>Machine stdlib</strong> (ADR 0012). Eight general-purpose architecture machines
+  bundled with the package — <code>std_cot</code>, <code>std_self_consistency</code>, <code>std_refine</code>,
+  <code>std_tot</code>, <code>std_debate</code>, <code>std_map_reduce</code>, <code>std_cascade</code>,
+  <code>std_plan_execute</code> — uniform contract (<code>task</code> in, <code>answer</code> out), each with
+  scripted scenario tests. Present in every host registry with
+  user-always-wins precedence (stdlib ← <code>mklang.machines</code> entry-point plugins ←
+  siblings ← target, shadowing warned); runnable <strong>by name</strong> from CLI and MCP
+  (<code>mklang run std_cot --set task="…"</code>); inline MCP sources can <code>call: std_*</code>.
+  Run-by-name checkpoints record a null machine hash and resume cleanly.
+  Catalog in <code>docs/stdlib.md</code>.</li>
+<li><strong>Discovery, check, durable resume</strong> (ADR 0013). MCP tools <code>list_machines</code> /
+  <code>describe_machine</code> (what may be commissioned, with full contracts), <code>check</code>
+  (schema + semantics + lint as structured output, no provider needed), and
+  <code>checkpoint_path</code> on <code>run</code>/<code>resume</code> for cross-process durable suspensions —
+  <code>resume</code> accepts an in-memory handle or a checkpoint file, including files
+  from <code>mklang run --checkpoint</code>; inline sources persist via a new optional
+  <code>machine_source</code> envelope key. CLI gains the symmetric <code>mklang machines</code>
+  subcommand (JSON; <code>--dir</code> adds project machines).</li>
+</ul>
+<h3 id="changed_18">Changed<a class="headerlink" href="#changed_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li>CI runs the unit suite with the <code>mcp</code> extra (the MCP tests no longer skip
+  silently) and checks/lints the bundled stdlib alongside the examples.</li>
+<li>Unknown run-by-name targets fail with the list of bundled machine names
+  instead of a raw errno message.</li>
+<li><code># noqa</code> annotations removed across the codebase (the suppressed rule was
+  never enabled); explanatory comments remain.</li>
+</ul>
+<h2 id="054-2026-07-16">[0.5.4] — 2026-07-16<a class="headerlink" href="#054-2026-07-16" title="Permanent link">&para;</a></h2>
+<p>Release-readiness pass. The language stays <strong>0.2</strong> and runtime semantics are
+unchanged; this release makes the existing interpreter reproducibly distributable.</p>
+<h3 id="added_17">Added<a class="headerlink" href="#added_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Trusted Publishing release workflow.</strong> A published GitHub Release now gates
+  publication on the full offline suite, strict docs, artifact validation, a
+  clean-wheel installation smoke, and the live provider matrix. The publish job
+  consumes the already-tested artifacts and uses short-lived PyPI OIDC credentials.</li>
+<li><strong>Enforceable live-matrix reporting.</strong> <code>scripts/gate_divergence.py</code> can require
+  named providers, enforce a minimum agreement rate, write a summary artifact,
+  and distinguishes a missing-key skip from a provider/runtime failure.</li>
+<li><strong>Release provenance tests.</strong> CI pins package metadata and <code>mklang.__version__</code>
+  to the same value and tests the required-provider gate offline.</li>
+</ul>
+<h3 id="changed_19">Changed<a class="headerlink" href="#changed_19" title="Permanent link">&para;</a></h3>
+<ul>
+<li>DeepSeek and OpenAI are the blocking release providers (three divergence runs,
+  agreement <code>1.0</code>). Anthropic, Google, OpenRouter, xAI, and Mistral are attempted
+  when credentials are configured and remain informational.</li>
+</ul>
+<h2 id="053-2026-07-16">[0.5.3] — 2026-07-16<a class="headerlink" href="#053-2026-07-16" title="Permanent link">&para;</a></h2>
+<p>Third remediation pass (Follow-up 003): closes the residue Remediation 002
+delivered without declaring. The language stays <strong>0.2</strong>; no <code>.mk</code> needs changes.</p>
+<h3 id="added_18">Added<a class="headerlink" href="#added_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>mklang test</code> — deterministic machine testing without API keys (R3-1).</strong>
+  A new subcommand runs a machine against a script of named scenarios with a
+  <strong>scripted LLM</strong> (produce texts + judge picks) and scripted tools/hooks —
+  fully deterministic, no provider or key. Per-scenario PASS/FAIL with a minimal
+  diff (first mismatched key, expected vs actual); exit 0 iff all pass. The
+  scripted LLM, <code>hooks:</code>/<code>tools:</code> bindings, and expectation matcher now live once
+  in <code>src/mklang/scripttest.py</code>, shared with the conformance runner (all 21 cases
+  green through it, unchanged). Ships <code>examples/triage.test.yaml</code> (happy path +
+  KB-empty escalation). Docs: README "Test your machine without API keys",
+  <code>docs/patterns.md</code>, <code>conformance/README.md</code> cross-reference. CI runs
+  <code>uv run mklang test examples/triage.mk --script examples/triage.test.yaml</code>
+  in the unit-test job (no API keys); the same scenarios are also covered by
+  <code>tests/test_scripttest.py</code> in the normal pytest run.</li>
+<li><strong>Static budget-feasibility check (R3-2).</strong> <code>mklang check</code>/<code>lint</code> now BFS the
+  shortest path (in states) from <code>entry</code> to a gate <code>to: END</code>. <code>budget</code> below it is
+  a guaranteed <code>budget-exhausted</code> halt, reported as error <code>budget-infeasible</code>;
+  <code>budget &lt; shortest + 2</code> warns (no headroom for a single repair). Fan-out states
+  count as 1 (branch counts are data-dependent), so the check is a lower bound —
+  the message says so. SPEC §7 documents it next to the charging rule. Host
+  pre-validation only; run semantics unchanged.</li>
+<li><strong>Dotted second-segment lint on inline context maps (R3-3, completes F7).</strong> When
+  a <code>{{root.key}}</code> root resolves to an inline dict literal in <code>context:</code>
+  (<code>ticket: {body: …}</code>), the second segment is now validated against the map's
+  keys, so <code>{{ticket.bod}}</code> is flagged. Skipped for state outputs and runtime
+  roots (<code>human</code>/<code>item</code>/<code>index</code>) whose shape is unknowable; deeper than segment 2
+  stays out of scope.</li>
+<li><strong>Schema-copy identity test (R3-4).</strong> One test asserts <code>schema/mklang.schema.json</code>
+  and the packaged copy <code>src/mklang/data/mklang.schema.json</code> are byte-identical,
+  with a failure message naming the sync direction (repo <code>schema/</code> is the source).</li>
+<li><strong>ADR 0010 — LLM-assisted lint (R3-5, Proposed, design only).</strong> An opt-in
+  <code>mklang lint --llm</code> that would generate synthetic outputs and measure
+  gate-selection stability/overlap (reusing <code>gate_divergence.py</code>) to catch
+  ambiguous prose <code>when</code> conditions. Documents cost model, determinism caveats,
+  relation to the conformance suite, and why it is out of 0.5.x. No code.</li>
+</ul>
+<h2 id="052-2026-07-16">[0.5.2] — 2026-07-16<a class="headerlink" href="#052-2026-07-16" title="Permanent link">&para;</a></h2>
+<p>Second remediation pass. The language stays <strong>0.2</strong>; no <code>.mk</code> needs changes.</p>
+<h3 id="changed-observable-behavior">Changed (observable behavior)<a class="headerlink" href="#changed-observable-behavior" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Default judge model now follows each state's tier (F1).</strong> Previously every
+  gate — including the highest-stakes gates on <code>reasoning</code> states (refund
+  thresholds, legal matters, human escalation) — was judged by the cheapest
+  (<code>fast</code>) model, silently deviating from SPEC §2.1. Gate judging now uses the
+  state's own effective tier by default. <strong>This changes which model judges your
+  gates.</strong> To restore the previous single-model behavior, set the provider
+  <code>judge:</code> key in the runtime config — it is now an explicit, opt-in <em>global</em>
+  override, no longer the default (it ships commented out in
+  <code>config/runtime.example.yaml</code>). The chosen judge model is recorded in the trace
+  as <code>judge_model</code> on every <code>gate_via: llm</code> step. Gate-divergence numbers
+  collected before this change are not comparable with those after; re-run
+  <code>scripts/gate_divergence.py</code> (now with a <code>--judge-tier</code> flag) to refresh them.</li>
+</ul>
+<h3 id="fixed_10">Fixed<a class="headerlink" href="#fixed_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Strict judge-reply parsing (F2).</strong> The bare-number fallback no longer grabs
+  the <em>first</em> digit anywhere in the reply (a verbose judge's "Condition 1 fails…"
+  misread as choice 1). Parse order is now: strict JSON, then a whole-reply bare
+  number, then the <strong>last</strong> number in the reply (models conclude with the answer).
+  The last two are traced as <code>judge_parse</code> (anomaly-adjacent, not a fallback). The
+  judge system prompt now forbids extra numbers; SPEC §5 constrains conformant
+  judges to terse instruct-style replies.</li>
+<li><strong><code>sample</code> branch diversity (F3).</strong> Each <code>sample: N</code> branch now sees its own
+  <code>{{index}}</code> (0-based), so a prompt can say "you are branch {{index}}, take a
+  different approach" (Tree-of-Thought, debate) instead of relying on temperature
+  alone. <code>{{index}}</code> is now available in both fan-out forms; <code>{{item}}</code> remains
+  <code>over</code>-only.</li>
+</ul>
+<h3 id="added_19">Added<a class="headerlink" href="#added_19" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>unresolved-interpolation</code> lint rule (F7).</strong> <code>mklang lint</code> flags any <code>{{path}}</code>
+  whose first segment no <code>context:</code> key / state <code>output:</code> / (inside a fan-out)
+  <code>item</code>/<code>index</code> provides — the silent-typo bug (<code>{{kb_answr}}</code> → empty string).
+  <code>item</code>/<code>index</code> referenced outside a fan-out state are flagged too. First-segment
+  only (dotted tails can't be checked statically); warning by default, error under
+  <code>--strict</code>.</li>
+<li><strong><code>--strict</code> rejects unsupported <code>mklang:</code> versions (F6).</strong> An unknown language
+  version stays a warning by default but becomes a hard error (<code>version-unsupported</code>)
+  under <code>mklang check --strict</code> / <code>lint --strict</code> / the new <code>run --strict</code>.</li>
+<li><strong><code>0600</code> checkpoints (F5).</strong> Checkpoint files (full blackboard as plaintext JSON)
+  are written owner-only. SPEC §11 now lists checkpoints as an asset and documents
+  the plaintext-at-rest surface (host-side mitigation; encryption is a v0.2
+  non-goal). The <code>--checkpoint</code> help notes the plaintext content.</li>
+<li><strong>Conformance coverage for hook precedence and <code>tool</code> states (F8).</strong> The case
+  format gains scripted <code>hooks:</code> (boolean sequences) and <code>tools:</code> (list or
+  <code>{input-substring: output}</code> map) bindings, plus <code>expect.error_prefix</code>. New cases:
+  <code>hook-before-prose</code>, <code>hook-false-falls-through</code>, <code>tool-state-output-deposit</code>,
+  <code>tool-unknown-halts</code>, <code>fanout-sample-index</code> (F3), <code>budget-fanout-charging</code> (F4).
+  Suite: 15 → 21 cases.</li>
+<li><strong>SPEC §7</strong> now states the fan-out step-charging rule (<code>max(1, len(branches))</code>)
+  explicitly, with the map-reduce budget-sizing implication and a worked example;
+  <code>docs/patterns.md</code> and ROADMAP note the possible v0.3 <code>budget</code>/<code>branch_budget</code>
+  split.</li>
+</ul>
+<blockquote>
+<p><strong>Deferred from Remediation 002, delivered in 0.5.3:</strong> author-facing scripted
+testing (<code>mklang test</code>), budget-feasibility check, dotted-segment lint,
+schema-identity test, ADR 0010.</p>
+</blockquote>
+<h2 id="051-2026-07-16">[0.5.1] — 2026-07-16<a class="headerlink" href="#051-2026-07-16" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_11">Fixed<a class="headerlink" href="#fixed_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Judge silent clamp</strong> — out-of-range or 0-based <code>{"choice": k}</code> replies are
+  no longer clamped to a valid gate. <code>parse_choice</code> returns <code>None</code> for OOR;
+  adapters raise <code>JudgeUnparseable</code>; the engine does not re-clamp. Soft-fallback
+  to <code>otherwise</code> (or hard-halt <code>judge-unparseable</code>) is traced via
+  <code>judge_fallback</code> / <code>judge_raw</code> — never a mute misroute with only <code>gate_via: llm</code>.</li>
+<li><strong>Showcase honesty (<code>triage.mk</code>)</strong> — <code>search_kb</code> and <code>send_reply</code> are real
+  <code>tool:</code> states (host stubs); generative states no longer claim tool use or
+  “confirm the send.” Same honesty pass on <code>research.mk</code> (no fake <code>web_search</code>).</li>
+<li><strong>README</strong> — dropped “no host code required”; documented that tools/hooks are
+  host-supplied; centered conformance + portable spec as the differentiator.</li>
+</ul>
+<h3 id="added_20">Added<a class="headerlink" href="#added_20" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Builtins / entry points: <code>search_kb</code>, <code>send_reply</code> (deterministic stubs).</li>
+<li><strong>SPEC §5</strong> — normative 1-based judge protocol; OOR = anomaly; documented
+  <code>JUDGE_CONTEXT_CHARS</code> (4000) truncation.</li>
+<li><strong>SPEC §11 Threat model (v0.2)</strong> — injection surface, partial mitigations,
+  explicit non-goals (declare rather than deny).</li>
+<li>Reference produce temperature defaults documented (non-normative).</li>
+<li><strong>Gate-divergence experiment</strong> — <code>scripts/gate_divergence.py</code> +
+  <code>docs/experiments/gate-divergence.md</code> (cross-provider agreement scaffold).</li>
+<li>ADR 0004 honesty note: prose-gate reliability is empirical.</li>
+</ul>
+<h3 id="changed_20">Changed<a class="headerlink" href="#changed_20" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Positioning: “writable by non-programmers” softened to prose-first / readable;
+  production needs developer judgment for tools, hooks, and untrusted inputs.</li>
+</ul>
+<h2 id="050-2026-07-16">[0.5.0] — 2026-07-16<a class="headerlink" href="#050-2026-07-16" title="Permanent link">&para;</a></h2>
+<h3 id="added_21">Added<a class="headerlink" href="#added_21" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Conformance suite</strong> (ADR 0009) — <code>conformance/cases/*.yaml</code>:
+  implementation-neutral cases (machine + scripted LLM + expected outcome) that
+  pin the language semantics; any second interpreter must pass them with its own
+  runner. Reference runner in <code>tests/test_conformance.py</code> (15 cases).</li>
+<li><strong><code>mklang lint</code></strong> — <code>check</code> plus static analysis: dead gates after
+  <code>otherwise</code>, repair-only states, outputs nobody reads (terminal/judged states
+  exempt), template roots nothing provides (<code>--strict</code> exits 1 on findings).</li>
+<li><strong>Provider adapters as entry-point plugins</strong> — group <code>mklang.providers</code>
+  (factory <code>(ProviderConfig) -&gt; LLM</code>); builtin <code>anthropic</code>, unknown names fall
+  back to the OpenAI-compatible adapter. Completes the plugin story
+  (tools/hooks/providers).</li>
+<li><strong>Gated live smoke tests</strong> (<code>tests/test_live.py</code>) — opt-in via <code>MKLANG_LIVE=1</code>,
+  provider-agnostic: they run the config's <code>active</code> provider (override with
+  <code>MKLANG_LIVE_PROVIDER</code>) and skip when its key is missing. All providers,
+  Anthropic included, share the same path — no provider-specific test code.</li>
+<li><strong>CI + docs site</strong> — extended GitHub Actions workflow (tests, ruff, schema +
+  semantic checks, lint, build, gated live smoke on main) and an mkdocs-material
+  site assembled from the repo's canonical markdown (<code>scripts/build-docs.sh</code>,
+  deployed to GitHub Pages).</li>
+</ul>
+<h3 id="changed_21">Changed<a class="headerlink" href="#changed_21" title="Permanent link">&para;</a></h3>
+<ul>
+<li>SPEC termination paragraph: the END-reachability validator is enforced (it
+  already was — the prose still said "SHOULD").</li>
+<li>Packaging metadata: classifiers, corrected repository URLs, author contact.</li>
+</ul>
+<h2 id="040-2026-07-16">[0.4.0] — 2026-07-16<a class="headerlink" href="#040-2026-07-16" title="Permanent link">&para;</a></h2>
+<h3 id="added_22">Added<a class="headerlink" href="#added_22" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Human-in-the-loop</strong> (ADR 0008) — with <code>--hitl</code> (requires <code>--checkpoint</code>), a
+  fired <code>escalate</code> gate <strong>suspends</strong> at the handler state instead of just routing:
+  the envelope records <code>reason: "escalated"</code> and <code>hitl: true</code>. Reply via
+  <strong><code>mklang resume ck.json --set human.reply="…"</code></strong> — values land in the innermost
+  frame's context so the handler can interpolate <code>{{human.reply}}</code>. Library API:
+  <code>run(..., escalate_suspend=True)</code>; mutate <code>frames[-1]["ctx"]</code> before resuming.
+  Default off — escalate-as-routing (tier cascades) is unaffected; escalate to
+  <code>END</code> and fan-out branches never suspend. Language unchanged (spec stays 0.2).</li>
+</ul>
+<h2 id="030-2026-07-16">[0.3.0] — 2026-07-16<a class="headerlink" href="#030-2026-07-16" title="Permanent link">&para;</a></h2>
+<h3 id="added_23">Added<a class="headerlink" href="#added_23" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Resumable runs / checkpoints</strong> (ADR 0007) — opt-in: with <code>--checkpoint PATH</code>,
+  budget exhaustion (<code>budget-exhausted</code> / <code>cost-exhausted</code>) <strong>suspends</strong> instead of
+  halting and writes a JSON checkpoint (frames = blackboard + position + spend per
+  <code>call</code> level, machine sha256). New subcommand <strong><code>mklang resume &lt;checkpoint&gt;</code></strong>
+  (<code>--max-tokens</code>, <code>--machine</code>, <code>--force</code>) continues as if uninterrupted — golden
+  round-trip tested, nested <code>call</code> included. New <code>RunResult</code> status <code>"suspended"</code>
+  with <code>frames</code>; library API <code>run(..., suspendable=, resume=)</code>; CLI exit code 3.
+  Fan-out branches never suspend. Language unchanged (spec stays 0.2).</li>
+</ul>
+<h3 id="fixed_12">Fixed<a class="headerlink" href="#fixed_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Docs drift pass: SPEC pseudo-schema includes <code>hook</code> / <code>hooks:</code>; comparison table and
+  philosophy updated for host hooks; ADR 0002/0004 no longer refer to code-hooks as
+  future-only; ROADMAP test count aligned (~70).</li>
+<li>Stale <code>__version__</code> in <code>mklang/__init__.py</code> (was pinned at 0.2.0).</li>
+</ul>
+<h2 id="022-2026-07-16">[0.2.2] — 2026-07-16<a class="headerlink" href="#022-2026-07-16" title="Permanent link">&para;</a></h2>
+<h3 id="added_24">Added<a class="headerlink" href="#added_24" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Code-hook gates</strong> — optional <code>hook: &lt;name&gt;</code> on a gate evaluates a host predicate
+  <code>(context, output) -&gt; bool</code> without the LLM (ADR 0006). Top-level <code>hooks:</code>
+  declarations; CLI builtins (<code>auto_approve_ok</code>, …); example <code>hook_gates.mk</code>. Trace
+  records <code>gate_via: hook|llm|otherwise</code>.</li>
+<li><strong>Tool / hook plugin registry</strong> — entry-point groups <code>mklang.tools</code> and
+  <code>mklang.hooks</code>; <code>load_tool_registry()</code> / <code>load_hook_registry()</code> merge builtins with
+  third-party plugins (later keys win). Documented in CONTRIBUTING / patterns.</li>
+</ul>
+<h3 id="changed_22">Changed<a class="headerlink" href="#changed_22" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Default runtime provider is <strong>DeepSeek</strong> (<code>active: deepseek</code> in
+  <code>config/runtime.example.yaml</code>); README quickstart and status aligned. Live smoke
+  re-verified on DeepSeek (<code>expense_approval.mk</code> → <code>done</code>).</li>
+</ul>
+<h2 id="021-2026-07-16">[0.2.1] — 2026-07-16<a class="headerlink" href="#021-2026-07-16" title="Permanent link">&para;</a></h2>
+<p>Correctness hardening and multi-provider polish on top of the v0.2 core.</p>
+<h3 id="fixed_13">Fixed<a class="headerlink" href="#fixed_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Sub-machine halt propagation</strong> — a <code>call</code> whose child halts (budget, fail, …)
+  now halts the parent as <code>call-failed: &lt;child-error&gt;</code> with nested <code>sub_trace</code>,
+  instead of continuing as <code>done</code> with <code>result=None</code>.</li>
+<li><strong>Judge sees reasoning</strong> — when <code>reason: true</code>, the private chain-of-thought is
+  passed to <code>LLM.judge</code> (SPEC §4.5 / §6), not only recorded in the trace.</li>
+<li><strong>Anthropic adapter parity</strong> — transient retry with backoff, wrap API failures as
+  <code>ProviderError</code>, apply <code>temperature</code> when thinking is off, structured JSON judge
+  (shared <code>parse_choice</code> with OpenAI-compat).</li>
+<li><strong>Pre-run tier validation</strong> — <code>mklang run</code> rejects machines that need a tier missing
+  from the provider map; engine KeyError messages name the missing tier.</li>
+<li><strong>Shared <code>cost_budget</code> across <code>call</code></strong> — sub-machines inherit the remaining token
+  budget (no unbounded child spend while the parent still looks under budget).</li>
+<li><strong>Judge unparseable is no longer silent</strong> — adapters raise <code>JudgeUnparseable</code>; the
+  engine soft-falls back only to an eligible <code>otherwise</code> (trace: <code>judge_fallback</code>),
+  else halts with <code>judge-unparseable</code>.</li>
+<li><strong><code>over</code> missing path / wrong type</strong> — hard error (empty list still OK per SPEC).</li>
+<li><strong>Fan-out branch <code>call</code> halt</strong> — preserves <code>sub_trace</code> and child token usage.</li>
+<li>Engine exception-safety (clean <code>halt</code>, isolated fan-out branches); empty-<code>eligible</code>
+  no longer crashes; <code>--set</code> accepts JSON (lists for <code>over</code>); <code>load_registry</code> skips
+  malformed siblings; <code>.env</code> discovered from cwd.</li>
+</ul>
+<h3 id="added_25">Added<a class="headerlink" href="#added_25" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Formal <code>tool</code> states</strong> — a state can invoke a host-registered callable so tool
+  observations re-enter the context (real ReAct, not prose-simulated). Optional
+  top-level <code>tools:</code> block; built-in demo tools (<code>calc</code>, <code>search</code>).</li>
+<li><strong>Cost accounting</strong> — per-step token usage in the trace, a run total, and an
+  optional <code>cost_budget</code> (halt <code>cost-exhausted</code>).</li>
+<li><strong>Error taxonomy</strong> — <code>refusal</code>, <code>provider-error</code>, <code>call-failed</code>,
+  <code>judge-unparseable</code> halt reasons; typed adapter exceptions (<code>CallFailed</code>,
+  <code>JudgeUnparseable</code>, …).</li>
+<li><strong>Structured-output judge</strong> — OpenAI-compatible and Anthropic adapters judge via
+  JSON <code>{"choice": N}</code> with a regex fallback path in <code>parse_choice</code>.</li>
+<li>Per-tier <code>params</code> applied to the model (effort / thinking / reasoning_effort),
+  best-effort with drop-on-error; pre-run validation in <code>mklang run</code>; richer
+  <code>mklang check</code> (dead states, unproduced <code>result</code>, catch-all warning, version
+  advisory).</li>
+<li>Schema bundled as package data; <code>mklang: "0.2"</code> field; transient-error retry.</li>
+<li>Apache-2.0 <code>LICENSE</code>, <code>CONTRIBUTING.md</code>, this changelog.</li>
+<li>Quality: golden-trace and cookbook-conformance tests; Anthropic adapter unit tests
+  (params / refusal / usage / retry / judge). <strong>Live Anthropic e2e still deferred</strong>
+  (no <code>ANTHROPIC_API_KEY</code> in the release environment). Live-tested path remains
+  DeepSeek.</li>
+<li>Docs: SPEC header aligned to <strong>0.2</strong>; ROADMAP shipped items synced.</li>
+</ul>
+<h2 id="020-core-v02-reference-interpreter">[0.2.0] — core v0.2 + reference interpreter<a class="headerlink" href="#020-core-v02-reference-interpreter" title="Permanent link">&para;</a></h2>
+<h3 id="added_26">Added<a class="headerlink" href="#added_26" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Language core v0.2</strong>: <code>reason</code> (traced chain-of-thought), <code>accumulate</code>
+  (list-append), fan-out (<code>sample</code> / <code>over</code>), sub-machine <code>call</code>, top-level <code>result</code>.</li>
+<li>Patterns cookbook (<code>SPEC.md §10</code>) mapping CoT / ReAct / Reflexion / Self-consistency
+  / Tree-of-Thought / Plan-Execute / Debate / Map-Reduce / Router / speculative cascade.</li>
+<li><strong>Reference interpreter</strong> (<code>src/mklang/</code>): loader + validator, <code>{{}}</code> interpolation,
+  multi-provider LLM adapters (native Anthropic + generic OpenAI-compatible), run loop,
+  nested trace, <code>mklang run</code> / <code>mklang check</code> CLI. Live-tested on DeepSeek.</li>
+<li>JSON Schema <code>oneOf {generative | call}</code>; examples <code>self_consistency</code>, <code>map_reduce</code>
+  (+ <code>summarize_doc</code>), <code>react</code>.</li>
+</ul>
+<h2 id="01-language-definition">[0.1] — language definition<a class="headerlink" href="#01-language-definition" title="Permanent link">&para;</a></h2>
+<h3 id="added_27">Added<a class="headerlink" href="#added_27" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The mklang concept: an LLM-driven state machine where each state has four faces
+  (<code>structure</code>, <code>prompt</code>, <code>execution</code>, <code>gates</code>), gates are transitions, and the LLM is
+  the runtime. Provider-agnostic capability tiers (<code>fast</code> / <code>balanced</code> / <code>reasoning</code>).</li>
+<li><code>SPEC.md</code>, JSON Schema, multi-provider runtime config, examples <code>triage</code>, <code>research</code>,
+  <code>expense_approval</code>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

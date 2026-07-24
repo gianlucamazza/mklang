@@ -1,0 +1,2175 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A declarative language for LLM-driven state machines.">
+      
+      
+      
+        <link rel="canonical" href="https://gianlucamazza.github.io/mklang/experiments/validation-report-2026-07-23/">
+      
+      
+        <link rel="prev" href="../authoring-blind-spot/">
+      
+      
+        <link rel="next" href="../distribution-five-reader/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Validation report 2026-07-23 - mklang</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#validation-report-2026-07-23-audit-findings" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="mklang" class="md-header__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mklang
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Validation report 2026-07-23
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mklang" class="md-nav__button md-logo" aria-label="mklang" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    mklang
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gianlucamazza/mklang" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gianlucamazza/mklang
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SPEC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../conformance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conformance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stability policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live demos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Machine stdlib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpreter architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gate-divergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gate divergence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring-blind-spot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring blind_spot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation report 2026-07-23
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#environment-constraint-read-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment constraint (read first)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-results-register" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Results register
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-item-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-item detail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-item detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1-format-gate-absent-confirmed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A1 — Format gate absent — CONFIRMED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2-coverage-gate-is-environment-dependent-confirmed-docs-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A2 — Coverage gate is environment-dependent — CONFIRMED; docs fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3-tag-changelog-pypi-divergence-confirmed-invariant-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A3 — Tag / CHANGELOG / PyPI divergence — CONFIRMED; invariant enforced
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4-clipy-monolith-downgrade-to-cosmetic-hotspot-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A4 — cli.py monolith — DOWNGRADE to cosmetic; hotspot fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b1-structural-behavioural-validation-confirmed-structural-magnitude-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B1 — Structural ≠ behavioural validation — CONFIRMED (structural); magnitude MEASURED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2-repair-pass-sufficiency-confirmed-structural-magnitude-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B2 — Repair-pass sufficiency — CONFIRMED (structural); magnitude MEASURED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3-mcp-persistence-asymmetry-confirmed-asymmetry-deliberate-close-by-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B3 — MCP persistence asymmetry — CONFIRMED asymmetry, DELIBERATE → close by-design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c1-premature-100-decision-recorded-adr-0028" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C1 — Premature 1.0.0 — decision recorded (ADR 0028)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-release-cadence-confirmed-observation-policy-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 — Release cadence — CONFIRMED observation; policy set
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c3-provider-coverage-confirmed-via-recorded-run-live-re-run-blocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C3 — Provider coverage — CONFIRMED via recorded run; live re-run BLOCKED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4-bus-factor-1-confirmed-no-action-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C4 — Bus factor 1 — CONFIRMED, no action now
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d1-distribution-is-the-binding-constraint-blocked-external" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D1 — Distribution is the binding constraint — BLOCKED (external)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-still-owed-j-class-must-be-recorded-as-adrs-not-defaulted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions still owed (J-class — must be recorded as ADRs, not defaulted)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decisions still owed (J-class — must be recorded as ADRs, not defaulted)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#best-practices-documentation-completed-this-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best-practices documentation completed (this branch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#derived-fix-backlog-tm-class-verdict-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Derived fix backlog (T/M-class — verdict-driven)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Derived fix backlog (T/M-class — verdict-driven)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-enforcements-applied-closes-58" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI enforcements (applied — closes #58)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-assumptions-revisited-plan-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Assumptions revisited (plan §5)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../distribution-five-reader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Five-reader distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#environment-constraint-read-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment constraint (read first)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-results-register" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Results register
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-item-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-item detail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-item detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1-format-gate-absent-confirmed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A1 — Format gate absent — CONFIRMED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2-coverage-gate-is-environment-dependent-confirmed-docs-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A2 — Coverage gate is environment-dependent — CONFIRMED; docs fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3-tag-changelog-pypi-divergence-confirmed-invariant-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A3 — Tag / CHANGELOG / PyPI divergence — CONFIRMED; invariant enforced
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4-clipy-monolith-downgrade-to-cosmetic-hotspot-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A4 — cli.py monolith — DOWNGRADE to cosmetic; hotspot fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b1-structural-behavioural-validation-confirmed-structural-magnitude-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B1 — Structural ≠ behavioural validation — CONFIRMED (structural); magnitude MEASURED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2-repair-pass-sufficiency-confirmed-structural-magnitude-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B2 — Repair-pass sufficiency — CONFIRMED (structural); magnitude MEASURED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3-mcp-persistence-asymmetry-confirmed-asymmetry-deliberate-close-by-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B3 — MCP persistence asymmetry — CONFIRMED asymmetry, DELIBERATE → close by-design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c1-premature-100-decision-recorded-adr-0028" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C1 — Premature 1.0.0 — decision recorded (ADR 0028)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-release-cadence-confirmed-observation-policy-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 — Release cadence — CONFIRMED observation; policy set
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c3-provider-coverage-confirmed-via-recorded-run-live-re-run-blocked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C3 — Provider coverage — CONFIRMED via recorded run; live re-run BLOCKED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4-bus-factor-1-confirmed-no-action-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C4 — Bus factor 1 — CONFIRMED, no action now
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d1-distribution-is-the-binding-constraint-blocked-external" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D1 — Distribution is the binding constraint — BLOCKED (external)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-still-owed-j-class-must-be-recorded-as-adrs-not-defaulted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions still owed (J-class — must be recorded as ADRs, not defaulted)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decisions still owed (J-class — must be recorded as ADRs, not defaulted)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#best-practices-documentation-completed-this-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best-practices documentation completed (this branch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#derived-fix-backlog-tm-class-verdict-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Derived fix backlog (T/M-class — verdict-driven)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Derived fix backlog (T/M-class — verdict-driven)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-enforcements-applied-closes-58" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI enforcements (applied — closes #58)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-assumptions-revisited-plan-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Assumptions revisited (plan §5)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="validation-report-2026-07-23-audit-findings">Validation Report — 2026-07-23 audit findings<a class="headerlink" href="#validation-report-2026-07-23-audit-findings" title="Permanent link">&para;</a></h1>
+<p><strong>Subject:</strong> <code>gianlucamazza/mklang</code> @ <code>e525a1b</code> (v1.0.0)
+<strong>Executed:</strong> 2026-07-23, on a clean clone in an offline-capable environment.
+<strong>Plan:</strong> the twelve-finding <em>Problem Validation Plan</em> (Method §0). This report fills the
+plan's §4 Results register and derives a fix backlog from the verdicts. It prescribes no
+fixes beyond that backlog, per the plan's method.</p>
+<h2 id="environment-constraint-read-first">Environment constraint (read first)<a class="headerlink" href="#environment-constraint-read-first" title="Permanent link">&para;</a></h2>
+<p>The <strong>original audit run</strong> had <strong>no provider API keys</strong> (<code>DEEPSEEK_API_KEY</code> /
+<code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code> all unset). That bounded three items to
+<em>code-and-record</em> evidence rather than fresh live execution at first write.</p>
+<p><strong>Same-day / next-session follow-ups</strong> (keys present for DeepSeek + OpenAI):</p>
+<ul>
+<li><strong>B1 / B2</strong> — measured; see <code>authoring-blind-spot.md</code> and the register below.</li>
+<li><strong>C3</strong> — still not re-run with Anthropic (<code>ANTHROPIC_API_KEY</code> unset / billing);
+  the recorded DeepSeek+OpenAI 2026-07-23 suite remains the baseline.</li>
+<li><strong>D1</strong> — still external; protocol frozen in <code>distribution-five-reader.md</code>.</li>
+</ul>
+<p>Nothing below reports a magnitude that was not actually measured.</p>
+<hr />
+<h2 id="4-results-register">4. Results register<a class="headerlink" href="#4-results-register" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Verdict</th>
+<th>Evidence</th>
+<th>Falsifier triggered?</th>
+<th>Follow-up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td><strong>CONFIRMED; CI fixed</strong></td>
+<td>At audit: <code>quality.yml</code> ran <code>ruff check</code> only; one file drifted. Follow-up: <code>Format check</code> step + reformatted file (#58).</td>
+<td>No</td>
+<td><strong>DONE</strong> — <code>ruff format --check</code> in <code>quality.yml</code>.</td>
+</tr>
+<tr>
+<td>A2</td>
+<td><strong>CONFIRMED; docs fixed</strong></td>
+<td><code>--extra dev</code>: <strong>87.58% FAIL</strong> vs <code>--extra dev --extra mcp</code>: <strong>91.81% PASS</strong>. Follow-up: CONTRIBUTING documents gate 90 + <code>--extra mcp</code>.</td>
+<td>No</td>
+<td><strong>DONE</strong> — canonical invocation documented.</td>
+</tr>
+<tr>
+<td>A3</td>
+<td><strong>CONFIRMED; invariant enforced</strong></td>
+<td>Three-way divergence at audit (23 tags / 28 CHANGELOG / 16 PyPI). Follow-up: tag↔CHANGELOG ≥0.5.3 test + <code>fetch-depth: 0</code> (#58).</td>
+<td>No</td>
+<td><strong>DONE</strong> — <code>tests/test_release.py</code> + CI tags.</td>
+</tr>
+<tr>
+<td>A4</td>
+<td><strong>DOWNGRADE (mostly cosmetic); hotspot fixed</strong></td>
+<td>At audit: 1026 lines / mean CC 8.05 (B); hotspot <strong><code>cmd_doctor</code> CC 41 (F)</strong>. Follow-up: helpers extracted — <code>cmd_doctor</code> CC <strong>8 (B)</strong> (#63).</td>
+<td><strong>Partial</strong> at audit; hotspot closed.</td>
+<td>Do not split <code>cli.py</code> wholesale.</td>
+</tr>
+<tr>
+<td>B1</td>
+<td><strong>CONFIRMED (structural); magnitude MEASURED</strong></td>
+<td>Structural premise unchanged. Live run 2026-07-23: DeepSeek <code>deepseek-reasoner</code>, 20 corpus items × 3, <code>blind_spot = 0.0167</code> (check 0.7167 − behaviour 0.7000). Verdict: <strong>do not build <code>test_machine</code></strong>. See <code>authoring-blind-spot.md</code>.</td>
+<td>Falsifier for “must build test_machine” <strong>triggered</strong> (spot &lt; 0.10).</td>
+<td>Close #59 on measurement; keep authoring-reliability work separate.</td>
+</tr>
+<tr>
+<td>B2</td>
+<td><strong>CONFIRMED (structural); magnitude MEASURED</strong></td>
+<td>Same harness: 41.7% of trials needed ≥1 static repair; 28.3% still failed check after one repair. Shared <code>budget: 16</code> remains optimistic for multi-gate authoring — orthogonal to <code>test_machine</code>.</td>
+<td>n/a</td>
+<td>Optional: dedicated authoring-repair budget (product), not a language break.</td>
+</tr>
+<tr>
+<td>B3</td>
+<td><strong>CONFIRMED asymmetry — but DELIBERATE &amp; documented → close by-design</strong></td>
+<td>MCP tools: <code>run, resume, list_machines, describe_machine, check</code> — no write. Author-and-run works (<code>run(source=…)</code> + <code>check</code>). ADR 0011: "a remote MCP host should not touch the server's filesystem… introduces no new authority." ADR 0013:53: "ADR 0011's 'never write to disk' default is preserved."</td>
+<td><strong>Yes</strong> — "deliberate" branch: it <em>was</em> withheld, on purpose. "undocumented" sub-claim refuted.</td>
+<td>One-line surfacing in SECURITY.md / SPEC §11 (ADR trail is the current home).</td>
+</tr>
+<tr>
+<td>C1</td>
+<td><strong>Judgement — decided (ADR 0028)</strong></td>
+<td>Whole example surface first appeared <strong>2026-07-18</strong> (<code>git log --follow</code>), 5 days before the 1.0.0 freeze (2026-07-23). Author-only soak; zero external. (Naïve <code>--diff-filter=A</code> showed 2026-07-23 — a <code>.mk→.mkl</code> rename artifact; corrected.)</td>
+<td>n/a (J)</td>
+<td>ADR 0028: freeze provisional on evidence; 2.0 conditions named; no retraction.</td>
+</tr>
+<tr>
+<td>C2</td>
+<td><strong>CONFIRMED (observation); policy set</strong></td>
+<td><code>v0.16.0</code> 14:48 and <code>v1.0.0</code> 17:34 <strong>same day</strong> (+0200 ≈ plan's UTC 12:51/15:40). 16 PyPI releases across 2026-07-16…23.</td>
+<td>No</td>
+<td>Publish-cadence policy in CONTRIBUTING (done on the validation PR).</td>
+</tr>
+<tr>
+<td>C3</td>
+<td><strong>CONFIRMED via recorded runs; Anthropic still blocked</strong></td>
+<td>2026-07-23: <strong>1.0 per machine</strong>. 2026-07-24 (1.0.1): pooled <strong>0.917</strong>; <code>severity_escalate</code> <strong>0.667</strong> (one DeepSeek auto vs page). Release-gate single machine still <strong>1.0</strong>. Anthropic: <strong>key absent</strong> in maintainer env and GH secrets.</td>
+<td>Coarse routing still solid on three machines; escalate contestability is real.</td>
+<td>#60 — set <code>ANTHROPIC_API_KEY</code> (local + GH secrets) + credit.</td>
+</tr>
+<tr>
+<td>C4</td>
+<td><strong>CONFIRMED bus factor 1</strong></td>
+<td><code>git shortlog</code>: 124 + 54 commits one human (two spellings), 8 Claude, 2+2 bots.</td>
+<td>n/a (J)</td>
+<td>No action now; confirm CONTRIBUTING answers "how does a 2nd person get productive."</td>
+</tr>
+<tr>
+<td>D1</td>
+<td><strong>BLOCKED (external)</strong></td>
+<td>Cannot be validated from inside the repo — needs 5 external readers. Internal facts consistent with the claim: 11 examples, 28 ADRs, ~92% cov, 5-platform matrix; protocol frozen in <code>distribution-five-reader.md</code>.</td>
+<td>Not evaluable in-repo</td>
+<td>Run the 5-reader test (record verbatim first questions).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="per-item-detail">Per-item detail<a class="headerlink" href="#per-item-detail" title="Permanent link">&para;</a></h2>
+<h3 id="a1-format-gate-absent-confirmed">A1 — Format gate absent — CONFIRMED<a class="headerlink" href="#a1-format-gate-absent-confirmed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>uv run --extra dev ruff format --check src tests scripts</code> → <em>"1 file would be reformatted"</em>
+  (<code>tests/test_truncation.py</code>), 92 already formatted.</li>
+<li><strong>Falsifier checked and refuted:</strong> the reformat reproduces under the version the repo
+  resolves for CI — <code>uv run ... ruff --version</code> → <strong>0.15.22</strong> (same as the original local
+  observation). Not a local-version artifact.</li>
+<li><strong>Second question:</strong> <code>git log --all --grep=format -i</code> surfaces only unrelated commits (docs
+  alignment, taint fences, logging). <strong>No recorded rationale</strong> for omitting the format check.</li>
+<li>At audit, <code>quality.yml</code> was <code>ruff check</code> only (no format gate).</li>
+<li><strong>Follow-up:</strong> <code>Format check</code> step added (<code>ruff format --check src tests scripts</code>);
+  drifted <code>tests/test_truncation.py</code> reformatted (#58).</li>
+</ul>
+<h3 id="a2-coverage-gate-is-environment-dependent-confirmed-docs-fixed">A2 — Coverage gate is environment-dependent — CONFIRMED; docs fixed<a class="headerlink" href="#a2-coverage-gate-is-environment-dependent-confirmed-docs-fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Leg 1 (<code>--extra dev</code>): TOTAL <strong>87.58%</strong>, <em>"Required test coverage of 90.0% not reached"</em> → FAIL.</li>
+<li>Leg 2 (<code>--extra dev --extra mcp</code>): TOTAL <strong>91.81%</strong> → PASS. <code>mcp/server.py</code> goes 0% → 87%.</li>
+<li><strong>Follow-up:</strong> CONTRIBUTING documents the canonical
+  <code>uv run --extra dev --extra mcp pytest …</code> invocation and <code>fail_under = 90</code>.</li>
+</ul>
+<h3 id="a3-tag-changelog-pypi-divergence-confirmed-invariant-enforced">A3 — Tag / CHANGELOG / PyPI divergence — CONFIRMED; invariant enforced<a class="headerlink" href="#a3-tag-changelog-pypi-divergence-confirmed-invariant-enforced" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Counts at audit: <strong>23 tags, 28 CHANGELOG entries, 16 PyPI releases</strong> (three-way).</li>
+<li>CHANGELOG-only (never tagged): <code>0.1, 0.2.0, 0.2.1, 0.5.1, 0.5.2</code> — pre-distribution history.</li>
+<li><strong>Follow-up:</strong> invariant cut at <strong>0.5.3</strong> in <code>tests/test_release.py</code>; CI
+  <code>fetch-depth: 0</code> so the test runs (does not skip) on the matrix (#58).</li>
+</ul>
+<h3 id="a4-clipy-monolith-downgrade-to-cosmetic-hotspot-fixed">A4 — <code>cli.py</code> monolith — DOWNGRADE to cosmetic; hotspot fixed<a class="headerlink" href="#a4-clipy-monolith-downgrade-to-cosmetic-hotspot-fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>At audit: Radon mean CC <strong>8.05 (B)</strong>; outlier <strong><code>cmd_doctor</code> CC 41 (F)</strong>; three C-grade
+  handlers (<code>cmd_resume</code> 20, <code>cmd_lint</code> 16, <code>cmd_test</code> 12). Dispatch-table shape confirmed.</li>
+<li><strong>Follow-up:</strong> <code>cmd_doctor</code> extracted into helpers — CC <strong>8 (B)</strong> (#63). Rest of <code>cli.py</code>
+  left alone.</li>
+</ul>
+<h3 id="b1-structural-behavioural-validation-confirmed-structural-magnitude-measured">B1 — Structural ≠ behavioural validation — CONFIRMED (structural); magnitude MEASURED<a class="headerlink" href="#b1-structural-behavioural-validation-confirmed-structural-magnitude-measured" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Mechanism proven from source, provider-free:</strong></li>
+<li><code>host.check_machine</code> (host.py:140) docstring: <em>"Validate without running — schema +
+    semantics + lint, no provider needed."</em> Body = <code>_parse_source</code> + <code>semantic_check</code> +
+    <code>lint_machine</code>. Purely static.</li>
+<li><code>console/tools.py:140 write_machine</code> writes the file, then returns
+    <code>host.check_machine(source=…)</code> as its verdict.</li>
+<li><code>agent.mkl</code> loop: <code>decide → author → save → decide</code>. <code>save</code> observation carries the
+    static check; control returns to <code>decide</code>. <strong>No state executes the authored machine
+    against a scenario before <code>reply</code>.</strong></li>
+<li><strong>No <code>test_machine</code> exists</strong> anywhere in <code>src/</code>. The <code>mklang test</code> / <code>scripttest</code> runner
+    is a separate CLI path, not wired into the authoring loop.</li>
+<li>So the plan's core assertion — the loop "cannot distinguish valid from correct" — is
+  <strong>true by construction.</strong></li>
+<li><strong>Follow-up (same day, keys available):</strong> corpus + harness + live DeepSeek
+  historical <code>deepseek-reasoner</code> run (20×3; retired alias) → <strong><code>blind_spot = 0.0167</code></strong>. Verdict under the fixed
+  thresholds: <strong>do not build <code>test_machine</code>.</strong> Recorded in
+  <code>docs/experiments/authoring-blind-spot.md</code>; issue #59 closed.</li>
+</ul>
+<h3 id="b2-repair-pass-sufficiency-confirmed-structural-magnitude-measured">B2 — Repair-pass sufficiency — CONFIRMED (structural); magnitude MEASURED<a class="headerlink" href="#b2-repair-pass-sufficiency-confirmed-structural-magnitude-measured" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>agent.mkl:19 budget: 16 # decide/action cycles incl. an authoring repair + the reply</code>.</li>
+<li><strong>Structural observation supporting the concern:</strong> there is no <em>dedicated</em> repair budget.
+  A turn that discovers + runs a machine or two, then authors and needs a <em>second</em> repair,
+  draws every step from the same pool of 16. The comment implies headroom for <em>one</em> repair;
+  the code does not reserve it.</li>
+<li><strong>Follow-up:</strong> same harness measured 41.7% of trials needing ≥1 static re-author and
+  28.3% still failing check after one repair — authoring reliability, orthogonal to
+  <code>test_machine</code>.</li>
+</ul>
+<h3 id="b3-mcp-persistence-asymmetry-confirmed-asymmetry-deliberate-close-by-design">B3 — MCP persistence asymmetry — CONFIRMED asymmetry, DELIBERATE → close by-design<a class="headerlink" href="#b3-mcp-persistence-asymmetry-confirmed-asymmetry-deliberate-close-by-design" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Surface: <code>run, resume, list_machines, describe_machine, check</code>. <code>run(source=…)</code> +
+  <code>check(source=…)</code> give author-validate-run; <strong>no persist</strong>.</li>
+<li><strong>Was it withheld?</strong> Yes, deliberately, and it is recorded:</li>
+<li>ADR 0011: <em>"A remote MCP host should not touch the server's filesystem… never written to
+    disk unless explicitly requested"</em>; <em>"introduces no new authority."</em></li>
+<li>ADR 0013:53: <em>"ADR 0011's 'never write to disk' default is preserved; persistence is an
+    explicit per-call opt-in."</em></li>
+<li>ADR 0013:45: an MCP host may <em>"discover… validate a machine it authored, run it"</em> — the
+    surface is scoped to exactly that, minus workspace persistence.</li>
+<li>The plan's "undocumented asymmetry" framing is the part that fails: it <strong>is</strong> documented in
+  the ADR trail. The console's guard model (workspace confinement, human <code>confirm</code> on
+  overwrite) indeed does not transfer to a headless host — and the ADRs already chose <em>not</em> to
+  pretend it does. <strong>Close as by-design;</strong> optional one-liner in SECURITY.md / SPEC §11 for
+  discoverability outside the ADR trail.</li>
+</ul>
+<h3 id="c1-premature-100-decision-recorded-adr-0028">C1 — Premature 1.0.0 — decision recorded (ADR 0028)<a class="headerlink" href="#c1-premature-100-decision-recorded-adr-0028" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Q3 (soak time), measured:</strong> every example first appeared <strong>2026-07-18</strong> (via
+  <code>git log --follow</code>, correcting a <code>.mk→.mkl</code> rename that made naïve dating read 2026-07-23).
+  Five days of <strong>author-only</strong> exercise; no external soak on any part of the spec-0.3 surface.</li>
+<li><strong>Follow-up:</strong> ADR 0028 records the posture — 1.0.0 stands (no retraction), freeze is
+  SemVer-stable under ADR 0026 and provisional on evidence for product confidence, with
+  falsifiable 2.0 conditions. Issue #62 closed. Distribution evidence (#61) still open.</li>
+</ul>
+<h3 id="c2-release-cadence-confirmed-observation-policy-set">C2 — Release cadence — CONFIRMED observation; policy set<a class="headerlink" href="#c2-release-cadence-confirmed-observation-policy-set" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>git for-each-ref</code> timeline: <code>v0.16.0</code> 2026-07-23 14:48, <code>v1.0.0</code> 2026-07-23 17:34 — under
+  three hours apart, same day. 16 PyPI publishes in the repo's ~7-day tag history.</li>
+<li><strong>Follow-up:</strong> CONTRIBUTING Releases now states publish cadence (PyPI on user-visible
+  change or a fixed interval, whichever is slower; a tag alone is enough for a checkpoint).</li>
+</ul>
+<h3 id="c3-provider-coverage-confirmed-via-recorded-run-live-re-run-blocked">C3 — Provider coverage — CONFIRMED via recorded run; live re-run BLOCKED<a class="headerlink" href="#c3-provider-coverage-confirmed-via-recorded-run-live-re-run-blocked" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>docs/experiments/gate-divergence.md</code> Results table records the post-freeze <strong>2026-07-23</strong>
+  four-machine suite: <strong>1.0 agreement per machine</strong> (15/15 within-machine pairs each), 24/24
+  runs <code>done</code>, zero gate errors, deepseek + openai ×3. Per-machine signatures recorded.</li>
+<li><strong>Coarse-routing critique is pre-addressed:</strong> the suite already carries a deliberately
+  contestable machine (<code>sentiment_borderline</code>, "genuinely contestable" gates) plus a
+  control-flow-critical <code>severity_escalate</code> and a <code>grounding_repair</code> loop. The recorded note —
+  <em>"free-text outputs diverge on the contestable machines while routing stays identical"</em> — is
+  precisely the reassurance the plan asked for: agreement is not measured only on easy cases.</li>
+<li><strong>Anthropic priced:</strong> billing-blocked, not key-blocked (SPEC §9, README, experiment doc all
+  say so). One four-machine × 3-repeat Anthropic pass is ~12 small synthetic runs ≈ <strong>~30k
+  tokens, well under \$1</strong>. The decision to leave it blocked is therefore a credit-purchase
+  choice, not a cost-at-scale one.</li>
+</ul>
+<h3 id="c4-bus-factor-1-confirmed-no-action-now">C4 — Bus factor 1 — CONFIRMED, no action now<a class="headerlink" href="#c4-bus-factor-1-confirmed-no-action-now" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>git shortlog -sne</code>: 124 + 54 (one human), 8 Claude, 2 dependabot, 2 github-actions.</li>
+<li>Not a defect pre-adoption. The ADR trail (27) + conformance suite already do most of the
+  onboarding work; confirm CONTRIBUTING closes the loop.</li>
+</ul>
+<h3 id="d1-distribution-is-the-binding-constraint-blocked-external">D1 — Distribution is the binding constraint — BLOCKED (external)<a class="headerlink" href="#d1-distribution-is-the-binding-constraint-blocked-external" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Un-testable from inside the repository by design. Internal facts are consistent with the
+  claim (mature engineering: 28 ADRs, ~92% cov, 5-platform matrix; zero external signal),
+  but the claim's <em>own</em> falsifier is external: show two demos to five people, record their
+  first verbatim question, count how many understand it unaided, and whether ≥1 installs.
+  Protocol: <code>distribution-five-reader.md</code>. That test is cheap and owed; it cannot be run here.</li>
+</ul>
+<hr />
+<h2 id="decisions-still-owed-j-class-must-be-recorded-as-adrs-not-defaulted">Decisions still owed (J-class — must be recorded as ADRs, not defaulted)<a class="headerlink" href="#decisions-still-owed-j-class-must-be-recorded-as-adrs-not-defaulted" title="Permanent link">&para;</a></h2>
+<p>Per the plan's Method rule, no J-item enters a fix backlog until its decision is recorded.</p>
+<ol>
+<li><strong>C1</strong> — provisional-freeze ADR. <strong>Done (ADR 0028)</strong> after B1 measurement; D1 still
+   external. 1.0.0 stands; 2.0 conditions named; no retraction.</li>
+<li><strong>C2</strong> — cadence policy in CONTRIBUTING. <strong>Done</strong> — "Publish cadence" added to the Releases
+   section (the plan's candidate wording; maintainer may tune the interval).</li>
+<li><strong>C4</strong> — acknowledge in CONTRIBUTING; no code. The change checklist + ADR trail already
+   answer "how a second person gets productive"; no further action taken.</li>
+</ol>
+<h3 id="best-practices-documentation-completed-this-branch">Best-practices documentation completed (this branch)<a class="headerlink" href="#best-practices-documentation-completed-this-branch" title="Permanent link">&para;</a></h3>
+<p>The findings surfaced three gaps in <code>docs/guides/best-practices.md</code>, now filled:</p>
+<ul>
+<li><strong>B1</strong> — §10 gains "Static checks are not behavioural correctness" (and §15 anti-pattern
+  #16): <code>check</code>/<code>lint</code> prove well-formedness, not behaviour; run a scenario, especially for
+  agent-authored machines.</li>
+<li><strong>B3</strong> — §11 + §14 now state the MCP <strong>read-only-to-disk</strong> posture (ADR 0011/0013).</li>
+<li><strong>A1</strong> — CONTRIBUTING dev loop + change checklist now include the CI-gated <code>ruff format</code>.</li>
+<li><strong>A3</strong> — CONTRIBUTING Releases now documents the tag↔CHANGELOG invariant enforced by the test.</li>
+</ul>
+<h2 id="derived-fix-backlog-tm-class-verdict-driven">Derived fix backlog (T/M-class — verdict-driven)<a class="headerlink" href="#derived-fix-backlog-tm-class-verdict-driven" title="Permanent link">&para;</a></h2>
+<p>Items marked <strong>DONE</strong> were fixed on this branch alongside the report.</p>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>Action</th>
+<th>Size</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td>Reformat <code>tests/test_truncation.py</code> (<strong>DONE</strong>); add <code>ruff format --check</code> to <code>quality.yml</code> lint step (<strong>DONE</strong> — #58).</td>
+<td>XS</td>
+<td><strong>DONE</strong></td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Fix stale <code>fail_under = 88</code> → <code>90</code> in CONTRIBUTING (2×); note the <code>--extra mcp</code> requirement. (Canonical command already documented; that was the real residual.)</td>
+<td>S</td>
+<td><strong>DONE</strong></td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Enforce the tag↔CHANGELOG invariant (cut at 0.5.3) in <code>tests/test_release.py</code> (<strong>DONE</strong>); <code>fetch-depth: 0</code> on the test-job checkout so CI sees tags (<strong>DONE</strong> — #58). The test skips (not fails) without tags, so it is safe for sdist installs.</td>
+<td>S</td>
+<td><strong>DONE</strong></td>
+</tr>
+<tr>
+<td>B3</td>
+<td>One-line MCP no-persist note in SECURITY.md (ADR-decided).</td>
+<td>XS</td>
+<td><strong>DONE</strong></td>
+</tr>
+<tr>
+<td>A4</td>
+<td>(Optional) refactor only <code>cmd_doctor</code> (CC 41). Do <strong>not</strong> split <code>cli.py</code> wholesale.</td>
+<td>S</td>
+<td><strong>DONE</strong> — CC 41→8 (B); helpers in <code>cli.py</code></td>
+</tr>
+<tr>
+<td>B1</td>
+<td>Freeze the authoring corpus + hand-written acceptance scenarios; run the blind_spot experiment.</td>
+<td>L</td>
+<td><strong>DONE</strong> — <code>blind_spot=0.0167</code>; no <code>test_machine</code></td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Run one Anthropic four-machine pass (~30k tok) to close the three-provider gap.</td>
+<td>XS</td>
+<td>Blocked — key empty locally <strong>and</strong> missing from GH Actions secrets</td>
+</tr>
+<tr>
+<td>D1</td>
+<td>Run the five-reader comprehension test; record verbatim first questions.</td>
+<td>M</td>
+<td>Protocol frozen (<code>distribution-five-reader.md</code>); execution external</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ci-enforcements-applied-closes-58">CI enforcements (applied — closes #58)<a class="headerlink" href="#ci-enforcements-applied-closes-58" title="Permanent link">&para;</a></h3>
+<p>Both workflow edits land with this branch (maintainer push; the automation
+account that wrote the report lacked <code>workflows</code> permission):</p>
+<ul>
+<li><strong>A1</strong> — <code>Format check</code> step after <code>Lint</code> in the <code>checks</code> job
+  (<code>ruff format --check src tests scripts</code>).</li>
+<li><strong>A3</strong> — <code>fetch-depth: 0</code> on the <code>test</code> job checkout so
+  <code>test_changelog_entries_from_distribution_cutoff_are_tagged</code> runs (does not
+  skip) in CI.</li>
+</ul>
+<hr />
+<h2 id="5-assumptions-revisited-plan-5">5. Assumptions revisited (plan §5)<a class="headerlink" href="#5-assumptions-revisited-plan-5" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>"The weakness is in distribution and the authoring loop, not code quality."</strong> Partly
+  revised by follow-up measurement: code quality remains <em>good</em>; B1's <strong>blind_spot is
+  tiny (0.0167)</strong> so the structural authoring-loop gap does <strong>not</strong> dominate product risk
+  the way the audit hypothesized. Residual authoring pain is <strong>static-check failure /
+  repair rate</strong>, not silent behavioural wrongness. Distribution (D1) is still unmeasured
+  and remains the open external risk.</li>
+<li><strong>"<code>blind_spot</code> is measurable with hand-written acceptance criteria."</strong> <strong>Confirmed</strong> —
+  the corpus + harness ran; writing criteria first was feasible. One true blind-spot trial
+  out of 60.</li>
+<li><strong>Severity ordering (B1, D1 above all).</strong> After measurement, <strong>D1 outranks B1</strong>. Next
+  human priority: five external readers (#61). Optional: authoring-repair budget product
+  work. Not more in-repo coverage ratcheting.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
