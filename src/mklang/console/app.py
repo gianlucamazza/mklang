@@ -12,7 +12,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from dataclasses import replace as dc_replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Protocol
 from datetime import datetime
 from pathlib import Path
 
@@ -29,7 +29,21 @@ from .tools import ConsoleTools
 if TYPE_CHECKING:
     from textual.app import App
 
+    from .session import Session
     from ..llm.base import LLM
+
+
+class _BridgeApp(Protocol):
+    """The part of the local Textual app needed by the worker bridge."""
+
+    shutting_down: bool
+    session: "Session"
+
+    def call_from_thread(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any: ...
+
+    def render_event(self, event: dict) -> object: ...
+
+    def enter_answer_mode(self, question: str) -> object: ...
 
 
 def load_brain(agent_path: str | None = None) -> Machine:
@@ -71,9 +85,11 @@ def build_app(
     class TextualBridge:
         """Bridge impl: emit from any thread; ask/confirm block the worker."""
 
+        app: _BridgeApp
         _reply: str | None
+        always_yes: bool
 
-        def __init__(self, app: "ConsoleApp"):
+        def __init__(self, app: _BridgeApp):
             self.app = app
             self._reply = None
             self._event = threading.Event()
