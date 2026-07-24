@@ -166,10 +166,14 @@ providers:
     base_url: https://api.deepseek.com
     tiers:
       {
-        fast: deepseek-chat,
-        balanced: deepseek-chat,
-        reasoning: deepseek-reasoner,
+        fast: deepseek-v4-flash,
+        balanced: deepseek-v4-flash,
+        reasoning: deepseek-v4-flash,
       }
+    params:
+      fast: {thinking: {type: disabled}}
+      balanced: {thinking: {type: disabled}}
+      reasoning: {thinking: {type: enabled}, reasoning_effort: high}
   anthropic:
     tiers:
       {
@@ -182,7 +186,7 @@ providers:
     tiers: { fast: qwen3:8b, balanced: qwen3:32b, reasoning: deepseek-r1:70b }
 ```
 
-The example config defaults to **DeepSeek** (the path we live-test against). Flip
+The example config defaults to **DeepSeek V4 Flash** (the path we live-test against). Flip
 `active: anthropic` (or `openai` / `local` / …) and every example runs unchanged.
 Blocks ship for **Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI (Grok),
 Mistral, and local** (Ollama/vLLM) — every non-Anthropic one is OpenAI-compatible,
@@ -336,7 +340,7 @@ keys resolve server-side from the environment, never over the wire.
 
 ## Status
 
-**Language v0.3 / package 1.0.7** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 1.0.8** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`

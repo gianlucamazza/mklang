@@ -9,6 +9,7 @@ Set Height 675
 Set FontSize 22
 Set FontFamily "JetBrains Mono"
 Set Padding 24
+Set PlaybackSpeed 2
 Set WaitTimeout 180s
 
 # The language: a real reason -> tool -> observe -> loop machine (react.mkl).

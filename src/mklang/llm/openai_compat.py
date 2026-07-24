@@ -50,7 +50,13 @@ class OpenAICompatLLM:
                 dropped = _drop_offending_param(kwargs, msg)
                 if dropped:
                     continue  # retry once without the rejected field
-                raise ProviderError(str(e)) from e
+                detail = str(e)
+                model = kwargs.get("model")
+                if model and ("model" in msg or "not found" in msg):
+                    detail = (
+                        f"{detail} (configured model={model!r}; verify the provider model catalog)"
+                    )
+                raise ProviderError(detail) from e
 
     def produce(
         self,
@@ -129,17 +135,20 @@ def _usage(response: object) -> tuple[int, int]:
 
 
 def _apply_params(kwargs: dict, params: dict | None) -> None:
-    """Split per-tier params into SDK kwargs vs extra_body. Skip Anthropic-only keys."""
+    """Split per-tier params into SDK kwargs and provider-specific extra_body."""
     if not params:
         return
     extra: dict = {}
     for key, value in params.items():
-        if key == "thinking":  # Anthropic concept; not an OpenAI field
-            continue
         if key in _TOP_LEVEL_PARAMS:
             kwargs[key] = value
         else:
             extra[key] = value
+    thinking = extra.get("thinking")
+    if isinstance(thinking, dict) and thinking.get("type") == "enabled":
+        # DeepSeek V4 thinking mode rejects temperature semantically; omit it
+        # instead of relying on the provider's compatibility behavior.
+        kwargs.pop("temperature", None)
     if extra:
         kwargs["extra_body"] = extra
 

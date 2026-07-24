@@ -81,15 +81,26 @@ def test_produce_reasoning_only_when_requested():
     assert llm.produce("m", "s", "u", reason=False).reasoning is None
 
 
-def test_produce_splits_params_and_skips_anthropic_thinking():
+def test_produce_splits_params_and_forwards_openai_thinking():
     llm, completions = _adapter(lambda n, k: _Resp())
     llm.produce(
-        "m", "s", "u", params={"reasoning_effort": "high", "custom": 1, "thinking": {"x": 1}}
+        "m",
+        "s",
+        "u",
+        params={"reasoning_effort": "high", "custom": 1, "thinking": {"type": "enabled"}},
     )
     sent = completions.calls[0]
     assert sent["reasoning_effort"] == "high"  # SDK top-level
-    assert sent["extra_body"] == {"custom": 1}  # provider-specific passthrough
-    assert "thinking" not in sent and "thinking" not in sent["extra_body"]
+    assert sent["extra_body"] == {"custom": 1, "thinking": {"type": "enabled"}}
+    assert "temperature" not in sent
+
+
+def test_produce_forwards_disabled_thinking_and_keeps_temperature():
+    llm, completions = _adapter(lambda n, k: _Resp())
+    llm.produce("m", "s", "u", params={"thinking": {"type": "disabled"}})
+    sent = completions.calls[0]
+    assert sent["temperature"] == 0.4
+    assert sent["extra_body"] == {"thinking": {"type": "disabled"}}
 
 
 # -------------------------------------------------------- _create resilience
@@ -126,6 +137,15 @@ def test_create_raises_provider_error_when_nothing_droppable():
     llm, _ = _adapter(side_effect)
     with pytest.raises(ProviderError):
         llm.produce("m", "s", "u")
+
+
+def test_model_not_found_error_names_the_configured_model():
+    def side_effect(n, kwargs):
+        raise RuntimeError("model not found")
+
+    llm, _ = _adapter(side_effect)
+    with pytest.raises(ProviderError, match="configured model='deepseek-v4-flash'"):
+        llm.produce("deepseek-v4-flash", "s", "u")
 
 
 # --------------------------------------------------------------------- judge

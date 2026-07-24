@@ -1,7 +1,7 @@
 > PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machine
 s
  ⭘                                         mklang console
-  ● READY  ·  deepseek  ·  tokens 0+0  ·  session 20260724-135844-1813
+  ● READY  ·  deepseek  ·  tokens 0+0  ·  session 20260725-000320-2156
 ┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                   │
 │  Ready. Ask the agent what should happen, or type /help.                                          │
@@ -11,9 +11,11 @@ s
 ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                              ▏^p palette
 ║ Find this week's news about open-source AI models and give me a short brief with links.           ║
-  ⏸ WAITING  do_run  ·  deepseek  ·  tokens 3873+921  ·  session 20260724-135844-1813
-│  capabilities once for the session?  → type y / yes / sì / always yes  (Enter = no)               │
+  ◐ RUNNING  ·  deepseek  ·  tokens 0+0  ·  session 20260725-000320-2156
 │ ▼ Find this week's news about open-source AI models and give m                                    │
+│ Ask the agent or type / for commands                                                              │
+  ⏸ WAITING  do_run  ·  deepseek  ·  tokens 3839+621  ·  session 20260725-000320-2156
+│  capabilities once for the session?  → type y / yes / sì / always yes  (Enter = no)               │
 │ └── ▼ console_agent                                                                               │
 │     ├── ● decide ok → prepare_workspace_read                                                      │
 │     ├── ● prepare_workspace_read ok → workspace_read                                              │
@@ -22,17 +24,17 @@ s
 │     ├── ● prepare_run ok → do_run                                                                 │
 │     └── ◐ do_run  tool·balanced                                                                   │
 ║ answer here, then Enter…                                                                          ║
-║ ye                                                                                                ║
 ║ yes                                                                                               ║
-  ● READY  ·  deepseek  ·  tokens 12815+3185  ·  session 20260724-135844-1813
-│  details beyond the truncated portion were invented.                                              │
+  ● READY  ·  deepseek  ·  tokens 13392+3957  ·  session 20260725-000320-2156
+│  you: yes                                                                                         │
 │ └── ▼ ✓ console_agent  done                                                                       │
 │     ├── ▶ ● do_run ok → decide                                                                    │
 │     ├── ● decide ok → reply                                                                       │
 │     └── ● reply ok → END                                                                          │
+│  2026). The search was bound and successful.                                                      │
 ║ Now boil that down to a single headline takeaway.                                                 ║
-  ◐ RUNNING  decide  ·  deepseek  ·  tokens 12815+3185  ·  session 20260724-135844-1813
-│  you: Now boil that down to a single headline takeaway.                                           │
+  ◐ RUNNING  ·  deepseek  ·  tokens 13392+3957  ·  session 20260725-000320-2156
 │ ▼ Now boil that down to a single headline takeaway.                                               │
-│     └── ◐ decide  generative·reasoning                                                            │
-│ Ask the agent or type / for commands                                                              │
+  ● READY  ·  deepseek  ·  tokens 15748+4198  ·  session 20260725-000320-2156
+│  security and national competition.                                                               │
+║ /quit                                                                                             ║

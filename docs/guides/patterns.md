@@ -186,7 +186,7 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   explicitly — "you are branch {{index}}, take a different approach" (Tree-of-Thought,
   debate), not temperature alone.
 - **`reason: true`** yields a captured chain only on models that expose thinking
-  (Anthropic adaptive, DeepSeek `deepseek-reasoner`, o-series). On plain models the
+  (Anthropic adaptive, DeepSeek V4 with `thinking.type: enabled`, o-series). On plain models the
   model still reasons internally; the trace just won't hold the scratchpad.
 - **Per-tier `params` are applied** to each generation: `effort`/`thinking` on
   Anthropic, `reasoning_effort` on OpenAI/xAI, etc. They're best-effort — a param a

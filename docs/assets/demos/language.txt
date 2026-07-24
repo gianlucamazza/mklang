@@ -338,6 +338,38 @@
 
 
 ────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
 > PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
 vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
 
@@ -395,13 +427,13 @@ vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
 # warning: machine 'self_consistency' shadows the bundled stdlib machine
 # warning: machine 'summarize_doc' shadows the bundled stdlib machine
 # warning: machine 'triage' shadows the bundled stdlib machine
-# react · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': 'deeps
-eek-chat', 'reasoning': 'deepseek-reasoner'}
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
 DONE react · provider deepseek
 ╭─────────────────────────────────── Result ───────────────────────────────────╮
 │ 153                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-tokens 1753+97 · steps 12
+tokens 1499+303 · steps 10
 
 ────────────────────────────────────────────────────────────────────────────────
 > PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
@@ -417,13 +449,13 @@ vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
 # warning: machine 'self_consistency' shadows the bundled stdlib machine
 # warning: machine 'summarize_doc' shadows the bundled stdlib machine
 # warning: machine 'triage' shadows the bundled stdlib machine
-# react · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': 'deeps
-eek-chat', 'reasoning': 'deepseek-reasoner'}
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
 DONE react · provider deepseek
 ╭─────────────────────────────────── Result ───────────────────────────────────╮
 │ 153                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-tokens 1753+97 · steps 12
+tokens 1499+303 · steps 10
 
 ────────────────────────────────────────────────────────────────────────────────
 > PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
@@ -439,13 +471,13 @@ vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
 # warning: machine 'self_consistency' shadows the bundled stdlib machine
 # warning: machine 'summarize_doc' shadows the bundled stdlib machine
 # warning: machine 'triage' shadows the bundled stdlib machine
-# react · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': 'deeps
-eek-chat', 'reasoning': 'deepseek-reasoner'}
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
 DONE react · provider deepseek
 ╭─────────────────────────────────── Result ───────────────────────────────────╮
 │ 153                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-tokens 1753+97 · steps 12
+tokens 1499+303 · steps 10
 >
 ────────────────────────────────────────────────────────────────────────────────
 > PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --pro
@@ -461,13 +493,13 @@ vider deepseek --set question.text=Calculate_7_times_24_minus_15_books
 # warning: machine 'self_consistency' shadows the bundled stdlib machine
 # warning: machine 'summarize_doc' shadows the bundled stdlib machine
 # warning: machine 'triage' shadows the bundled stdlib machine
-# react · provider=deepseek · tiers={'fast': 'deepseek-chat', 'balanced': 'deeps
-eek-chat', 'reasoning': 'deepseek-reasoner'}
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'd
+eepseek-v4-flash', 'reasoning': 'deepseek-v4-flash'}
 DONE react · provider deepseek
 ╭─────────────────────────────────── Result ───────────────────────────────────╮
 │ 153                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-tokens 1753+97 · steps 12
+tokens 1499+303 · steps 10
 > clear
 ────────────────────────────────────────────────────────────────────────────────
 >

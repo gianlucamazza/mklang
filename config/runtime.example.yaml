@@ -5,7 +5,7 @@
 # reasoning, see SPEC.md §2.1) to concrete provider models. Swap `active` (or the
 # tier maps) and the SAME .mkl runs on a different backend with zero edits.
 #
-# Model IDs below are current as of 2026-07-16. Anthropic IDs are authoritative;
+# Model IDs below are current as of 2026-07-24. Anthropic IDs are authoritative;
 # the others are the current best-in-class per provider and are host-updatable —
 # verify against each provider's catalog before production.
 #
@@ -37,7 +37,7 @@ providers:
       reasoning: claude-opus-4-8 # strongest Opus-tier ($5/$25); swap to claude-fable-5 for the max tier
     # judge: claude-haiku-4-5 # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
-      # Latest-model features. Opus 4.8 / Sonnet 5: adaptive thinking + effort
+    # Latest-model features. Opus 4.8 / Sonnet 5: adaptive thinking + effort
       # (budget_tokens is removed on these models — do NOT use it).
       reasoning:
         thinking: adaptive
@@ -82,16 +82,24 @@ providers:
         thinking_level: high # Gemini 3 dynamic thinking control
 
   # --- DeepSeek ------------------------------------------------------------
-  # OpenAI-compatible API. Two stable aliases that track the latest weights:
-  # `deepseek-chat` (V3-line, general) and `deepseek-reasoner` (R1-line, thinking).
+  # OpenAI-compatible API. V4 uses one model family with an explicit thinking
+  # toggle; the legacy `deepseek-chat` and `deepseek-reasoner` aliases are retired.
   deepseek:
     base_url: https://api.deepseek.com
     api_key_env: DEEPSEEK_API_KEY
     tiers:
-      fast: deepseek-chat
-      balanced: deepseek-chat
-      reasoning: deepseek-reasoner
-    # judge: deepseek-chat # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
+      fast: deepseek-v4-flash
+      balanced: deepseek-v4-flash
+      reasoning: deepseek-v4-flash
+    params:
+      fast:
+        thinking: {type: disabled}
+      balanced:
+        thinking: {type: disabled}
+      reasoning:
+        thinking: {type: enabled}
+        reasoning_effort: high
+    # judge: deepseek-v4-flash # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
 
   # --- OpenRouter (meta-provider / aggregator) -----------------------------
   # One endpoint, hundreds of models across every vendor. Model ids are

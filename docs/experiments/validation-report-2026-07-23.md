@@ -89,7 +89,7 @@ Nothing below reports a magnitude that was not actually measured.
 - So the plan's core assertion — the loop "cannot distinguish valid from correct" — is
   **true by construction.**
 - **Follow-up (same day, keys available):** corpus + harness + live DeepSeek
-  `deepseek-reasoner` run (20×3) → **`blind_spot = 0.0167`**. Verdict under the fixed
+  historical `deepseek-reasoner` run (20×3; retired alias) → **`blind_spot = 0.0167`**. Verdict under the fixed
   thresholds: **do not build `test_machine`.** Recorded in
   `docs/experiments/authoring-blind-spot.md`; issue #59 closed.
 

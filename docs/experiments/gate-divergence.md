@@ -111,7 +111,7 @@ uv run python scripts/gate_divergence.py --machines all --providers deepseek,ope
 
 - **runs_done:** 24 (4 machines × 2 providers × 3 repeats), 0 skipped, 0 failed,
   `gate_errors: []`
-- **Judges:** tier-following (SPEC §2.1 default) — `deepseek-chat` and
+- **Judges:** tier-following (SPEC §2.1 default) — historical `deepseek-chat` and
   `gpt-5.4-mini` (both machines are `fast`-tier throughout)
 - **Per-machine agreement** (15/15 within-machine pairs each):
 

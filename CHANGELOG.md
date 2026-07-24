@@ -8,13 +8,25 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.7`).
+  `pyproject.toml` (currently `1.0.8`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.8] — 2026-07-24
+
+DeepSeek V4 model migration without compatibility fallbacks.
+
+### Changed
+
+- Replace retired `deepseek-chat` / `deepseek-reasoner` aliases with the
+  canonical `deepseek-v4-flash` model and explicit per-tier thinking settings.
+- Forward OpenAI-compatible `thinking` parameters through `extra_body` and
+  omit unsupported temperature on DeepSeek thinking requests.
+- Improve model-not-found diagnostics with the configured model ID.
 
 ## [1.0.7] — 2026-07-24
 

@@ -1,7 +1,7 @@
 # Authoring-loop blind_spot results
 
 **Date:** 2026-07-23
-**Provider / model:** deepseek / deepseek-reasoner
+**Provider / model:** deepseek / deepseek-reasoner (historical run; retired 2026-07-24)
 **Repeats:** 3 · **Items:** 20
 **Corpus:** `docs/experiments/authoring-corpus.yaml`
 **Harness:** `scripts/authoring_blind_spot.py` (author → static check → scripted acceptance)
@@ -70,4 +70,3 @@ Thresholds (fixed in advance, issue #59): `<0.10` close B1 / `0.10–0.25` opt-i
 
 - Issue #59 · validation report 2026-07-23 (B1/B2)
 - ADR 0028 (1.0 provisional posture — B1 no longer forces a 2.0)
-
