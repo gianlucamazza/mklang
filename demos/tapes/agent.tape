@@ -31,16 +31,16 @@ Sleep 1s
 
 Type "Find this week's news about open-source AI models and give me a short brief with links."
 Enter
-Wait+Screen@120s /Consent/
+Wait+Screen@120s /capabilities once/
 Sleep 1s
 Type "yes"
 Enter
-Wait+Screen@180s /agent:/
+Wait+Screen@180s /READY[\s\S]*console_agent[\s\S]*done/
 Sleep 3s
 
 Type "Now boil that down to a single headline takeaway."
 Enter
-Wait+Screen@180s /boil that down[\s\S]*agent:/
+Wait+Screen@180s /READY[\s\S]*boil that down/
 Sleep 4s
 
 Type "/quit"

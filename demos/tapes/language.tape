@@ -15,7 +15,7 @@ Set Padding 24
 Set Framerate 24
 Set PlaybackSpeed 1.15
 Set TypingSpeed 28ms
-Set WaitTimeout 90s
+Set WaitTimeout 180s
 
 Hide
 Type "clear"
@@ -36,8 +36,8 @@ Sleep 1s
 # Run it: gates route on natural-language conditions; the calc tool observation
 # re-enters context; the loop is bounded by budget; finalize escalates to the
 # reasoning tier.
-Type `uv run mklang run examples/react.mkl --provider deepseek --set question.text="A shelf holds 7 boxes of 24 books each; 15 books are then removed. How many books remain?"`
+Type `uv run mklang run examples/react.mkl --format text --provider deepseek --set question.text="A shelf holds 7 boxes of 24 books each; 15 books are then removed. How many books remain?"`
 Enter
-Wait+Screen@90s /DONE.*react.*provider deepseek/
+Wait+Screen@180s /DONE.*react.*provider deepseek/
 Wait+Screen@90s /Result/
 Sleep 3s

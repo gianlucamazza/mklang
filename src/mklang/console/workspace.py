@@ -125,7 +125,9 @@ class WorkspaceInspector:
         return candidate
 
     def _relative(self, path: Path) -> str:
-        return str(path.relative_to(self.root)) or "."
+        # Workspace paths are part of the JSON contract; keep `/` separators
+        # on Windows as well as POSIX so callers and tests see one portable form.
+        return path.relative_to(self.root).as_posix() or "."
 
     def _sensitive(self, path: Path) -> bool:
         return (

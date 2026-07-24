@@ -8,7 +8,7 @@
 mklang: "0.2"
 machine: react
 entry: think
-budget: 15
+budget: 24
 default_tier: balanced
 result: answer
 

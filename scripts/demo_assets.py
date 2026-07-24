@@ -50,9 +50,8 @@ REQUIRED_TEXT = {
     "agent": (
         "Ready",
         "you:",
-        "Consent",
-        "agent:",
-        "news_search",
+        "capabilities once",
+        "console_agent",
         "boil that down",
     ),
     "language": (
