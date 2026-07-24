@@ -101,9 +101,11 @@ def build_app(
             if self.always_yes:
                 return True
             # Accept common yes tokens (EN/IT). Default is no if the user hits enter.
-            reply = self.ask(
-                f"{prompt}  → type y / yes / sì / always yes  (Enter = no)"
-            ).strip().lower()
+            reply = (
+                self.ask(f"{prompt}  → type y / yes / sì / always yes  (Enter = no)")
+                .strip()
+                .lower()
+            )
             if reply in ("always yes", "always_yes", "always-yes", "sempre sì", "sempre si"):
                 self.always_yes = True
                 self.app.session.always_yes = True

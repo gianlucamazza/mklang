@@ -105,11 +105,7 @@ def test_search_preserves_published_date_and_accepts_recency_inputs():
 
 
 def test_search_bounds_accumulated_observation_fields():
-    configure_search(
-        FakeSearchBackend(
-            [{"title": "T", "url": "u" * 1000, "snippet": "s" * 2000}]
-        )
-    )
+    configure_search(FakeSearchBackend([{"title": "T", "url": "u" * 1000, "snippet": "s" * 2000}]))
     data = json.loads(search({"query": "q"}))
     assert len(data["results"][0]["url"]) == SEARCH_URL_CHARS
     assert len(data["results"][0]["snippet"]) == SEARCH_SNIPPET_CHARS
