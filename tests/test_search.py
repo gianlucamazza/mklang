@@ -6,6 +6,8 @@ from urllib.error import URLError
 
 from mklang.search import (
     FakeSearchBackend,
+    SEARCH_SNIPPET_CHARS,
+    SEARCH_URL_CHARS,
     TavilySearchBackend,
     configure_search,
     search,
@@ -100,6 +102,18 @@ def test_search_preserves_published_date_and_accepts_recency_inputs():
     data = json.loads(search({"query": "news", "max_results": 3, "days": 30, "topic": "news"}))
     assert data["error"] is None
     assert data["results"][0]["published_date"] == "2026-07-01"
+
+
+def test_search_bounds_accumulated_observation_fields():
+    configure_search(
+        FakeSearchBackend(
+            [{"title": "T", "url": "u" * 1000, "snippet": "s" * 2000}]
+        )
+    )
+    data = json.loads(search({"query": "q"}))
+    assert len(data["results"][0]["url"]) == SEARCH_URL_CHARS
+    assert len(data["results"][0]["snippet"]) == SEARCH_SNIPPET_CHARS
+    assert data["results"][0]["snippet"].endswith("…[truncated]")
 
 
 def test_tavily_payload_includes_days_and_topic():

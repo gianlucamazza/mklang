@@ -111,7 +111,8 @@ the value together. Command names are suggested while typing.
 Every conversation persists under
 `$XDG_STATE_HOME/mklang/console/sessions/<id>/` (default
 `~/.local/state/mklang/console/sessions/<id>/`):
-`state.json` (history, spend, tool consents — rewritten atomically per turn),
+`state.json` (history, spend, tool consents, and the session's `always yes`
+choice — rewritten atomically per turn),
 `transcript.jsonl` (turns + every engine event, streaming append), and
 `checkpoints/` for turns parked on budget exhaustion. `--continue` reopens the
 latest session; `--session <id>` a specific one. The canonical host layout is
@@ -143,8 +144,11 @@ Pattern references: `examples/research_web.mkl`, `examples/research_compress.mkl
 **Tool consent is not an error.** The first time a machine uses host tools
 (`search`, `calc`, …) the console pauses with a yellow prompt and asks you to
 allow it for the session. Type **`y`** / **`yes`** / **`sì`** and Enter.
-Afterwards it is remembered in the session (inspector: consented tools). Enter
-alone means **no**.
+Type **`always yes`** to approve this and future confirmation prompts in the
+session, including overwrite and budget-continuation prompts. The choice is
+persisted when the session is reopened with `--continue` or `--session`.
+Afterwards tool consent is remembered in the session (inspector: consented
+tools). Enter alone means **no**.
 
 ## Observations from `run_machine` (anti-cutoff honesty)
 
@@ -162,6 +166,14 @@ full engine trace. That observation is still honest about cutoff:
 Full events still stream to the activity tree / session transcript. The agent is
 instructed not to invent the missing tail of a truncated result, and not to
 answer live-web questions from training knowledge alone.
+
+Search observations are also bounded before they are accumulated into a
+machine's working notes: titles are capped at 300 characters, URLs at 500, and
+snippets at 800. A field shortened at that boundary ends with
+`…[truncated]`. This keeps a second search batch from displacing the first
+batch from the prompt while preserving the JSON envelope and the cutoff signal.
+For larger research loops, use the `research_compress` pattern to rewrite notes
+between searches.
 
 Time-sensitive workspace machines should declare `context.today: ""`; the host
 fills today's ISO date before the run (same convention as CLI/MCP). Wall-clock

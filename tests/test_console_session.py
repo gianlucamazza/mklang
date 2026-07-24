@@ -34,6 +34,13 @@ def test_session_roundtrip(tmp_path):
     assert [json.loads(line)["t"] for line in lines] == ["user", "agent"]
 
 
+def test_session_roundtrip_preserves_always_yes(tmp_path):
+    s = Session.create(tmp_path)
+    s.always_yes = True
+    s.save_state()
+    assert Session.load(s.dir).always_yes is True
+
+
 def test_latest_picks_newest_and_handles_empty(tmp_path):
     assert Session.latest(tmp_path / "nowhere") is None
     a = Session.create(tmp_path)

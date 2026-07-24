@@ -41,6 +41,7 @@ class Session:
     spent_in: int = 0
     spent_out: int = 0
     consented: list[str] = field(default_factory=list)
+    always_yes: bool = False
     workspace: str = ""
     brain: str = ""
 
@@ -67,6 +68,7 @@ class Session:
             spent_in=st.get("spent_in", 0),
             spent_out=st.get("spent_out", 0),
             consented=list(st.get("consented", [])),
+            always_yes=bool(st.get("always_yes", False)),
             workspace=st.get("workspace", ""),
             brain=st.get("brain", ""),
         )
@@ -95,6 +97,7 @@ class Session:
             "spent_in": self.spent_in,
             "spent_out": self.spent_out,
             "consented": sorted(self.consented),
+            "always_yes": self.always_yes,
             "workspace": self.workspace,
             "brain": self.brain,
         }

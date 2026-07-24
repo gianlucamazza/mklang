@@ -45,7 +45,7 @@ provider-native tool-calling or browser automation.
 | Host `context.today` convention + research patterns | **done**                                         |
 | Host `context.now` (wall-clock local ISO datetime)  | **done** (same inject path; not search-specific) |
 | `runtime.yaml` tools.search block                   | **done** (generalized `tools:` block, see below) |
-| Console-specific consent copy for search            | deferred (generic tool consent covers it)        |
+| Console-specific consent copy for search            | done (generic consent plus documented `always yes`) |
 | stdlib `std_research`                               | shipped (search → ground stdlib machine)         |
 
 ## The `tools:` block (shipped later, generalized)

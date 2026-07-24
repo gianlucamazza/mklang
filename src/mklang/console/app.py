@@ -77,6 +77,7 @@ def build_app(
             self.app = app
             self._reply = None
             self._event = threading.Event()
+            self.always_yes = False
 
         def emit(self, event: dict) -> None:
             if self.app.shutting_down:
@@ -97,8 +98,18 @@ def build_app(
             return self._reply or ""
 
         def confirm(self, prompt: str) -> bool:
+            if self.always_yes:
+                return True
             # Accept common yes tokens (EN/IT). Default is no if the user hits enter.
-            return self.ask(f"{prompt}  → type y / yes / sì  (Enter = no)").strip().lower() in (
+            reply = self.ask(
+                f"{prompt}  → type y / yes / sì / always yes  (Enter = no)"
+            ).strip().lower()
+            if reply in ("always yes", "always_yes", "always-yes", "sempre sì", "sempre si"):
+                self.always_yes = True
+                self.app.session.always_yes = True
+                self.app.session.save_state()
+                return True
+            return reply in (
                 "y",
                 "yes",
                 "s",
@@ -162,6 +173,7 @@ def build_app(
             self.spent_in = self.session.spent_in
             self.spent_out = self.session.spent_out
             self.tools._consented.update(self.session.consented)
+            self.bridge.always_yes = self.session.always_yes
             self.answer_mode = False
             self.running = False
             self.shutting_down = False

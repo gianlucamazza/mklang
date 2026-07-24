@@ -221,7 +221,7 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 | **`parse: list` + truncate** | Halts `parse-list-truncated`                                                    | Keep planner outputs short and well-structured                                             |
 | **Produce `{{…}}` budget**   | Long values end with `…[truncated]` (ADR 0017)                                  | Compress notes before the next loop (`research_compress.mkl`)                               |
 | **Judge CONTEXT**            | Head+tail + `…[context_truncated]…`                                             | Put critical facts in **state output**, not only deep context                              |
-| **Console observation**      | Compact JSON: `truncated`, `result_truncated`, `…[truncated]` on clipped result | Brain/user must report cuts — never invent the missing tail                                |
+| **Console observation**      | Compact JSON: `truncated`, `result_truncated`, `…[truncated]` on clipped result; accumulated search fields are bounded with the same marker | Brain/user must report cuts — never invent the missing tail; compress long research notes |
 
 Continue-stitching after length stop is **deferred** (not default).
 
@@ -312,7 +312,9 @@ emits a `note:` on machines that use escalate (advisory even under `--strict`).
 - Prefer **hooks + HITL** before irreversible tools.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
 - Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
-- Console: tool **consent** once per session; workspace confinement for authored `.mkl` files.
+- Console: tool **consent** once per session; `always yes` is an explicit operator
+  choice that applies to later confirmation prompts in that persisted session;
+  workspace confinement still applies to authored `.mkl` files.
 - MCP: **read-only to disk by design.** The server can author, validate (`check`)
   and run inline machines, but exposes **no persist/write tool** — headless hosts
   gain no general filesystem-write authority (ADR 0011/0013; the only disk write is

@@ -21,6 +21,20 @@ if TYPE_CHECKING:
 
 SearchFn = Callable[[dict], str]
 
+# Search observations are often accumulated across multiple queries and then
+# interpolated into a single model prompt. Keep each hit useful without letting
+# the second query batch consume the whole prompt-side working-memory cap.
+SEARCH_SNIPPET_CHARS = 800
+SEARCH_URL_CHARS = 500
+
+
+def _clip_observation_field(value: object, limit: int) -> str:
+    text = str(value or "")
+    marker = "…[truncated]"
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - len(marker))] + marker
+
 
 class SearchBackend(Protocol):
     def search(
@@ -251,9 +265,9 @@ def search(inp: dict) -> str:
             if not isinstance(row, dict):
                 continue
             item = {
-                "title": str(row.get("title") or "")[:300],
-                "url": str(row.get("url") or "")[:2000],
-                "snippet": str(row.get("snippet") or "")[:2000],
+                "title": _clip_observation_field(row.get("title"), 300),
+                "url": _clip_observation_field(row.get("url"), SEARCH_URL_CHARS),
+                "snippet": _clip_observation_field(row.get("snippet"), SEARCH_SNIPPET_CHARS),
             }
             pub = row.get("published_date")
             if pub:

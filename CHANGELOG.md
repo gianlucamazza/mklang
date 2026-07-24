@@ -8,13 +8,29 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.4`).
+  `pyproject.toml` (currently `1.0.5`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.5] — 2026-07-24
+
+Console confirmation and web-research context handling improvements.
+
+### Added
+
+- Console confirmation prompts accept `always yes` for the remainder of the
+  persisted session, including later tool, overwrite, and budget confirmations.
+- Documentation now describes the confirmation scope, persistence, and search
+  observation limits.
+
+### Changed
+
+- Accumulated search titles, URLs, and snippets are bounded with an explicit
+  `…[truncated]` marker so later research batches remain visible to the model.
 
 ## [1.0.4] — 2026-07-24
 
