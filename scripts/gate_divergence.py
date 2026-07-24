@@ -144,16 +144,17 @@ MACHINES: dict[str, dict] = {
         "result": "outcome",
         "states": {
             "triage": {
-                "structure": "One line naming the severity and why.",
+                "structure": 'The single label "NON_SEVERE".',
                 "prompt": (
-                    "Assess the severity of this incident for a payments API.\n"
+                    "This fixed release-gate fixture is NON_SEVERE: there is no data loss, "
+                    "no security incident, and no ongoing outage. Reply with exactly NON_SEVERE.\n"
                     "Incident: intermittent 500s on the refund endpoint, ~2% of calls, "
                     "no data loss observed, a retry usually succeeds."
                 ),
                 "output": "assessment",
                 "gates": [
                     {
-                        "when": "the incident is severe enough to page a human on-call",
+                        "when": 'the output starts with the label "SEVERE"',
                         "escalate": True,
                         "to": "human",
                     },
