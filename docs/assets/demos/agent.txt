@@ -1,44 +1,52 @@
 > uv run mklang console --provider deepseek --workspace /tmp/mklang-agent-machines
- ⭘                                         mklang console
- READY · deepseek · tokens 0+0 · session 20260723-172606-f069
+ ⭘                                     mklang console
+ READY · deepseek · tokens 0+0 · session 20260724-080536-0a1d
  Ready. Ask the agent what should happen, or type /help.
-┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-▊  Ask the agent or type / for commands                                                              ▎
-▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
- f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                              ▏^p palette
-▊  Find this week's news about open-source AI models and give me a short brief with links.           ▎
- RUNNING · deepseek · tokens 0+0 · session 20260723-172606-f069
- you: Find this week's news about open-source AI models and give me a short brief with links.
+┌───────────────────────────────────────────────────────────────────────────────────────────┐
+▊  Ask the agent or type / for commands                                                     ▎
+▊▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▎
+ f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                     ▏^p palette
+▊  ind this week's news about open-source AI models and give me a short brief with links.   ▎
+ RUNNING · deepseek · tokens 2102+878 · session 20260724-080536-0a1d
+ you: Find this week's news about open-source AI models and give me a short brief with
+ links.
+ ⏸ Consent: machine 'news_search' will call host tool(s) [search] (e.g. live web search).
+ Allow this once for the session?  → type y / yes / sì / always yes  (Enter = no)
  ▼ Find this week's news about open-source AI models and give m
  └── ▼ console_agent
-     └── ◐ decide generative·reasoning
- RUNNING · deepseek · tokens 2080+724 · session 20260723-172606-f069
- ⏸ Consent: machine 'news_search' will call host tool(s) [search] (e.g. live web search). Allow
- this once for the session?  → type y / yes / sì  (Enter = no)
      ├── ● decide ok → discover
      ├── ● discover ok → decide
      ├── ● decide ok → prepare_run
      ├── ● prepare_run ok → do_run
      └── ◐ do_run tool·balanced
-▊  answer here, then Enter…                                                                          ▎
-▊  yes                                                                                               ▎
+▊  answer here, then Enter…                                                                 ▎
+▊  yes                                                                                      ▎
  you: yes
- READY · deepseek · tokens 9831+3181 · session 20260723-172606-f069
-    Link
-  • "Kimi K3 highlights China's push for open and inclusive AI development" – CGTN coverage of
-    Moonshot AI's launch of the world's largest open-source model (2.8 trillion parameters) and
-    Chinese officials' emphasis on openness.
-                                                                                                   ▆▆
- The remaining results were truncated; if you need the full list or a deeper dive, let me know.
+ READY · deepseek · tokens 11820+4930 · session 20260724-080536-0a1d
+ you: Find this week's news about open-source AI models and give me a short brief with    ▄▄
+ agent:
  └── ▼ ✓ console_agent  done
      ├── ▶ ● do_run ok → decide
+     ├── ● prepare_run ok → do_run                                                        ▅▅
+     ├── ● do_run ok → decide
+  5 AI & Tech Brief: Exclusive | An open-source framework – The Trump administration and
+    industry discuss a capability framework for U.S. open-source models based on current
+    Chinese model capabilities.
+    → https://www.washingtonpost.com/wp-intelligence/ai-tech-brief/2026… (URL truncated in
+    source)
+                                                                                          ▄▄
+ Note: The search result was truncated; additional articles may exist beyond these five.
+▊  Now boil that down to a single headline takeaway.                                        ▎
+ RUNNING · deepseek · tokens 11820+4930 · session 20260724-080536-0a1d
+                                                                                          ▅▅
+ Note: The search result was truncated; additional articles may exist beyond these five.  ▁▁
+ ▼ Now boil that down to a single headline takeaway.
+     └── ◐ decide generative·reasoning
+ READY · deepseek · tokens 13449+5113 · session 20260724-080536-0a1d
+ you: Now boil that down to a single headline takeaway.
+ This week’s big story: Chinese open-weight AI models are forcing a U.S. policy and
+ industry pivot, with the U.S. rethinking restrictions and global leaders backing         ▃▃
+ open-source AI with security guardrails.
      ├── ● decide ok → reply
      └── ● reply ok → END
-▊  Now boil that down to a single headline takeaway.                                                 ▎
- READY · deepseek · tokens 11472+3314 · session 20260723-172606-f069
- you: Now boil that down to a single headline takeaway.
- agent:
- This week's top story: China's Moonshot AI released Kimi K3, the world's largest open-source model▅▅
- (2.8 trillion parameters), sparking U.S. regulatory debate over foreign-made open-weight AI.
- ▼ Now boil that down to a single headline takeaway.
-▊  /quit                                                                                             ▎
+▊  /quit                                                                                    ▎
