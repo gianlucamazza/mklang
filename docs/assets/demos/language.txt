@@ -13,4 +13,4 @@ at', 'reasoning': 'deepseek-reasoner'}
 DONE react · provider deepseek
 ╭────────────────────────────────────── Result ──────────────────────────────────────╮
 │ 153                                                                                │
-tokens 959+69 · steps 6
+tokens 1848+119 · steps 12
