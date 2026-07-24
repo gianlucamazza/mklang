@@ -14,7 +14,21 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- Scoped console capabilities (`machine:tool`) with conservative risk metadata,
+  redacted audit records, checkpoint metadata, and an entry-point plugin
+  allowlist via `MKLANG_ALLOWED_PLUGINS`.
+- Uniform observation fields (`status`, `retryable`, and `untrusted`) for host
+  tool boundaries, plus high-risk confirmation handling that cannot be bypassed
+  by `always yes`.
+- Console recovery and operator-state improvements: transcript replay,
+  actionable worker errors, strict `/run` assignments, and responsive inspector
+  states.
+
 ### Changed
+
+- Console, workspace, session, rendering, and checkpoint behavior are now
+  covered by deterministic regression and security tests; documentation defines
+  the host-policy boundary for prompt-injection-capable content.
 
 ## [1.0.5] — 2026-07-24
 

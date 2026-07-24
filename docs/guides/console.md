@@ -33,11 +33,20 @@ of the current turn beneath it
 (brain states under `console_agent`; Textual draws a single expand toggle ▶/▼
 per expandable row — run labels are the machine name only). Each commissioned
 run nests under the state that launched it; `call:` sub-runs by depth; fan-out
-branches as leaves.
+branches as leaves. The status strip reports provider, session token spend, and
+current phase; `READY`, `RUNNING`, `WAITING`, `STOPPING`, and `ERROR` are
+distinct operator states.
 Normal state output stays in the inspector; only exceptional/truncated previews
 expand the tree. `F2` toggles the inspector (docked at 100+ columns, full workspace
 below that), `ctrl+t` toggles activity, `ctrl+g` requests a cooperative stop after
 the current state, and `ctrl+l` clears the conversation.
+
+The shell uses semantic operator states rather than color alone: `● READY`,
+`◐ RUNNING`, `⏸ WAITING`, `■ STOPPING`, and `! ERROR`. The input border changes
+to an amber answer mode for consent, HITL, and budget questions; disabled input
+means the worker is still active. The inspector starts with explicit empty
+states, then exposes the latest context, trace, and session facts. On narrow
+terminals `F2` changes the inspector from a docked panel into the full workspace.
 
 ## Conversation rendering
 
@@ -84,6 +93,12 @@ that want project inspection should declare and use the same workspace tools in
 addition to the existing contract (`list_machines`, `describe_machine`,
 `read_machine`, `check_machine`, `write_machine`, `run_machine`, `ask_user`).
 
+Tool consent is scoped to the commissioned machine and tool (`machine:tool`),
+not only to a global tool name. Machine discovery exposes conservative risk
+metadata (`read_only`, `external_egress`, `irreversible`, `sensitivity`,
+`idempotent`); these are host policy hints and cannot be self-granted by the
+brain.
+
 ### Brain prompt assembly
 
 Generative states on the brain follow the host mapping
@@ -117,7 +132,9 @@ current run and keeps the console open. The lifecycle contract is maintained in
 [Best practices §14](best-practices.md#console-cancellation-and-shutdown-documentation-ssot).
 
 Slash commands use shell-style quoting, so `/run demo task="hello world"` keeps
-the value together. Command names are suggested while typing.
+the value together. Every `/run` argument must be `key=value`; malformed
+arguments are rejected before the worker starts. Command names are suggested
+while typing, and `/help` includes copyable examples.
 
 ## Sessions
 
@@ -128,7 +145,10 @@ Every conversation persists under
 choice — rewritten atomically per turn),
 `transcript.jsonl` (turns + every engine event, streaming append), and
 `checkpoints/` for turns parked on budget exhaustion. `--continue` reopens the
-latest session; `--session <id>` a specific one. The canonical host layout is
+latest session and replays recoverable user, agent, and slash-result records into
+the conversation pane; a torn final transcript line is ignored. Unexpected
+worker errors are shown as actionable `ERROR` state and re-enable the prompt.
+`--session <id>` reopens a specific one. The canonical host layout is
 maintained in
 [Best practices §13](best-practices.md#current-host-layout-documentation-ssot).
 
@@ -157,8 +177,10 @@ Pattern references: `examples/research_web.mkl`, `examples/research_compress.mkl
 **Tool consent is not an error.** The first time a machine uses host tools
 (`search`, `calc`, …) the console pauses with a yellow prompt and asks you to
 allow it for the session. Type **`y`** / **`yes`** / **`sì`** and Enter.
-Type **`always yes`** to approve this and future confirmation prompts in the
-session, including overwrite and budget-continuation prompts. The choice is
+Type **`always yes`** to approve this and future low-risk confirmation prompts
+in the session, including budget-continuation prompts. High-risk prompts for
+external egress, writes, irreversible actions, or unknown third-party tools are
+always shown again. The choice is
 persisted when the session is reopened with `--continue` or `--session`.
 Afterwards tool consent is remembered in the session (inspector: consented
 tools). Enter alone means **no**.

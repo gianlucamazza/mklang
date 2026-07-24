@@ -109,6 +109,25 @@ class Session:
         with (self.dir / "transcript.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
+    def records(self) -> list[dict]:
+        """Read recoverable transcript records, tolerating a torn final line."""
+        path = self.dir / "transcript.jsonl"
+        if not path.is_file():
+            return []
+        records: list[dict] = []
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            return []
+        for line in lines:
+            try:
+                value = json.loads(line)
+            except (TypeError, ValueError):
+                continue
+            if isinstance(value, dict):
+                records.append(value)
+        return records
+
 
 def history_for_brain(
     history: str,

@@ -9,7 +9,9 @@ are `ConsoleTools`, and the run tree is the `on_event` stream.
 
 from __future__ import annotations
 
+import os
 import threading
+import traceback
 from collections.abc import Callable
 from dataclasses import replace as dc_replace
 from typing import TYPE_CHECKING, Any, Protocol
@@ -116,11 +118,13 @@ def build_app(
             return self._reply or ""
 
         def confirm(self, prompt: str) -> bool:
-            if self.always_yes:
+            high_risk = prompt.startswith("[high-risk] ")
+            display_prompt = prompt.removeprefix("[high-risk] ")
+            if self.always_yes and not high_risk:
                 return True
             # Accept common yes tokens (EN/IT). Default is no if the user hits enter.
             reply = (
-                self.ask(f"{prompt}  → type y / yes / sì / always yes  (Enter = no)")
+                self.ask(f"{display_prompt}  → type y / yes / sì / always yes  (Enter = no)")
                 .strip()
                 .lower()
             )
@@ -149,15 +153,30 @@ def build_app(
     class ConsoleApp(App):
         TITLE = "mklang console"
         CSS = """
-        Screen { layout: vertical; }
-        #body { height: 1fr; }
-        #main { width: 2fr; }
-        #log { height: 1fr; padding: 0 1; scrollbar-gutter: stable; }
-        #activity { height: 11; border-top: solid $panel; padding: 0 1; }
+        Screen { layout: vertical; background: $background; }
+        Header { background: $surface; color: $text; }
+        Footer { background: $surface; color: $text-muted; }
+        #body { height: 1fr; min-height: 8; }
+        #main { width: 2fr; min-width: 32; }
+        #log { height: 1fr; padding: 1 2; scrollbar-gutter: stable; border: solid $panel; background: $surface; }
+        #activity { height: 12; min-height: 5; border: solid $panel; padding: 0 1; background: $background; }
         #activity.hidden { display: none; }
-        #status { height: 1; padding: 0 1; color: $text-muted; background: $boost; }
-        #prompt { height: 3; border-top: solid $primary; }
-        #inspector { width: 40%; border-left: solid $panel; }
+        #status { height: 2; padding: 0 2; color: $text-muted; background: $boost; content-align: left middle; }
+        #status.ready { color: $success; }
+        #status.running { color: $primary; }
+        #status.waiting { color: $warning; }
+        #status.stopping { color: $warning; }
+        #status.error { color: $error; }
+        #prompt { height: 3; border: solid $primary; padding: 0 1; background: $surface; }
+        #prompt:focus { border: double $primary; }
+        #prompt.answer-mode { border: double $warning; background: $panel; }
+        #prompt:disabled { color: $text-muted; border: solid $panel; }
+        #inspector { width: 40%; border: solid $panel; background: $surface; }
+        #inspector-tabs { height: 1fr; }
+        #inspector-tabs Tab { padding: 0 2; }
+        #inspector-tabs Tab.-active { color: $text; background: $panel; text-style: bold; }
+        #inspector-context, #inspector-trace { padding: 1 2; }
+        #inspector-session { padding: 2; overflow-y: auto; }
         """
         BINDINGS = [
             ("ctrl+c", "quit", "Quit"),
@@ -190,6 +209,7 @@ def build_app(
                     base, workspace=str(self.tools.workspace), brain=brain.name
                 )
             self.history = self.session.history
+            self.tools.audit = lambda record: self.session.append({"t": "audit", **record})
             self.spent_in = self.session.spent_in
             self.spent_out = self.session.spent_out
             self.tools._consented.update(self.session.consented)
@@ -201,6 +221,7 @@ def build_app(
             self._worker_done.set()
             self.activity_visible = True
             self.inspector_visible = False
+            self.current_phase = ""
             self.log_history: list[str] = []  # plain mirror of the log, for tests
 
         def compose(self) -> ComposeResult:
@@ -268,7 +289,8 @@ def build_app(
         async def _wait_for_worker(self) -> None:
             import asyncio
 
-            while not self._worker_done.is_set():
+            deadline = asyncio.get_running_loop().time() + 30
+            while not self._worker_done.is_set() and asyncio.get_running_loop().time() < deadline:
                 await asyncio.sleep(0.01)
 
         def _run_thread_worker(self, work: Callable[[], object]) -> None:
@@ -278,6 +300,9 @@ def build_app(
             def tracked_work():
                 try:
                     return work()
+                except Exception as exc:
+                    if not self.shutting_down:
+                        self.call_from_thread(self.finish_worker_error, exc, traceback.format_exc())
                 finally:
                     self._worker_done.set()
 
@@ -295,12 +320,68 @@ def build_app(
                 self.log_chrome(
                     f"[dim]resumed session with {len(self.history)} chars of history[/dim]"
                 )
+                self.replay_session()
             self.update_status("ready")
             self.query_one(Inspector).show_session(
                 self.session, self.spent_in, self.spent_out, self.tools._consented
             )
+            self.query_one(Inspector).show_empty()
             self.apply_responsive_layout()
             self.query_one("#prompt", Input).focus()
+
+        def replay_session(self) -> None:
+            """Restore the visible conversation from the append-only transcript."""
+            for record in self.session.records():
+                kind = record.get("t")
+                if kind == "user":
+                    self.log_plain(
+                        str(record.get("text", "")),
+                        label_markup="[b cyan]you:[/b cyan] ",
+                        mirror_label="you:",
+                    )
+                elif kind == "agent":
+                    body = str(record.get("text", ""))
+                    if record.get("status") == "done":
+                        self.log_markdown(
+                            body, label_markup="[b green]agent:[/b green]", mirror_label="agent:"
+                        )
+                    else:
+                        self.log_plain(
+                            body, label_markup="[b red]agent:[/b red] ", mirror_label="agent:"
+                        )
+                elif kind == "slash-result":
+                    self.log_fenced(
+                        str(record.get("text", "")),
+                        label_markup="[b green]result:[/b green]",
+                        mirror_label="result:",
+                        lang="json",
+                    )
+
+        def finish_worker_error(self, exc: Exception, stack: str = "") -> None:
+            """Return the UI to an actionable state after an unexpected worker error."""
+            if self.shutting_down:
+                return
+            detail = f"{type(exc).__name__}: {exc}"
+            self.session.append({"t": "worker-error", "text": detail})
+            self.log_plain(
+                detail,
+                label_markup="[b red]console error:[/b red] ",
+                mirror_label="console error:",
+            )
+            if stack and os.environ.get("MKLANG_DEBUG") == "1":
+                self.log_plain(
+                    stack,
+                    label_markup="[dim]traceback:[/dim] ",
+                    mirror_label="traceback:",
+                )
+            self.running = False
+            self.answer_mode = False
+            box = self.query_one("#prompt", Input)
+            box.disabled = False
+            box.placeholder = "Ask the agent or type / for commands"
+            box.remove_class("answer-mode")
+            self.update_status("error")
+            box.focus()
 
         def on_resize(self, _event: object) -> None:
             self.apply_responsive_layout()
@@ -376,18 +457,32 @@ def build_app(
 
         def update_status(self, state: str | None = None) -> None:
             state = state or ("running" if self.running else "ready")
-            self.query_one("#status", Static).update(
-                f"{state.upper()} · {self.tools.prov.name} · tokens {self.spent_in}+{self.spent_out} "
-                f"· session {self.session.id}"
+            status = self.query_one("#status", Static)
+            status.remove_class("ready", "running", "waiting", "stopping", "error")
+            status.add_class(state)
+            status.update(
+                log_render.status_line(
+                    state,
+                    self.tools.prov.name,
+                    self.current_phase,
+                    self.spent_in,
+                    self.spent_out,
+                    self.session.id,
+                )
             )
 
         def render_event(self, e: dict) -> None:
             self.session.append({"t": "event", **e})
+            if e["type"] == "state-start":
+                self.current_phase = str(e.get("state") or "working")
+                self.update_status("waiting" if e.get("kind") == "tool" else "running")
             if e["type"] == "state-done":
                 tokens = e.get("tokens") or {}
                 self.spent_in += tokens.get("input_tokens", 0)
                 self.spent_out += tokens.get("output_tokens", 0)
                 self.update_status()
+            if e["type"] == "run-finished":
+                self.current_phase = ""
             self.query_one(ActivityTree).feed(e)
 
         # -- human input ----------------------------------------------------
@@ -399,6 +494,7 @@ def build_app(
             box = self.query_one("#prompt", Input)
             # Consent prompts include "type y"; keep a short generic placeholder.
             box.placeholder = "answer here, then Enter…"
+            box.add_class("answer-mode")
             box.disabled = False
             box.focus()
 
@@ -409,6 +505,7 @@ def build_app(
             if self.answer_mode:
                 self.answer_mode = False
                 box.placeholder = "Ask the agent or type / for commands"
+                box.remove_class("answer-mode")
                 self.log_plain(text, label_markup="[yellow]you:[/yellow] ", mirror_label="you:")
                 box.disabled = True
                 self.bridge.deliver(text)
@@ -433,7 +530,7 @@ def build_app(
             import json as _json
 
             from ..checkpoint import load_checkpoint
-            from ..cli import _coerce
+            from .commands import parse_assignments
 
             from .commands import BY_NAME, help_text, parse_command
 
@@ -462,11 +559,15 @@ def build_app(
                     self.log_chrome("[dim]no machines[/dim]")
             elif cmd == "/run" and args:
                 target = args[0]
-                inputs = {}
-                for kv in args[1:]:
-                    if "=" in kv:
-                        k, v = kv.split("=", 1)
-                        inputs[k] = _coerce(v)
+                try:
+                    inputs = parse_assignments(args[1:])
+                except ValueError as exc:
+                    self.log_plain(
+                        str(exc),
+                        label_markup="[red]command error:[/red] ",
+                        mirror_label="command error:",
+                    )
+                    return
                 self.log_plain(
                     f"{target} {inputs or ''}".rstrip(),
                     label_markup="[b cyan]/run[/b cyan] ",
@@ -524,7 +625,7 @@ def build_app(
                 self.query_one("#prompt", Input).disabled = True
                 self._run_thread_worker(lambda: self.slash_resume(ck_doc))
             elif cmd == "/quit":
-                self.exit()
+                _ = self.run_action("quit")
             elif cmd in ("/run", "/check", "/read", "/budget"):
                 self.log_plain(
                     f"usage: {BY_NAME[cmd].usage}",
@@ -564,6 +665,7 @@ def build_app(
             self.update_status("ready")
             box = self.query_one("#prompt", Input)
             box.disabled = False
+            box.remove_class("answer-mode")
             box.focus()
 
         # -- the agent turn (worker thread) ----------------------------------
@@ -610,7 +712,7 @@ def build_app(
                 if not self.bridge.confirm(
                     f"turn budget exhausted ({machine.budget} steps) — continue with +8?"
                 ):
-                    ck = self.session.checkpoints_dir / f"turn-{datetime.now():%H%M%S}.json"
+                    ck = self.session.checkpoints_dir / f"turn-{datetime.now():%H%M%S-%f}.json"
                     save_checkpoint(
                         ck, machine.name, "<console-brain>", res.error, res.frames, None
                     )
@@ -651,6 +753,7 @@ def build_app(
             self.update_status("ready")
             box = self.query_one("#prompt", Input)
             box.disabled = False
+            box.remove_class("answer-mode")
             box.focus()
 
     return ConsoleApp()

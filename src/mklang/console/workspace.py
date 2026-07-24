@@ -7,6 +7,7 @@ its results to the host-tool JSON-string contract.
 
 from __future__ import annotations
 
+import codecs
 import os
 import re
 from collections.abc import Iterator
@@ -134,6 +135,19 @@ class WorkspaceInspector:
 
     def _visible_file(self, path: Path) -> bool:
         return not path.name.startswith(".") and not self._sensitive(path)
+
+    @staticmethod
+    def _decode_prefix(data: bytes) -> tuple[str, bool]:
+        """Decode a bounded UTF-8 prefix without misclassifying a split codepoint."""
+        try:
+            return data.decode("utf-8"), False
+        except UnicodeDecodeError as exc:
+            last = data[-1] if data else 0
+            incomplete_tail = 0x80 <= last <= 0xBF or 0xC2 <= last <= 0xF4
+            if exc.end != len(data) or not incomplete_tail:
+                raise
+            decoder = codecs.getincrementaldecoder("utf-8")()
+            return decoder.decode(data[: exc.start], final=False), True
 
     def _iter_files(self, root: Path, max_depth: int) -> Iterator[Path]:
         if not root.is_dir():
@@ -275,7 +289,7 @@ class WorkspaceInspector:
         try:
             size = path.stat().st_size
             data = path.read_bytes()[:limit]
-            text = data.decode("utf-8")
+            text, split_codepoint = self._decode_prefix(data)
         except UnicodeDecodeError:
             return self._error(
                 "read_workspace_file", relative, "binary or non-UTF-8 file skipped", content=""
@@ -287,7 +301,7 @@ class WorkspaceInspector:
             "path": relative,
             "content": text,
             "bytes": size,
-            "truncated": size > limit,
+            "truncated": size > limit or split_codepoint,
             "skipped_sensitive": False,
             "error": None,
         }
@@ -325,9 +339,13 @@ class WorkspaceInspector:
             files_scanned += 1
             try:
                 remaining = self.MAX_SEARCH_BYTES - bytes_scanned
-                data = path.read_bytes()[: min(self.MAX_READ_BYTES, remaining)]
+                file_size = path.stat().st_size
+                read_limit = min(self.MAX_READ_BYTES, remaining)
+                data = path.read_bytes()[:read_limit]
                 bytes_scanned += len(data)
-                text = data.decode("utf-8")
+                text, split_codepoint = self._decode_prefix(data)
+                if file_size > len(data) or split_codepoint:
+                    truncated = True
             except (OSError, UnicodeDecodeError):
                 continue
             for line_no, line in enumerate(text.splitlines(), 1):

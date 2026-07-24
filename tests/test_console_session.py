@@ -32,6 +32,15 @@ def test_session_roundtrip(tmp_path):
     assert loaded.consented == ["calc"]
     lines = (s.dir / "transcript.jsonl").read_text().strip().splitlines()
     assert [json.loads(line)["t"] for line in lines] == ["user", "agent"]
+    assert [record["t"] for record in loaded.records()] == ["user", "agent"]
+
+
+def test_session_records_ignore_torn_final_line(tmp_path):
+    s = Session.create(tmp_path)
+    s.append({"t": "user", "text": "hello"})
+    with (s.dir / "transcript.jsonl").open("a", encoding="utf-8") as stream:
+        stream.write('{"t": "agent"')
+    assert s.records() == [{"t": "user", "text": "hello"}]
 
 
 def test_session_roundtrip_preserves_always_yes(tmp_path):
@@ -225,9 +234,10 @@ def test_continue_restores_history_and_spend(tmp_path):
         )
         async with app.run_test() as pilot:
             await pilot.pause(0.1)
-            return app.session.id, app.history, app.spent_in, app.spent_out
+            return app.session.id, app.history, app.spent_in, app.spent_out, app.log_history
 
-    sid2, history, rin, rout = asyncio.run(second())
+    sid2, history, rin, rout, log_history = asyncio.run(second())
     assert sid2 == sid
     assert "user: hello" in history and "agent: done!" in history
     assert (rin, rout) == (9, 4)
+    assert "you: hello" in log_history and "agent: done!" in log_history

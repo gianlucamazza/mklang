@@ -37,8 +37,24 @@ def parse_command(text: str) -> tuple[str, list[str]]:
     return parts[0].lower(), parts[1:]
 
 
+def parse_assignments(args: list[str]) -> dict[str, object]:
+    """Parse slash-command ``key=value`` arguments without dropping input."""
+    from ..cli import _coerce
+
+    values: dict[str, object] = {}
+    for arg in args:
+        if "=" not in arg:
+            raise ValueError(f"expected key=value, got {arg!r}")
+        key, value = arg.split("=", 1)
+        if not key.strip():
+            raise ValueError("assignment key cannot be empty")
+        values[key.strip()] = _coerce(value)
+    return values
+
+
 def help_text() -> str:
     width = max(len(command.usage) for command in COMMANDS)
     rows = [f"{command.usage:<{width}}  {command.description}" for command in COMMANDS]
+    rows.append('Examples: /run std_cot task="2 + 2" · /check demo · /resume 0')
     rows.append("F2 inspector · Ctrl+T activity · Ctrl+G stop · Ctrl+L clear")
     return "\n".join(rows)

@@ -75,6 +75,11 @@ def load_entry_point_machines(group: str = ENTRY_POINT_GROUP) -> dict[str, Machi
         return reg
     for ep in selected:
         try:
+            from .plugin_policy import allowed_plugin
+
+            if not allowed_plugin(ep.name):
+                _log.warning("machine plugin %r blocked by MKLANG_ALLOWED_PLUGINS", ep.name)
+                continue
             obj = ep.load()
             if callable(obj):
                 obj = obj()

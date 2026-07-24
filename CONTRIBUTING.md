@@ -48,6 +48,13 @@ my_vendor = "mypkg.providers:factory"  # (ProviderConfig) -> LLM
 - Providers: factory `(ProviderConfig) -> LLM`; unknown names fall back to the
   OpenAI-compatible adapter.
 
+Entry-point plugins are host code and should be explicitly allowlisted in
+production with `MKLANG_ALLOWED_PLUGINS=name1,name2`. An empty or unset value
+keeps the development default of loading discovered plugins; a configured list
+blocks every other plugin before it can register tools, hooks, or providers.
+Tests for plugin policy and capability metadata belong in `tests/` and must not
+depend on external credentials.
+
 The CLI loads `load_tool_registry()` / `load_hook_registry()` / the provider
 registry (builtins + entry points). Library users may still pass explicit
 `tools=` / `hooks=` to `run()`.

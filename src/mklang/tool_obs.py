@@ -23,5 +23,8 @@ def tool_obs(
     payload fields (e.g. ``results``, ``facts``, ``sent``).
     """
     body: dict[str, Any] = {"tool": tool, "stub": bool(stub), "error": error}
+    body.setdefault("status", "error" if error else "ok")
+    body.setdefault("retryable", False)
+    body.setdefault("untrusted", True)
     body.update(payload)
     return json.dumps(body, ensure_ascii=False)

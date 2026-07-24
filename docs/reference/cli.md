@@ -14,7 +14,7 @@ config discovery in [Installation](../guides/install.md).
 | [`machines`](#machines) | list commissionable machines (stdlib, plugins) as JSON                 |
 | [`init`](#init)         | scaffold project or user config without overwriting files              |
 | [`doctor`](#doctor)     | diagnose the resolved setup: config layer, env, keys, machine roots    |
-| [`console`](#console)   | agent-first console TUI (needs the `[console]` extra)                  |
+| [`console`](#console)   | agent-first console TUI (bundled in the core install)                  |
 
 ## Global conventions
 

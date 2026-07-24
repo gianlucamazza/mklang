@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from rich.syntax import Syntax
 from rich.table import Table
+from rich.text import Text
 from textual.containers import Vertical
 from textual.widgets import RichLog, Static, TabbedContent, TabPane, Tree
 
@@ -166,6 +167,15 @@ class Inspector(Vertical):
             with TabPane("Session", id="tab-session"):
                 yield Static("", id="inspector-session")
 
+    def show_empty(self) -> None:
+        """Keep the inspector informative before the first run."""
+        self.query_one("#inspector-context", RichLog).write(
+            Text("No run context yet. Submit a request to inspect the blackboard.", style="dim")
+        )
+        self.query_one("#inspector-trace", RichLog).write(
+            Text("No trace yet. Live state transitions will appear here after a run.", style="dim")
+        )
+
     def show_result(self, res: RunResult) -> None:
         ctx_log = self.query_one("#inspector-context", RichLog)
         ctx_log.clear()
@@ -173,7 +183,13 @@ class Inspector(Vertical):
         ctx_log.write(Syntax(payload, "json", word_wrap=True, background_color="default"))
         trace_log = self.query_one("#inspector-trace", RichLog)
         trace_log.clear()
-        table = Table(show_header=True, header_style="bold", expand=True)
+        table = Table(
+            show_header=True,
+            header_style="bold cyan",
+            expand=True,
+            box=None,
+            padding=(0, 1),
+        )
         table.add_column("#", width=4)
         table.add_column("State")
         table.add_column("Policy")
@@ -190,10 +206,14 @@ class Inspector(Vertical):
     def show_session(
         self, session: "ConsoleSession", spent_in: int, spent_out: int, consented: set
     ) -> None:
-        self.query_one("#inspector-session", Static).update(
-            f"session: {session.id}\n"
-            f"dir: {session.dir}\n"
-            f"workspace: {session.workspace}\n"
-            f"tokens: {spent_in}+{spent_out}\n"
-            f"consented tools: {', '.join(sorted(consented)) or '—'}"
-        )
+        info = Text()
+        for label, value in (
+            ("SESSION", session.id),
+            ("DIRECTORY", session.dir),
+            ("WORKSPACE", session.workspace),
+            ("TOKENS", f"{spent_in}+{spent_out}"),
+            ("CONSENTED TOOLS", ", ".join(sorted(consented)) or "—"),
+        ):
+            info.append(f"{label}\n", style="bold cyan")
+            info.append(f"{value}\n\n")
+        self.query_one("#inspector-session", Static).update(info)

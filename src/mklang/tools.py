@@ -158,6 +158,11 @@ def load_entry_point_tools(group: str = ENTRY_POINT_GROUP) -> dict[str, ToolFn]:
         return reg
     for ep in selected:
         try:
+            from .plugin_policy import allowed_plugin
+
+            if not allowed_plugin(ep.name):
+                _log.warning("tool plugin %r blocked by MKLANG_ALLOWED_PLUGINS", ep.name)
+                continue
             obj = ep.load()
             if not callable(obj):
                 raise TypeError(f"{ep.name} is not callable")

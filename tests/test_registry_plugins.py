@@ -54,6 +54,12 @@ def test_entry_point_machine_document_and_factory(monkeypatch):
     assert reg["plugged"].entry == "a"
 
 
+def test_entry_point_machine_can_be_blocked_by_allowlist(monkeypatch):
+    _with_eps(monkeypatch, [_EP("blocked", MACHINE_DOC)])
+    monkeypatch.setenv("MKLANG_ALLOWED_PLUGINS", "other")
+    assert load_entry_point_machines() == {}
+
+
 def test_broken_entry_point_machine_is_skipped_with_warning(monkeypatch, caplog):
     _with_eps(
         monkeypatch,

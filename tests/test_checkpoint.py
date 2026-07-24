@@ -293,9 +293,18 @@ def test_envelope_save_load_and_hash(tmp_path):
             "trace": [],
         }
     ]
-    save_checkpoint(ck_path, "demo", mk, "cost-exhausted", frames, 100)
+    save_checkpoint(
+        ck_path,
+        "demo",
+        mk,
+        "cost-exhausted",
+        frames,
+        100,
+        metadata={"capability": "demo:read_file", "request_id": "req-1"},
+    )
     ck = load_checkpoint(ck_path)
     assert ck["machine"] == "demo" and ck["frames"] == frames and ck["cost_budget"] == 100
+    assert ck["metadata"]["capability"] == "demo:read_file"
     assert verify_hash(ck, mk)
     mk.write_text(MK + "# touched\n", encoding="utf-8")
     assert not verify_hash(ck, mk)

@@ -6,6 +6,7 @@ import re
 import pytest
 
 from mklang.console.tools import ConsoleTools
+from mklang.console.commands import parse_assignments
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 
@@ -114,6 +115,14 @@ def test_tool_registry_names(tools):
     }
 
 
+def test_slash_assignments_reject_malformed_arguments():
+    assert parse_assignments(["task=hello", "count=2"]) == {"task": "hello", "count": 2}
+    with pytest.raises(ValueError, match="expected key=value"):
+        parse_assignments(["task"])
+    with pytest.raises(ValueError, match="key cannot be empty"):
+        parse_assignments(["=value"])
+
+
 def test_close_is_optional_and_idempotent(tmp_path):
     class ClosableLLM(MockLLM):
         def __init__(self):
@@ -180,6 +189,8 @@ def test_write_machine_derives_name_from_source(tools):
     assert "not valid YAML" in bad_yaml["error"]
     nameless = json.loads(tools.write_machine({"source": "entry: a\nbudget: 3"}))
     assert "no `machine:` name" in nameless["error"]
+    hidden = json.loads(tools.write_machine({"name": ".hidden", "source": HITL_SRC}))
+    assert "escapes" in hidden["error"]
 
 
 def test_check_machine_reports_errors(tools):
@@ -220,6 +231,16 @@ def test_run_machine_tool_consent(tools):
     n = len(tools.bridge.confirms)
     tools.run_machine({"target": "tooly", "inputs": "{}"})
     assert len(tools.bridge.confirms) == n
+
+
+def test_run_machine_consent_is_scoped_to_machine_and_audit_is_redacted(tools):
+    (tools.workspace / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
+    records = []
+    tools.audit = records.append
+    tools.run_machine({"target": "tooly", "inputs": "{}"})
+    assert "tooly:calc" in tools._consented
+    assert any(row["event"] == "capability-granted" for row in records)
+    assert all("api" not in json.dumps(row).lower() for row in records)
 
 
 WRITY_SRC = """\
@@ -273,6 +294,14 @@ def test_run_machine_bad_inputs_and_unknown_target(tools):
         in json.loads(tools.run_machine({"target": "std_cot", "inputs": "{oops"}))["error"]
     )
     assert "unknown machine" in json.loads(tools.run_machine({"target": "nope"}))["error"]
+    assert (
+        "cost_budget must be an integer"
+        in json.loads(tools.run_machine({"target": "std_cot", "cost_budget": "oops"}))["error"]
+    )
+    assert (
+        "cost_budget must be positive"
+        in json.loads(tools.run_machine({"target": "std_cot", "cost_budget": 0}))["error"]
+    )
 
 
 def test_ask_user_passthrough(tools):
@@ -322,6 +351,15 @@ def test_workspace_tools_report_binary_and_missing_files(tools):
     assert "binary" in binary["error"]
     missing = json.loads(tools.read_workspace_file({"request": '{"path": "missing.txt"}'}))
     assert "unavailable" in missing["error"]
+
+
+def test_workspace_read_preserves_complete_utf8_prefix(tools):
+    (tools.workspace / "unicode.txt").write_text("caffè", encoding="utf-8")
+    read = json.loads(
+        tools.read_workspace_file({"request": '{"path": "unicode.txt", "max_bytes": 5}'})
+    )
+    assert read["content"] == "caff"
+    assert read["truncated"] is True
 
 
 def test_workspace_inspector_skips_sensitive_files(tools):

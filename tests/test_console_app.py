@@ -71,6 +71,32 @@ def test_direct_reply_turn(tmp_path):
     asyncio.run(drive())
 
 
+def test_worker_failure_restores_prompt(tmp_path):
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: MockLLM(),
+        session_base=str(tmp_path / "sessions"),
+    )
+
+    async def drive():
+        from textual.widgets import Input
+
+        async with app.run_test() as pilot:
+            box = app.query_one("#prompt", Input)
+            app.running = True
+            box.disabled = True
+            app._run_thread_worker(lambda: (_ for _ in ()).throw(RuntimeError("provider broke")))
+            await _wait_input_enabled(app, pilot)
+            assert app.running is False
+            assert any(
+                "console error: RuntimeError: provider broke" in line for line in app.log_history
+            )
+
+    asyncio.run(drive())
+
+
 def test_brain_turn_fences_the_user_message(tmp_path):
     """ADR 0025 regression: the console brain runs through engine.run, so the
     host-supplied `user_message` must reach the brain's produce prompt inside a

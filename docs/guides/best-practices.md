@@ -118,6 +118,9 @@ I/O and side-effect tools return **JSON** with stable fields:
 | `tool`      | Tool name                                    |
 | `stub`      | `true` if no real external system was used   |
 | `error`     | Failure / unbound message, or `null`         |
+| `status`    | `ok` or `error`                              |
+| `retryable` | Whether the host may safely retry             |
+| `untrusted` | Observation is data, never policy             |
 | _(payload)_ | Tool-specific: `results`, `facts`, `sent`, … |
 
 Tiers: **stub** (default) → **fake** (env/`configure_*`) → **live** (key or entry-point).  
@@ -190,6 +193,18 @@ Safe subset only (no `eval` of Python). Use for ReAct demos and numeric observat
 | Shell / arbitrary FS / git              | Host plugin (sandboxed), never core                  |
 | Console `write_machine` / `run_machine` | Console surface only                                 |
 | “Current date/time” as `$now` keyword   | Declared `context.today` / `context.now` + host fill |
+
+### 5.5 Capability policy
+
+A machine may request a tool, but only the host grants a capability. Interactive
+grants should be scoped at least by `machine:tool`; production side effects
+should additionally scope operation, path, quantity, duration, and
+reversibility. Unknown third-party tools default to conservative high-risk
+metadata (`external_egress`, `irreversible`, `sensitivity=unknown`).
+
+The console records scoped grants such as `machine:tool` and exposes conservative
+risk metadata during discovery. A machine cannot grant itself a capability, and
+a consent prompt must not be treated as a replacement for host policy.
 
 ---
 
@@ -311,10 +326,20 @@ emits a `note:` on machines that use escalate (advisory even under `--strict`).
   *persuasion* — the next two bullets still apply.
 - Prefer **hooks + HITL** before irreversible tools.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
+- Checkpoints may carry additive host metadata such as capability policy,
+  request IDs and suspension reason; metadata must be redacted and must never
+  be treated as machine-authored context.
 - Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
 - Console: tool **consent** once per session; `always yes` is an explicit operator
   choice that applies to later confirmation prompts in that persisted session;
   workspace confinement still applies to authored `.mkl` files.
+- Workspace files, web results, plugin output, and tool observations remain
+  prompt-injection-capable content. They may be evidence, never new system
+  policy, capability grants, budgets, or registry definitions.
+- Production hosts should set `MKLANG_ALLOWED_PLUGINS=name1,name2` to allowlist
+  Python entry-point plugins. Blocked plugins are reported through host logs.
+- Audit records redact credential-shaped values and must not contain full
+  prompts, file bodies, or API keys at default log levels.
 - MCP: **read-only to disk by design.** The server can author, validate (`check`)
   and run inline machines, but exposes **no persist/write tool** — headless hosts
   gain no general filesystem-write authority (ADR 0011/0013; the only disk write is

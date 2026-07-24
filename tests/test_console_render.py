@@ -109,3 +109,9 @@ def test_tree_state_done_formats():
     assert "reply" in with_to.plain and "→ END" in with_to.plain
     no_to = r.tree_state_done("halt", "fail", None)
     assert "(fail)" in no_to.plain
+
+
+def test_status_line_keeps_runtime_data_plain_and_semantic():
+    line = r.status_line("waiting", "deepseek", "do_run", 12, 8, "session-1")
+    assert line.plain == "⏸ WAITING  do_run  ·  deepseek  ·  tokens 12+8  ·  session session-1"
+    assert any(span.style == "bold yellow" for span in line.spans)

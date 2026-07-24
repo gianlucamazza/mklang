@@ -99,6 +99,7 @@ def save_checkpoint(
     cost_budget: int | None,
     hitl: bool = False,
     machine_source: str | None = None,
+    metadata: dict | None = None,
 ) -> None:
     """`machine_source` carries the inline `.mkl` text for machines that have no
     file (MCP inline commissions), so a cross-process resume can rebuild them."""
@@ -118,6 +119,10 @@ def save_checkpoint(
     }
     if machine_source is not None:
         envelope["machine_source"] = machine_source
+    if metadata:
+        # Metadata is host policy/provenance only; callers must redact secrets
+        # before passing it here. Keep it additive for old checkpoint readers.
+        envelope["metadata"] = dict(metadata)
     _write_private(path, json.dumps(envelope, ensure_ascii=False, indent=2))
 
 

@@ -15,6 +15,14 @@ from rich.text import Text
 CODE_THEME = "monokai"
 PREVIEW_MAX = 200  # align with engine._preview default for event output
 
+STATUS_GLYPHS = {
+    "ready": "●",
+    "running": "◐",
+    "waiting": "⏸",
+    "stopping": "■",
+    "error": "!",
+}
+
 
 def chrome(markup: str) -> Text:
     """Internal-only Rich markup — never interpolate untrusted strings."""
@@ -89,16 +97,33 @@ def tree_run_finished(machine: str, status: str, error: str | None = None) -> Te
 
 
 def tree_state_start(state: str, kind: str, tier: str) -> Text:
-    line = Text(f"◐ {state or ''} ")
-    line.append(f"{kind or ''}·{tier or ''}", style="dim")
+    kind_style = {
+        "tool": "yellow",
+        "generative": "cyan",
+        "gate": "magenta",
+        "accumulate": "blue",
+    }.get(kind, "dim")
+    line = Text("◐ ", style="yellow")
+    line.append(state or "", style="bold")
+    if kind or tier:
+        line.append("  ")
+        line.append(f"{kind or 'state'}·{tier or 'default'}", style=kind_style)
     return line
 
 
 def tree_state_done(state: str, policy: str | None, to: str | None) -> Text:
     """Match prior UX: ``● state {dim policy} → to`` or ``● state {dim policy} (policy)``."""
-    line = Text(f"● {state or ''} ")
+    policy_style = {
+        "ok": "green",
+        "fail": "red",
+        "halt": "red",
+        "suspend": "yellow",
+    }.get(str(policy), "dim")
+    line = Text("● ", style=policy_style)
+    line.append(state or "", style="bold")
+    line.append(" ")
     if policy is not None:
-        line.append(str(policy), style="dim")
+        line.append(str(policy), style=policy_style)
         line.append(" ")
     if to:
         line.append(f"→ {to}")
@@ -116,4 +141,28 @@ def tree_preview(preview: str, limit: int = PREVIEW_MAX) -> Text:
 
 
 def tree_branch(index: object) -> Text:
-    return Text(f"· branch {index}")
+    return Text(f"· branch {index}", style="dim")
+
+
+def status_line(
+    state: str, provider: str, phase: str, spent_in: int, spent_out: int, session: str
+) -> Text:
+    """Render the operator HUD without treating runtime data as markup."""
+    normalized = state.lower()
+    glyph = STATUS_GLYPHS.get(normalized, "•")
+    style = {
+        "ready": "green",
+        "running": "cyan",
+        "waiting": "yellow",
+        "stopping": "yellow",
+        "error": "red",
+    }.get(normalized, "dim")
+    line = Text()
+    line.append(f"{glyph} {normalized.upper()}", style=f"bold {style}")
+    if phase:
+        line.append(f"  {phase}", style="bold")
+    line.append(
+        f"  ·  {provider}  ·  tokens {spent_in}+{spent_out}  ·  session {session}",
+        style="dim",
+    )
+    return line
