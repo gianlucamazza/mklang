@@ -30,6 +30,7 @@ Wait+Screen@30s /Ready/
 Sleep 1s
 Type "/budget 100000"
 Enter
+Wait+Screen@30s /default cost budget/
 Sleep 1s
 
 Type "Find this week's news about open-source AI models and give me a short brief with links."
