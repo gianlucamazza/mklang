@@ -91,13 +91,15 @@ def echo_llm(prov=None, judge=0):
 
 @pytest.fixture
 def tools(tmp_path):
-    return ConsoleTools(
+    instance = ConsoleTools(
         config=CONFIG,
         provider=None,
         bridge=FakeBridge(),
         workspace=tmp_path / "ws",
         build_llm=echo_llm,
     )
+    instance.machine_root.mkdir(parents=True, exist_ok=True)
+    return instance
 
 
 def test_tool_registry_names(tools):
@@ -156,7 +158,8 @@ def test_close_is_optional_and_idempotent(tmp_path):
 
 
 def test_list_and_describe_include_workspace_machines(tools):
-    (tools.workspace / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")
+    (tools.machine_root / "approval.mkl").parent.mkdir(parents=True, exist_ok=True)
+    (tools.machine_root / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")
     listed = json.loads(tools.list_machines({}))
     names = {m["name"] for m in listed["machines"]}
     assert "std_cot" in names and "approval" in names
@@ -164,6 +167,16 @@ def test_list_and_describe_include_workspace_machines(tools):
     assert desc["result"] == "final"
     unknown = json.loads(tools.describe_machine({"name": "ghost"}))
     assert "unknown machine" in unknown["error"]
+
+
+def test_canonical_machine_directory_wins_over_legacy_root(tools):
+    (tools.workspace / "approval.mkl").write_text("# legacy\n" + HITL_SRC, encoding="utf-8")
+    (tools.machine_root / "approval.mkl").write_text("# canonical\n" + HITL_SRC, encoding="utf-8")
+
+    listed = json.loads(tools.list_machines({}))
+    assert sum(row["name"] == "approval" for row in listed["machines"]) == 1
+    source = tools.read_machine({"name": "approval"})
+    assert source.startswith("# canonical")
 
 
 def test_write_machine_is_workspace_confined(tools):
@@ -174,17 +187,18 @@ def test_write_machine_is_workspace_confined(tools):
     ok = json.loads(tools.write_machine({"name": "approval", "source": HITL_SRC}))
     assert ok["written"] == "approval.mkl"
     assert ok["check"]["ok"] is True
+    assert (tools.machine_root / "approval.mkl").is_file()
 
     tools.bridge.yes = False  # decline overwrite
     declined = json.loads(tools.write_machine({"name": "approval", "source": "machine: x"}))
     assert "declined" in declined["error"]
-    assert "approval" in (tools.workspace / "approval.mkl").read_text()
+    assert "approval" in (tools.machine_root / "approval.mkl").read_text()
 
 
 def test_write_machine_derives_name_from_source(tools):
     ok = json.loads(tools.write_machine({"source": HITL_SRC}))
     assert ok["written"] == "approval.mkl"
-    assert (tools.workspace / "approval.mkl").is_file()
+    assert (tools.machine_root / "approval.mkl").is_file()
 
     bad_yaml = json.loads(tools.write_machine({"source": "states: [unclosed"}))
     assert "not valid YAML" in bad_yaml["error"]
@@ -195,7 +209,7 @@ def test_write_machine_derives_name_from_source(tools):
 
 
 def test_write_machine_validates_before_atomic_replace(tools):
-    target = tools.workspace / "approval.mkl"
+    target = tools.machine_root / "approval.mkl"
     target.write_text(HITL_SRC, encoding="utf-8")
     bad = json.loads(tools.write_machine({"name": "approval", "source": "machine: broken"}))
     assert bad["error"] == "machine validation failed; file was not changed"
@@ -250,7 +264,7 @@ def test_run_machine_by_name_and_events_flow(tools):
 
 
 def test_run_machine_hitl_brokered_to_bridge(tools):
-    (tools.workspace / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")
+    (tools.machine_root / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "approval", "inputs": '{"request": "refund"}'}))
     assert out["status"] == "done"
     assert "approved" in out["result"]
@@ -259,7 +273,7 @@ def test_run_machine_hitl_brokered_to_bridge(tools):
 
 
 def test_run_machine_tool_consent(tools):
-    (tools.workspace / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
+    (tools.machine_root / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "tooly", "inputs": "{}"}))
     assert out["status"] == "done"
     assert any("calc" in c for c in tools.bridge.confirms)
@@ -270,7 +284,7 @@ def test_run_machine_tool_consent(tools):
 
 
 def test_run_machine_consent_is_scoped_to_machine_and_audit_is_redacted(tools):
-    (tools.workspace / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
+    (tools.machine_root / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
     records = []
     tools.audit = records.append
     tools.run_machine({"target": "tooly", "inputs": "{}"})
@@ -303,7 +317,7 @@ def test_run_machine_consent_grants_fs_writes(tools, tmp_path):
     fs.configure_fs(fs.LocalFSBackend(tmp_path / "data"))
     (tmp_path / "data").mkdir()
     assert fs.writes_allowed() is False
-    (tools.workspace / "writy.mkl").write_text(WRITY_SRC, encoding="utf-8")
+    (tools.machine_root / "writy.mkl").write_text(WRITY_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "writy", "inputs": "{}"}))
     assert out["status"] == "done"
     assert any("write_file" in c for c in tools.bridge.confirms)
@@ -319,7 +333,8 @@ def test_run_machine_tool_consent_declined(tmp_path):
         workspace=tmp_path / "ws",
         build_llm=echo_llm,
     )
-    (tools.workspace / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
+    tools.machine_root.mkdir(parents=True, exist_ok=True)
+    (tools.machine_root / "tooly.mkl").write_text(TOOLY_SRC, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "tooly", "inputs": "{}"}))
     assert "declined" in out["error"]
 
@@ -367,7 +382,7 @@ def test_workspace_listing_reading_and_search_are_confined(tools):
 
     listed = json.loads(tools.list_workspace({"request": '{"path": ""}'}))
     assert listed["workspace_root"] == str(tools.workspace)
-    assert {row["path"] for row in listed["entries"]} == {"README.md", "src"}
+    assert {row["path"] for row in listed["entries"]} == {"README.md", "machines", "src"}
     deep = json.loads(tools.list_workspace({"request": '{"path": "", "depth": 2}'}))
     assert "src/main.py" in {row["path"] for row in deep["entries"]}
     read = json.loads(
@@ -406,7 +421,7 @@ def test_workspace_inspector_skips_sensitive_files(tools):
     (tools.workspace / "credentials.json").write_text('{"token": "secret"}', encoding="utf-8")
     (tools.workspace / "private.pem").write_text("PRIVATE KEY", encoding="utf-8")
     listed = json.loads(tools.list_workspace({}))
-    assert {row["path"] for row in listed["entries"]} == set()
+    assert {row["path"] for row in listed["entries"]} == {"machines"}
     denied = json.loads(tools.read_workspace_file({"path": "credentials.json"}))
     assert denied["skipped_sensitive"] is True
     assert "secret" not in json.dumps(denied)
@@ -440,7 +455,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "longy.mkl").write_text(long_src, encoding="utf-8")
+    (tools.machine_root / "longy.mkl").write_text(long_src, encoding="utf-8")
 
     def truncating_llm(prov=None):
         return MockLLM(
@@ -479,7 +494,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "big.mkl").write_text(long_src, encoding="utf-8")
+    (tools.machine_root / "big.mkl").write_text(long_src, encoding="utf-8")
     blob = "Z" * 2500
 
     def long_llm(prov=None):
@@ -515,7 +530,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "dated.mkl").write_text(src, encoding="utf-8")
+    (tools.machine_root / "dated.mkl").write_text(src, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "dated", "inputs": "{}"}))
     assert out["status"] == "done"
     # echo_llm returns the user prompt; the injected date is host-supplied,
@@ -542,7 +557,7 @@ states:
         then: ok
         to: END
 """
-    (tools.workspace / "clocked.mkl").write_text(src, encoding="utf-8")
+    (tools.machine_root / "clocked.mkl").write_text(src, encoding="utf-8")
     out = json.loads(tools.run_machine({"target": "clocked", "inputs": "{}"}))
     assert out["status"] == "done"
     assert re.search(r"now is <data-\w+>\n20", out["result"])

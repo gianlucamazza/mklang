@@ -21,7 +21,7 @@ from .errors import ProviderConfigError
 from .llm.base import LLM
 from .loader import check_tiers, load_machine, semantic_check, validate_dict
 from .model import Machine, parse_machine
-from .registry import base_registry, load_registry
+from .registry import base_registry, load_path_registry
 
 
 class PrepareError(Exception):
@@ -166,7 +166,7 @@ def check_machine(
         else:
             # Callers pass exactly one of source/path.
             assert path is not None
-            registry = {**base, **load_registry(Path(path).parent, validate=False)}
+            registry = {**base, **load_path_registry(path, validate=False)}
             machine = load_machine(path)
             registry[machine.name] = machine
     except PrepareError as e:
@@ -190,9 +190,12 @@ def prepare_path(
     strict: bool = False,
     build_llm: BuildLLM | None = None,
 ) -> Prepared:
-    """Load a machine from disk with sibling-`.mkl` registry discovery, layered on
-    the bundled stdlib. `machine_path` may also be a bare registry name (e.g.
-    `std_cot`) when no such file exists — run-by-name, no sibling discovery."""
+    """Load a machine from disk with project-aware registry discovery.
+
+    Paths in a recognized project see root-level and ``machines/`` files;
+    unrelated paths see only their siblings. A bare registry name (e.g.
+    ``std_cot``) uses the global registry without path discovery.
+    """
     prov, llm, warnings = _provider(config, provider, build_llm)
     base = base_registry()
     if not Path(machine_path).exists():
@@ -206,7 +209,7 @@ def prepare_path(
             warnings,
             kind="load",
         )
-    siblings = load_registry(Path(machine_path).parent, validate=False)
+    siblings = load_path_registry(machine_path, validate=False)
     for name in sorted(set(siblings) & set(base)):
         warnings.append(f"machine '{name}' shadows the bundled stdlib machine")
     registry = {**base, **siblings}

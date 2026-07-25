@@ -8,7 +8,7 @@ import os
 from mklang import cli
 from mklang.config import load_env_files
 from mklang.paths import host_paths, resolve_config, resolve_config_with_layer
-from mklang.registry import registry_with_sources
+from mklang.registry import load_path_registry, registry_with_sources
 
 
 def _machine(name: str) -> str:
@@ -58,6 +58,40 @@ def test_init_is_idempotent_and_never_overwrites(tmp_path, capsys):
     second = json.loads(capsys.readouterr().out)
     assert second["summary"]["unchanged"] >= 2
     assert (target / "config/runtime.yaml").read_text(encoding="utf-8") == original
+
+
+def test_init_project_machines_are_discoverable(tmp_path, capsys):
+    target = tmp_path / "project"
+    assert cli.main(["init", "--dir", str(target), "--format", "json"]) == 0
+    capsys.readouterr()
+
+    reg, sources = registry_with_sources(target)
+    assert "hello" in reg
+    assert sources["hello"] == "local"
+
+
+def test_path_registry_loads_full_project_scope(tmp_path):
+    project = tmp_path / "project"
+    machine_root = project / "machines"
+    machine_root.mkdir(parents=True)
+    (project / "legacy.mkl").write_text(_machine("legacy"), encoding="utf-8")
+    (machine_root / "child.mkl").write_text(_machine("child"), encoding="utf-8")
+
+    from_machines = load_path_registry(machine_root / "child.mkl")
+    from_root = load_path_registry(project / "legacy.mkl")
+    assert {"legacy", "child"} <= set(from_machines)
+    assert {"legacy", "child"} <= set(from_root)
+
+
+def test_path_registry_keeps_unrelated_directories_sibling_scoped(tmp_path):
+    isolated = tmp_path / "isolated"
+    isolated.mkdir()
+    (isolated / "only.mkl").write_text(_machine("only"), encoding="utf-8")
+    (tmp_path / "machines").mkdir()
+    (tmp_path / "machines" / "other.mkl").write_text(_machine("other"), encoding="utf-8")
+
+    registry = load_path_registry(isolated / "only.mkl")
+    assert "only" in registry and "other" not in registry
 
 
 def test_resolve_config_names_the_winning_layer(tmp_path, monkeypatch):

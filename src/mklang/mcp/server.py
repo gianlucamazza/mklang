@@ -404,7 +404,9 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
     ) -> dict:
         """Commission an mklang machine and return its result with full provenance
         (trace + usage). Pass the machine as inline `.mkl` YAML via `source`, OR via
-        `path`: a filesystem path (sibling `.mkl` files become callable machines) or
+        `path`: a filesystem path (project root/`machines/` files become callable
+        when the path belongs to a recognized project; otherwise sibling `.mkl`
+        files are used) or
         the bare name of a bundled machine (see list_machines) — exactly one of the
         two. Inline sources may `call:` bundled machines. `inputs` merges values
         into the machine's context by dotted key (e.g. {"ticket.body": "..."});

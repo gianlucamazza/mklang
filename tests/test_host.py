@@ -115,6 +115,18 @@ def test_prepare_path_discovers_sibling_registry(tmp_path):
     assert {"caller", "worker"} <= set(p.registry)  # stdlib machines ride along
 
 
+def test_prepare_path_discovers_project_machines_from_canonical_scope(tmp_path):
+    project = tmp_path / "project"
+    machine_root = project / "machines"
+    machine_root.mkdir(parents=True)
+    (project / "legacy.mkl").write_text(WORKER.replace("worker", "legacy"), encoding="utf-8")
+    (machine_root / "caller.mkl").write_text(CALLER, encoding="utf-8")
+    (machine_root / "worker.mkl").write_text(WORKER, encoding="utf-8")
+
+    p = host.prepare_path(CONFIG, None, str(machine_root / "caller.mkl"), build_llm=build_llm)
+    assert {"caller", "worker", "legacy"} <= set(p.registry)
+
+
 def test_prepare_path_load_failure(tmp_path):
     bad = tmp_path / "bad.mkl"
     bad.write_text("machine: x\n", encoding="utf-8")  # missing entry/budget/states

@@ -35,6 +35,39 @@ def load_registry(directory: str | Path, validate: bool = True) -> dict[str, Mac
     return reg
 
 
+def load_project_registry(directory: str | Path, validate: bool = True) -> dict[str, Machine]:
+    """Load project machines from the root and canonical ``machines/`` folder.
+
+    Root-level files remain supported for compatibility.  The canonical folder
+    wins on duplicate machine names, matching the project layout created by
+    ``mklang init``.
+    """
+    from .paths import project_machine_root
+
+    root = Path(directory)
+    reg = load_registry(root, validate=validate)
+    machine_root = project_machine_root(root)
+    if machine_root != root:
+        reg.update(load_registry(machine_root, validate=validate))
+    return reg
+
+
+def load_path_registry(machine_path: str | Path, validate: bool = True) -> dict[str, Machine]:
+    """Load the machine scope implied by a filesystem path.
+
+    A canonical project is recognized by its ``machines/`` directory.  Paths
+    inside that directory, and legacy root-level paths beside it, see the full
+    project registry.  An unrelated directory remains sibling-scoped.
+    """
+    path = Path(machine_path).resolve()
+    parent = path.parent
+    if parent.name == "machines":
+        return load_project_registry(parent.parent, validate=validate)
+    if (parent / "machines").is_dir():
+        return load_project_registry(parent, validate=validate)
+    return load_registry(parent, validate=validate)
+
+
 @functools.lru_cache(maxsize=1)
 def load_stdlib_registry() -> dict[str, Machine]:
     """The bundled `std_*` architecture machines — package copy first (works
@@ -122,7 +155,7 @@ def registry_with_sources(
             reg[name] = machine
             sources[name] = source
     if project_dir:
-        for name, machine in load_registry(project_dir, validate=False).items():
+        for name, machine in load_project_registry(project_dir, validate=False).items():
             reg[name] = machine
             sources[name] = "local"
     return reg, sources

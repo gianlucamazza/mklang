@@ -28,7 +28,8 @@ from ..capabilities import capability_key, metadata_for, redact
 from ..config import load_provider
 from ..engine import run as run_machine_engine
 from ..llm.base import LLM
-from ..registry import base_registry, load_registry
+from ..paths import project_machine_root
+from ..registry import base_registry, load_project_registry
 from .workspace import WorkspaceInspector
 
 
@@ -74,6 +75,7 @@ class ConsoleTools:
     def __post_init__(self):
         self.workspace = Path(self.workspace).resolve()
         self.workspace.mkdir(parents=True, exist_ok=True)
+        self.machine_root = project_machine_root(self.workspace)
         self.inspector = WorkspaceInspector(self.workspace)
         self.prov = load_provider(self.config, self.provider)
         self.llm = (self.build_llm or _default_build_llm)(self.prov)
@@ -100,7 +102,7 @@ class ConsoleTools:
     # -- registry ----------------------------------------------------------
 
     def _registry(self) -> dict:
-        return {**base_registry(), **load_registry(self.workspace, validate=False)}
+        return {**base_registry(), **load_project_registry(self.workspace, validate=False)}
 
     def as_tool_registry(self) -> dict:
         """The tool map handed to the brain machine's run(tools=...)."""
@@ -185,7 +187,7 @@ class ConsoleTools:
 
     def read_machine(self, input: dict) -> str:
         name = str(input.get("name") or "").strip()
-        path = self._workspace_path(name)
+        path = self._existing_machine_path(name)
         if path is not None and path.is_file():
             try:
                 return path.read_text(encoding="utf-8")
@@ -200,7 +202,7 @@ class ConsoleTools:
         name = str(input.get("name") or "").strip()
         if source:
             return _obs(host.check_machine(source=source))
-        path = self._workspace_path(name)
+        path = self._existing_machine_path(name)
         if path is None or not path.is_file():
             return _obs({"error": f"no source given and no machine file '{name}'"})
         return _obs(host.check_machine(path=str(path)))
@@ -234,6 +236,7 @@ class ConsoleTools:
             )
         temporary: str | None = None
         try:
+            path.parent.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(
                 mode="w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False
             ) as handle:
@@ -293,17 +296,35 @@ class ConsoleTools:
         return _obs({"task": self.task})
 
     def _workspace_path(self, name: str) -> Path | None:
-        """Resolve a machine name/filename inside the workspace; None if it escapes."""
+        """Resolve a machine name/filename inside the canonical machine root."""
         if not name:
             return None
         fname = name if name.endswith(".mkl") else f"{name}.mkl"
         parts = Path(fname).parts
         if any(part.startswith(".") or part in WorkspaceInspector.IGNORED_DIRS for part in parts):
             return None
-        candidate = (self.workspace / fname).resolve()
-        if not candidate.is_relative_to(self.workspace):
+        candidate = (self.machine_root / fname).resolve()
+        if not candidate.is_relative_to(self.machine_root):
             return None
         return candidate
+
+    def _legacy_workspace_path(self, name: str) -> Path | None:
+        """Resolve a legacy root-level machine without using it for new writes."""
+        path = self._workspace_path(name)
+        if path is None:
+            return None
+        legacy = (self.workspace / path.relative_to(self.machine_root)).resolve()
+        return legacy if legacy.is_relative_to(self.workspace) else None
+
+    def _existing_machine_path(self, name: str) -> Path | None:
+        """Prefer canonical machines, then accept an existing root-level file."""
+        canonical = self._workspace_path(name)
+        if canonical is None:
+            return None
+        if canonical.is_file():
+            return canonical
+        legacy = self._legacy_workspace_path(name)
+        return legacy if legacy is not None and legacy.is_file() else canonical
 
     # -- execution ---------------------------------------------------------
 

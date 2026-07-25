@@ -106,6 +106,11 @@ def bundled_sample_test() -> Path:
     raise FileNotFoundError("the bundled sample test script is missing from this installation")
 
 
+def project_machine_root(root: str | Path) -> Path:
+    """Return the canonical machine directory for a project workspace."""
+    return Path(root).resolve() / "machines"
+
+
 def resolve_config(explicit: str | Path | None = None, *, cwd: Path | None = None) -> Path:
     """Resolve runtime config using ADR 0021's stable precedence order."""
     return resolve_config_with_layer(explicit, cwd=cwd)[0]

@@ -247,6 +247,42 @@ def test_run_by_path_examples(monkeypatch, store):
     assert out["status"] == "done"
 
 
+def test_run_by_path_uses_project_machine_scope(tmp_path, monkeypatch, store):
+    use_llm(monkeypatch, echo_llm)
+    project = tmp_path / "project"
+    machine_root = project / "machines"
+    machine_root.mkdir(parents=True)
+    worker = """\
+machine: worker
+entry: s
+budget: 2
+result: answer
+states:
+  s:
+    structure: answer
+    prompt: worker
+    output: answer
+    gates: [{when: otherwise, then: ok, to: END}]
+"""
+    caller = """\
+machine: caller
+entry: s
+budget: 3
+result: answer
+states:
+  s:
+    call: worker
+    output: answer
+    gates: [{when: otherwise, then: ok, to: END}]
+"""
+    (machine_root / "worker.mkl").write_text(worker, encoding="utf-8")
+    caller_path = machine_root / "caller.mkl"
+    caller_path.write_text(caller, encoding="utf-8")
+
+    out = srv.run_tool(store, DEFAULTS, path=str(caller_path))
+    assert out["status"] == "done"
+
+
 def test_list_and_describe_machines(tmp_path, monkeypatch):
     # Isolate from the host: a real user/system machines dir must not leak in.
     monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))

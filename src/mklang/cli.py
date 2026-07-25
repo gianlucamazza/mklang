@@ -22,7 +22,7 @@ from .llm.base import LLM
 from .loader import load_machine, semantic_check
 from .model import Machine
 from .logs import LEVELS, setup_process_logging
-from .registry import base_registry, load_registry
+from .registry import base_registry, load_path_registry
 from .presentation import (
     CommandResult,
     Diagnostic,
@@ -322,7 +322,7 @@ def cmd_lint(args: argparse.Namespace) -> int:
             "findings": [],
             "llm_findings": [],
         }
-        registry = {**base_registry(), **load_registry(Path(path).parent, validate=False)}
+        registry = {**base_registry(), **load_path_registry(path, validate=False)}
         try:
             machine = load_machine(path)
         except Exception as e:  # surface any load/validation failure
@@ -377,7 +377,7 @@ def cmd_test(args: argparse.Namespace) -> int:
 
     from .scripttest import match_expectation, run_scenario
 
-    registry = {**base_registry(), **load_registry(Path(args.machine).parent, validate=False)}
+    registry = {**base_registry(), **load_path_registry(args.machine, validate=False)}
     try:
         machine = load_machine(args.machine)
     except Exception as e:  # surface any load/validation failure
@@ -770,7 +770,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     items: list[dict] = []
     for path in args.machines:
         item = {"path": path, "status": "ok", "errors": [], "warnings": []}
-        registry = {**base_registry(), **load_registry(Path(path).parent, validate=False)}
+        registry = {**base_registry(), **load_path_registry(path, validate=False)}
         try:
             machine = load_machine(path)
         except Exception as e:  # surface any load/validation failure
