@@ -700,6 +700,7 @@ def build_app(
                 tier_params=self.tools.prov.params,
                 tools=self.tools.as_tool_registry(),
                 hooks=load_hook_registry(),
+                cost_budget=self.tools.default_cost_budget,
                 suspendable=True,
                 resume=resume,
                 on_event=self.bridge.emit,

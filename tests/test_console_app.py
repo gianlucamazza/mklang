@@ -392,6 +392,30 @@ def test_slash_commands(tmp_path):
     asyncio.run(drive())
 
 
+def test_console_brain_receives_default_cost_budget(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_run_engine(*args, **kwargs):
+        captured["cost_budget"] = kwargs["cost_budget"]
+        return None
+
+    monkeypatch.setattr("mklang.console.app.run_engine", fake_run_engine)
+    app = build_app(
+        CONFIG,
+        None,
+        str(tmp_path / "ws"),
+        build_llm=lambda prov: scripted_llm({}, [4]),
+        session_base=str(tmp_path / "sessions"),
+    )
+    app.tools.default_cost_budget = 60_000
+
+    from types import SimpleNamespace
+
+    app._run_brain(SimpleNamespace(name="console_agent"), {})
+
+    assert captured["cost_budget"] == 60_000
+
+
 def test_clarify_turn_uses_answer_mode(tmp_path):
     llm = scripted_llm(
         {
