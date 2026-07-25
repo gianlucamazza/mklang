@@ -128,7 +128,7 @@ brain must not AUTHOR a machine solely to read the clock.
 | `/machines`                      | list commissionable machines with contracts       |
 | `/run <name> [k=v…]`             | commission directly (`--set`-style JSON coercion) |
 | `/check <name>` / `/read <name>` | validate / show a workspace machine               |
-| `/budget <n>`                    | default token budget for commissioned runs        |
+| `/budget <n>`                    | default token budget for agent turns and commissioned runs |
 | `/resume [n]`                    | list / finish the session's parked turns          |
 | `/session`                       | current session facts                             |
 | `/help` · `/quit`                | help · exit                                       |
