@@ -8,13 +8,31 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.9`).
+  `pyproject.toml` (currently `1.0.10`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.10] — 2026-07-25
+
+Workspace isolation, runtime budget accounting and documentation hardening.
+
+### Added
+
+- Workspace-scoped session continuation, registry safety diagnostics and
+  regression coverage for environment, filesystem and judge-cost boundaries.
+
+### Changed
+
+- Make console/configuration workspace selection authoritative and make
+  `mklang init` transactional with rollback on failure.
+- Include judge usage in cost accounting, partition fan-out budgets and apply
+  the console default budget to agent turns.
+- Document the corrected isolation, budgeting, initialization and console
+  contracts.
 
 ## [1.0.9] — 2026-07-25
 
