@@ -190,7 +190,9 @@ The example config defaults to **DeepSeek V4 Flash** (the path we live-test agai
 `active: anthropic` (or `openai` / `local` / …) and every example runs unchanged.
 Blocks ship for **Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI (Grok),
 Mistral, and local** (Ollama/vLLM) — every non-Anthropic one is OpenAI-compatible,
-so a single adapter serves them all. **OpenRouter** is a meta-provider: its
+so one shared transport adapter serves registered OpenAI-compatible providers;
+the host registry declares protocol-specific profiles explicitly. Custom
+OpenAI-compatible endpoints must set `protocol: openai_compat`. **OpenRouter** is a meta-provider: its
 `vendor/model` ids let each tier target a different vendor through one endpoint.
 Per-tier params (Anthropic adaptive-thinking + `effort`, OpenAI/xAI
 `reasoning_effort`, …) live under `params`. Full map:
@@ -340,7 +342,7 @@ keys resolve server-side from the environment, never over the wire.
 
 ## Status
 
-**Language v0.3 / package 1.0.8** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 1.0.9** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`

@@ -213,6 +213,9 @@ class Inspector(Vertical):
             ("WORKSPACE", session.workspace),
             ("TOKENS", f"{spent_in}+{spent_out}"),
             ("CONSENTED TOOLS", ", ".join(sorted(consented)) or "—"),
+            ("TASK PHASE", session.task.get("phase", "—")),
+            ("TASK PROGRESS", f"{session.task.get('progress', 0)}%"),
+            ("TASK GOAL", session.task.get("goal", "—")),
         ):
             info.append(f"{label}\n", style="bold cyan")
             info.append(f"{value}\n\n")

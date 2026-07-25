@@ -1,8 +1,9 @@
-"""OpenAI-compatible adapter: DeepSeek, OpenAI, OpenRouter, xAI, Mistral, local."""
+"""Shared adapter for providers that expose the OpenAI chat-completions protocol."""
 
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
 
 from ..errors import JudgeUnparseable, ProviderError
 from .base import (
@@ -21,12 +22,27 @@ from .context_view import format_judge_context
 _TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "top_p", "seed"}
 
 
+@dataclass(frozen=True)
+class OpenAICompatProfile:
+    """Declared protocol policy for an OpenAI-compatible provider."""
+
+    omit_temperature_when_thinking: bool = False
+
+
 class OpenAICompatLLM:
-    def __init__(self, api_key: str, base_url: str | None = None, max_retries: int = 3):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str | None = None,
+        max_retries: int = 3,
+        *,
+        profile: OpenAICompatProfile | None = None,
+    ):
         from openai import OpenAI  # imported lazily so tests don't need the dep
 
         self.client = OpenAI(api_key=api_key or "unused", base_url=base_url)
         self.max_retries = max_retries
+        self.profile = profile or OpenAICompatProfile()
 
     def close(self) -> None:
         """Close the SDK client, interrupting any in-flight console request."""
@@ -72,7 +88,7 @@ class OpenAICompatLLM:
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": temperature,
         }
-        _apply_params(kwargs, params)
+        _apply_params(kwargs, params, self.profile)
         # Align with Anthropic's explicit budget: avoid provider-default short
         # completions that look like silent cutoff (ADR 0018). Tier params may
         # override; unsupported max_tokens is dropped and retried by _create.
@@ -134,7 +150,9 @@ def _usage(response: object) -> tuple[int, int]:
     return getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0
 
 
-def _apply_params(kwargs: dict, params: dict | None) -> None:
+def _apply_params(
+    kwargs: dict, params: dict | None, profile: OpenAICompatProfile | None = None
+) -> None:
     """Split per-tier params into SDK kwargs and provider-specific extra_body."""
     if not params:
         return
@@ -145,9 +163,13 @@ def _apply_params(kwargs: dict, params: dict | None) -> None:
         else:
             extra[key] = value
     thinking = extra.get("thinking")
-    if isinstance(thinking, dict) and thinking.get("type") == "enabled":
-        # DeepSeek V4 thinking mode rejects temperature semantically; omit it
-        # instead of relying on the provider's compatibility behavior.
+    if (
+        profile
+        and profile.omit_temperature_when_thinking
+        and isinstance(thinking, dict)
+        and thinking.get("type") == "enabled"
+    ):
+        # The provider profile declares this policy; the shared adapter stays generic.
         kwargs.pop("temperature", None)
     if extra:
         kwargs["extra_body"] = extra

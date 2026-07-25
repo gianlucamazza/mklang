@@ -34,6 +34,7 @@ def test_agent_machine_is_clean():
         "list_workspace",
         "read_workspace_file",
         "search_workspace",
+        "update_task",
     } <= {s.tool for s in m.states.values() if s.kind == "tool"}
 
 

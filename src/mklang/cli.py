@@ -291,13 +291,20 @@ def cmd_lint(args: argparse.Namespace) -> int:
 
     llm = prov = None
     if args.llm:
-        from .config import load_provider
-
-        prov = load_provider(args.config, args.provider)
-        missing = host.missing_key_message(prov)
-        if missing:
-            return _input_error(args, missing)
-        llm = _build_llm(prov)
+        try:
+            prov, llm, _ = host.prepare_provider(args.config, args.provider, build_llm=_build_llm)
+        except host.PrepareError as err:
+            result = CommandResult(
+                command=args.cmd,
+                ok=False,
+                diagnostics=[
+                    Diagnostic("error", message, code=f"prepare-{err.kind}")
+                    for message in err.errors
+                ],
+            )
+            fmt = output_format(args.format)
+            emit_result(result, fmt=fmt, color=args.color, stderr=fmt == "text")
+            return 2
         print(
             f"# --llm probe: provider={prov.name} · advisory only, non-deterministic "
             f"(ADR 0010) — never a --strict error source",
@@ -636,6 +643,20 @@ def _doctor_provider_key_items(cfg: dict, active: str) -> tuple[list[dict], bool
     items: list[dict] = []
     ok = True
     for pname, block in cfg["providers"].items():
+        if not isinstance(block, dict):
+            status = "error" if pname == active else "warning"
+            items.append(
+                {
+                    "name": f"provider {pname} · invalid block",
+                    "status": status,
+                    "errors" if status == "error" else "warnings": [
+                        "provider configuration must be a mapping"
+                    ],
+                }
+            )
+            if pname == active:
+                ok = False
+            continue
         env_var = (block or {}).get("api_key_env", "")
         # The run-time readiness contract, not a reimplementation of it.
         prov = ProviderConfig(

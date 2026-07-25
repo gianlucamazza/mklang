@@ -8,13 +8,33 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.8`).
+  `pyproject.toml` (currently `1.0.9`).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changed
+
+## [1.0.9] — 2026-07-25
+
+Agentic console completion and provider/configuration hardening.
+
+### Added
+
+- Persistent console task ledger for goals, plans, progress, blockers,
+  artifacts and verification evidence, with session and inspector continuity.
+- Explicit decision repair path for invalid brain actions and regression tests
+  for task updates, provider diagnostics and registry warnings.
+
+### Changed
+
+- Console authoring validates machines before atomic replacement, preventing a
+  failed validation from partially overwriting an existing file.
+- Provider protocols and compatibility profiles are explicit, with structured
+  configuration errors and no implicit provider fallback.
+- Documentation and runtime configuration examples now describe the explicit
+  OpenAI-compatible protocol and agentic console lifecycle.
 
 ## [1.0.8] — 2026-07-24
 

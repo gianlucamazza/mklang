@@ -44,6 +44,7 @@ class Session:
     always_yes: bool = False
     workspace: str = ""
     brain: str = ""
+    task: dict = field(default_factory=dict)
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -71,6 +72,7 @@ class Session:
             always_yes=bool(st.get("always_yes", False)),
             workspace=st.get("workspace", ""),
             brain=st.get("brain", ""),
+            task=dict(st.get("task", {})),
         )
 
     @classmethod
@@ -100,6 +102,7 @@ class Session:
             "always_yes": self.always_yes,
             "workspace": self.workspace,
             "brain": self.brain,
+            "task": self.task,
         }
         tmp = self.dir / "state.json.tmp"
         tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

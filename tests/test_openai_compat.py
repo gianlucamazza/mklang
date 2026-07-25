@@ -4,7 +4,7 @@ import pytest
 
 from mklang.errors import ProviderError
 from mklang.llm.base import is_connection_error
-from mklang.llm.openai_compat import OpenAICompatLLM
+from mklang.llm.openai_compat import OpenAICompatLLM, OpenAICompatProfile
 
 
 class _Msg:
@@ -44,6 +44,7 @@ def _adapter(side_effect=None, max_retries=3) -> OpenAICompatLLM:
     llm.max_retries = max_retries
     completions = _Completions(side_effect)
     llm.client = type("C", (), {"chat": type("Ch", (), {"completions": completions})()})()
+    llm.profile = OpenAICompatProfile()
     return llm
 
 

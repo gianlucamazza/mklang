@@ -210,6 +210,8 @@ def build_app(
                 )
             self.history = self.session.history
             self.tools.audit = lambda record: self.session.append({"t": "audit", **record})
+            self.tools.task = self.session.task
+            self.tools.task_persist = self.session.save_state
             self.spent_in = self.session.spent_in
             self.spent_out = self.session.spent_out
             self.tools._consented.update(self.session.consented)
@@ -710,6 +712,7 @@ def build_app(
                     "workspace_context": self.tools.workspace_context(),
                     "workspace_brief": "",
                     "workspace_required": requires_workspace_inspection(user_message),
+                    "task_state": dict(self.session.task),
                 }
             )
             host_mod.inject_host_defaults(ctx)  # brain may declare context.today

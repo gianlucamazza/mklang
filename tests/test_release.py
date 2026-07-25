@@ -92,14 +92,23 @@ def _git_tags() -> set[str] | None:
 
 
 def test_changelog_entries_from_distribution_cutoff_are_tagged():
-    """Every CHANGELOG entry from the distribution cutoff up must carry a git tag."""
+    """Every released CHANGELOG entry must carry a matching git tag.
+
+    The current package version is allowed to be prepared before its release
+    tag exists; after publication it is checked like every other entry.
+    """
     tags = _git_tags()
     if tags is None:
         pytest.skip("no git tags available (sdist or shallow checkout)")
+    current_version = mklang.__version__
     missing = [
         version
         for version in _changelog_versions()
-        if _version_tuple(version) >= _DISTRIBUTION_CUTOFF and f"v{version}" not in tags
+        if (
+            _version_tuple(version) >= _DISTRIBUTION_CUTOFF
+            and version != current_version
+            and f"v{version}" not in tags
+        )
     ]
     assert not missing, (
         f"CHANGELOG entries at/above {'.'.join(map(str, _DISTRIBUTION_CUTOFF))} without a "

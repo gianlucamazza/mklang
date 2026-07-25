@@ -1,7 +1,11 @@
-"""Provider adapter registry: builtins, entry-point plugins, and the default fallback."""
+"""Provider adapter registry: builtins, entry-point plugins, and explicit protocols."""
 
 from mklang.config import ProviderConfig
-from mklang.providers import BUILTINS, build_llm, load_provider_registry, openai_compat
+import pytest
+
+from mklang.errors import ProviderConfigError
+from mklang import providers
+from mklang.providers import BUILTINS, build_llm, load_provider_registry
 
 
 def _prov(name):
@@ -19,8 +23,28 @@ def test_entry_point_provider_resolves():
     assert "anthropic" in reg
 
 
-def test_unknown_provider_falls_back_to_openai_compat():
+def test_registered_openai_compatible_provider_uses_shared_adapter():
     llm = build_llm(_prov("deepseek"))
+    assert type(llm).__name__ == "OpenAICompatLLM"
+    assert llm.profile.omit_temperature_when_thinking is True
+
+
+def test_unknown_provider_requires_explicit_protocol():
+    with pytest.raises(ProviderConfigError, match="not registered"):
+        build_llm(_prov("typo"))
+
+
+def test_custom_openai_compatible_provider_declares_protocol():
+    llm = build_llm(
+        ProviderConfig(name="custom", protocol="openai_compat", tiers={"balanced": "m"})
+    )
+    assert type(llm).__name__ == "OpenAICompatLLM"
+
+
+def test_explicit_protocol_precedes_registered_name():
+    llm = build_llm(
+        ProviderConfig(name="anthropic", protocol="openai_compat", tiers={"balanced": "m"})
+    )
     assert type(llm).__name__ == "OpenAICompatLLM"
 
 
@@ -36,4 +60,25 @@ def test_extra_override_wins():
     sentinel = object()
     reg = load_provider_registry({"deepseek": lambda prov: sentinel})
     assert reg["deepseek"](_prov("deepseek")) is sentinel
-    assert load_provider_registry().get("nope", openai_compat) is openai_compat
+    assert load_provider_registry().get("nope") is None
+
+
+def test_provider_entry_points_honor_allowlist(monkeypatch, caplog):
+    class EntryPoint:
+        name = "blocked"
+
+        @staticmethod
+        def load():
+            return lambda prov: object()
+
+    class EntryPoints:
+        @staticmethod
+        def select(*, group):
+            assert group == "mklang.providers"
+            return [EntryPoint()]
+
+    monkeypatch.setattr(providers, "entry_points", lambda: EntryPoints())
+    monkeypatch.setenv("MKLANG_ALLOWED_PLUGINS", "allowed")
+    with caplog.at_level("WARNING", logger="mklang.providers"):
+        assert providers.load_entry_point_providers() == {}
+    assert "blocked by MKLANG_ALLOWED_PLUGINS" in caplog.text

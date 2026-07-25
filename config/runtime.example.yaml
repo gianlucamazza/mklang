@@ -15,9 +15,10 @@
 
 active: deepseek # deepseek | anthropic | openai | google | openrouter | xai | mistral | local
 
-# NOTE: every non-Anthropic provider below speaks the OpenAI-compatible protocol,
-# so one adapter (base_url + api_key_env + tiers) serves them all. OpenRouter is a
-# meta-provider — its `vendor/model` ids let each tier target a different vendor.
+# NOTE: every non-Anthropic provider below declares the OpenAI-compatible protocol,
+# so one shared transport adapter serves them with explicit provider profiles.
+# OpenRouter is a meta-provider — its `vendor/model` ids let each tier target a
+# different vendor.
 #
 # JUDGE MODEL: by default a state's gates are judged by the SAME tier that generated
 # it (SPEC §2.1) — so a `reasoning` state's high-stakes gates are judged by the
@@ -55,6 +56,7 @@ providers:
   # gpt-5.5-pro / gpt-5.4-pro exist but are Responses-API only — the reference
   # adapter uses chat.completions, so they are not mapped here.
   openai:
+    protocol: openai_compat
     api_key_env: OPENAI_API_KEY
     tiers:
       fast: gpt-5.4-mini
@@ -71,6 +73,7 @@ providers:
 
   # --- Google --------------------------------------------------------------
   google:
+    protocol: openai_compat
     api_key_env: GEMINI_API_KEY
     tiers:
       fast: gemini-3-flash
@@ -85,6 +88,7 @@ providers:
   # OpenAI-compatible API. V4 uses one model family with an explicit thinking
   # toggle; the legacy `deepseek-chat` and `deepseek-reasoner` aliases are retired.
   deepseek:
+    protocol: openai_compat
     base_url: https://api.deepseek.com
     api_key_env: DEEPSEEK_API_KEY
     tiers:
@@ -106,6 +110,7 @@ providers:
   # namespaced `vendor/model`, so each tier can point at a DIFFERENT underlying
   # provider — pick the best model per tier regardless of who makes it.
   openrouter:
+    protocol: openai_compat
     base_url: https://openrouter.ai/api/v1
     api_key_env: OPENROUTER_API_KEY
     tiers:
@@ -116,6 +121,7 @@ providers:
 
   # --- xAI (Grok) ----------------------------------------------------------
   xai:
+    protocol: openai_compat
     base_url: https://api.x.ai/v1
     api_key_env: XAI_API_KEY
     tiers:
@@ -129,6 +135,7 @@ providers:
 
   # --- Mistral -------------------------------------------------------------
   mistral:
+    protocol: openai_compat
     base_url: https://api.mistral.ai/v1
     api_key_env: MISTRAL_API_KEY
     tiers:
@@ -139,6 +146,7 @@ providers:
 
   # --- Local (OpenAI-compatible endpoint: Ollama / vLLM / LM Studio) --------
   local:
+    protocol: openai_compat
     base_url: http://localhost:11434/v1
     api_key_env: LOCAL_API_KEY # often unused for local servers; keep for compatibility
     tiers:

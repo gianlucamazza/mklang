@@ -28,7 +28,8 @@ def load_registry(directory: str | Path, validate: bool = True) -> dict[str, Mac
     for f in sorted(Path(directory).glob("*.mkl")):
         try:
             m = load_machine(f, validate=validate)
-        except Exception:  # a broken sibling shouldn't crash the run
+        except Exception as err:  # a broken sibling shouldn't crash the run
+            _log.warning("machine file %s skipped: %s", f, err)
             continue
         reg[m.name] = m
     return reg

@@ -33,8 +33,11 @@ a contributor's map, not language semantics — those live in the SPEC. The
   and **judge** — plus the fixed `JUDGE_SYSTEM` role and the shared
   `build_judge_user` (OUTPUT/REASONING/CONTEXT always fenced, ADR 0025) used
   by both adapters.
-- `openai_compat.py` — one adapter for every OpenAI-compatible provider
-  (DeepSeek, OpenAI, OpenRouter, xAI, Mistral, local).
+- `openai_compat.py` — shared transport adapter for OpenAI-compatible providers.
+  Provider aliases are registered explicitly; protocol policies such as DeepSeek
+  V4 thinking-temperature handling are passed as profiles rather than inferred
+  from arbitrary request payloads. Custom endpoints must declare
+  `protocol: openai_compat`.
 - `anthropic.py` — native Anthropic adapter (`mklang[anthropic]` extra).
 - `mock.py` — deterministic scripted LLM for tests; no network.
 - `prompts.py` — reference-interpreter prompt assembly (host concern, not
@@ -54,7 +57,9 @@ All surfaces commission runs through the same seam, `host.py`.
   `tools.py` (the brain machine's hands, including bounded read-only workspace
   listing, search and file reads), `workspace.py` (workspace policy, budgets and
   inspection). The brain itself is a machine:
-  `data/console/agent.mkl`.
+  `data/console/agent.mkl`. The brain's `update_task` tool persists a validated
+  goal/plan/progress ledger in the session state, while authored machines are
+  checked before atomic workspace replacement.
 - `mcp/` — the stdio MCP server (ADR 0011/0013): `server.py` (commissioning +
   provenance, live events per ADR 0019), `sessions.py` (suspended runs keyed by
   opaque handles).
@@ -74,7 +79,7 @@ Plugins hook in via entry-point groups; builtins register the same way.
 
 | Module                                         | Role                                                                                            |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `config.py`                                    | tier→model map per provider; keys from `.env`                                                   |
+| `config.py`                                    | tier→model map, explicit protocol, and structural provider validation; keys from `.env`          |
 | `paths.py`                                     | XDG host layout and config/machine discovery (ADR 0021)                                         |
 | `errors.py`                                    | typed adapter errors the engine maps to halt reasons                                            |
 | `lint.py` / `llmlint.py`                       | static analysis / LLM-assisted lint (ADR 0010)                                                  |

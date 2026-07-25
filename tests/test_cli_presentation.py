@@ -70,3 +70,32 @@ def test_missing_console_session_does_not_dump_traceback(tmp_path, monkeypatch, 
     assert rc == 2
     assert "Traceback" not in captured.out + captured.err
     assert "state.json" in captured.out + captured.err
+
+
+def test_unknown_provider_is_structured_config_error(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "runtime.yaml"
+    config.write_text(
+        """active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TEST_PROVIDER_KEY", "test-key")
+    rc = cli.main(["run", "std_cot", "--config", str(config), "--format", "json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 2
+    assert payload["diagnostics"][0]["code"] == "prepare-config"
+    assert "not registered" in payload["diagnostics"][0]["message"]
+
+
+def test_lint_llm_uses_structured_provider_errors(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "runtime.yaml"
+    config.write_text(
+        """active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TEST_PROVIDER_KEY", "test-key")
+    rc = cli.main(
+        ["lint", "examples/triage.mkl", "--llm", "--config", str(config), "--format", "json"]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 2
+    assert payload["diagnostics"][0]["code"] == "prepare-config"

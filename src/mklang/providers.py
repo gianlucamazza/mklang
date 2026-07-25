@@ -2,9 +2,9 @@
 
 A provider factory is a callable ``(ProviderConfig) -> LLM`` — the returned
 object must expose ``produce(...)`` and ``judge(...)`` (see ``llm/base.py``).
-The CLI resolves the active provider name against this registry; any name not
-registered falls back to the OpenAI-compatible adapter, which serves every
-OpenAI-protocol provider (deepseek, openai, xai, mistral, openrouter, local, …).
+The CLI resolves the active provider name against this registry. OpenAI-compatible
+providers are explicit aliases or must declare ``protocol: openai_compat`` in the
+host config; unknown names never silently select an adapter.
 """
 
 from __future__ import annotations
@@ -14,7 +14,9 @@ from collections.abc import Callable
 from importlib.metadata import entry_points
 
 from .config import ProviderConfig
+from .errors import ProviderConfigError
 from .llm.base import LLM
+from .llm.openai_compat import OpenAICompatLLM, OpenAICompatProfile
 
 ENTRY_POINT_GROUP = "mklang.providers"
 
@@ -30,13 +32,22 @@ def anthropic(prov: ProviderConfig) -> LLM:
 
 
 def openai_compat(prov: ProviderConfig) -> LLM:
-    from .llm.openai_compat import OpenAICompatLLM
+    profile = OPENAI_COMPAT_PROFILES.get(prov.name, OpenAICompatProfile())
+    return OpenAICompatLLM(prov.api_key, prov.base_url, profile=profile)
 
-    return OpenAICompatLLM(prov.api_key, prov.base_url)
 
-
-# Only protocol-distinct adapters need a named entry; OpenAI-compatible is the default.
-BUILTINS: dict[str, ProviderFactory] = {"anthropic": anthropic}
+# OpenAI-compatible aliases are explicit so a typo cannot silently select a protocol.
+# ``protocol: openai_compat`` remains available for custom endpoints and plugins.
+OPENAI_COMPAT_PROFILES = {
+    "deepseek": OpenAICompatProfile(omit_temperature_when_thinking=True),
+}
+BUILTINS: dict[str, ProviderFactory] = {
+    "anthropic": anthropic,
+    **{
+        name: openai_compat
+        for name in ("deepseek", "openai", "google", "openrouter", "xai", "mistral", "local")
+    },
+}
 
 
 def load_entry_point_providers(group: str = ENTRY_POINT_GROUP) -> dict[str, ProviderFactory]:
@@ -53,6 +64,11 @@ def load_entry_point_providers(group: str = ENTRY_POINT_GROUP) -> dict[str, Prov
         return reg
     for ep in selected:
         try:
+            from .plugin_policy import allowed_plugin
+
+            if not allowed_plugin(ep.name):
+                _log.warning("provider plugin %r blocked by MKLANG_ALLOWED_PLUGINS", ep.name)
+                continue
             reg[ep.name] = ep.load()
         except Exception as e:
             _log.warning("provider plugin %r failed to load: %s", ep.name, e)
@@ -74,5 +90,14 @@ def load_provider_registry(
 
 
 def build_llm(prov: ProviderConfig) -> LLM:
-    """Resolve the provider name to a factory; default to the OpenAI-compatible adapter."""
-    return load_provider_registry().get(prov.name, openai_compat)(prov)
+    """Resolve a registered provider or an explicitly declared protocol."""
+    if prov.protocol == "openai_compat":
+        return openai_compat(prov)
+    registry = load_provider_registry()
+    factory = registry.get(prov.name)
+    if factory is not None:
+        return factory(prov)
+    raise ProviderConfigError(
+        f"provider {prov.name!r} is not registered; configure an entry-point provider "
+        "or set protocol: openai_compat"
+    )

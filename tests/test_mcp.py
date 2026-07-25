@@ -45,6 +45,23 @@ def test_server_default_config_uses_the_resolution_chain():
     assert srv.DEFAULT_CONFIG is None
 
 
+def test_unknown_provider_is_structured_prepare_failure(tmp_path, monkeypatch, store):
+    config = tmp_path / "runtime.yaml"
+    config.write_text(
+        """active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TEST_PROVIDER_KEY", "test-key")
+    out = srv.run_tool(
+        store,
+        {"config": str(config), "provider": None},
+        path="std_cot",
+    )
+    assert out["status"] == "error"
+    assert out["error"] == "prepare-failed"
+    assert "not registered" in out["errors"][0]
+
+
 HITL = """\
 machine: h
 entry: draft

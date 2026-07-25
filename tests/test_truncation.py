@@ -108,7 +108,7 @@ def test_complete_produce_has_no_truncated_flag():
 
 def test_openai_compat_length_finish_reason():
     """Adapter maps choices[0].finish_reason=length → Produced.truncated (no network)."""
-    from mklang.llm.openai_compat import OpenAICompatLLM
+    from mklang.llm.openai_compat import OpenAICompatLLM, OpenAICompatProfile
 
     class _Msg:
         content = "partial"
@@ -139,6 +139,7 @@ def test_openai_compat_length_finish_reason():
             )()
         },
     )()
+    llm.profile = OpenAICompatProfile()
     p = llm.produce("m", "sys", "user")
     assert p.truncated is True
     assert p.finish_reason == "length"

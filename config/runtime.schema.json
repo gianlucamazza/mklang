@@ -81,6 +81,10 @@
       "required": ["tiers"],
       "additionalProperties": false,
       "properties": {
+        "protocol": {
+          "enum": ["auto", "openai_compat"],
+          "description": "Adapter protocol. Omit for a registered provider; use openai_compat for a custom OpenAI-compatible endpoint. Unknown provider names never fall back implicitly."
+        },
         "api_key_env": {
           "type": "string",
           "description": "Name of the env var holding this provider's API key."
@@ -96,7 +100,7 @@
         },
         "params": {
           "type": "object",
-          "description": "Per-tier, provider-specific generation params (effort, thinking, reasoning_effort, …). Free-form; validated by the runtime, not here.",
+          "description": "Per-tier, provider-specific generation params (effort, thinking, reasoning_effort, …). The runtime validates the tier structure; adapter profiles apply protocol-specific semantics.",
           "additionalProperties": false,
           "properties": {
             "fast": { "type": "object" },

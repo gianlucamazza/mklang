@@ -120,3 +120,14 @@ def test_doctor_reports_config_source_and_schema_warning(tmp_path, monkeypatch, 
     assert any(n == "tools search · backend=fake · source=config" for n in names)
     schema_items = [i for i in payload["items"] if i["name"].startswith("schema ")]
     assert schema_items and any("api_key" in w for w in schema_items[0]["warnings"])
+
+
+def test_doctor_rejects_malformed_active_provider_block(tmp_path, monkeypatch, capsys):
+    from test_first_run import _doctor_host
+
+    _doctor_host(tmp_path, monkeypatch)
+    cfg_path = tmp_path / "runtime.yaml"
+    cfg_path.write_text("active: fake\nproviders:\n  fake: broken\n", encoding="utf-8")
+    assert cli.main(["doctor", "--config", str(cfg_path), "--format", "json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert any(item["name"] == "provider fake · invalid block" for item in payload["items"])
