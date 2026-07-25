@@ -24,7 +24,7 @@ Type "rm -rf /tmp/mklang-agent-state /tmp/mklang-agent-machines && mkdir -p /tmp
 Enter
 Show
 
-Type "PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines"
+Type "PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines --max-tokens 60000"
 Enter
 Wait+Screen@30s /Ready/
 Sleep 1s
