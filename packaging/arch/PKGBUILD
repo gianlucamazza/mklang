@@ -14,8 +14,8 @@ checkdepends=(python-pytest python-mcp)
 optdepends=('python-mcp: mklang-mcp MCP server'
             'python-argcomplete: shell completions')
 backup=(etc/mklang/runtime.yaml)
-source=("https://files.pythonhosted.org/packages/source/m/mklang/mklang-$pkgver.tar.gz")
-sha256sums=('575f36f04f3ab66ac2f1eec2e0d9b3f465cb49fc14f3807c268ea2e20100c2da')
+source=("https://files.pythonhosted.org/packages/99/9a/045a0919a3a2763240aff13263ea7b15b1a86dd8b8890bad080be7403154/mklang-$pkgver.tar.gz")
+sha256sums=('e6fa7213ea2ab2901942eeff580508a2394760871896210d614277519ea204fb')
 
 build() {
   cd "mklang-$pkgver"
