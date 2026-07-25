@@ -28,7 +28,7 @@ Type "PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspac
 Enter
 Wait+Screen@30s /Ready/
 Sleep 1s
-Type "/budget 60000"
+Type "/budget 100000"
 Enter
 Sleep 1s
 
