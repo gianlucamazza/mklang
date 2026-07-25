@@ -36,8 +36,8 @@ host itself keeps config, machines, and state.
 
 3. **Machine search path**, later wins, extending `base_registry`'s existing
    layering: stdlib ← entry-point plugins ← system machines ← user machines ←
-   project `--dir`. `mklang machines` labels the new sources `system` / `user`
-   alongside `stdlib` / `plugin` / `local`.
+   project root ← project `machines/`. `mklang machines` labels project
+   machines as `local` alongside `stdlib` / `plugin` / `system` / `user`.
 
 4. **`mklang init`** scaffolds a project (`config/runtime.yaml`, `machines/`,
    `.env` template); `mklang init --user` seeds the user config root from the

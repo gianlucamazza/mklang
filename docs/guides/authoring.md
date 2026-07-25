@@ -67,7 +67,8 @@ Optional faces — reach for them when the pattern calls for it:
   exclusive; `{{index}}` available inside both, `{{item}}` inside `over` (§4.7).
 - `parse: list` — deposit a parsed JSON array instead of text, ready for a
   downstream `over:`; declare `mklang: "0.3"` (§4.10).
-- `call: <machine>` — run a sibling machine as a subroutine; `input:` maps parent
+- `call: <machine>` — run a machine in the active registry as a subroutine;
+  project paths include root-level and `machines/` files; `input:` maps parent
   context in, `output:` receives its `result` (§4.8).
 - `tool: <name>` — a host-registered callable; the **only** place for real side
   effects (search, send, calc) (§4.9).
@@ -111,9 +112,10 @@ charges one step per branch at runtime but counts as 1 at check time.
   only (`structure`/`execution` are **not** interpolated).
 - Every `{{key}}` must resolve: from `context:`, a previous state's `output:`,
   `human.*` (HITL resume), or `item`/`index` inside a fan-out state.
-- `call:` targets must exist as sibling `.mkl` files (same directory), a bundled
-  `std_*` name, or an entry-point machine — an inline MCP `source` machine can
-  `call: std_*` but not arbitrary siblings unless the host registry includes them.
+- `call:` targets must exist in the active registry: bundled `std_*`, global
+  layers, or project `.mkl` files. Outside a recognized project, only sibling
+  files are discovered automatically. An inline MCP `source` machine can call
+  bundled/global machines but cannot implicitly load project files.
 - **Time-sensitive / web machines:** declare `today: ""` in `context:`; the host
   fills the ISO date when empty. For wall-clock time declare `now: ""` (local
   ISO datetime). Ground web answers in `tool: search` notes, not training

@@ -45,10 +45,11 @@ experts (static `call:` + domain categories), exact-policy gates (host hooks),
 Plan-and-Execute (needs structured list output — a `[maybe]` ROADMAP note).
 These remain documented patterns, not machines.
 
-- **Registry precedence, user always wins:** every host registry is layered
-  `stdlib ← entry-point plugins ← directory siblings ← run target`. A sibling
-  or target that reuses a stdlib name shadows it and the host surfaces a
-  warning. The language is untouched (0.2); the schema is untouched.
+- **Registry precedence, project-local wins:** every host registry is layered
+  `stdlib ← entry-point plugins ← system ← user ← project root ← project/machines`.
+  A local machine that reuses a global name shadows it and the host surfaces a
+  warning. Unrelated paths retain sibling-only discovery. The language is
+  untouched (0.2); the schema is untouched.
 - **Run-by-name:** a machine argument that is not an existing file but matches
   a base-registry name resolves to that machine — `mklang run std_cot --set
 task="…"` and MCP `run(path="std_cot")` with no server change. A run-by-name

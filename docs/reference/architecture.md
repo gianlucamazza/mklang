@@ -73,7 +73,7 @@ Plugins hook in via entry-point groups; builtins register the same way.
 | `providers.py` | `mklang.providers` | LLM adapter factory                          |
 | `tools.py`     | `mklang.tools`     | `(dict) -> str` host tool for `tool:` states |
 | `hooks.py`     | `mklang.hooks`     | `(context, output) -> bool` gate hook        |
-| `registry.py`  | `mklang.machines`  | directory of `.mkl` machines                  |
+| `registry.py`  | `mklang.machines`  | layered `.mkl` registry: stdlib → plugin → system → user → project → `project/machines/` |
 
 ## Supporting modules
 

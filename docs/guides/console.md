@@ -178,7 +178,11 @@ generative prose that pretends to search). Host binding:
 | `MKLANG_SEARCH_BACKEND=stub` | Force offline even if a Tavily key is set      |
 | unset key + unset backend    | Structured stub: `"no external search bound…"` |
 
-Example workspace machine: `machines/news_search.mkl` (topic → search → brief).
+Project machines live in the workspace's canonical `machines/` directory. The
+console discovers, reads, runs, and authors machines there; legacy `.mkl` files
+in the workspace root remain readable for compatibility, but new authored files
+are always saved under `machines/`. Example workspace machine:
+`machines/news_search.mkl` (topic → search → brief).
 The stdlib `std_research` (search → ground) is always runnable by name.
 Pattern references: `examples/research_web.mkl`, `examples/research_compress.mkl`.
 

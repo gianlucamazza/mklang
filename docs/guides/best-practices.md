@@ -402,7 +402,7 @@ Generic bash/FS stay **out of core**. When you need disk, pick the class:
 | Class                       | Examples                                         | Where it lives                            | Controls                                                              |
 | --------------------------- | ------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
 | **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir | CLI / host config                         | Operator-chosen paths; checkpoint mode `0600`                         |
-| **2. Workspace console**    | `list_workspace` / `read_workspace_file` / `search_workspace` (read-only) plus `write_machine` / `read_machine` (`.mkl`) | Console surface (ADR 0015) | Root defaults to the launch cwd and is injected as absolute `workspace_root`; `--workspace` overrides it; relative paths; reject escape, hidden/build/vendor/sensitive paths; bounded file/byte budgets; report truncation; confirm `.mkl` overwrite |
+| **2. Workspace console**    | `list_workspace` / `read_workspace_file` / `search_workspace` (read-only) plus `write_machine` / `read_machine` (`.mkl`) | Console surface (ADR 0015) | Root defaults to the launch cwd and is injected as absolute `workspace_root`; `--workspace` overrides it; relative paths; reject escape, hidden/build/vendor/sensitive paths; bounded file/byte budgets; report truncation; confirm `.mkl` overwrite; project machines live in `machines/` |
 | **3. Machine data I/O**     | Read CSV, write a report                         | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch |
 | **4. Arbitrary FS / shell** | `rm`, bash, git                                  | **Never core**; explicit sandboxed plugin | Default off; high friction                                            |
 
@@ -424,6 +424,12 @@ Console sessions always live under
 `mklang init --user` creates these roots and seeds the user `machines/` with a
 commented `hello.mkl` sample plus its `hello.test.yaml` scenario (keyless first
 run via `mklang test`).
+Project machine resolution is shared by CLI, console, and path-based MCP runs:
+the registry layers stdlib → plugin → system → user → project root → project
+`machines/`, with the last matching machine winning. Root-level project `.mkl`
+files remain readable for compatibility; new console-authored files go under
+`machines/`. A path outside a recognizable project loads only its sibling
+machines plus the global registry.
 Local vs global (ADR 0023): `runtime.yaml` resolves first-hit-wins
 (project → user → `/etc` → bundled) for every entry point, `mklang-mcp`
 included; `.env` layers per key — real environment > project `.env` > user

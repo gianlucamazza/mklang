@@ -49,8 +49,9 @@ implementation change, not this ADR.
   - _Inline source has no parent directory_, so the server **builds the `registry` in
     memory** from the single supplied machine. A `call:` to a target that was not supplied
     surfaces cleanly as a `semantic_check` error (the same error the CLI would raise), not
-    a crash. Path-loaded machines keep parent-directory sibling discovery
-    (`load_registry`), exactly as the CLI does.
+    a crash. Path-loaded machines use project-aware discovery: root-level and
+    `machines/` files are included for recognized projects; unrelated paths keep
+    parent-directory sibling discovery.
 
 - **Tool `resume`.** Takes an **opaque checkpoint handle** (not a file path), optional
   injected values (the HITL reply, e.g. `human.reply`, written into the innermost frame's

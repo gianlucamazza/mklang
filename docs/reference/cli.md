@@ -151,8 +151,8 @@ mklang test examples/triage.mkl --script examples/triage.test.yaml
 mklang machines [--dir DIR]
 ```
 
-Lists commissionable machines (stdlib, plugins; `--dir` adds a project
-directory's `.mkl` files) with the winning source per name.
+Lists commissionable machines (stdlib, plugins; `--dir` adds a project's
+root-level and `machines/` files) with the winning source per name.
 
 ## init
 
