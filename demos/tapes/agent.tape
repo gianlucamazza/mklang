@@ -24,9 +24,12 @@ Type "rm -rf /tmp/mklang-agent-state /tmp/mklang-agent-machines && mkdir -p /tmp
 Enter
 Show
 
-Type "PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines --max-tokens 60000"
+Type "PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines"
 Enter
 Wait+Screen@30s /Ready/
+Sleep 1s
+Type "/budget 60000"
+Enter
 Sleep 1s
 
 Type "Find this week's news about open-source AI models and give me a short brief with links."
