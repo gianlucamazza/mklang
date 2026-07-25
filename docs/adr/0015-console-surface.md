@@ -88,6 +88,9 @@ behavior change when absent; the same seam later serves OpenTelemetry export
 - `write_machine` is confined to the workspace directory; runs of machines
   whose `tool:` states have real side effects surface a consent prompt listing
   the tools before the first execution (SPEC §11 applies to the console too).
+- Session continuation is workspace-scoped: `--continue` selects the newest
+  session for the selected workspace, while `--session` rejects a session
+  recorded for another workspace.
 
 ### UX shape (Textual)
 
@@ -96,7 +99,8 @@ line with slash commands that bypass the brain for operator use (`/machines`,
 `/run <name>`, `/check <path>`, `/resume <ck>`, `/budget`, `/provider`,
 `/quit`), and a toggleable inspector (context blackboard, full trace, usage).
 Sessions persist under the host state root — blackboard, event transcript
-(JSONL), checkpoints — and `--continue` reopens the last one. [ADR 0021](0021-filesystem-layout-local-install.md)
+(JSONL), checkpoints — and `--continue` reopens the last session for the
+selected workspace. [ADR 0021](0021-filesystem-layout-local-install.md)
 later standardized the XDG location and legacy fallback;
 [Best practices §13](../guides/best-practices.md#current-host-layout-documentation-ssot)
 is the documentation SSOT for the current paths.

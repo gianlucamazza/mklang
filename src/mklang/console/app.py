@@ -199,10 +199,25 @@ def build_app(
                 cancel_requested=self.cancel_event.is_set,
             )
             if session_id:
-                self.session = Session.load(base / session_id)
+                candidate = (base / session_id).resolve()
+                if not candidate.is_relative_to(base.resolve()):
+                    raise ValueError("session id must stay inside the console session directory")
+                self.session = Session.load(candidate)
+                if (
+                    self.session.workspace
+                    and Path(self.session.workspace).resolve() != self.tools.workspace
+                ):
+                    raise ValueError(
+                        f"session {session_id!r} belongs to workspace {self.session.workspace!r}, "
+                        f"not {self.tools.workspace}"
+                    )
             elif continue_session:
-                self.session = Session.latest(base) or Session.create(
-                    base, workspace=str(self.tools.workspace), brain=brain.name
+                self.session = Session.latest(
+                    base, workspace=self.tools.workspace
+                ) or Session.create(
+                    base,
+                    workspace=str(self.tools.workspace),
+                    brain=brain.name,
                 )
             else:
                 self.session = Session.create(

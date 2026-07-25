@@ -25,12 +25,23 @@ def load_registry(directory: str | Path, validate: bool = True) -> dict[str, Mac
     skipped (the caller validates its own target explicitly), so one bad file in the
     project directory can't sink an unrelated run."""
     reg: dict[str, Machine] = {}
-    for f in sorted(Path(directory).glob("*.mkl")):
+    root = Path(directory).resolve()
+    for f in sorted(root.glob("*.mkl")):
+        try:
+            resolved = f.resolve()
+            if not resolved.is_relative_to(root):
+                _log.warning("machine file %s skipped: symlink escapes registry root %s", f, root)
+                continue
+        except OSError as err:
+            _log.warning("machine file %s skipped: cannot resolve path: %s", f, err)
+            continue
         try:
             m = load_machine(f, validate=validate)
         except Exception as err:  # a broken sibling shouldn't crash the run
             _log.warning("machine file %s skipped: %s", f, err)
             continue
+        if m.name in reg:
+            _log.warning("machine name %r collides in %s; using %s", m.name, root, f)
         reg[m.name] = m
     return reg
 
@@ -48,7 +59,15 @@ def load_project_registry(directory: str | Path, validate: bool = True) -> dict[
     reg = load_registry(root, validate=validate)
     machine_root = project_machine_root(root)
     if machine_root != root:
-        reg.update(load_registry(machine_root, validate=validate))
+        child = load_registry(machine_root, validate=validate)
+        for name in set(reg) & set(child):
+            _log.warning(
+                "machine name %r in %s shadows legacy project machine in %s",
+                name,
+                machine_root,
+                root,
+            )
+        reg.update(child)
     return reg
 
 

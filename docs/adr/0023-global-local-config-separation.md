@@ -63,6 +63,11 @@ run time, one at a time.
    gate), machine roots with counts, and the state paths. Exit 1 when the
    active provider cannot run.
 
+7. **Explicit workspace roots are authoritative for console runtime loading**:
+   console config and dotenv lookup use the selected workspace root, and the
+   filesystem data backend is bound to that same root. Console sessions are
+   selected by workspace and cannot be reopened from another workspace.
+
 ## Consequences
 
 - A host configured once with `mklang init --user` now behaves identically for

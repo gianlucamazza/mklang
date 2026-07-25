@@ -169,7 +169,7 @@ Never ask the model to “confirm the message was sent.” Gates should treat `s
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Input**   | `list_files`: `path?` · `read_file`: `path`, `max_bytes?` · `write_file`: `path`, `content`, `overwrite?`                             |
 | **Output**  | JSON: `{tool, stub, error, path, …}` — `entries/count/truncated`, `content/bytes/truncated`, `bytes/written/existed`                  |
-| **Default** | **Live reads** confined to the workspace (`MKLANG_FS_ROOT` or cwd); writes refused without a grant                                    |
+| **Default** | **Live reads** confined to the selected workspace (`--workspace` for console/MCP, otherwise `MKLANG_FS_ROOT` or cwd); writes refused without a grant |
 | **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` / `tools.fs.write` · Offline: `MKLANG_FS_BACKEND=stub` or `tools.fs.backend: stub` |
 
 Relative paths only; `..`, absolute paths, and dotfiles are refused; writes are
@@ -258,7 +258,8 @@ Continue-stitching after length stop is **deferred** (not default).
 
 - **Step `budget`:** worst-case path × loops + fan-out width; leave repair headroom.
 - **Fan-out:** charges `max(1, len(branches))` at runtime; static check counts fan-out as 1.
-- **Token cost:** `--max-tokens` / `cost_budget` shared with `call` children.
+- **Token cost:** `--max-tokens` / `cost_budget` is shared with `call` children,
+  includes produce and judge usage, and is partitioned across fan-out branches.
 - **Tiers:** default `balanced`; cascade `fast` → escalate → `reasoning` for mostly-easy work.
 - **Sample diversity:** temperature and/or `{{index}}` in the prompt; do not assume all reasoners sample.
 
@@ -330,7 +331,7 @@ emits a `note:` on machines that use escalate (advisory even under `--strict`).
   request IDs and suspension reason; metadata must be redacted and must never
   be treated as machine-authored context.
 - Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
-- Console: tool **consent** once per session; `always yes` is an explicit operator
+- Console: tool **consent** once per workspace-scoped session; `always yes` is an explicit operator
   choice that applies to later confirmation prompts in that persisted session;
   workspace confinement still applies to authored `.mkl` files.
 - Workspace files, web results, plugin output, and tool observations remain

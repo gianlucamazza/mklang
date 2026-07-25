@@ -77,8 +77,19 @@ class ConsoleTools:
         self.workspace.mkdir(parents=True, exist_ok=True)
         self.machine_root = project_machine_root(self.workspace)
         self.inspector = WorkspaceInspector(self.workspace)
-        self.prov = load_provider(self.config, self.provider)
+        self.prov = load_provider(self.config, self.provider, cwd=self.workspace)
         self.llm = (self.build_llm or _default_build_llm)(self.prov)
+        # The console has one authoritative workspace. Bind the data-tool
+        # backend to it instead of allowing runtime.yaml/MKLANG_FS_ROOT to
+        # silently redirect commissioned machines elsewhere.
+        from .. import fs
+
+        self._previous_fs_backend = fs.current_fs_backend()
+        backend_name, _ = fs.resolve_backend_name()
+        fs.configure_fs(
+            fs.LocalFSBackend(self.workspace) if backend_name == "local" else fs.StubFSBackend()
+        )
+        self._fs_bound = True
 
     def close(self) -> None:
         """Release the provider client once, if the adapter exposes a lifecycle hook."""
@@ -89,6 +100,12 @@ class ConsoleTools:
         close = getattr(self.llm, "close", None)
         if callable(close):
             close()
+        if getattr(self, "_fs_bound", False):
+            from .. import fs
+
+            fs.configure_fs(self._previous_fs_backend)
+            fs.allow_writes(False)
+            self._fs_bound = False
 
     def _audit(self, event: str, **fields: object) -> None:
         if self.audit is None:

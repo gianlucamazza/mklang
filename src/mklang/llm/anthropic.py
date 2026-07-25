@@ -137,6 +137,11 @@ class AnthropicLLM:
         idx, method = parse_choice(text, len(conditions))
         if idx is None:
             raise JudgeUnparseable(text[:200] or "(empty)")
+        usage = getattr(msg, "usage", None)
+        self.last_judge_usage = (
+            getattr(usage, "input_tokens", 0) or 0,
+            getattr(usage, "output_tokens", 0) or 0,
+        )
         return idx, method
 
 

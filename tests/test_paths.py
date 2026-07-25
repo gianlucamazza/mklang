@@ -135,6 +135,21 @@ def test_user_env_fills_gaps_behind_the_project_env(tmp_path, monkeypatch):
     assert os.environ["MK_TEST_USER_ONLY"] == "user"
 
 
+def test_empty_project_env_does_not_mask_user_value(tmp_path, monkeypatch):
+    monkeypatch.setattr(os, "environ", dict(os.environ))
+    monkeypatch.setenv("MKLANG_CONFIG_DIR", str(tmp_path / "userconf"))
+    userconf = tmp_path / "userconf"
+    userconf.mkdir()
+    (userconf / ".env").write_text("MK_TEST_KEY=user\n", encoding="utf-8")
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / ".env").write_text("MK_TEST_KEY=\n", encoding="utf-8")
+    monkeypatch.chdir(project)
+    monkeypatch.delenv("MK_TEST_KEY", raising=False)
+    load_env_files()
+    assert os.environ["MK_TEST_KEY"] == "user"
+
+
 def test_console_workspace_defaults_to_current_directory(tmp_path, monkeypatch):
     monkeypatch.setenv("MKLANG_DATA_DIR", str(tmp_path / "data"))
     cwd = tmp_path / "somewhere"

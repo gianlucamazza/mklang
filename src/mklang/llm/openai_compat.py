@@ -136,6 +136,7 @@ class OpenAICompatLLM:
         idx, method = parse_choice(text, len(conditions))
         if idx is None:
             raise JudgeUnparseable(text[:200] or "(empty)")
+        self.last_judge_usage = _usage(r)
         return idx, method
 
 

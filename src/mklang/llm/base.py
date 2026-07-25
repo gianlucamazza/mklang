@@ -51,7 +51,9 @@ class LLM(Protocol):
         reply was parsed (``"json"`` / ``"bare"`` / ``"last-number"``, see
         ``parse_choice``); the engine traces a non-``json`` method as ``judge_parse``.
         Returning a bare ``int`` is also accepted (the engine treats the method as
-        unknown) — mock/scripted judges use that simpler form.
+        unknown) — mock/scripted judges use that simpler form. Reference adapters
+        expose judge usage through the optional ``last_judge_usage`` attribute so
+        existing adapter implementations remain source-compatible.
 
         When the state used `reason: true`, `reasoning` is the private chain-of-thought
         (SPEC §4.5 / §6) — visible to the judge, never deposited into context."""

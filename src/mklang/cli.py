@@ -10,6 +10,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -465,6 +466,10 @@ def cmd_init(args: argparse.Namespace) -> int:
         host_paths,
     )
 
+    if args.user and args.dir != ".":
+        return _input_error(args, "--dir cannot be combined with --user")
+    if not args.user and Path(args.dir).exists() and not Path(args.dir).is_dir():
+        return _input_error(args, f"project root is not a directory: {args.dir}")
     if args.user:
         root = host_paths().config
         config_target = host_paths().user_config
@@ -477,10 +482,6 @@ def cmd_init(args: argparse.Namespace) -> int:
         env_target = root / ".env"
     created: list[str] = []
     skipped: list[str] = []
-    for directory in (config_target.parent, machines):
-        if not directory.exists():
-            directory.mkdir(parents=True, exist_ok=True)
-            created.append(str(directory))
     templates = [
         (bundled_config(), config_target),
         (bundled_env_example(), env_target),
@@ -490,12 +491,41 @@ def cmd_init(args: argparse.Namespace) -> int:
     # Both modes get the schema next to runtime.yaml so the example's
     # yaml-language-server header validates in either location.
     templates.append((bundled_config_schema(), config_target.parent / "runtime.schema.json"))
-    for source, target in templates:
-        if target.exists():
-            skipped.append(str(target))
-        else:
-            shutil.copyfile(source, target)
+    created_files: list[Path] = []
+    created_dirs: list[Path] = []
+    try:
+        for directory in (config_target.parent, machines):
+            if not directory.exists():
+                directory.mkdir(parents=True, exist_ok=True)
+                created_dirs.append(directory)
+                created.append(str(directory))
+        for source, target in templates:
+            if target.exists():
+                skipped.append(str(target))
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            fd, temporary_name = tempfile.mkstemp(prefix=f".{target.name}.", dir=target.parent)
+            temporary = Path(temporary_name)
+            try:
+                with os.fdopen(fd, "wb") as handle, source.open("rb") as source_handle:
+                    shutil.copyfileobj(source_handle, handle)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(temporary, target)
+            except BaseException:
+                temporary.unlink(missing_ok=True)
+                raise
+            created_files.append(target)
             created.append(str(target))
+    except (OSError, shutil.Error) as exc:
+        for path in reversed(created_files):
+            path.unlink(missing_ok=True)
+        for directory in sorted(created_dirs, key=lambda path: len(path.parts), reverse=True):
+            try:
+                directory.rmdir()
+            except OSError:
+                pass
+        return _input_error(args, f"initialization failed atomically: {exc}")
     result = CommandResult(
         command="init",
         ok=True,
@@ -529,7 +559,10 @@ def cmd_console(args: argparse.Namespace) -> int:
     from .console.app import main as console_main
     from .config import load_provider
 
-    missing = host.missing_key_message(load_provider(args.config, args.provider))
+    workspace = _resolve_workspace(args.workspace)
+    missing = host.missing_key_message(
+        load_provider(args.config, args.provider, cwd=Path(workspace).resolve())
+    )
     if missing:
         # Fail before the TUI launches; otherwise the brain dies on its first turn.
         print(missing, file=sys.stderr)
@@ -537,7 +570,7 @@ def cmd_console(args: argparse.Namespace) -> int:
     return console_main(
         args.config,
         args.provider,
-        _resolve_workspace(args.workspace),
+        workspace,
         args.agent,
         continue_session=args.continue_session,
         session_id=args.session,

@@ -75,10 +75,14 @@ def missing_key_message(prov: ProviderConfig) -> str | None:
 
 
 def _provider(
-    config: str | None, provider: str | None, build_llm: BuildLLM | None
+    config: str | None,
+    provider: str | None,
+    build_llm: BuildLLM | None,
+    *,
+    cwd: Path | None = None,
 ) -> tuple[ProviderConfig, LLM, list[str]]:
     try:
-        prov = load_provider(config, provider)
+        prov = load_provider(config, provider, cwd=cwd)
     except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
         raise PrepareError([str(exc)], kind="load") from exc
     missing = missing_key_message(prov)
@@ -196,7 +200,13 @@ def prepare_path(
     unrelated paths see only their siblings. A bare registry name (e.g.
     ``std_cot``) uses the global registry without path discovery.
     """
-    prov, llm, warnings = _provider(config, provider, build_llm)
+    resolved_path = Path(machine_path).resolve()
+    config_cwd = (
+        resolved_path.parent.parent
+        if resolved_path.parent.name == "machines"
+        else resolved_path.parent
+    )
+    prov, llm, warnings = _provider(config, provider, build_llm, cwd=config_cwd)
     base = base_registry()
     if not Path(machine_path).exists():
         if machine_path in base:

@@ -37,6 +37,9 @@ _TURN_SPLIT = re.compile(r"(?=^user: )", re.M)
 @dataclass
 class Session:
     dir: Path
+    created_at: str = field(
+        default_factory=lambda: datetime.now().isoformat(timespec="microseconds")
+    )
     history: str = ""
     spent_in: int = 0
     spent_out: int = 0
@@ -65,6 +68,9 @@ class Session:
         st = json.loads((d / "state.json").read_text(encoding="utf-8"))
         return cls(
             dir=d,
+            created_at=str(
+                st.get("created_at") or datetime.fromtimestamp(d.stat().st_mtime).isoformat()
+            ),
             history=st.get("history", ""),
             spent_in=st.get("spent_in", 0),
             spent_out=st.get("spent_out", 0),
@@ -76,12 +82,30 @@ class Session:
         )
 
     @classmethod
-    def latest(cls, base: Path | str = DEFAULT_BASE) -> "Session | None":
+    def latest(
+        cls, base: Path | str = DEFAULT_BASE, *, workspace: str | Path | None = None
+    ) -> "Session | None":
         base = Path(base)
         if not base.is_dir():
             return None
-        candidates = sorted(p for p in base.iterdir() if (p / "state.json").is_file())
-        return cls.load(candidates[-1]) if candidates else None
+        expected = str(Path(workspace).expanduser().resolve()) if workspace is not None else None
+        candidates = []
+        for path in base.iterdir():
+            if not (path / "state.json").is_file():
+                continue
+            if expected is not None:
+                try:
+                    state = json.loads((path / "state.json").read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                recorded = state.get("workspace")
+                if not recorded or str(Path(recorded).expanduser().resolve()) != expected:
+                    continue
+            candidates.append(path)
+        if not candidates:
+            return None
+        sessions = [cls.load(path) for path in candidates]
+        return max(sessions, key=lambda session: (session.created_at, session.id))
 
     # -- persistence -------------------------------------------------------
 
@@ -95,6 +119,7 @@ class Session:
 
     def save_state(self) -> None:
         payload = {
+            "created_at": self.created_at,
             "history": self.history,
             "spent_in": self.spent_in,
             "spent_out": self.spent_out,

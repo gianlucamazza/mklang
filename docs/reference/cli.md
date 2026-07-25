@@ -71,7 +71,7 @@ mklang run MACHINE [--set k.path=value]... [options]
 | `--set k.path=value`         | seed the initial context (repeatable)                                                                      |
 | `--config PATH`              | runtime config (auto-discovered when omitted)                                                              |
 | `--provider NAME`            | override the config's `active` provider                                                                    |
-| `--max-tokens N`             | cost budget: halt once total tokens reach this                                                             |
+| `--max-tokens N`             | cost budget: halt once total produce + judge tokens reach this                                            |
 | `--checkpoint PATH`          | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11; frames record the taint set, SPEC §6) |
 | `--hitl`                     | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)   |
 | `--strict`                   | refuse to run a document whose `mklang:` version is unsupported (default: warning)                         |
@@ -164,7 +164,9 @@ Never overwrites existing files. Project mode creates `config/runtime.yaml`,
 `config/runtime.schema.json`, `.env`, and `machines/` seeded with a commented
 `hello.mkl` sample plus its `hello.test.yaml` scenario script — an immediate,
 keyless first run via `mklang test`; `--user` initializes the XDG user host
-instead ([Installation](../guides/install.md)).
+instead ([Installation](../guides/install.md)). `--user` and `--dir` are
+mutually exclusive; existing files are preserved and a failed scaffold is
+rolled back.
 
 ## doctor
 
@@ -190,7 +192,8 @@ launched); the selected root is injected into the brain as `workspace_root`,
 and repeated by the snapshot and workspace-tool results (tool paths remain
 relative and confined);
 `--agent` swaps the console's brain with your own machine;
-`--continue`/`--session` reopen sessions. Full guide:
+`--continue` resumes only the latest session belonging to the selected workspace;
+`--session` rejects sessions belonging to another workspace. Full guide:
 [Console](../guides/console.md).
 
 ## mklang-mcp

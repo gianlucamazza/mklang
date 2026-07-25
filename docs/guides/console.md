@@ -153,10 +153,12 @@ Every conversation persists under
 `always yes` choice — rewritten atomically per turn),
 `transcript.jsonl` (turns + every engine event, streaming append), and
 `checkpoints/` for turns parked on budget exhaustion. `--continue` reopens the
-latest session and replays recoverable user, agent, and slash-result records into
+latest session for the selected workspace and replays recoverable user, agent,
+and slash-result records into
 the conversation pane; a torn final transcript line is ignored. Unexpected
 worker errors are shown as actionable `ERROR` state and re-enable the prompt.
-`--session <id>` reopens a specific one. The canonical host layout is
+`--session <id>` reopens a specific one only when it belongs to the selected
+workspace. The canonical host layout is
 maintained in
 [Best practices §13](best-practices.md#current-host-layout-documentation-ssot).
 

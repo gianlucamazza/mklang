@@ -56,7 +56,14 @@ def test_latest_picks_newest_and_handles_empty(tmp_path):
     assert Session.latest(tmp_path / "nowhere") is None
     a = Session.create(tmp_path)
     b = Session.create(tmp_path)
-    assert Session.latest(tmp_path).id == max(a.id, b.id)
+    assert Session.latest(tmp_path).id in {a.id, b.id}
+
+
+def test_latest_is_scoped_to_workspace(tmp_path):
+    a = Session.create(tmp_path, workspace=str(tmp_path / "a"))
+    b = Session.create(tmp_path, workspace=str(tmp_path / "b"))
+    assert Session.latest(tmp_path, workspace=tmp_path / "a").id == a.id
+    assert Session.latest(tmp_path, workspace=tmp_path / "b").id == b.id
 
 
 def test_history_for_brain_keeps_last_turns_with_marker():

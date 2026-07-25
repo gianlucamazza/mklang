@@ -155,7 +155,7 @@ def _judge_prose_batch(
     judge_reasoning: str | None,
     judge_model: str,
     ann: dict,
-) -> tuple[int, Gate, dict]:
+) -> tuple[int, Gate, dict, tuple[int, int]]:
     """Fused LLM judge over a prose batch; otherwise-fallback on JudgeUnparseable."""
     try:
         verdict = deps.llm.judge(
@@ -169,7 +169,7 @@ def _judge_prose_batch(
         # method ("json" / "bare" / "last-number"). Mock/scripted judges return
         # a bare int (method unknown).
         if isinstance(verdict, tuple):
-            local, parse_method = verdict
+            local, parse_method = verdict[:2]
         else:
             local, parse_method = verdict, None
         # Adapters must return an index in [0, len(batch)); do not clamp here —
@@ -182,7 +182,8 @@ def _judge_prose_batch(
         # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
         if parse_method and parse_method != "json":
             ann["judge_parse"] = parse_method
-        return gi, gate, ann
+        usage = getattr(deps.llm, "last_judge_usage", (0, 0))
+        return gi, gate, ann, (int(usage[0] or 0), int(usage[1] or 0))
     except JudgeUnparseable as e:
         ann["judge_fallback"] = True
         ann["judge_raw"] = str(e)[:200]
@@ -193,7 +194,7 @@ def _judge_prose_batch(
             raise
         gi, gate = catch
         ann["gate_via"] = "otherwise"
-        return gi, gate, ann
+        return gi, gate, ann, (0, 0)
 
 
 def _select_gate(
@@ -203,7 +204,7 @@ def _select_gate(
     deps: _Ctx,
     judge_reasoning: str | None,
     judge_model: str,
-) -> tuple[int, Gate, dict]:
+) -> tuple[int, Gate, dict, tuple[int, int]]:
     """Pick the first true gate (hooks / otherwise / fused LLM prose batch).
 
     `judge_model` is the model this state's prose gates are judged by (SPEC §2.1).
@@ -217,12 +218,12 @@ def _select_gate(
             if _call_hook(gate, ctx, result, deps.hooks):
                 ann["gate_via"] = "hook"
                 ann["hook"] = gate.hook
-                return gi, gate, ann
+                return gi, gate, ann, (0, 0)
             i += 1
             continue
         if _is_otherwise(gate):
             ann["gate_via"] = "otherwise"
-            return gi, gate, ann
+            return gi, gate, ann, (0, 0)
         batch = _collect_prose_batch(eligible, i)
         if not batch:
             i += 1
@@ -584,9 +585,19 @@ def _execute_fanout(
     branch_tainted = _fanout_branch_taint(state, tainted)
     if branches:
         with ThreadPoolExecutor(max_workers=deps.max_workers) as ex:
+            branch_budget = None
+            if deps.cost_budget is not None:
+                branch_budget = max(1, deps.cost_budget // len(branches))
             outs = list(
                 ex.map(
-                    lambda b: _safe_exec(state, b, deps, machine, depth, branch_tainted),
+                    lambda b: _safe_exec(
+                        state,
+                        b,
+                        replace(deps, cost_budget=branch_budget),
+                        machine,
+                        depth,
+                        branch_tainted,
+                    ),
                     branches,
                 )
             )
@@ -962,7 +973,11 @@ class _Runner:
         self.total_in += step_in
         self.total_out += step_out
         if step_in or step_out:
-            step["cost"] = {"input_tokens": step_in, "output_tokens": step_out}
+            previous = step.get("cost", {})
+            step["cost"] = {
+                "input_tokens": int(previous.get("input_tokens", 0)) + step_in,
+                "output_tokens": int(previous.get("output_tokens", 0)) + step_out,
+            }
 
     def _judge(
         self,
@@ -983,10 +998,11 @@ class _Runner:
             return self._halt("no-gate-matched")
         try:
             judge_model = _judge_model_for(S, self.machine, self.deps)
-            i, gate, gann = _select_gate(
+            i, gate, gann, judge_usage = _select_gate(
                 eligible, result, self.ctx, self.deps, judge_reasoning, judge_model
             )
             step.update(gann)
+            self._charge_step(step, *judge_usage)
         except JudgeUnparseable:
             step.update(step=self.steps, gate=None, policy="judge-unparseable", to=None)
             if "judge_fallback" not in step:

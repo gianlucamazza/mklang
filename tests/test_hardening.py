@@ -42,6 +42,35 @@ def test_usage_recorded_in_trace_and_result():
     assert r.trace[0]["cost"] == {"input_tokens": 10, "output_tokens": 5}
 
 
+def test_judge_usage_is_included_in_cost_accounting():
+    class JudgeUsageLLM(MockLLM):
+        def judge(self, *args, **kwargs):
+            self.last_judge_usage = (7, 3)
+            return 0
+
+    machine = M(
+        {
+            "machine": "x",
+            "entry": "a",
+            "budget": 5,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [{"when": "accepted", "then": "ok", "to": "END"}],
+                }
+            },
+        }
+    )
+    r = _run(
+        machine,
+        JudgeUsageLLM(produce_fn=lambda *a: Produced("x", input_tokens=10, output_tokens=5)),
+    )
+    assert r.usage == {"input_tokens": 17, "output_tokens": 8}
+    assert r.trace[0]["cost"] == {"input_tokens": 17, "output_tokens": 8}
+
+
 def test_cost_budget_halts():
     llm = MockLLM(produce_fn=lambda *a: Produced("x", input_tokens=100, output_tokens=0))
     r = _run(_one_state(gates_to="a", budget=99), llm, cost_budget=150)
