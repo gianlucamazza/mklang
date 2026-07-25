@@ -112,6 +112,7 @@ def test_tool_registry_names(tools):
         "list_workspace",
         "read_workspace_file",
         "search_workspace",
+        "update_task",
     }
 
 
@@ -191,6 +192,41 @@ def test_write_machine_derives_name_from_source(tools):
     assert "no `machine:` name" in nameless["error"]
     hidden = json.loads(tools.write_machine({"name": ".hidden", "source": HITL_SRC}))
     assert "escapes" in hidden["error"]
+
+
+def test_write_machine_validates_before_atomic_replace(tools):
+    target = tools.workspace / "approval.mkl"
+    target.write_text(HITL_SRC, encoding="utf-8")
+    bad = json.loads(tools.write_machine({"name": "approval", "source": "machine: broken"}))
+    assert bad["error"] == "machine validation failed; file was not changed"
+    assert target.read_text(encoding="utf-8") == HITL_SRC
+
+
+def test_update_task_validates_and_persists(tools):
+    persisted = []
+    tools.task_persist = lambda: persisted.append(dict(tools.task))
+    result = json.loads(
+        tools.update_task(
+            {
+                "request": json.dumps(
+                    {
+                        "goal": "ship the console",
+                        "phase": "verifying",
+                        "plan": [{"step": "run tests", "status": "done"}],
+                        "progress": 80,
+                        "verification": ["pytest passed"],
+                    }
+                )
+            }
+        )
+    )
+    assert result["task"]["goal"] == "ship the console"
+    assert result["task"]["action_count"] == 1
+    assert persisted and persisted[-1]["progress"] == 80
+    invalid = json.loads(tools.update_task({"request": '{"phase":"unknown"}'}))
+    assert "invalid task phase" in invalid["error"]
+    forged = json.loads(tools.update_task({"request": '{"action_count":99}'}))
+    assert "unknown task fields" in forged["error"]
 
 
 def test_check_machine_reports_errors(tools):

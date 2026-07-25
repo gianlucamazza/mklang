@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=../../../../schema/mklang.schema.json
 # agent.mkl — the console's brain (ADR 0015): one run per user turn.
 #
-# Flow: decide → {workspace scan/search/read/analyze | discover |
+# Flow: decide → {task update | workspace scan/search/read/analyze | discover |
 #                 prepare_run → do_run | clarify | author → save | reply → END}
 #       (every action loops back to decide; the budget bounds the turn)
 # Shows: the console's intelligence as an ordinary, auditable machine — swap it
@@ -69,6 +69,11 @@ tools:
       Search visible UTF-8 project files without shell access. Input is a JSON
       request string {"query": "...", "path": "", "max_results": 40}; the
       result reports the absolute workspace_root.
+  - name: update_task
+    description: >
+      Persist the current goal, phase, plan, progress, blockers, artifacts and
+      verification in the session ledger. Input: {"request": "<JSON object>"}.
+      This is the authoritative continuity record for multi-step work.
 
 context:
   user_message: ""
@@ -80,11 +85,12 @@ context:
   workspace_context: {} # host-provided deterministic snapshot of this folder
   workspace_brief: "" # compact evidence summary for multi-step analysis
   workspace_required: false # host classification for explicit project analysis
+  task_state: {} # persistent goal/plan/progress ledger for this session
 
 states:
   decide: # the ReAct "think" step
     structure: >
-      One line starting with exactly one of WORKSPACE_SCAN, WORKSPACE_SEARCH,
+      One line starting with exactly one of TASK_UPDATE, WORKSPACE_SCAN, WORKSPACE_SEARCH,
       WORKSPACE_READ, WORKSPACE_ANALYZE, DISCOVER, RUN, CLARIFY, AUTHOR or
       REPLY, followed by the details: for RUN the machine name and the inputs
       to pass; for workspace actions the JSON request; for CLARIFY the question
@@ -109,6 +115,10 @@ states:
       not invent a time from training data.
       For directory questions, report the injected Workspace root exactly;
       distinguish it from global/user machine discovery and session storage.
+      When work spans multiple actions or turns, keep the task ledger current:
+      use TASK_UPDATE at the start, after meaningful progress, when blocked, and
+      before the final reply. A plan item is done only after its action and
+      verification are recorded. Never claim completion without evidence.
       If a tool returned search unbound, say how to enable it (TAVILY_API_KEY or
       MKLANG_SEARCH_BACKEND). If an observation has truncated: true or
       result_truncated: true, report the cutoff and do not invent the missing
@@ -120,12 +130,15 @@ states:
 
       Workspace snapshot: {{workspace_context}}
       Workspace evidence brief: {{workspace_brief}}
+      Task ledger: {{task_state}}
 
       Conversation so far: {{history}}
       User request: {{user_message}}
       Observations this turn: {{observation}}
 
       Choose the single next action:
+      - TASK_UPDATE — persist the current goal/phase/plan/progress and any
+        artifacts, blockers or verification evidence as a JSON ledger update.
       - WORKSPACE_SCAN — list the project root or a relevant directory before
         analyzing a folder/project.
       - WORKSPACE_SEARCH — find symbols, files or project instructions after a
@@ -177,9 +190,47 @@ states:
       - when: the output chooses WORKSPACE_ANALYZE
         then: ok
         to: analyze_workspace
+      - when: the output chooses TASK_UPDATE
+        then: ok
+        to: prepare_task_update
       - when: otherwise
         then: ok
-        to: reply
+        to: decision_repair
+
+  decision_repair:
+    structure: >
+      One line beginning with exactly one supported action: TASK_UPDATE,
+      WORKSPACE_SCAN, WORKSPACE_SEARCH, WORKSPACE_READ, WORKSPACE_ANALYZE,
+      DISCOVER, RUN, CLARIFY, AUTHOR or REPLY.
+    execution: |
+      Repair the previous invalid decision. Choose exactly one supported action;
+      do not answer the user directly in this repair state.
+    prompt: |
+      Previous decision: {{thought}}
+      Task ledger: {{task_state}}
+      Choose one valid action from the console contract.
+    tier: reasoning
+    output: thought
+    gates: [{ when: otherwise, then: ok, to: decide }]
+
+  prepare_task_update:
+    structure: 'A JSON object with task ledger fields and nothing else.'
+    execution: Output only the JSON object, without markdown or commentary.
+    prompt: |
+      Convert this task decision into JSON. Preserve only valid fields:
+      goal, phase, plan, progress, blocked_reason, artifacts, verification.
+      Decision: {{thought}}
+      Existing ledger: {{task_state}}
+    tier: fast
+    output: task_request
+    gates: [{ when: otherwise, then: ok, to: task_update }]
+
+  task_update:
+    tool: update_task
+    input: { request: "{{task_request}}" }
+    output: observation
+    accumulate: true
+    gates: [{ when: otherwise, then: ok, to: decide }]
 
   prepare_workspace_scan:
     structure: 'A JSON object {"path": ""} and nothing else.'
@@ -383,6 +434,7 @@ states:
       Today is {{today}}. Current local time is {{now}}.
       User request: {{user_message}}
       Your decision: {{thought}}
+      Task ledger: {{task_state}}
       Observations this turn: {{observation}}
 
       Write the final reply to the user.

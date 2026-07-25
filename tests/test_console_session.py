@@ -22,6 +22,7 @@ def test_session_roundtrip(tmp_path):
     s.history = "user: hi\nagent: hello"
     s.spent_in, s.spent_out = 10, 5
     s.consented = ["calc"]
+    s.task = {"goal": "ship", "phase": "planning", "progress": 10}
     s.save_state()
     s.append({"t": "user", "text": "hi"})
     s.append({"t": "agent", "text": "hello"})
@@ -30,6 +31,7 @@ def test_session_roundtrip(tmp_path):
     assert loaded.history == s.history
     assert (loaded.spent_in, loaded.spent_out) == (10, 5)
     assert loaded.consented == ["calc"]
+    assert loaded.task == s.task
     lines = (s.dir / "transcript.jsonl").read_text().strip().splitlines()
     assert [json.loads(line)["t"] for line in lines] == ["user", "agent"]
     assert [record["t"] for record in loaded.records()] == ["user", "agent"]

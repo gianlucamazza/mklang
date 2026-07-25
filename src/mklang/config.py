@@ -19,6 +19,7 @@ class ProviderConfig:
     base_url: str | None = None
     judge: str | None = None
     params: dict = field(default_factory=dict)
+    protocol: str = "auto"  # auto (registered provider) or openai_compat
 
     def judge_override(self) -> str | None:
         """The optional global judge-model override (config `judge:`).
@@ -66,6 +67,34 @@ def load_provider(config_path: str | Path | None, provider: str | None = None) -
     if name not in cfg.get("providers", {}):
         raise ValueError(f"provider {name!r} not in {resolved}")
     p = cfg["providers"][name]
+    if not isinstance(p, dict):
+        raise ValueError(f"provider {name!r} in {resolved} must be a mapping")
+    protocol = p.get("protocol", "auto")
+    if protocol not in {"auto", "openai_compat"}:
+        raise ValueError(
+            f"provider {name!r} in {resolved} has unsupported protocol {protocol!r}; "
+            "use auto or openai_compat"
+        )
+    tiers = p.get("tiers")
+    if not isinstance(tiers, dict) or set(tiers) != {"fast", "balanced", "reasoning"}:
+        raise ValueError(
+            f"provider {name!r} in {resolved} must define exactly fast, balanced and reasoning tiers"
+        )
+    if any(not isinstance(model, str) or not model.strip() for model in tiers.values()):
+        raise ValueError(f"provider {name!r} in {resolved} has invalid model ids")
+    params = p.get("params", {}) or {}
+    if not isinstance(params, dict):
+        raise ValueError(
+            f"provider {name!r} in {resolved} has invalid `params`; expected a mapping"
+        )
+    unknown_param_tiers = set(params) - set(tiers)
+    if unknown_param_tiers:
+        raise ValueError(
+            f"provider {name!r} in {resolved} has params for unknown tier(s): "
+            f"{sorted(unknown_param_tiers)}"
+        )
+    if any(not isinstance(value, dict) for value in params.values()):
+        raise ValueError(f"provider {name!r} in {resolved} has non-mapping tier params")
     api_key = os.environ.get(p.get("api_key_env", ""), "")
     # Publish the optional `tools:` block process-wide (ADR 0016): every
     # executing surface passes through here before any tool runs.
@@ -74,10 +103,11 @@ def load_provider(config_path: str | Path | None, provider: str | None = None) -
     configure_tools(parse_tools_block(cfg))
     return ProviderConfig(
         name=name,
-        tiers=p["tiers"],
+        tiers=tiers,
+        protocol=protocol,
         api_key=api_key,
         api_key_env=p.get("api_key_env", ""),
         base_url=p.get("base_url"),
         judge=p.get("judge"),
-        params=p.get("params", {}) or {},
+        params=params,
     )

@@ -71,6 +71,7 @@ display path renders Markdown. Square brackets in model output (`array[0]`,
 ## The agent
 
 One user turn = one run of `agent.mkl` (ReAct-shaped): `decide` routes between
+**TASK_UPDATE** (the durable goal/plan/progress ledger),
 **WORKSPACE_SCAN / SEARCH / READ / ANALYZE** (read-only project inspection),
 **DISCOVER** (list machines), **RUN** (commission one), **CLARIFY** (ask you),
 **AUTHOR** (write a new `.mkl` into the workspace, validate it, repair on
@@ -91,7 +92,14 @@ cannot finish until workspace evidence and an evidence brief exist. Swap the
 brain with `--agent your_brain.mkl` — custom brains
 that want project inspection should declare and use the same workspace tools in
 addition to the existing contract (`list_machines`, `describe_machine`,
-`read_machine`, `check_machine`, `write_machine`, `run_machine`, `ask_user`).
+`read_machine`, `check_machine`, `write_machine`, `run_machine`, `ask_user`,
+`update_task`).
+The task ledger is updated explicitly through `update_task`; its validated
+fields are persisted in `state.json` and include the current goal, phase,
+plan, progress, blockers, artifacts and verification evidence. Invalid brain
+decisions enter a bounded repair state rather than being silently treated as a
+reply. Authoring validates the complete machine before an atomic replacement,
+so a failed validation cannot partially overwrite an existing file.
 
 Tool consent is scoped to the commissioned machine and tool (`machine:tool`),
 not only to a global tool name. Machine discovery exposes conservative risk
@@ -141,8 +149,8 @@ while typing, and `/help` includes copyable examples.
 Every conversation persists under
 `$XDG_STATE_HOME/mklang/console/sessions/<id>/` (default
 `~/.local/state/mklang/console/sessions/<id>/`):
-`state.json` (history, spend, tool consents, and the session's `always yes`
-choice — rewritten atomically per turn),
+`state.json` (history, spend, tool consents, task ledger, and the session's
+`always yes` choice — rewritten atomically per turn),
 `transcript.jsonl` (turns + every engine event, streaming append), and
 `checkpoints/` for turns parked on budget exhaustion. `--continue` reopens the
 latest session and replays recoverable user, agent, and slash-result records into

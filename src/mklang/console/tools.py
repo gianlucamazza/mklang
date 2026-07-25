@@ -13,6 +13,8 @@ explicit one-time consent per tool set (SPEC §11 applies to the console too).
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -63,6 +65,8 @@ class ConsoleTools:
     build_llm: Callable[[object], LLM] | None = None
     cancel_requested: Callable[[], object] | None = None
     audit: Callable[[dict], object] | None = None
+    task: dict = field(default_factory=dict)
+    task_persist: Callable[[], object] | None = None
     _consented: set = field(default_factory=set)
     _close_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
     _closed: bool = field(default=False, init=False, repr=False)
@@ -111,6 +115,7 @@ class ConsoleTools:
             "list_workspace": self.list_workspace,
             "read_workspace_file": self.read_workspace_file,
             "search_workspace": self.search_workspace,
+            "update_task": self.update_task,
         }
 
     # -- read-only project inspection -------------------------------------
@@ -221,12 +226,71 @@ class ConsoleTools:
         ):
             self._audit("write-denied", machine=name, path=path.name, reason="overwrite declined")
             return _obs({"error": "overwrite declined by the user"})
-        path.write_text(source, encoding="utf-8")
         checked = host.check_machine(source=source)
+        if not checked.get("ok"):
+            self._audit("machine-write-failed", machine=name, path=path.name, check=checked)
+            return _obs(
+                {"error": "machine validation failed; file was not changed", "check": checked}
+            )
+        temporary: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False
+            ) as handle:
+                handle.write(source)
+                handle.flush()
+                os.fsync(handle.fileno())
+                temporary = handle.name
+            os.replace(temporary, path)
+        except OSError as exc:
+            if temporary:
+                try:
+                    os.unlink(temporary)
+                except OSError:
+                    pass
+            self._audit("machine-write-failed", machine=name, path=path.name, error=str(exc))
+            return _obs({"error": f"cannot write machine atomically: {exc}", "check": checked})
         self._audit(
             "machine-written", machine=name, path=path.name, bytes=len(source.encode("utf-8"))
         )
         return _obs({"written": path.name, "check": checked})
+
+    def update_task(self, input: dict) -> str:
+        """Update the persistent task ledger without granting new capabilities."""
+        request = self._decode_workspace_request(input)
+        if not request:
+            return _obs({"error": "task update must be a non-empty JSON object"})
+        allowed = {
+            "goal",
+            "phase",
+            "plan",
+            "progress",
+            "blocked_reason",
+            "artifacts",
+            "verification",
+        }
+        unknown = sorted(set(request) - allowed)
+        if unknown:
+            return _obs({"error": f"unknown task fields: {', '.join(unknown)}"})
+        phases = {"planning", "executing", "verifying", "waiting", "blocked", "complete"}
+        if "phase" in request and request["phase"] not in phases:
+            return _obs({"error": f"invalid task phase {request['phase']!r}"})
+        if "progress" in request and (
+            not isinstance(request["progress"], int) or not 0 <= request["progress"] <= 100
+        ):
+            return _obs({"error": "task progress must be an integer between 0 and 100"})
+        for key in ("plan", "artifacts", "verification"):
+            if key in request and not isinstance(request[key], list):
+                return _obs({"error": f"task {key} must be a list"})
+        for key in ("goal", "blocked_reason"):
+            if key in request and not isinstance(request[key], str):
+                return _obs({"error": f"task {key} must be a string"})
+        self.task.update(request)
+        self.task["action_count"] = int(self.task.get("action_count", 0)) + 1
+        self._audit("task-updated", task=self.task)
+        if self.task_persist is not None:
+            self.task_persist()
+        return _obs({"task": self.task})
 
     def _workspace_path(self, name: str) -> Path | None:
         """Resolve a machine name/filename inside the workspace; None if it escapes."""

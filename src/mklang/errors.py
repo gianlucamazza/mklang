@@ -11,6 +11,10 @@ class ProviderError(MklangError):
     """A provider/API call failed (after retries)."""
 
 
+class ProviderConfigError(MklangError):
+    """The configured provider cannot be resolved to a valid adapter."""
+
+
 class RefusalError(MklangError):
     """The model declined to answer (e.g. Anthropic stop_reason == 'refusal')."""
 

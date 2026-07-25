@@ -17,6 +17,7 @@ from collections.abc import Callable
 
 from .config import ProviderConfig, load_provider
 from .engine import RunResult
+from .errors import ProviderConfigError
 from .llm.base import LLM
 from .loader import check_tiers, load_machine, semantic_check, validate_dict
 from .model import Machine, parse_machine
@@ -83,8 +84,21 @@ def _provider(
     missing = missing_key_message(prov)
     if missing:
         raise PrepareError([missing], kind="config")
-    llm = (build_llm or _default_build_llm)(prov)
+    try:
+        llm = (build_llm or _default_build_llm)(prov)
+    except ProviderConfigError as exc:
+        raise PrepareError([str(exc)], kind="config") from exc
     return prov, llm, []
+
+
+def prepare_provider(
+    config: str | None,
+    provider: str | None,
+    *,
+    build_llm: BuildLLM | None = None,
+) -> tuple[ProviderConfig, LLM, list[str]]:
+    """Resolve a provider through the same seam used by runnable machines."""
+    return _provider(config, provider, build_llm)
 
 
 def _check(

@@ -48,7 +48,7 @@
     "fast": "deepseek-v4-flash",
     "reasoning": "deepseek-v4-flash"
   },
-  "package_version": "1.0.8",
+  "package_version": "1.0.9",
   "provider": "deepseek",
   "schema": 2,
   "source": {

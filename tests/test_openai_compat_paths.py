@@ -7,6 +7,7 @@ import pytest
 from mklang.errors import JudgeUnparseable, ProviderError
 from mklang.llm.openai_compat import (
     OpenAICompatLLM,
+    OpenAICompatProfile,
     _apply_params,
     _drop_offending_param,
     _usage,
@@ -52,6 +53,7 @@ def _adapter(side_effect, max_retries=3):
     llm.max_retries = max_retries
     completions = _Completions(side_effect)
     llm.client = type("C", (), {"chat": type("Ch", (), {"completions": completions})()})()
+    llm.profile = OpenAICompatProfile()
     return llm, completions
 
 
@@ -92,7 +94,14 @@ def test_produce_splits_params_and_forwards_openai_thinking():
     sent = completions.calls[0]
     assert sent["reasoning_effort"] == "high"  # SDK top-level
     assert sent["extra_body"] == {"custom": 1, "thinking": {"type": "enabled"}}
-    assert "temperature" not in sent
+    assert sent["temperature"] == 0.4
+
+
+def test_profile_can_omit_temperature_for_thinking_provider():
+    llm, completions = _adapter(lambda n, k: _Resp())
+    llm.profile = OpenAICompatProfile(omit_temperature_when_thinking=True)
+    llm.produce("m", "s", "u", params={"thinking": {"type": "enabled"}})
+    assert "temperature" not in completions.calls[0]
 
 
 def test_produce_forwards_disabled_thinking_and_keeps_temperature():

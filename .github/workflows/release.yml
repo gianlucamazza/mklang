@@ -38,6 +38,8 @@ jobs:
           bash scripts/build-docs.sh
           uvx --with mkdocs-material mkdocs build --strict
       - name: Build and validate distributions
+        env:
+          SOURCE_DATE_EPOCH: "0"
         run: |
           uv build
           uvx twine check dist/*
