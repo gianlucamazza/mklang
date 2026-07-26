@@ -12,16 +12,29 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.10] — 2026-07-26
+
+Workspace isolation, runtime budget accounting, packaging hygiene and an
+internal layout refactor.
+
 ### Added
 
+- Workspace-scoped session continuation, registry safety diagnostics and
+  regression coverage for environment, filesystem and judge-cost boundaries.
 - All `examples/*.test.yaml` scenarios run in the offline suite
-  (`tests/test_examples.py`), which also pins every `machines/` workspace copy
-  byte-identical to its `examples/` twin; `machines/*.mkl` joins the CI
+  (`tests/repo/test_examples.py`), which also pins every `machines/` workspace
+  copy byte-identical to its `examples/` twin; `machines/*.mkl` joins the CI
   schema/check/lint gates.
 - Version headings in this changelog link to the GitHub compare view.
 
 ### Changed
 
+- Make console/configuration workspace selection authoritative and make
+  `mklang init` transactional with rollback on failure.
+- Include judge usage in cost accounting, partition fan-out budgets and apply
+  the console default budget to agent turns.
+- Document the corrected isolation, budgeting, initialization and console
+  contracts.
 - Internal layout (no user-facing changes, ADR 0029): the `doctor`
   diagnostics and the argparse tree moved out of `cli.py`
   (`cli_doctor.py`, `cli_parser.py`); the console worker bridge and the
@@ -37,24 +50,6 @@ All notable changes to mklang are documented here. The format follows
 - The sdist no longer bundles release artifacts: `dist-release/`, `packaging/`
   and `uv.lock` are excluded (the 1.0.9 sdist shipped a stale copy of itself
   and an old makepkg tarball).
-
-## [1.0.10] — 2026-07-25
-
-Workspace isolation, runtime budget accounting and documentation hardening.
-
-### Added
-
-- Workspace-scoped session continuation, registry safety diagnostics and
-  regression coverage for environment, filesystem and judge-cost boundaries.
-
-### Changed
-
-- Make console/configuration workspace selection authoritative and make
-  `mklang init` transactional with rollback on failure.
-- Include judge usage in cost accounting, partition fan-out budgets and apply
-  the console default budget to agent turns.
-- Document the corrected isolation, budgeting, initialization and console
-  contracts.
 
 ## [1.0.9] — 2026-07-25
 
