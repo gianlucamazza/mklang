@@ -24,7 +24,7 @@ from typing import Protocol
 import yaml
 
 from .. import host
-from ..capabilities import capability_key, metadata_for, redact
+from .capabilities import capability_key, metadata_for, redact
 from ..config import load_provider
 from ..engine import run as run_machine_engine
 from ..llm.base import LLM

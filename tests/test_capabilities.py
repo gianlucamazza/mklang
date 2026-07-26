@@ -2,7 +2,7 @@
 
 import json
 
-from mklang.capabilities import capability_key, metadata_for, redact
+from mklang.console.capabilities import capability_key, metadata_for, redact
 from mklang.tool_obs import tool_obs
 
 
