@@ -51,12 +51,16 @@ All surfaces commission runs through the same seam, `host.py`.
 
 - `cli.py` + `presentation.py` — the `mklang` command; typed `CommandResult`s
   rendered as Rich text or stable JSON ([CLI reference](cli.md), ADR 0022).
-- `console/` — the TUI (ADR 0015): `app.py` (Textual app), `session.py`
-  (crash-tolerant persistence), `commands.py` (slash commands), `render.py`
-  (safe conversation rendering), `widgets.py` (activity tree, inspector),
-  `tools.py` (the brain machine's hands, including bounded read-only workspace
-  listing, search and file reads), `workspace.py` (workspace policy, budgets and
-  inspection). The brain itself is a machine:
+  `cli_parser.py` builds the argparse tree from injected handlers;
+  `cli_doctor.py` is the `doctor` diagnostics (ADR 0029).
+- `console/` — the TUI (ADR 0015): `app.py` (Textual app), `bridge.py`
+  (worker↔UI bridge: emit from any thread, block on human answers),
+  `session.py` (crash-tolerant persistence), `commands.py` (slash commands),
+  `render.py` (safe conversation rendering), `widgets.py` (activity tree,
+  inspector), `tools.py` (the brain machine's hands, including bounded
+  read-only workspace listing, search and file reads), `capabilities.py`
+  (host-side consent and privacy policy for agent tools), `workspace.py`
+  (workspace policy, budgets and inspection). The brain itself is a machine:
   `data/console/agent.mkl`. The brain's `update_task` tool persists a validated
   goal/plan/progress ledger in the session state, while authored machines are
   checked before atomic workspace replacement.
@@ -68,23 +72,25 @@ All surfaces commission runs through the same seam, `host.py`.
 
 Plugins hook in via entry-point groups; builtins register the same way.
 
-| Registry       | Entry-point group  | Contract                                     |
-| -------------- | ------------------ | -------------------------------------------- |
-| `providers.py` | `mklang.providers` | LLM adapter factory                          |
-| `tools.py`     | `mklang.tools`     | `(dict) -> str` host tool for `tool:` states |
-| `hooks.py`     | `mklang.hooks`     | `(context, output) -> bool` gate hook        |
+| Registry       | Entry-point group  | Contract                                                                                 |
+| -------------- | ------------------ | ---------------------------------------------------------------------------------------- |
+| `providers.py` | `mklang.providers` | LLM adapter factory                                                                      |
+| `tools.py`     | `mklang.tools`     | `(dict) -> str` host tool for `tool:` states                                             |
+| `hooks.py`     | `mklang.hooks`     | `(context, output) -> bool` gate hook                                                    |
 | `registry.py`  | `mklang.machines`  | layered `.mkl` registry: stdlib → plugin → system → user → project → `project/machines/` |
 
 ## Supporting modules
 
 | Module                                         | Role                                                                                            |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `config.py`                                    | tier→model map, explicit protocol, and structural provider validation; keys from `.env`          |
+| `config.py`                                    | tier→model map, explicit protocol, and structural provider validation; keys from `.env`         |
 | `paths.py`                                     | XDG host layout and config/machine discovery (ADR 0021)                                         |
 | `errors.py`                                    | typed adapter errors the engine maps to halt reasons                                            |
 | `lint.py` / `llmlint.py`                       | static analysis / LLM-assisted lint (ADR 0010)                                                  |
 | `scripttest.py`                                | scripted-LLM harness — single source of truth shared by `mklang test` and the conformance suite |
 | `search.py`, `kb.py`, `mail.py`, `tool_obs.py` | host tool stubs + shared observation envelope (ADR 0016/0020)                                   |
+| `fs.py`                                        | filesystem data tools: workspace-confined reads, opt-in writes (ADR 0024)                       |
+| `toolconfig.py`                                | the `tools:` runtime-config block shared by the backend resolvers                               |
 | `data/stdlib/`                                 | the `std_*` machines ([catalog](stdlib.md), ADR 0012)                                           |
 | `data/mklang.schema.json`                      | the JSON Schema `check` validates against                                                       |
 

@@ -20,7 +20,7 @@ uv run mklang test examples/triage.mkl --script examples/triage.test.yaml  # scr
 ```
 
 `pytest` already runs the [conformance suite](./conformance/README.md)
-(`tests/test_conformance.py` over `conformance/cases/*.yaml`). `mklang test` is
+(`tests/conformance/test_conformance.py` over `conformance/cases/*.yaml`). `mklang test` is
 the same case format for **author-facing** scenario scripts next to a machine.
 
 Secrets live in `.env` (gitignored); copy `.env.example` and add provider keys for
@@ -72,7 +72,7 @@ A change to the **language** must land as a coherent set — in this order:
    update a case under `conformance/cases/` (ADR 0009).
 5. **Examples** — add/adjust a machine in `examples/` that exercises the feature;
    where gate routing matters, add a sibling `*.test.yaml` — every
-   `examples/*.test.yaml` runs in CI (`tests/test_examples.py`). A machine
+   `examples/*.test.yaml` runs in CI (`tests/repo/test_examples.py`). A machine
    copied into the `machines/` workspace must stay byte-identical to its
    `examples/` twin (enforced by the same test).
 6. **Tests** — deterministic coverage with `MockLLM` in `tests/`; keep `ruff`
@@ -120,7 +120,7 @@ an existing tag.
 **Tag ↔ CHANGELOG invariant.** Every `CHANGELOG.md` entry from **0.5.3** upward
 must carry a matching `v<version>` git tag; entries at or below **0.5.2** are
 pre-distribution history and are exempt (the first PyPI release was 0.5.4). This
-is enforced offline by `tests/test_release.py`
+is enforced offline by `tests/repo/test_release.py`
 (`test_changelog_entries_from_distribution_cutoff_are_tagged`) — so a CHANGELOG
 entry that was never released fails CI. Either tag it or drop it.
 

@@ -2,7 +2,7 @@
 
 Implementation-neutral test cases for the **language semantics** (SPEC §5–§7).
 An interpreter conforms to mklang v0.3 (v0.2 documents remain valid) when it
-passes every case in `cases/` with its own runner. The reference runner is `tests/test_conformance.py`; a
+passes every case in `cases/` with its own runner. The reference runner is `tests/conformance/test_conformance.py`; a
 second implementation (TypeScript, Rust, …) writes its own runner against the
 same YAML files.
 

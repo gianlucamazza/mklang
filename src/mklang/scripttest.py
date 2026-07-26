@@ -3,7 +3,7 @@ API-key-free testing of mklang machines.
 
 Two consumers share this module:
 
-- **The conformance suite** (`tests/test_conformance.py`) — pins the *interpreter*
+- **The conformance suite** (`tests/conformance/test_conformance.py`) — pins the *interpreter*
   against `conformance/cases/*.yaml` (SPEC §5–§7). It builds a machine + registry
   from each case and asserts the expectation matches.
 - **`mklang test`** (the CLI) — lets an *author* test their own `.mkl` against a

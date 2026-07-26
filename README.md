@@ -324,7 +324,7 @@ keys resolve server-side from the environment, never over the wire.
 - `machines/` — the canonical project workspace the
   [console](./docs/guides/console.md) discovers in this repo; holds a
   byte-identical demo copy of `examples/news_search.mkl` (the pair is pinned by
-  `tests/test_examples.py`).
+  `tests/repo/test_examples.py`).
 
 ## Stack
 

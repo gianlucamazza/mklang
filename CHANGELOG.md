@@ -22,6 +22,11 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
+- Internal layout (no user-facing changes, ADR 0029): the `doctor`
+  diagnostics and the argparse tree moved out of `cli.py`
+  (`cli_doctor.py`, `cli_parser.py`); the console worker bridge and the
+  capability policy moved into `console/` (`bridge.py`,
+  `capabilities.py`); `tests/` mirrors the `src` layout.
 - Support policy restated post-1.0 (`SECURITY.md`, stability guide);
   conformance README scope now covers the 0.3 `parse: list` and raw-input
   cases; `.env.example` documents the `MKLANG_*` host-layout and plugin-policy
