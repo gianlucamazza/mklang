@@ -14,8 +14,10 @@ from mklang.loader import semantic_check, validate_dict
 from mklang.registry import base_registry, load_stdlib_registry
 from mklang.scripttest import match_expectation, run_scenario
 
+from conftest import REPO_ROOT
+
 CONFIG = "config/runtime.example.yaml"
-STDLIB_DIR = Path(__file__).resolve().parents[1] / "src" / "mklang" / "data" / "stdlib"
+STDLIB_DIR = REPO_ROOT / "src" / "mklang" / "data" / "stdlib"
 STDLIB_FILES = sorted(STDLIB_DIR.glob("*.mkl"))
 EXPECTED = {
     "std_cascade",

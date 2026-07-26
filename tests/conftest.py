@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
+
+# Repo root, independent of a test module's directory depth. Test modules
+# import it as `from conftest import REPO_ROOT` (prepend import mode puts
+# tests/ on sys.path).
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)

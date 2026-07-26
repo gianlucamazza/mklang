@@ -6,7 +6,6 @@ and that the harness actually drives a run end to end with a scripted LLM.
 """
 
 import importlib.util
-from pathlib import Path
 
 import pytest
 
@@ -15,7 +14,9 @@ from mklang.llm.base import Produced
 from mklang.loader import semantic_check
 from mklang.model import parse_machine
 
-ROOT = Path(__file__).resolve().parents[1]
+from conftest import REPO_ROOT
+
+ROOT = REPO_ROOT
 
 
 def _module():

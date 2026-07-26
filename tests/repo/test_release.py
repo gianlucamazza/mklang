@@ -1,6 +1,5 @@
 """Release provenance and live-matrix gate tests (offline)."""
 
-from pathlib import Path
 import importlib.util
 import re
 import subprocess
@@ -10,8 +9,10 @@ import pytest
 
 import mklang
 
+from conftest import REPO_ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
+
+ROOT = REPO_ROOT
 
 
 def _gate_divergence_module():

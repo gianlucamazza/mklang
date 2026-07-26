@@ -1,7 +1,5 @@
 """The console brain (agent.mkl, ADR 0015 M1c): validity + scripted scenarios in CI."""
 
-from pathlib import Path
-
 import yaml
 
 from mklang.lint import lint_machine
@@ -11,7 +9,9 @@ from mklang.scripttest import match_expectation, run_scenario
 from mklang.hooks import console_workspace_ready
 from mklang.console.workspace import requires_workspace_inspection
 
-AGENT_DIR = Path(__file__).resolve().parents[1] / "src" / "mklang" / "data" / "console"
+from conftest import REPO_ROOT
+
+AGENT_DIR = REPO_ROOT / "src" / "mklang" / "data" / "console"
 
 
 def load_agent():
