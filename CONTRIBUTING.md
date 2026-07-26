@@ -71,11 +71,17 @@ A change to the **language** must land as a coherent set — in this order:
 4. **Conformance** — if the change touches language semantics (SPEC §5–§7), add or
    update a case under `conformance/cases/` (ADR 0009).
 5. **Examples** — add/adjust a machine in `examples/` that exercises the feature;
-   where gate paths matter, a sibling `*.test.yaml` for `mklang test` is welcome.
+   where gate routing matters, add a sibling `*.test.yaml` — every
+   `examples/*.test.yaml` runs in CI (`tests/test_examples.py`). A machine
+   copied into the `machines/` workspace must stay byte-identical to its
+   `examples/` twin (enforced by the same test).
 6. **Tests** — deterministic coverage with `MockLLM` in `tests/`; keep `ruff`
    **and `mypy`** clean (zero suppressions) and coverage above the
    `fail_under = 90` gate.
 7. **Docs** — `README.md`, `docs/guides/patterns.md`, `CHANGELOG.md`, and `ROADMAP.md`.
+   A new page under `docs/` must also be listed in the `mkdocs.yml` nav — the
+   published site is built from `docs/` by `scripts/build-docs.sh` (see
+   `mkdocs.yml` for the layout mapping).
 
 Keep `ruff format` clean too — the format check is CI-gated (`ruff format --check`),
 not only `ruff check`.

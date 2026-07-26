@@ -13,8 +13,8 @@ mklang carries two independent version numbers:
   (currently `"0.3"`; `"0.2"` documents remain valid). It changes only when the
   language changes.
 - **Package version** — the reference interpreter and tooling, SemVer in
-  `pyproject.toml` (currently pre-1.0). It changes when the interpreter or
-  tooling changes.
+  `pyproject.toml` (1.x — strict SemVer since 1.0.0). It changes when the
+  interpreter or tooling changes.
 
 The two move independently: a package release often ships with the spec version
 unchanged. Both lines are recorded in [CHANGELOG](../../CHANGELOG.md).

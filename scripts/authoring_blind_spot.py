@@ -46,7 +46,7 @@ from mklang.config import load_env_files, load_provider
 from mklang.errors import ProviderError, RefusalError
 from mklang.host import PrepareError, check_machine
 from mklang.llm.base import LLM
-from mklang.model import parse_machine
+from mklang.model import Machine, parse_machine
 from mklang.providers import build_llm
 from mklang.scripttest import match_expectation, run_scenario
 
@@ -499,7 +499,7 @@ states:
 }
 
 
-def _parse_authored(source: str):
+def _parse_authored(source: str) -> tuple[Machine | None, str | None]:
     """Parse authored YAML into a Machine, or return an error string."""
     try:
         doc = yaml.safe_load(source)

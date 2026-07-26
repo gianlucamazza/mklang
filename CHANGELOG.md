@@ -14,7 +14,24 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- All `examples/*.test.yaml` scenarios run in the offline suite
+  (`tests/test_examples.py`), which also pins every `machines/` workspace copy
+  byte-identical to its `examples/` twin; `machines/*.mkl` joins the CI
+  schema/check/lint gates.
+- Version headings in this changelog link to the GitHub compare view.
+
 ### Changed
+
+- Support policy restated post-1.0 (`SECURITY.md`, stability guide);
+  conformance README scope now covers the 0.3 `parse: list` and raw-input
+  cases; `.env.example` documents the `MKLANG_*` host-layout and plugin-policy
+  variables.
+
+### Fixed
+
+- The sdist no longer bundles release artifacts: `dist-release/`, `packaging/`
+  and `uv.lock` are excluded (the 1.0.9 sdist shipped a stale copy of itself
+  and an old makepkg tarball).
 
 ## [1.0.10] — 2026-07-25
 
@@ -1030,3 +1047,38 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
   the runtime. Provider-agnostic capability tiers (`fast` / `balanced` / `reasoning`).
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
+
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.10...HEAD
+[1.0.10]: https://github.com/gianlucamazza/mklang/compare/v1.0.9...v1.0.10
+[1.0.9]: https://github.com/gianlucamazza/mklang/compare/v1.0.8...v1.0.9
+[1.0.8]: https://github.com/gianlucamazza/mklang/compare/v1.0.7...v1.0.8
+[1.0.7]: https://github.com/gianlucamazza/mklang/compare/v1.0.6...v1.0.7
+[1.0.6]: https://github.com/gianlucamazza/mklang/compare/v1.0.5...v1.0.6
+[1.0.5]: https://github.com/gianlucamazza/mklang/compare/v1.0.4...v1.0.5
+[1.0.4]: https://github.com/gianlucamazza/mklang/compare/v1.0.3...v1.0.4
+[1.0.3]: https://github.com/gianlucamazza/mklang/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/gianlucamazza/mklang/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/gianlucamazza/mklang/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/gianlucamazza/mklang/compare/v0.16.0...v1.0.0
+[0.16.0]: https://github.com/gianlucamazza/mklang/compare/v0.15.0...v0.16.0
+[0.15.0]: https://github.com/gianlucamazza/mklang/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/gianlucamazza/mklang/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/gianlucamazza/mklang/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/gianlucamazza/mklang/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/gianlucamazza/mklang/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/gianlucamazza/mklang/compare/v0.9.3...v0.10.0
+[0.9.3]: https://github.com/gianlucamazza/mklang/compare/v0.9.2...v0.9.3
+[0.9.2]: https://github.com/gianlucamazza/mklang/compare/v0.9.1...v0.9.2
+[0.9.1]: https://github.com/gianlucamazza/mklang/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/gianlucamazza/mklang/compare/v0.8.2...v0.9.0
+[0.8.2]: https://github.com/gianlucamazza/mklang/compare/v0.8.1...v0.8.2
+[0.8.1]: https://github.com/gianlucamazza/mklang/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/gianlucamazza/mklang/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/gianlucamazza/mklang/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/gianlucamazza/mklang/compare/v0.5.4...v0.6.0
+[0.5.4]: https://github.com/gianlucamazza/mklang/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/gianlucamazza/mklang/compare/v0.5.0...v0.5.3
+[0.5.0]: https://github.com/gianlucamazza/mklang/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/gianlucamazza/mklang/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/gianlucamazza/mklang/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/gianlucamazza/mklang/releases/tag/v0.2.2

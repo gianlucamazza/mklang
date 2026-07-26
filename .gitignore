@@ -26,3 +26,10 @@ venv/
 # Generated docs site
 site-src/
 site/
+
+# Release and makepkg artifacts
+dist-release/
+packaging/arch/src/
+packaging/arch/pkg/
+packaging/arch/*.tar.gz
+*.pkg.tar.*

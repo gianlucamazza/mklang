@@ -87,8 +87,11 @@ exclude = [
   "/.github",
   "/demos",
   "/dist",
+  "/dist-release",
+  "/packaging",
   "/site",
   "/docs/assets/demos",
+  "/uv.lock",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -122,7 +125,7 @@ skip_covered = true
 exclude_also = ["if TYPE_CHECKING:"]
 
 [tool.mypy]
-files = ["src/mklang"]
+files = ["src/mklang", "scripts"]
 python_version = "3.11"
 check_untyped_defs = true
 disallow_incomplete_defs = true

@@ -171,9 +171,9 @@ providers:
         reasoning: deepseek-v4-flash,
       }
     params:
-      fast: {thinking: {type: disabled}}
-      balanced: {thinking: {type: disabled}}
-      reasoning: {thinking: {type: enabled}, reasoning_effort: high}
+      fast: { thinking: { type: disabled } }
+      balanced: { thinking: { type: disabled } }
+      reasoning: { thinking: { type: enabled }, reasoning_effort: high }
   anthropic:
     tiers:
       {
@@ -321,6 +321,10 @@ keys resolve server-side from the environment, never over the wire.
   - [`map_reduce.mkl`](./examples/map_reduce.mkl) + [`summarize_doc.mkl`](./examples/summarize_doc.mkl) — `over` + `call`.
   - [`react.mkl`](./examples/react.mkl) — reason/act/observe loop with `accumulate`.
   - [`hook_gates.mkl`](./examples/hook_gates.mkl) — deterministic code-hook gates (exact policy).
+- `machines/` — the canonical project workspace the
+  [console](./docs/guides/console.md) discovers in this repo; holds a
+  byte-identical demo copy of `examples/news_search.mkl` (the pair is pinned by
+  `tests/test_examples.py`).
 
 ## Stack
 

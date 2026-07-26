@@ -46,7 +46,7 @@ Principles:
 
 _mklang is to LangGraph what a declarative spec is to Python code._
 
-### What mklang is **not** (v0.2)
+### What mklang is **not**
 
 - It does not compile to a formal artifact (GBNF, JSON Schema of _outputs_, code).
 - It guarantees neither determinism nor statically typed output.
@@ -276,7 +276,7 @@ prompt: |
 ```
 
 Interpolations of **tainted** context keys (host-supplied values, tool
-observations, prior deposits — see §6 *Taint & untrusted-data delimiting*)
+observations, prior deposits — see §6 _Taint & untrusted-data delimiting_)
 render inside a `<data-NONCE>…</data-NONCE>` fence; author `context:` literals
 render bare.
 
@@ -1013,7 +1013,7 @@ language contract; silent omission would be worse than incomplete mitigation.
 
 | Source                                  | Trust               | How it enters the machine                |
 | --------------------------------------- | ------------------- | ---------------------------------------- |
-| Author `.mkl` prose                      | Trusted (author)    | structure, prompt, execution, `when`     |
+| Author `.mkl` prose                     | Trusted (author)    | structure, prompt, execution, `when`     |
 | Host tools / hooks                      | Trusted (host code) | `tool:` / `hook:` registries             |
 | Tool **observations** (search, KB, …)   | **Untrusted data**  | deposited into the blackboard (§4.9)     |
 | Blackboard / `--set` / resume injection | **Often untrusted** | `{{path}}` interpolation + judge CONTEXT |
@@ -1029,7 +1029,7 @@ language contract; silent omission would be worse than incomplete mitigation.
    review. Since ADR 0025 tainted values are **delimited** (`<data-NONCE>`
    fences, §6) in produce and judge prompts, so the model can structurally
    distinguish data from instructions — a **mitigation, not a proof**: a model
-   can still be persuaded by the *content* of a fenced span. There is still no
+   can still be persuaded by the _content_ of a fenced span. There is still no
    dual-channel control plane or privilege separation between "untrusted
    observation" and "trusted policy". Related work on dual-channel agents
    (e.g. CaMeL-style designs) is the right research direction; **mklang does

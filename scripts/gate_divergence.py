@@ -27,9 +27,12 @@ import sys
 from itertools import combinations
 from pathlib import Path
 
+from collections.abc import Callable
+
 from mklang.cli import _build_llm
-from mklang.config import load_provider
+from mklang.config import ProviderConfig, load_provider
 from mklang.engine import run
+from mklang.llm.base import LLM
 from mklang.model import parse_machine
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -234,7 +237,7 @@ def _run_once(
     config: str,
     judge_tier: str | None = None,
     machine_doc: dict | None = None,
-    build_llm=_build_llm,
+    build_llm: Callable[[ProviderConfig], LLM] = _build_llm,
 ) -> dict:
     """Run one machine once for one provider. `build_llm` is injectable so the
     offline suite can drive the harness with a scripted LLM (no keys)."""

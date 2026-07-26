@@ -2,9 +2,11 @@
 
 ## Supported versions
 
-mklang is pre-1.0: only the **latest released package version** receives
-security fixes. The language spec version (`mklang:` per-file field) is
-independent — see [CHANGELOG.md](./CHANGELOG.md) for the two version lines.
+Security fixes land on the **latest released package version** only; there are
+no maintenance branches for older releases. The language spec version
+(`mklang:` per-file field) is independent — see [CHANGELOG.md](./CHANGELOG.md)
+for the two version lines and
+[docs/guides/stability.md](./docs/guides/stability.md) for the SemVer policy.
 
 ## Reporting a vulnerability
 

@@ -57,7 +57,7 @@ The runner must provide an LLM whose behavior is fully determined by the case:
   substring of the rendered user prompt (map order); error if nothing matches.
   Tainted interpolations arrive fenced (SPEC §6): match the stable `<data-`
   prefix to assert delimiting, or order a `<data-` key first and a bare-text
-  key second to assert its *absence*.
+  key second to assert its _absence_.
 - **tokens**: every produce reports this `[input, output]` cost (drives the
   cost-budget cases). Default zero.
 - **judge**: return the listed indices in order (an index into the presented
@@ -80,8 +80,12 @@ Covered: gate policies (ok/repair/escalate/fail), `otherwise`, fused judging,
 document order), repair budgets, step and cost budgets, **fan-out step charging**
 (`max(1, len(branches))`, §7), `call` (incl. failure propagation), fan-out
 (`sample` incl. per-branch `{{index}}`, `over`), `accumulate`, **`tool` states**
-(observation deposit, unknown-tool halt), result selection, the halt-reason
-taxonomy, and **untrusted-context delimiting** (SPEC §6 / ADR 0025: the four
+(observation deposit, unknown-tool halt), **output parsing** (0.3 `parse: list`:
+JSON-array deposit for downstream `over:`, and the clean state-error halt on
+non-array output), **raw input resolution** (0.3: an `input:` value that is
+exactly one `{{path}}` placeholder passes the raw context value — e.g. a list —
+into the callee; mixed templates still render text), result selection, the
+halt-reason taxonomy, and **untrusted-context delimiting** (SPEC §6 / ADR 0025: the four
 `taint-*` cases pin fenced tool observations, host inputs, and call results,
 plus bare author literals). Judge-prompt fencing is adapter behavior → unit
 tests, not conformance.
