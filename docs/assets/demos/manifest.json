@@ -41,8 +41,8 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-27T14:30:38.215304+00:00",
-  "generated_from": "b0bb7aa6c43fb0da2c3928a4577471f305a518e5",
+  "generated_at": "2026-07-27T14:57:33.894924+00:00",
+  "generated_from": "4d3f5371997a331aa2cd39e4529a8dda71197b32",
   "models": {
     "balanced": "deepseek-v4-flash",
     "fast": "deepseek-v4-flash",
@@ -59,7 +59,7 @@
       "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
       "examples/news_search.mkl": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mkl": "c2fabb98ec3458cb6454f25ea1ef3cbc4c6dbd28797b5825fa13433c2696a7bc",
-      "scripts/demo_assets.py": "6b8bf0e0fed7cf9a2cbbf0f2ce242996c93edaea18ac24ed8691dbb3c50e262c",
+      "scripts/demo_assets.py": "e3ca6cf6fe36ffb682ff90b66b723017eb93078b4add2a347e52a73442be666e",
       "src/mklang/cli.py": "543895f9762c1af44ed219ecd3da172e4ac25985e73c11dc0477da004f07bf5b",
       "src/mklang/config.py": "7f70ab9d8c4e101fee24e8b5c8353a55827412ec7ab06c3273f8df0cb2fedd90",
       "src/mklang/console/__init__.py": "89e07bbecf189192a684db26463237ecdc31a4cca146e68c5374029450d0ac2c",
@@ -86,7 +86,7 @@
       "src/mklang/search.py": "2e0f08175e3e4902e8c933dd5f429f9e303e210ca9f93aee50bd669b7ebe36c5",
       "src/mklang/tools.py": "2ac751ef995dbcade7eef2bb2e3d34af472ca4d190f6aade453d94f3cdb03fb2"
     },
-    "sha256": "e8b2ca9249237100f57c8624ed131f5f67d2782be1fa398e4088ee644a9318d0"
+    "sha256": "475bcf98f3ba084463da350902bef718e1bfc7dbcdd2b21761100a8377076cbf"
   },
   "toolchain": {
     "font": {

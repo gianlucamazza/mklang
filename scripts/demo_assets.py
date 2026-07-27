@@ -73,7 +73,8 @@ WEBM_MAX = 3 * 1024 * 1024
 GIF_MAX = 5 * 1024 * 1024
 TOTAL_MAX = 16 * 1024 * 1024
 MIN_DURATION = 8.0
-MAX_DURATION = 45.0
+# Agent + live web is latency-variable; 2026-07-27 CI hit ~63s wall playback.
+MAX_DURATION = 75.0
 ANSI = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
