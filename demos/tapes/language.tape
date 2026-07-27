@@ -6,26 +6,38 @@ Require python
 Set Shell "bash"
 Set Width 1200
 Set Height 675
-Set FontSize 22
+Set FontSize 20
 Set FontFamily "JetBrains Mono"
-Set Padding 24
-Set PlaybackSpeed 2
-Set WaitTimeout 180s
+Set LetterSpacing 0
+Set LineHeight 1.0
+Set Theme "Catppuccin Frappe"
+Set Padding 20
+Set Framerate 24
+Set PlaybackSpeed 2.5
+Set TypingSpeed 18ms
+Set WaitTimeout 240s
 
-# The language: a real reason -> tool -> observe -> loop machine (react.mkl).
-Type "PYTHONPATH=src python -m mklang.cli run examples/react.mkl --format text --provider deepseek --set question.text=Calculate_7_times_24_minus_15_books"
+# Language surface: check → lint → run (matches docs/demos.md).
+# Isolate react.mkl so sibling example machines do not flood shadow warnings.
+
+Hide
+Type "rm -rf /tmp/mklang-lang && mkdir -p /tmp/mklang-lang && cp examples/react.mkl /tmp/mklang-lang/ && clear"
 Enter
-Wait+Screen@180s /provider deepseek/
-Wait+Screen@90s /153/
+Show
+
+Type "PYTHONPATH=src python -m mklang.cli check /tmp/mklang-lang/react.mkl"
+Enter
+Wait+Screen@30s /OK .*react\.mkl/
+Sleep 1s
+
+Type "PYTHONPATH=src python -m mklang.cli lint --strict /tmp/mklang-lang/react.mkl"
+Enter
+Wait+Screen@30s /findings=0/
+Sleep 1s
+
+Type "PYTHONPATH=src python -m mklang.cli run /tmp/mklang-lang/react.mkl --format text --provider deepseek --set question.text=Calculate_7_times_24_minus_15"
+Enter
+Wait+Screen@240s /DONE react/
+Wait+Screen@30s /Result/
+Wait+Screen@30s /153/
 Sleep 3s
-
-Type "clear"
-Enter
-Type "PYTHONPATH=src python -m mklang.cli check examples/react.mkl"
-Enter
-Wait+Screen /OK.*react/
-Sleep 1s
-Type "PYTHONPATH=src python -m mklang.cli lint --strict examples/react.mkl"
-Enter
-Wait+Screen /findings=0/
-Sleep 1s

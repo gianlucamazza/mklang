@@ -12,10 +12,17 @@ versioned VHS tapes, not hand-edited terminal captures.
   Your browser does not support embedded WebM video.
 </video>
 
-The agent recording is a free-language, multi-turn session: the first request
-makes the agent brain commission `news_search` (live web via the host `search`
-tool) and report a sourced brief; the follow-up turn chains on that context to
-distill a one-line takeaway — no slash commands involved.
+The agent recording is a free-language, multi-turn session:
+
+1. Raise the session cost budget (`/budget`) so the live path has room.
+2. Ask in natural language to `RUN news_search` for this week's open-source AI
+   models with a short linked brief — the brain commissions the workspace
+   machine and requests host capability consent for `search` (or a turn-budget
+   continue) once; the tape answers `always yes` so further session confirms
+   stay unattended.
+3. After the sourced brief, chain a follow-up turn that distills a one-line
+   takeaway — no slash commands involved for the work itself.
+
 [Read the terminal transcript](assets/demos/agent.txt).
 
 ## Language: gates, tools, and the reasoning loop
@@ -25,10 +32,15 @@ distill a one-line takeaway — no slash commands involved.
   Your browser does not support embedded WebM video.
 </video>
 
-The language recording checks and lints `react.mkl`, then runs it: a real
-reason → act → observe loop. Gates route on natural-language conditions, the
-`calc` tool observation re-enters the context, the loop is bounded by the step
-`budget`, and the `finalize` state escalates to the `reasoning` tier.
+The language recording walks the recommended CLI path on `react.mkl`:
+
+1. `mklang check` — schema + semantic OK.
+2. `mklang lint --strict` — zero findings.
+3. `mklang run` — a real reason → act (`calc` host tool) → observe loop.
+   Gates route on natural-language conditions, the tool observation re-enters
+   the context, the step `budget` bounds the loop, and `finalize` escalates to
+   the `reasoning` tier. The result is the arithmetic answer (153).
+
 [Read the terminal transcript](assets/demos/language.txt).
 
 More flows — the console's stdlib fan-out, `over:`/`call:` composition, HITL
