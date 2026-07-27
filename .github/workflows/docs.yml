@@ -1,3 +1,6 @@
+# Deploy the MkDocs site with the official GitHub Pages OIDC flow
+# (upload-pages-artifact + deploy-pages). Replaces the legacy
+# `mkdocs gh-deploy --force` force-push to the gh-pages branch.
 name: docs
 
 on:
@@ -6,15 +9,37 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v9.0.0
       - name: Assemble docs source
         run: bash scripts/build-docs.sh
-      - name: Build and deploy to GitHub Pages
-        run: uvx --with mkdocs-material mkdocs gh-deploy --force --strict
+      - name: Build site (strict)
+        run: uvx --with mkdocs-material mkdocs build --strict
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
