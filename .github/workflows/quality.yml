@@ -50,6 +50,23 @@ jobs:
         run: shellcheck scripts/install.sh
       - name: Build sdist + wheel
         run: uv build
+      - name: Offline suite against the sdist (AUR check surface)
+        # packaging/arch/PKGBUILD check() runs pytest on the extracted PyPI
+        # sdist. packaging/ and .git are excluded from the sdist; repo-hygiene
+        # tests must skip there rather than FileNotFoundError. A green
+        # full-checkout suite alone does not prove this path (1.0.10/1.0.11).
+        run: |
+          set -euo pipefail
+          sdist=$(echo dist/mklang-*.tar.gz)
+          work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
+          tar xzf "$sdist" -C "$work"
+          tree=$(echo "$work"/mklang-*)
+          uv venv "$work/venv"
+          # Runtime deps from the sdist + AUR checkdepends equivalents.
+          uv pip install --python "$work/venv/bin/python" "$sdist" pytest "mcp>=1.10"
+          cd "$tree"
+          "$work/venv/bin/python" -m pytest tests -q
 
   test:
     strategy:

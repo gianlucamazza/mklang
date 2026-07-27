@@ -130,6 +130,14 @@ on. Publish to PyPI on a **user-visible change** (or a fixed interval, whichever
 is slower), not on every internal checkpoint. Batch churn between real releases
 behind local tags.
 
+**Sdist as a first-class consumer.** The AUR recipe builds and tests from the
+published sdist (`packaging/arch/PKGBUILD` `check()`). Paths excluded from the
+sdist (`packaging/`, `.git`, …) are absent there: any offline test that opens
+them must **skip** when missing, and the quality gate re-runs the suite on the
+extracted sdist so a packaging-only failure cannot ship. After PyPI publish,
+pin `source`/`sha256sums` and push the AUR package — see
+[packaging/arch/README.md](./packaging/arch/README.md).
+
 ## Non-goals (don't propose these)
 
 Pinning a concrete provider/model inside a `.mkl` — machines route by capability tier

@@ -42,12 +42,40 @@ makepkg --printsrcinfo > .SRCINFO
 git add PKGBUILD .SRCINFO && git commit -m "mklang $(source ./PKGBUILD && echo "$pkgver-$pkgrel")" && git push
 ```
 
+## `check()` surface (sdist, not the git tree)
+
+`check()` runs the offline suite against the **extracted PyPI sdist**, not a
+git checkout:
+
+```sh
+cd "mklang-$pkgver"
+PYTHONPATH=src python -m pytest tests -q
+```
+
+The sdist deliberately excludes `packaging/` (and other release artifacts) —
+see `tool.hatch.build.targets.sdist.exclude` in `pyproject.toml`. Repo-hygiene
+tests that open those paths (e.g. `test_pkgbuild_version_is_synchronized`)
+**must skip** when the file is absent, never crash. The same rule already
+applies to git-tag invariants on shallow/sdist trees.
+
+CI enforces this: after `uv build`, the quality gate extracts the sdist and
+re-runs the offline suite there. That gate is the load-bearing guard for this
+surface — a green full-checkout suite alone does **not** prove AUR `check()`
+will pass.
+
 ## Release checklist
 
-On every mklang release, bump `pkgver`, reset `pkgrel=1`, and update
-`source` + `sha256sums` from `https://pypi.org/pypi/mklang/<version>/json`.
+On every mklang release:
 
-Prefer the **content-addressed** `files.pythonhosted.org/packages/<hash>/…`
-URL from the JSON `urls[]` entry for the sdist: the legacy
-`packages/source/m/mklang/mklang-$pkgver.tar.gz` path can 404 for a while after
-publish. Verify the digest against a local download before pushing AUR.
+1. Bump `pkgver`, reset `pkgrel=1` (sha256 may still point at the previous
+   sdist until step 3).
+2. Publish the GitHub Release (`v<version>`) so Trusted Publishing ships the
+   sdist to PyPI.
+3. Update `source` + `sha256sums` from
+   `https://pypi.org/pypi/mklang/<version>/json`. Prefer the
+   **content-addressed** `files.pythonhosted.org/packages/<hash>/…` URL from
+   the JSON `urls[]` entry for the sdist: the legacy
+   `packages/source/m/mklang/mklang-$pkgver.tar.gz` path can 404 for a while
+   after publish. Verify the digest against a local download.
+4. Push `PKGBUILD` + regenerated `.SRCINFO` to the AUR (see above). AUR lag
+   after a PyPI fix is user-visible breakage, not optional polish.

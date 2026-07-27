@@ -39,7 +39,13 @@ def test_pkgbuild_version_is_synchronized():
     # Nothing else pins the Arch recipe to the package version; sha256sums is
     # excluded because it can only follow the published PyPI sdist digest
     # (packaging/arch/README.md release checklist).
-    pkgbuild = (ROOT / "packaging" / "arch" / "PKGBUILD").read_text(encoding="utf-8")
+    # packaging/ is intentionally omitted from the PyPI sdist (see
+    # tool.hatch.build.targets.sdist.exclude) so AUR builds from that sdist
+    # cannot see the recipe — skip rather than fail there.
+    pkgbuild_path = ROOT / "packaging" / "arch" / "PKGBUILD"
+    if not pkgbuild_path.is_file():
+        pytest.skip("packaging/arch/PKGBUILD not present (sdist build)")
+    pkgbuild = pkgbuild_path.read_text(encoding="utf-8")
     assert f"pkgver={mklang.__version__}\n" in pkgbuild
 
 

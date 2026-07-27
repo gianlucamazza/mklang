@@ -8,9 +8,28 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.11`).
+  `pyproject.toml` (currently `1.0.12`).
 
 ## [Unreleased]
+
+## [1.0.12] — 2026-07-27
+
+Packaging check surface: the offline suite must pass on the published sdist.
+
+### Fixed
+
+- `test_pkgbuild_version_is_synchronized` skips when `packaging/arch/PKGBUILD`
+  is absent (sdist / AUR `check()`), matching the intentional sdist exclude of
+  `packaging/`. Previously the AUR build failed with `FileNotFoundError` on
+  1.0.10 and 1.0.11.
+
+### Changed
+
+- Quality gate re-runs the offline suite against the extracted sdist after
+  `uv build`, so a packaging-only failure cannot ship again.
+- Document the sdist-as-consumer contract in `packaging/arch/README.md` and
+  `CONTRIBUTING.md` (skip when excluded paths are missing; pin + push AUR
+  after every PyPI publish).
 
 ## [1.0.11] — 2026-07-27
 
@@ -1058,7 +1077,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.11...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.12...HEAD
+[1.0.12]: https://github.com/gianlucamazza/mklang/compare/v1.0.11...v1.0.12
 [1.0.11]: https://github.com/gianlucamazza/mklang/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/gianlucamazza/mklang/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/gianlucamazza/mklang/compare/v1.0.8...v1.0.9
