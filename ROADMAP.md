@@ -24,12 +24,13 @@ Active focus (milestone 1.1, `horizon:now`):
 
 ## Next
 
-Accepted for milestone 1.1 (`horizon:next`):
+Accepted for milestone 1.1 (`horizon:next`). Implementation lands in the same
+PR stream as this index when closed:
 
-- **[next] Freeze release-gate floor policy** (when to promote machines) — [#69](https://github.com/gianlucamazza/mklang/issues/69)
-- **[next] Production embedding guide** (`run` / `resume` / checkpoint / secrets) — [#70](https://github.com/gianlucamazza/mklang/issues/70)
-- **[next] Versioned run/resume result JSON Schema for hosts** — [#71](https://github.com/gianlucamazza/mklang/issues/71)
-- **[next] Anthropic secret + credit runbook** — [#72](https://github.com/gianlucamazza/mklang/issues/72)
+- **[next] Freeze release-gate floor policy** (when to promote machines) — [#69](https://github.com/gianlucamazza/mklang/issues/69) → `docs/experiments/gate-divergence.md`
+- **[next] Production embedding guide** (`run` / `resume` / checkpoint / secrets) — [#70](https://github.com/gianlucamazza/mklang/issues/70) → `docs/guides/host-embedding.md`
+- **[next] Versioned run/resume result JSON Schema for hosts** — [#71](https://github.com/gianlucamazza/mklang/issues/71) → `schema/run-result.schema.json`
+- **[next] Anthropic secret + credit runbook** — [#72](https://github.com/gianlucamazza/mklang/issues/72) → gate-divergence runbook section
 
 ## Later
 

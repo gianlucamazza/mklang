@@ -2,7 +2,9 @@
 
 The `mklang` command-line interface, one page. The authoring workflow behind
 these commands is in [Authoring](../guides/authoring.md); host layout and
-config discovery in [Installation](../guides/install.md).
+config discovery in [Installation](../guides/install.md); embedding from an
+outer process in [Host embedding](../guides/host-embedding.md) (JSON wire shape:
+[`run-result.schema.json`](../../schema/run-result.schema.json)).
 
 | Command                 | Purpose                                                                |
 | ----------------------- | ---------------------------------------------------------------------- |

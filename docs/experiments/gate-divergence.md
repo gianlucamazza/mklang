@@ -171,8 +171,134 @@ uv run python scripts/gate_divergence.py --machines all --providers deepseek,ope
   (`DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `TAVILY_API_KEY` only). Closing the
   three-provider gap needs a live key + credit (issue #60).
 
+## Release-gate floor policy
+
+This section freezes how release floors are chosen and how machines enter the
+release gate. Implementation lives in
+[`.github/workflows/release.yml`](https://github.com/gianlucamazza/mklang/blob/main/.github/workflows/release.yml)
+(live matrix job). Tracking:
+[#64](https://github.com/gianlucamazza/mklang/issues/64),
+[#69](https://github.com/gianlucamazza/mklang/issues/69).
+
+### Current floors (package 1.x)
+
+| Machine | Role | Floor (`signature_agreement_rate`) | Evidence |
+| ------- | ---- | ---------------------------------- | -------- |
+| `gate_divergence` | Easy multi-way `ok` routing — **release anchor** | **1.0** | Stable 1.0 on DeepSeek×OpenAI (2026-07-16 … 2026-07-24) |
+| `severity_escalate` | Control-flow `escalate` — **contestability probe** | **0.5** | Observed **0.667** on 2026-07-24; floor allows contestability without letting total chaos pass |
+
+Default script floor for any machine without an override is the global
+`--min-agreement` (release uses **1.0**). Per-machine overrides use
+`--min-agreement-by-machine name=rate`.
+
+### How floors are chosen
+
+1. **Evidence first.** A floor needs at least one dated full-suite (or
+   release-gate) row in this document with provider, repeats, and per-machine
+   rates. No floor change from a single maintainer anecdote.
+2. **Anchor vs probe.** Anchor machines (easy, high-stakes for “package is
+   broken”) stay at **1.0**. Probe machines (deliberately contestable control
+   flow) may use a lower floor so the release does not pretend prose judges
+   are deterministic; the floor must still fail total chaos (random routing).
+3. **Who may change.** Maintainer PR that (a) updates the table above, (b)
+   updates `release.yml` comments + flags in the same commit, (c) links the
+   evidence row. No silent CI-only edits.
+4. **Provider expansion.** When a new provider joins `--require-providers`,
+   re-run the current release set at ≥3 repeats before tightening floors.
+   Optional providers (present in the provider list but not required) may be
+   skipped when the key is absent — they do not lower the required pair’s floor.
+
+### Promoting a machine into the release gate
+
+A suite machine moves from **suite-only** (`--machines all` maintainer runs)
+into **release.yml** only when all of the following hold:
+
+1. **Stable enough:** ≥2 dated runs (different calendar days or releases) at
+   the proposed floor on the required providers, with `gate_errors: []`.
+2. **Distinct signal:** the machine stresses a gate shape not already covered
+   by an existing release machine (routing / borderline / escalate / repair …).
+3. **Cost budget:** release live matrix stays within the workflow timeout; if
+   adding a machine requires cutting repeats below 3, do not promote.
+4. **Documented floor:** a row in the floors table with rationale (anchor vs
+   probe). Contestable machines must not be promoted at 1.0 without evidence
+   they actually hold 1.0 across repeats.
+5. **Not a substitute for hooks:** promotion measures judge agreement; it does
+   **not** remove the SPEC §11 guidance that high-stakes transitions need
+   hooks/HITL in production machines.
+
+Demotion (remove from release, keep in suite) is allowed when a machine becomes
+noise (always 1.0 and redundant) or chronically flaky without product value;
+record the reason in the next results row.
+
+### Suite-only machines (not in release.yml)
+
+| Machine | Why suite-only today |
+| ------- | -------------------- |
+| `sentiment_borderline` | Contestable free-text; routing has been 1.0 but free-text diverges — useful measurement, redundant with anchor for release |
+| `grounding_repair` | Anchored repair loop; stable 1.0 — candidate for promotion if release cost allows and we want repair coverage |
+
+## Anthropic secret + credit runbook
+
+Closes the *ops* side of [#60](https://github.com/gianlucamazza/mklang/issues/60)
+and [#72](https://github.com/gianlucamazza/mklang/issues/72). The adapter and
+harness already support Anthropic; the gap is **account credit** and **keys in
+the places that run live jobs**.
+
+### Prerequisites
+
+1. **Billing / credits** on the Anthropic account (past failures were
+   `invalid_request_error` / purchase-credits — **not** a missing adapter).
+2. **API key** with access to the models mapped in `config/runtime.yaml`
+   (or project `config/runtime.yaml`) under `providers.anthropic.tiers`.
+
+### Local
+
+```bash
+# .env (gitignored) — never commit
+ANTHROPIC_API_KEY=sk-ant-…
+
+# optional: force active provider for smoke
+MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=anthropic uv run --extra dev pytest -q tests/test_live.py
+
+# three-provider gate-divergence (≈12 small Anthropic runs if ×3 on 4 machines)
+uv run python scripts/gate_divergence.py --machines all \
+  --providers deepseek,openai,anthropic --repeats 3 \
+  --summary-json /tmp/gate-div-summary.json \
+  --jsonl /tmp/gate-div.jsonl
+```
+
+Cost order-of-magnitude: one four-machine × 3-repeat Anthropic pass is on the
+order of **~30k tokens / well under $1** (issue #60). Append a results row to
+this document (date, providers, per-machine rates) and link the summary JSON
+from the PR that records it.
+
+### GitHub Actions (release / optional maintainer workflows)
+
+| Secret name | Required for |
+| ----------- | ------------ |
+| `DEEPSEEK_API_KEY` | release live matrix (`--require-providers`) |
+| `OPENAI_API_KEY` | release live matrix |
+| `ANTHROPIC_API_KEY` | third-provider rows; skipped cleanly when absent |
+| `TAVILY_API_KEY` | optional search-backed demos/tests, not gate-divergence |
+
+Set repository (or environment) secrets in GitHub → Settings → Secrets and
+variables → Actions. The release workflow lists optional providers; without
+`ANTHROPIC_API_KEY` those runs are **skipped**, not failed — so missing Anthropic
+does not block a DeepSeek+OpenAI release, but it also does **not** close #60.
+
+### Done when
+
+- [ ] Local `.env` has a working key **and** the account has credit
+- [ ] One dated three-provider (or Anthropic-including) row is in **Results**
+- [ ] Optionally: `ANTHROPIC_API_KEY` is present in Actions secrets for future
+      release matrices
+
 ## Related
 
 - SPEC §5 (judge protocol), §11 (threat model)
 - ADR 0004 (gates as reliability mechanism — empirical claim)
 - ADR 0009 (conformance suite pins interpreter rules, not judge accuracy)
+- Issues [#60](https://github.com/gianlucamazza/mklang/issues/60),
+  [#64](https://github.com/gianlucamazza/mklang/issues/64),
+  [#69](https://github.com/gianlucamazza/mklang/issues/69),
+  [#72](https://github.com/gianlucamazza/mklang/issues/72)

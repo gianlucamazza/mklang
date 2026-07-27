@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mklang.dev/schema/run-result.schema.json",
+  "title": "mklang run/resume result",
+  "description": "Wire shape returned by host.build_output() and extended by CLI/MCP surfaces. Documented for outer hosts (scripts, MCP clients, orchestrators). Not part of the language contract (SPEC); additive fields may appear on surfaces. Schema version is the top-level `schema_version` when present; absent means the pre-1.1 implicit shape (status/error/result/usage/trace[/at[/checkpoint…]]).",
+  "type": "object",
+  "required": ["status", "error", "result", "usage", "trace"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Optional document version for hosts that pin contracts. Current published value: \"1\". Omitted by today's CLI/MCP emitters; hosts should treat absence as version 1 of this shape."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["done", "halt", "suspended", "error"],
+      "description": "done = completed; halt = aborted (gate fail, budget without checkpoint, tool/call failure, …); suspended = resumable (budget or escalate under checkpoint/HITL); error = MCP/domain prep failure payload (not an engine RunResult)."
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Null on done. On halt/suspended: reason string (e.g. budget-exhausted, escalated, gate-fail, output-truncated, call-failed). On MCP error payloads: short code or message."
+    },
+    "result": {
+      "description": "Machine result value (context key from machine.result, or last state output). Null/omitted semantics follow the engine when the run did not finish cleanly."
+    },
+    "usage": {
+      "type": ["object", "null"],
+      "description": "Token usage when tracked.",
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "trace": {
+      "type": "array",
+      "description": "Ordered step records (state, gates, nested sub_trace for call:). Empty array when none.",
+      "items": { "type": "object" }
+    },
+    "at": {
+      "type": "string",
+      "description": "State id where a halt/suspend occurred, when known."
+    },
+    "checkpoint": {
+      "type": "string",
+      "description": "CLI: filesystem path written on suspend. MCP: opaque single-use session handle (and optionally checkpoint_file for the durable path)."
+    },
+    "checkpoint_file": {
+      "type": "string",
+      "description": "MCP only: durable checkpoint path when checkpoint_path was requested in addition to the in-memory handle."
+    },
+    "warnings": {
+      "type": "array",
+      "description": "MCP (and some hosts): non-fatal prepare/load warnings.",
+      "items": { "type": "string" }
+    },
+    "truncated": {
+      "type": "boolean",
+      "description": "Present on compact agent observations (console) when produce truncation was detected (ADR 0018)."
+    },
+    "result_truncated": {
+      "type": "boolean",
+      "description": "Present on compact observations when the result string was clipped for the brain."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "done" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "error": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "suspended" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "error": { "type": "string", "minLength": 1 }
+        },
+        "required": ["error"]
+      }
+    }
+  ]
+}
