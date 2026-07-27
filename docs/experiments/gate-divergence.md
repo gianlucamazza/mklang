@@ -85,6 +85,7 @@ temperature ablation.
 | 2026-07-16 | deepseek, openai (×3 each) | **1.0**             | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key).                                      |
 | 2026-07-23 | deepseek, openai (×3 each) | **1.0** per machine | 1 per machine       | First full **four-machine suite** run (`--machines all`). 24/24 runs `done`, agreement 1.0 within every machine (15/15 pairs each), zero gate errors. Free-text outputs diverge on the contestable machines while routing stays identical. Anthropic still billing-blocked. |
 | 2026-07-24 | deepseek, openai (×3 each) | **0.917** pooled; **1.0** on 3/4 machines | 1–2 per machine | **1.0.1 release day.** Full four-machine suite: 24/24 `done`, `gate_errors: []`. `gate_divergence` / `sentiment_borderline` / `grounding_repair` stay **1.0**; **`severity_escalate` drops to 0.667** (one DeepSeek run took `otherwise→auto` instead of page-human). Release-gate (single machine) still **1.0**. Anthropic **key absent** locally and in GitHub Actions secrets (not only billing). |
+| 2026-07-27 | deepseek, openai (×3 each) | **1.0** per machine (pooled **1.0**) | 1 per machine | Full four-machine suite, 24/24 `done`, `gate_errors: []`. Live smokes green. **`severity_escalate` back to 1.0** but the shared signature is `otherwise→auto` (not page-human) — agreement holds on the non-escalate path; still evidence that control-flow is model-sensitive across calendar days. Anthropic still **no key** in project/user `.env` (demo keys present: DeepSeek, OpenAI, Tavily only). |
 
 ### 2026-07-16 detail
 
@@ -170,6 +171,37 @@ uv run python scripts/gate_divergence.py --machines all --providers deepseek,ope
   `.env` (empty placeholder) **nor** in GitHub Actions repository secrets
   (`DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `TAVILY_API_KEY` only). Closing the
   three-provider gap needs a live key + credit (issue #60).
+
+### 2026-07-27 detail — full suite re-run (DeepSeek + OpenAI)
+
+Live smokes (`MKLANG_LIVE=1` × deepseek, openai) green. Full suite:
+
+```bash
+# keys from project .env (DeepSeek, OpenAI, Tavily present; Anthropic absent)
+uv run python scripts/gate_divergence.py --machines all \
+  --providers deepseek,openai --repeats 3 \
+  --summary-json /tmp/gate-div-summary.json
+```
+
+- **runs_done:** 24, 0 skipped, 0 failed, `gate_errors: []`
+- **signature_agreement_rate:** **1.0** pooled and **1.0** per machine
+- **Per-machine:**
+
+  | Machine                | Agreement | Distinct signatures | Shared signature (abbreviated) |
+  | ---------------------- | --------- | ------------------- | ------------------------------ |
+  | `gate_divergence`      | **1.0**   | 1                   | `label\|spam→spam_path → END` |
+  | `sentiment_borderline` | **1.0**   | 1                   | `assess\|clearly negative→neg → END` |
+  | `grounding_repair`     | **1.0**   | 1                   | `answer\|grounded, states 30 days→END` |
+  | `severity_escalate`    | **1.0**   | 1                   | `triage\|otherwise→auto → END` (not page-human) |
+
+- **Interpretation:** agreement recovered to 1.0 on the escalate machine, but
+  **both providers chose the non-escalate path** consistently. Combined with
+  2026-07-24's 0.667 / page-human split, control-flow escalate remains the
+  probe machine — floor **0.5** in release stays justified; do not raise it to
+  1.0 from a single good day.
+- **Anthropic:** still not runnable locally (no `ANTHROPIC_API_KEY` in project
+  or `~/.config/mklang/.env`). Issue #60 remains open until a key + credit
+  exist; #72 runbook documents the ops steps.
 
 ## Release-gate floor policy
 
