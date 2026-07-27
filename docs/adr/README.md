@@ -20,7 +20,7 @@ change checklist in CONTRIBUTING says when to add one.
 | [0013](0013-mcp-surface-completion.md)           | MCP surface completion: discovery, check, durable resume                  | Accepted                               |
 | [0014](0014-structured-list-outputs.md)          | Structured list outputs: `parse: list` and raw input resolution           | Accepted                               |
 | [0015](0015-console-surface.md)                  | `mklang console`: an agent-first operational TUI whose brain is a machine | Accepted (M1–M3 shipped)               |
-| [0016](0016-host-web-search-tool.md)             | Host web-search tool: optional real binding, offline stub default         | Accepted (tools block deferred)        |
+| [0016](0016-host-web-search-tool.md)             | Host web-search tool: optional real binding, offline stub default         | Accepted (`tools:` block shipped)      |
 | [0017](0017-context-content-management.md)       | Context & content management: host budgets first, language zones later    | Accepted (Layer 0–1; Layer 2 deferred) |
 | [0018](0018-output-truncation-anti-cutoff.md)    | Output truncation detection and host recovery policies                    | Accepted (continue deferred)           |
 | [0019](0019-mcp-live-events.md)                  | Live engine events on the MCP transport                                   | Accepted                               |

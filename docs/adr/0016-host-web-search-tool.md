@@ -1,6 +1,6 @@
 # ADR 0016 — Host web-search tool: optional real binding, offline stub default
 
-Status: Accepted (stub + fake/tavily + example; runtime.yaml tools block deferred).
+Status: Accepted (stub + fake/tavily + example; runtime.yaml `tools:` block shipped).
 Envelope generalized by [ADR 0020](./0020-host-tool-stub-architecture.md).
 
 ## Context
