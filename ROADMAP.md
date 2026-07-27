@@ -20,14 +20,13 @@ Active focus (milestone 1.1, `horizon:now`):
 
 - **[now] Live-verify Anthropic** (three-provider gate-divergence) — [#60](https://github.com/gianlucamazza/mklang/issues/60)
 - **[now] Five-reader distribution test (D1)** — [#61](https://github.com/gianlucamazza/mklang/issues/61)
-- **[now] Release-gate per-machine agreement floors** — [#64](https://github.com/gianlucamazza/mklang/issues/64)
 
 ## Next
 
-Milestone 1.1 doc/schema items **shipped** in [#73](https://github.com/gianlucamazza/mklang/pull/73)
-([#69](https://github.com/gianlucamazza/mklang/issues/69)–[#72](https://github.com/gianlucamazza/mklang/issues/72) closed). Remaining Now items need live ops or humans:
+Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianlucamazza/mklang/pull/73)
+([#64](https://github.com/gianlucamazza/mklang/issues/64), [#69](https://github.com/gianlucamazza/mklang/issues/69)–[#72](https://github.com/gianlucamazza/mklang/issues/72) closed). Remaining Now items need live ops or humans:
 
-- **[next]** After Anthropic key is available: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
+- **[next]** After Anthropic key + credit: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
 - **[next]** Five-reader distribution test — [#61](https://github.com/gianlucamazza/mklang/issues/61)
 
 ## Later
