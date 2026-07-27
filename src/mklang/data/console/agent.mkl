@@ -16,11 +16,15 @@
 mklang: "0.3"
 machine: console_agent
 entry: decide
-# Shared step budget for the whole turn: discover/run/clarify + author + up to
-# two static check repairs (write_machine → check only) + reply. There is no
-# separate language-level "repair budget" — headroom lives here. Authoring
-# check-fail rate measured ~28% after one repair (docs/experiments/authoring-blind-spot.md).
-budget: 24
+# Shared step budget for the whole turn: task ledger updates + workspace
+# inspect + discover/run/clarify + author + up to two static check repairs
+# (write_machine → check only) + reply. There is no separate language-level
+# "repair budget" — headroom lives here. Authoring check-fail rate measured
+# ~28% after one repair (docs/experiments/authoring-blind-spot.md). Bumped
+# 24 → 48 so a live commission (workspace read + run_machine + consent) does
+# not suspend mid-turn under the task-ledger path (1.0.9+), with headroom
+# for an occasional extra discover/task-update cycle before RUN.
+budget: 48
 default_tier: balanced
 result: reply
 

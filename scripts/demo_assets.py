@@ -49,17 +49,20 @@ SOURCE_PATTERNS = (
 REQUIRED_TEXT = {
     "agent": (
         "Ready",
-        "you:",
-        "capabilities once",
+        "default cost budget",
         "console_agent",
+        "do_run",
         "boil that down",
     ),
     "language": (
-        "OK examples/react.mkl",
+        "OK",
+        "react.mkl",
         "findings=0",
         "DONE react",
         "provider deepseek",
         "Result",
+        "153",
+        "steps",
     ),
 }
 FORBIDDEN_TEXT = (
@@ -207,19 +210,52 @@ def _clean_transcript(path: Path) -> str:
     return ANSI.sub("", path.read_text(encoding="utf-8", errors="replace"))
 
 
-def _normalize_transcript(path: Path) -> None:
-    """Turn VHS screen snapshots into a compact, readable plain-text transcript."""
+# Pure box / rule chrome captured by VHS snapshots (no semantic content).
+_CHROME = re.compile(r"^[\s─━═╭╮╯╰│┌┐└┘├┤┬┴┼╔╗╚╝║▔▁▂]+$")
+
+
+def _is_typing_prefix(earlier: str, later: str) -> bool:
+    """True when *earlier* is an intermediate VHS frame of typing *later*."""
+    a, b = earlier.rstrip(), later.rstrip()
+    if not a or a == b or len(a) >= len(b):
+        return False
+    if not b.startswith(a):
+        return False
+    # Only collapse progressive command/prompt typing, not prose replies.
+    sample = a.lstrip()
+    return sample.startswith((">", "PYTHONPATH", "python ", "/")) or "python -m mklang" in sample
+
+
+def _normalize_transcript_lines(raw_lines: list[str]) -> list[str]:
+    """Collapse VHS multi-frame noise into a compact, readable transcript."""
     lines: list[str] = []
     seen: set[str] = set()
-    for raw in _clean_transcript(path).splitlines():
-        line = raw.rstrip()
+    for raw in raw_lines:
+        line = ANSI.sub("", raw).rstrip()
         stripped = line.strip()
-        if not stripped or stripped == ">" or set(stripped) <= {"─"}:
+        if not stripped or stripped == ">":
+            continue
+        if _CHROME.fullmatch(stripped):
             continue
         if line not in seen:
             seen.add(line)
             lines.append(line)
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    # Drop intermediate typing frames (a strict prefix of a nearby later line).
+    kept: list[str] = []
+    for i, line in enumerate(lines):
+        window = lines[i + 1 : i + 16]
+        if any(_is_typing_prefix(line, other) for other in window):
+            continue
+        kept.append(line)
+    return kept
+
+
+def _normalize_transcript(path: Path) -> None:
+    """Turn VHS screen snapshots into a compact, readable plain-text transcript."""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    cleaned = _normalize_transcript_lines(text.splitlines())
+    path.write_text("\n".join(cleaned) + "\n", encoding="utf-8")
 
 
 def validate() -> dict[str, dict]:
