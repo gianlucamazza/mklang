@@ -188,7 +188,7 @@ def current_backend() -> SearchBackend | None:
     return _backend
 
 
-def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
+def resolve_backend_name(tc: ToolsConfig | None = None) -> tuple[str, str]:
     """Resolve the backend name and its source layer (shared with doctor).
 
     Precedence (ADR 0016/0023): explicit ``MKLANG_SEARCH_BACKEND`` env >

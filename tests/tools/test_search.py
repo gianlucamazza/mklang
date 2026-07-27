@@ -5,9 +5,9 @@ import json
 from urllib.error import URLError
 
 from mklang.search import (
-    FakeSearchBackend,
     SEARCH_SNIPPET_CHARS,
     SEARCH_URL_CHARS,
+    FakeSearchBackend,
     TavilySearchBackend,
     configure_search,
     search,

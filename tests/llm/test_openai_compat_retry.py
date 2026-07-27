@@ -23,8 +23,9 @@ class _Usage:
 
 
 class _Resp:
-    choices = [_Choice()]
-    usage = _Usage()
+    def __init__(self):
+        self.choices = [_Choice()]
+        self.usage = _Usage()
 
 
 class _Completions:

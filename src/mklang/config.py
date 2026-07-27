@@ -125,7 +125,8 @@ def load_provider(
     tiers = p.get("tiers")
     if not isinstance(tiers, dict) or set(tiers) != {"fast", "balanced", "reasoning"}:
         raise ValueError(
-            f"provider {name!r} in {resolved} must define exactly fast, balanced and reasoning tiers"
+            f"provider {name!r} in {resolved} must define exactly "
+            "fast, balanced and reasoning tiers"
         )
     if any(not isinstance(model, str) or not model.strip() for model in tiers.values()):
         raise ValueError(f"provider {name!r} in {resolved} has invalid model ids")

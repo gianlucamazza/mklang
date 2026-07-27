@@ -5,8 +5,8 @@ import re
 
 import pytest
 
-from mklang.console.tools import ConsoleTools
 from mklang.console.commands import parse_assignments
+from mklang.console.tools import ConsoleTools
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 
@@ -247,7 +247,11 @@ def test_check_machine_reports_errors(tools):
     bad = json.loads(
         tools.check_machine(
             {
-                "source": "machine: x\nentry: gone\nbudget: 2\nstates:\n  s: {structure: s, prompt: p, output: o, gates: [{when: otherwise, then: ok, to: END}]}\n"
+                "source": (
+                    "machine: x\nentry: gone\nbudget: 2\nstates:\n"
+                    "  s: {structure: s, prompt: p, output: o, "
+                    "gates: [{when: otherwise, then: ok, to: END}]}\n"
+                )
             }
         )
     )

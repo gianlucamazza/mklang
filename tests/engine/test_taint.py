@@ -280,7 +280,7 @@ def test_taint_survives_suspend_resume():
             },
         }
     )
-    llm, calls = recording_llm()
+    llm, _calls = recording_llm()
     r = run(
         machine,
         {"task": "t"},

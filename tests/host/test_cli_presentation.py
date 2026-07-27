@@ -75,7 +75,10 @@ def test_missing_console_session_does_not_dump_traceback(tmp_path, monkeypatch, 
 def test_unknown_provider_is_structured_config_error(tmp_path, monkeypatch, capsys):
     config = tmp_path / "runtime.yaml"
     config.write_text(
-        """active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n""",
+        (
+            "active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n"
+            "    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n"
+        ),
         encoding="utf-8",
     )
     monkeypatch.setenv("TEST_PROVIDER_KEY", "test-key")
@@ -89,7 +92,10 @@ def test_unknown_provider_is_structured_config_error(tmp_path, monkeypatch, caps
 def test_lint_llm_uses_structured_provider_errors(tmp_path, monkeypatch, capsys):
     config = tmp_path / "runtime.yaml"
     config.write_text(
-        """active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n""",
+        (
+            "active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n"
+            "    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n"
+        ),
         encoding="utf-8",
     )
     monkeypatch.setenv("TEST_PROVIDER_KEY", "test-key")

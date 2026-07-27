@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -108,10 +109,9 @@ class _Ctx:
 def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) -> None:
     if deps.on_event is None:
         return
-    try:
+    # An observer must never affect the run.
+    with contextlib.suppress(Exception):
         deps.on_event({"type": type_, "machine": machine, "depth": depth, **fields})
-    except Exception:  # an observer must never affect the run
-        pass
 
 
 def _preview(value: object, limit: int = 200) -> str:
@@ -475,7 +475,7 @@ def _deposit(ctx: dict, tainted: set[str], state: State, result: object) -> None
         prev = ctx.get(state.output, [])
         if not isinstance(prev, list):
             prev = [prev]
-        ctx[state.output] = prev + [result]
+        ctx[state.output] = [*prev, result]
     else:
         ctx[state.output] = result
     tainted.add(state.output)
@@ -566,8 +566,11 @@ def _execute_fanout(
     trace: list[dict],
     usage_tokens: tuple[int, int],
 ) -> tuple[object, str | None, int, int, int, dict] | RunResult:
-    """Run a sample/over fan-out; return (result, judge_reasoning, step_in, step_out, steps, step_fields)
-    or a halt RunResult on branch-setup failure."""
+    """Run a sample/over fan-out.
+
+    Returns (result, judge_reasoning, step_in, step_out, steps, step_fields)
+    or a halt RunResult on branch-setup failure.
+    """
     total_in, total_out = usage_tokens
     try:
         branches = _branch_contexts(state, ctx)
@@ -1096,7 +1099,7 @@ def run(
         trusted_keys,
     ).go()
     if on_event is not None:
-        try:
+        with contextlib.suppress(Exception):
             on_event(
                 {
                     "type": "run-finished",
@@ -1108,6 +1111,4 @@ def run(
                     "tokens": result.usage or {"input_tokens": 0, "output_tokens": 0},
                 }
             )
-        except Exception:
-            pass
     return result

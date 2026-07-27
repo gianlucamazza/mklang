@@ -123,8 +123,9 @@ def test_openai_compat_length_finish_reason():
         completion_tokens = 2
 
     class _Resp:
-        choices = [_Choice()]
-        usage = _Usage()
+        def __init__(self):
+            self.choices = [_Choice()]
+            self.usage = _Usage()
 
     llm = OpenAICompatLLM.__new__(OpenAICompatLLM)
     llm.max_retries = 0

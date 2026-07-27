@@ -380,7 +380,7 @@ def check_tool(source: str | None = None, path: str | None = None, strict: bool 
     return host.check_machine(source, path, strict=strict)
 
 
-def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None) -> "FastMCP":
+def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None) -> FastMCP:
     """Build the FastMCP server. Requires the `mcp` package (`pip install mklang[mcp]`)."""
     from mcp.server.fastmcp import FastMCP
 

@@ -1,7 +1,7 @@
 """Runtime provider configuration rejects structurally invalid blocks early."""
 
-import yaml
 import pytest
+import yaml
 
 from mklang.config import load_provider
 

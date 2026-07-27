@@ -4,7 +4,7 @@ API-key-free testing of mklang machines.
 Two consumers share this module:
 
 - **The conformance suite** (`tests/conformance/test_conformance.py`) — pins the *interpreter*
-  against `conformance/cases/*.yaml` (SPEC §5–§7). It builds a machine + registry
+  against `conformance/cases/*.yaml` (SPEC §5-§7). It builds a machine + registry
   from each case and asserts the expectation matches.
 - **`mklang test`** (the CLI) — lets an *author* test their own `.mkl` against a
   script of named scenarios, without a provider or API key.
@@ -67,10 +67,8 @@ class ScriptedLLM:
     ) -> Produced:
         with self._lock:
             if self._map is not None:
-                for key, text in self._map.items():
-                    if key in user:
-                        break
-                else:
+                text = next((t for key, t in self._map.items() if key in user), None)
+                if text is None:
                     raise AssertionError(f"no scripted produce matches prompt {user[:80]!r}")
             else:
                 text = self._seq.pop(0) if self._seq else "ok"
@@ -240,7 +238,7 @@ def match_expectation(result: RunResult, expect: dict) -> list[Mismatch]:
                 )
             )
         else:
-            for i, (want, got) in enumerate(zip(want_trace, result.trace)):
+            for i, (want, got) in enumerate(zip(want_trace, result.trace, strict=False)):
                 for k, v in want.items():
                     if got.get(k) != v:
                         ms.append(Mismatch(f"trace[{i}].{k}", v, got.get(k)))

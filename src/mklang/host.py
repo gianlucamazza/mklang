@@ -7,13 +7,12 @@ own way (stderr lines for the CLI, payload fields for the MCP server).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 import jsonschema
 import yaml
-
-from collections.abc import Callable
 
 from .config import ProviderConfig, load_provider
 from .engine import RunResult

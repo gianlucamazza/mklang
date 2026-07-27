@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 FORMAT = 1
@@ -27,10 +28,9 @@ def _write_private(path: str | Path, text: str) -> None:
     fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(text)
-    try:
+    # non-POSIX / unsupported filesystem: mode is advisory
+    with contextlib.suppress(OSError, NotImplementedError):
         os.chmod(p, 0o600)
-    except (OSError, NotImplementedError):  # non-POSIX / unsupported filesystem
-        pass
 
 
 def encode_repair(repair_left: dict[tuple[str, int], int]) -> list[list]:
@@ -108,7 +108,7 @@ def save_checkpoint(
     envelope = {
         "format": FORMAT,
         "mklang_version": __version__,
-        "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "created": datetime.now(UTC).isoformat(timespec="seconds"),
         "machine": machine_name,
         "machine_path": str(machine_path),
         "machine_sha256": file_sha256(machine_path),

@@ -12,6 +12,7 @@ explicit one-time consent per tool set (SPEC §11 applies to the console too).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import tempfile
@@ -24,12 +25,12 @@ from typing import Protocol
 import yaml
 
 from .. import host
-from .capabilities import capability_key, metadata_for, redact
 from ..config import load_provider
 from ..engine import run as run_machine_engine
 from ..llm.base import LLM
 from ..paths import project_machine_root
 from ..registry import base_registry, load_project_registry
+from .capabilities import capability_key, metadata_for, redact
 from .workspace import WorkspaceInspector
 
 
@@ -110,11 +111,9 @@ class ConsoleTools:
     def _audit(self, event: str, **fields: object) -> None:
         if self.audit is None:
             return
-        try:
+        # Audit must never change the machine's execution semantics.
+        with contextlib.suppress(Exception):
             self.audit(redact({"event": event, **fields}))
-        except Exception:
-            # Audit must never change the machine's execution semantics.
-            pass
 
     # -- registry ----------------------------------------------------------
 
@@ -264,10 +263,8 @@ class ConsoleTools:
             os.replace(temporary, path)
         except OSError as exc:
             if temporary:
-                try:
+                with contextlib.suppress(OSError):
                     os.unlink(temporary)
-                except OSError:
-                    pass
             self._audit("machine-write-failed", machine=name, path=path.name, error=str(exc))
             return _obs({"error": f"cannot write machine atomically: {exc}", "check": checked})
         self._audit(

@@ -9,14 +9,15 @@ are `ConsoleTools`, and the run tree is the `on_event` stream.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import threading
 import traceback
 from collections.abc import Callable
 from dataclasses import replace as dc_replace
-from typing import TYPE_CHECKING
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar
 
 import yaml
 
@@ -55,11 +56,11 @@ def build_app(
     provider: str | None,
     workspace: str,
     agent_path: str | None = None,
-    build_llm: "Callable[[object], LLM] | None" = None,
+    build_llm: Callable[[object], LLM] | None = None,
     session_base: str | None = None,
     continue_session: bool = False,
     session_id: str | None = None,
-) -> "App":
+) -> App:
     """Construct the Textual app (imported lazily so the core stays TUI-free)."""
     from rich.console import RenderableType
     from textual.app import App, ComposeResult
@@ -81,10 +82,19 @@ def build_app(
         Footer { background: $surface; color: $text-muted; }
         #body { height: 1fr; min-height: 8; }
         #main { width: 2fr; min-width: 32; }
-        #log { height: 1fr; padding: 1 2; scrollbar-gutter: stable; border: solid $panel; background: $surface; }
-        #activity { height: 12; min-height: 5; border: solid $panel; padding: 0 1; background: $background; }
+        #log {
+            height: 1fr; padding: 1 2; scrollbar-gutter: stable;
+            border: solid $panel; background: $surface;
+        }
+        #activity {
+            height: 12; min-height: 5; border: solid $panel;
+            padding: 0 1; background: $background;
+        }
         #activity.hidden { display: none; }
-        #status { height: 2; padding: 0 2; color: $text-muted; background: $boost; content-align: left middle; }
+        #status {
+            height: 2; padding: 0 2; color: $text-muted;
+            background: $boost; content-align: left middle;
+        }
         #status.ready { color: $success; }
         #status.running { color: $primary; }
         #status.waiting { color: $warning; }
@@ -101,7 +111,9 @@ def build_app(
         #inspector-context, #inspector-trace { padding: 1 2; }
         #inspector-session { padding: 2; overflow-y: auto; }
         """
-        BINDINGS = [
+        # Textual's App.BINDINGS is a list of Binding | 2-tuple | 3-tuple;
+        # keep the ClassVar loose enough for mypy variance (RUF012).
+        BINDINGS: ClassVar[list] = [
             ("ctrl+c", "quit", "Quit"),
             ("f2", "toggle_inspector", "Inspector"),
             ("ctrl+t", "toggle_activity", "Activity"),
@@ -219,12 +231,10 @@ def build_app(
             self.shutting_down = True
             self.cancel_event.set()
             self.bridge.cancel()
-            try:
+            # Shutdown must still release the console if a third-party
+            # provider implements a broken optional close hook.
+            with contextlib.suppress(Exception):
                 self.tools.close()
-            except Exception:
-                # Shutdown must still release the console if a third-party
-                # provider implements a broken optional close hook.
-                pass
 
         async def _wait_for_worker(self) -> None:
             import asyncio
@@ -470,9 +480,7 @@ def build_app(
             import json as _json
 
             from ..checkpoint import load_checkpoint
-            from .commands import parse_assignments
-
-            from .commands import BY_NAME, help_text, parse_command
+            from .commands import BY_NAME, help_text, parse_assignments, parse_command
 
             try:
                 cmd, args = parse_command(text)
@@ -638,9 +646,8 @@ def build_app(
         def turn(self, user_message: str) -> None:
             # Full history stays on the session for audit; only a windowed view
             # is injected into the brain (ADR 0017 console history budget).
-            from .session import history_for_brain
-
             from .. import host as host_mod
+            from .session import history_for_brain
 
             ctx = self._inject_workspace_context(
                 {

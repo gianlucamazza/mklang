@@ -8,13 +8,12 @@ and that the harness actually drives a run end to end with a scripted LLM.
 import importlib.util
 
 import pytest
+from conftest import REPO_ROOT
 
-from mklang.llm.mock import MockLLM
 from mklang.llm.base import Produced
+from mklang.llm.mock import MockLLM
 from mklang.loader import semantic_check
 from mklang.model import parse_machine
-
-from conftest import REPO_ROOT
 
 ROOT = REPO_ROOT
 
@@ -95,10 +94,10 @@ def test_release_gate_enforces_the_floor_per_machine():
 def test_release_gate_expects_repeats_times_machines_rows():
     rows = [_row("deepseek", "A", "s"), _row("deepseek", "B", "s")]  # 1 machine-run each
     errors = gd._ci_errors(rows, ["deepseek"], repeats=1, min_agreement=None)
-    assert errors == []  # 2 machines × 1 repeat = 2 rows, as expected
+    assert errors == []  # 2 machines x 1 repeat = 2 rows, as expected
     short = [_row("deepseek", "A", "s")]  # missing machine B's run
     errors = gd._ci_errors(
-        short + [_row("deepseek", "B", "s", status="error")], ["deepseek"], 1, None
+        [*short, _row("deepseek", "B", "s", status="error")], ["deepseek"], 1, None
     )
     assert any("failed" in e for e in errors)
 

@@ -12,8 +12,8 @@ from ..errors import JudgeUnparseable, ProviderError, RefusalError
 from .base import (
     JUDGE_CONTEXT_CHARS,
     JUDGE_SYSTEM,
-    Produced,
     TRANSIENT_STATUS,
+    Produced,
     build_judge_user,
     is_connection_error,
     is_length_stop,

@@ -14,7 +14,7 @@ class _BridgeApp(Protocol):
     """The part of the local Textual app needed by the worker bridge."""
 
     shutting_down: bool
-    session: "Session"
+    session: Session
 
     def call_from_thread(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any: ...
 

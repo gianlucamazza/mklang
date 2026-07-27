@@ -45,7 +45,9 @@ class StubMailBackend:
             "recorded": True,
             "delivery": "stub",
             "error": None,
-            "note": "Stub only — no message left the host. Bind a real mail/ticket tool for production.",
+            "note": (
+                "Stub only — no message left the host. Bind a real mail/ticket tool for production."
+            ),
         }
 
 
@@ -80,7 +82,7 @@ def current_mail_backend() -> MailBackend | None:
     return _backend
 
 
-def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
+def resolve_backend_name(tc: ToolsConfig | None = None) -> tuple[str, str]:
     """Backend name + source layer: env > ``tools.mail.backend`` config > stub."""
     from .toolconfig import current_tools
 

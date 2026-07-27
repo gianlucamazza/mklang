@@ -54,7 +54,7 @@ class Session:
     @classmethod
     def create(
         cls, base: Path | str = DEFAULT_BASE, workspace: str = "", brain: str = ""
-    ) -> "Session":
+    ) -> Session:
         sid = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:4]
         d = Path(base) / sid
         (d / "checkpoints").mkdir(parents=True, exist_ok=True)
@@ -63,7 +63,7 @@ class Session:
         return s
 
     @classmethod
-    def load(cls, d: Path | str) -> "Session":
+    def load(cls, d: Path | str) -> Session:
         d = Path(d)
         st = json.loads((d / "state.json").read_text(encoding="utf-8"))
         return cls(
@@ -84,7 +84,7 @@ class Session:
     @classmethod
     def latest(
         cls, base: Path | str = DEFAULT_BASE, *, workspace: str | Path | None = None
-    ) -> "Session | None":
+    ) -> Session | None:
         base = Path(base)
         if not base.is_dir():
             return None

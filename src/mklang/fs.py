@@ -258,7 +258,7 @@ def allow_writes(enabled: bool | None) -> None:
     _writes_allowed = enabled
 
 
-def writes_allowed_with_source(tc: "ToolsConfig | None" = None) -> tuple[bool, str]:
+def writes_allowed_with_source(tc: ToolsConfig | None = None) -> tuple[bool, str]:
     """Write grant + source: runtime grant > set env > config > off.
 
     A *set, non-empty* ``MKLANG_FS_WRITE`` decides either way, so
@@ -281,7 +281,7 @@ def writes_allowed() -> bool:
     return writes_allowed_with_source()[0]
 
 
-def resolve_workspace_with_source(tc: "ToolsConfig | None" = None) -> tuple[Path, str]:
+def resolve_workspace_with_source(tc: ToolsConfig | None = None) -> tuple[Path, str]:
     """Workspace root + source: ``MKLANG_FS_ROOT`` > ``tools.fs.workspace`` > cwd."""
     from .toolconfig import current_tools
 
@@ -298,7 +298,7 @@ def resolve_workspace() -> Path:
     return resolve_workspace_with_source()[0]
 
 
-def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
+def resolve_backend_name(tc: ToolsConfig | None = None) -> tuple[str, str]:
     """Backend name + source: env > ``tools.fs.backend`` config > local (ADR 0024).
 
     Unknown names degrade to ``stub`` — an unrecognized value must never

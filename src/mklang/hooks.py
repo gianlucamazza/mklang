@@ -7,8 +7,8 @@ Optional `hook: <name>` on a gate evaluates the named predicate without the LLM
 
 from __future__ import annotations
 
-import logging
 import json
+import logging
 from collections.abc import Callable
 from importlib.metadata import entry_points
 from typing import Any

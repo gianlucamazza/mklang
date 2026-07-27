@@ -34,7 +34,7 @@ class StubKBBackend:
     """Default offline KB: fixed demo facts tagged with the query."""
 
     def lookup(self, query: str) -> list[str]:
-        return list(_DEFAULT_FACTS) + [f"(stub demo facts for query={query!r})"]
+        return [*list(_DEFAULT_FACTS), f"(stub demo facts for query={query!r})"]
 
 
 class FakeKBBackend:
@@ -63,7 +63,7 @@ def current_kb_backend() -> KBBackend | None:
     return _backend
 
 
-def resolve_backend_name(tc: "ToolsConfig | None" = None) -> tuple[str, str]:
+def resolve_backend_name(tc: ToolsConfig | None = None) -> tuple[str, str]:
     """Backend name + source layer: env > ``tools.kb.backend`` config > stub."""
     from .toolconfig import current_tools
 

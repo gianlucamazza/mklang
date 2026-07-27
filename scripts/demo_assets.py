@@ -269,7 +269,8 @@ def validate() -> dict[str, dict]:
             duration = float(probe.get("format", {}).get("duration") or 0)
             if not MIN_DURATION <= duration <= MAX_DURATION:
                 errors.append(
-                    f"{path.name} duration {duration:.2f}s outside {MIN_DURATION:.0f}-{MAX_DURATION:.0f}s"
+                    f"{path.name} duration {duration:.2f}s outside "
+                    f"{MIN_DURATION:.0f}-{MAX_DURATION:.0f}s"
                 )
             metadata[path.relative_to(ROOT).as_posix()] = {
                 "bytes": size,
@@ -366,7 +367,7 @@ def check_drift() -> None:
         if path.stat().st_size != expected.get("bytes") or _sha256(path) != expected.get("sha256"):
             raise DemoError(f"demo asset drift: {relative}")
     expected_assets = {f"docs/assets/demos/{demo}.{ext}" for demo in DEMOS for ext in FORMATS}
-    if set((manifest.get("assets") or {})) != expected_assets:
+    if set(manifest.get("assets") or {}) != expected_assets:
         raise DemoError("demo manifest asset set is incomplete")
     # Also guard the on-disk set: a demo removed from DEMOS leaves orphan asset
     # files (its tape is gone, but the rendered webm/gif/txt linger). The

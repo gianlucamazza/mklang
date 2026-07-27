@@ -1,15 +1,14 @@
 """The console brain (agent.mkl, ADR 0015 M1c): validity + scripted scenarios in CI."""
 
 import yaml
+from conftest import REPO_ROOT
 
+from mklang.console.workspace import requires_workspace_inspection
+from mklang.hooks import console_workspace_ready
 from mklang.lint import lint_machine
 from mklang.loader import semantic_check, validate_dict
 from mklang.model import parse_machine
 from mklang.scripttest import match_expectation, run_scenario
-from mklang.hooks import console_workspace_ready
-from mklang.console.workspace import requires_workspace_inspection
-
-from conftest import REPO_ROOT
 
 AGENT_DIR = REPO_ROOT / "src" / "mklang" / "data" / "console"
 

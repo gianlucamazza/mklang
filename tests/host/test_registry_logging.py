@@ -13,7 +13,10 @@ def test_load_registry_warns_when_sibling_is_skipped(tmp_path, caplog):
 def test_load_registry_rejects_symlink_outside_root(tmp_path, caplog):
     outside = tmp_path / "outside.mkl"
     outside.write_text(
-        "machine: outside\nentry: s\nstates: {s: {prompt: x, output: y, gates: [{when: otherwise, to: END} ]}}\n",
+        (
+            "machine: outside\nentry: s\nstates: "
+            "{s: {prompt: x, output: y, gates: [{when: otherwise, to: END} ]}}\n"
+        ),
         encoding="utf-8",
     )
     root = tmp_path / "machines"

@@ -6,11 +6,9 @@ import subprocess
 import tomllib
 
 import pytest
-
-import mklang
-
 from conftest import REPO_ROOT
 
+import mklang
 
 ROOT = REPO_ROOT
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from conftest import REPO_ROOT
 
 from mklang import host
 from mklang.engine import run
@@ -13,8 +14,6 @@ from mklang.llm.mock import MockLLM
 from mklang.loader import semantic_check, validate_dict
 from mklang.registry import base_registry, load_stdlib_registry
 from mklang.scripttest import match_expectation, run_scenario
-
-from conftest import REPO_ROOT
 
 CONFIG = "config/runtime.example.yaml"
 STDLIB_DIR = REPO_ROOT / "src" / "mklang" / "data" / "stdlib"

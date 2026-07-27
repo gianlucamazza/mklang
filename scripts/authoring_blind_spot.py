@@ -12,9 +12,9 @@ For each item / repeat:
      count author attempts until check passes or the repair budget is spent.
 
 Metrics (issue thresholds):
-  blind_spot = mean(check_pass) − mean(behaviour_pass)   over authoring trials
+  blind_spot = mean(check_pass) - mean(behaviour_pass)   over authoring trials
   < 0.10  → static gate substantially sufficient
-  0.10–0.25 → opt-in test_machine
+  0.10-0.25 → opt-in test_machine
   > 0.25  → test_machine as a required step; 1.1.0 headline
 
 Usage:
@@ -693,12 +693,15 @@ def _write_md(path: Path, summary: dict, trials: list[Trial], meta: dict) -> Non
         f"| behaviour_pass_rate | **{summary['behaviour_pass_rate']}** |",
         f"| **blind_spot** | **{summary['blind_spot']}** |",
         f"| fraction needing ≥1 repair | {summary['fraction_needing_repair']} |",
-        f"| fraction exhausted repair without check_pass | {summary['fraction_exhausted_repair']} |",
+        (
+            "| fraction exhausted repair without check_pass | "
+            f"{summary['fraction_exhausted_repair']} |"
+        ),
         "",
         f"**Verdict:** {summary['verdict']}",
         "",
         "Thresholds (fixed in advance, issue #59): `<0.10` close B1 / "
-        "`0.10–0.25` opt-in `test_machine` / `>0.25` required step + 1.1.0 headline.",
+        "`0.10-0.25` opt-in `test_machine` / `>0.25` required step + 1.1.0 headline.",
         "",
         "## Per-item",
         "",

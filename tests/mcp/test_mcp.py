@@ -48,7 +48,10 @@ def test_server_default_config_uses_the_resolution_chain():
 def test_unknown_provider_is_structured_prepare_failure(tmp_path, monkeypatch, store):
     config = tmp_path / "runtime.yaml"
     config.write_text(
-        """active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n""",
+        (
+            "active: typo\nproviders:\n  typo:\n    api_key_env: TEST_PROVIDER_KEY\n"
+            "    tiers:\n      fast: model\n      balanced: model\n      reasoning: model\n"
+        ),
         encoding="utf-8",
     )
     monkeypatch.setenv("TEST_PROVIDER_KEY", "test-key")
@@ -301,7 +304,11 @@ def test_check_tool_structured_output():
     ok = srv.check_tool(path="examples/triage.mkl")
     assert ok["ok"] is True and ok["errors"] == []
     bad = srv.check_tool(
-        source="machine: x\nentry: gone\nbudget: 2\nstates:\n  s:\n    structure: s\n    prompt: p\n    output: o\n    gates: [{when: otherwise, then: ok, to: END}]\n"
+        source=(
+            "machine: x\nentry: gone\nbudget: 2\nstates:\n  s:\n"
+            "    structure: s\n    prompt: p\n    output: o\n"
+            "    gates: [{when: otherwise, then: ok, to: END}]\n"
+        )
     )
     assert bad["ok"] is False
     assert any("entry 'gone' is not a state" in e for e in bad["errors"])

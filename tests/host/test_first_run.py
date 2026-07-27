@@ -11,7 +11,6 @@ import mklang
 from mklang import cli, host
 from mklang.config import ProviderConfig
 
-
 CONFIG = "config/runtime.example.yaml"
 
 
@@ -185,7 +184,7 @@ def test_doctor_reports_tool_backends(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("MKLANG_FS_WRITE", raising=False)
     assert cli.main(["doctor", "--format", "json"]) == 0
     payload = json.loads(capsys.readouterr().out)
-    fs_line = [i for i in payload["items"] if i["name"].startswith("tools fs")][0]
+    fs_line = next(i for i in payload["items"] if i["name"].startswith("tools fs"))
     assert fs_line["status"] == "ok"
     assert f"workspace={tmp_path}" in fs_line["name"] and "write=off" in fs_line["name"]
     assert "source=default" in fs_line["name"]

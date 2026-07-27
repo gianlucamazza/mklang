@@ -39,10 +39,10 @@ class ActivityTree(Tree):
         self._turn_node = None
         self._reset_maps()
 
-    _turn_node: "TreeNode | None"
-    _brain_open: "TreeNode | None"
-    _run_nodes: dict[tuple, "TreeNode"]
-    _state_nodes: dict[tuple, "TreeNode"]
+    _turn_node: TreeNode | None
+    _brain_open: TreeNode | None
+    _run_nodes: dict[tuple, TreeNode]
+    _state_nodes: dict[tuple, TreeNode]
     _state_kinds: dict[tuple, str]
 
     def _reset_maps(self) -> None:
@@ -57,7 +57,7 @@ class ActivityTree(Tree):
         self._reset_maps()
         self._turn_node = self.root.add(log_render.tree_turn(title), expand=True)
 
-    def _parent_for(self, e: dict) -> "TreeNode | None":
+    def _parent_for(self, e: dict) -> TreeNode | None:
         tag = e.get("run")
         depth = e.get("depth", 0)
         if tag is None:  # brain event
@@ -69,7 +69,7 @@ class ActivityTree(Tree):
         )
 
     @staticmethod
-    def _enable_expand(node: "TreeNode | None") -> None:
+    def _enable_expand(node: TreeNode | None) -> None:
         """Textual defaults allow_expand=True even for empty leaves — only opt in
         when a node actually gains children (nested run, preview, branch)."""
         if node is not None and not node.allow_expand:
@@ -204,7 +204,7 @@ class Inspector(Vertical):
         trace_log.write(table)
 
     def show_session(
-        self, session: "ConsoleSession", spent_in: int, spent_out: int, consented: set
+        self, session: ConsoleSession, spent_in: int, spent_out: int, consented: set
     ) -> None:
         info = Text()
         for label, value in (

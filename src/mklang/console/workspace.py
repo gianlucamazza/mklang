@@ -13,7 +13,6 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 
-
 ANALYSIS_WORDS = (
     "analy",
     "analizz",
@@ -179,10 +178,8 @@ class WorkspaceInspector:
 
         instruction_files: list[str] = []
         markers: list[str] = []
-        scanned = 0
         truncated = False
-        for path in self._iter_files(self.root, max_depth=3):
-            scanned += 1
+        for scanned, path in enumerate(self._iter_files(self.root, max_depth=3), start=1):
             if scanned > self.MAX_SNAPSHOT_FILES:
                 truncated = True
                 break

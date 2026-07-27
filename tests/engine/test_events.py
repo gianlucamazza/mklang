@@ -71,7 +71,7 @@ def test_events_mirror_the_trace():
         "run-finished",
     ]
     done = [e for e in events if e["type"] == "state-done"]
-    for ev, step in zip(done, res.trace):
+    for ev, step in zip(done, res.trace, strict=False):
         assert ev["state"] == step["state"]
         assert ev["gate"] == step["gate"]
         assert ev["policy"] == step["policy"]
@@ -216,7 +216,7 @@ def test_state_done_event_carries_truncated_flag():
     res, events = collect(m, llm=llm)
     assert res.status == "done"
     assert res.trace[0].get("truncated") is True
-    done = [e for e in events if e["type"] == "state-done"][0]
+    done = next(e for e in events if e["type"] == "state-done")
     assert done.get("truncated") is True
     assert done.get("finish_reason") == "length"
 

@@ -1,10 +1,10 @@
 """Provider adapter registry: builtins, entry-point plugins, and explicit protocols."""
 
-from mklang.config import ProviderConfig
 import pytest
 
-from mklang.errors import ProviderConfigError
 from mklang import providers
+from mklang.config import ProviderConfig
+from mklang.errors import ProviderConfigError
 from mklang.providers import BUILTINS, build_llm, load_provider_registry
 
 

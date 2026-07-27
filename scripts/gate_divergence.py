@@ -24,10 +24,9 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Callable
 from itertools import combinations
 from pathlib import Path
-
-from collections.abc import Callable
 
 from mklang.cli import _build_llm
 from mklang.config import ProviderConfig, load_provider

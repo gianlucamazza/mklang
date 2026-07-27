@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib.util
 import json
 import logging
@@ -23,9 +24,8 @@ from .config import ProviderConfig
 from .engine import RunResult, run
 from .llm.base import LLM
 from .loader import load_machine, semantic_check
-from .model import Machine
 from .logs import setup_process_logging
-from .registry import base_registry, load_path_registry
+from .model import Machine
 from .presentation import (
     CommandResult,
     Diagnostic,
@@ -35,7 +35,7 @@ from .presentation import (
     emit_run_text,
     output_format,
 )
-
+from .registry import base_registry, load_path_registry
 
 _log = logging.getLogger("mklang.cli")
 
@@ -68,7 +68,10 @@ def _apply_sets(ctx: dict, sets: list[str]) -> dict:
 def _prepare(
     args: argparse.Namespace, machine_path: str
 ) -> tuple[ProviderConfig, LLM, dict, Machine, dict, dict] | int:
-    """Shared run/resume setup. Returns (prov, llm, registry, machine, tools, hooks) or exit code."""
+    """Shared run/resume setup.
+
+    Returns (prov, llm, registry, machine, tools, hooks) or an exit code.
+    """
     try:
         p = host.prepare_path(
             args.config,
@@ -115,7 +118,10 @@ def _emit(
     provider: str,
     hitl: bool = False,
 ) -> int:
-    """Print the result JSON; write a checkpoint on suspension. Exit: 0 done, 3 suspended, 1 halt."""
+    """Print the result JSON; write a checkpoint on suspension.
+
+    Exit codes: 0 done, 3 suspended, 1 halt.
+    """
     out = host.build_output(res)
     if res.status == "suspended":
         # A suspended run always carries reason + frames, and the callers only
@@ -523,10 +529,8 @@ def cmd_init(args: argparse.Namespace) -> int:
         for path in reversed(created_files):
             path.unlink(missing_ok=True)
         for directory in sorted(created_dirs, key=lambda path: len(path.parts), reverse=True):
-            try:
+            with contextlib.suppress(OSError):
                 directory.rmdir()
-            except OSError:
-                pass
         return _input_error(args, f"initialization failed atomically: {exc}")
     result = CommandResult(
         command="init",
@@ -558,8 +562,8 @@ def cmd_console(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
-    from .console.app import main as console_main
     from .config import load_provider
+    from .console.app import main as console_main
 
     workspace = _resolve_workspace(args.workspace)
     missing = host.missing_key_message(
