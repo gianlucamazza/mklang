@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+# Least privilege for the orchestrator; the reusable quality workflow sets its own.
+permissions:
+  contents: read
+
 jobs:
   quality:
     uses: ./.github/workflows/quality.yml
@@ -13,7 +17,10 @@ jobs:
     # key is absent, so forks without secrets stay green.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: quality
+    permissions:
+      contents: read
     env:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
