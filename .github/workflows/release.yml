@@ -77,9 +77,13 @@ jobs:
       - name: Required OpenAI smoke
         run: MKLANG_LIVE=1 MKLANG_LIVE_PROVIDER=openai uv run --all-extras pytest -q tests/test_live.py
       - name: Cross-provider gate agreement
-        # Easy multi-way routing must stay perfect (1.0). Control-flow escalate
-        # is measured too — floor 0.5 so total chaos fails while the observed
-        # 0.667 contestability (2026-07-24) does not block every release.
+        # Floor policy (do not edit floors without updating the table in
+        # docs/experiments/gate-divergence.md — Release-gate floor policy):
+        # - gate_divergence: anchor multi-way ok routing → min-agreement 1.0
+        # - severity_escalate: contestability probe → per-machine floor 0.5
+        #   (observed 0.667 on 2026-07-24; blocks total chaos, not probes)
+        # - --require-providers deepseek,openai; others skip if key absent
+        # Promoting machines: see gate-divergence.md "Promoting a machine".
         run: |
           mkdir -p live-results
           uv run --all-extras python scripts/gate_divergence.py \

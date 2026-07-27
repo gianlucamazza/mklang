@@ -24,7 +24,7 @@ uv run mklang test examples/triage.mkl --script examples/triage.test.yaml  # scr
 (`tests/conformance/test_conformance.py` over `conformance/cases/*.yaml`). `mklang test` is
 the same case format for **author-facing** scenario scripts next to a machine.
 
-**Optional pre-commit.** [`.pre-commit-config.yaml`](./.pre-commit-config.yaml)
+**Optional pre-commit.** [`.pre-commit-config.yaml`](https://github.com/gianlucamazza/mklang/blob/main/.pre-commit-config.yaml)
 mirrors the ruff gate locally (`pre-commit install`, then
 `pre-commit run --all-files`). CI remains the source of truth — hooks are a
 convenience, not a substitute for the quality workflow.
@@ -163,10 +163,10 @@ These are not files in the tree; keep them aligned with the quality gate:
 - **Docs site:** the `docs` workflow builds with MkDocs and deploys via
   `actions/deploy-pages` (OIDC / `github-pages` environment). Pages
   `build_type` is **workflow**, not the legacy `gh-pages` branch publish.
-- **Dependabot:** version updates via [`.github/dependabot.yml`](./.github/dependabot.yml);
+- **Dependabot:** version updates via [`.github/dependabot.yml`](https://github.com/gianlucamazza/mklang/blob/main/.github/dependabot.yml);
   also keep **Dependabot alerts** and **Dependabot security updates** on in
   the repo Security settings.
 - **Secret scanning** and **push protection** should stay on (public repo default).
 - Vulnerability reports go through private
   [Security Advisories](https://github.com/gianlucamazza/mklang/security/advisories/new)
-  — see [`SECURITY.md`](./SECURITY.md).
+  — see [`SECURITY.md`](https://github.com/gianlucamazza/mklang/blob/main/SECURITY.md).
