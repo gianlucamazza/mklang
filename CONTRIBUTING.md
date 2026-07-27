@@ -135,8 +135,9 @@ published sdist (`packaging/arch/PKGBUILD` `check()`). Paths excluded from the
 sdist (`packaging/`, `.git`, …) are absent there: any offline test that opens
 them must **skip** when missing, and the quality gate re-runs the suite on the
 extracted sdist so a packaging-only failure cannot ship. After PyPI publish,
-pin `source`/`sha256sums` and push the AUR package — see
-[packaging/arch/README.md](./packaging/arch/README.md).
+pin `source`/`sha256sums` and push the AUR package — see the
+[Arch packaging README](https://github.com/gianlucamazza/mklang/tree/main/packaging/arch)
+(not on the docs site; packaging/ is outside `docs/`).
 
 ## Non-goals (don't propose these)
 
