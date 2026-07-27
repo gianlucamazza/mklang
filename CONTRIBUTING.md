@@ -14,6 +14,7 @@ MKLANG_LIVE=1 uv run --extra dev pytest -q tests/test_live.py  # opt-in live smo
 uv run --extra dev ruff check src tests scripts
 uv run --extra dev ruff format --check src tests scripts  # formatting (CI-gated); drop --check to fix
 uv run --all-extras mypy              # static types (zero suppressions)
+uv run --extra dev --with pip-audit pip-audit  # dependency CVE scan (CI-gated)
 uv run mklang check examples/*.mkl     # schema + semantic validation
 uv run mklang lint --strict examples/*.mkl   # + static analysis
 uv run mklang test examples/triage.mkl --script examples/triage.test.yaml  # scripted scenarios, no API keys
@@ -22,6 +23,11 @@ uv run mklang test examples/triage.mkl --script examples/triage.test.yaml  # scr
 `pytest` already runs the [conformance suite](./conformance/README.md)
 (`tests/conformance/test_conformance.py` over `conformance/cases/*.yaml`). `mklang test` is
 the same case format for **author-facing** scenario scripts next to a machine.
+
+**Optional pre-commit.** [`.pre-commit-config.yaml`](./.pre-commit-config.yaml)
+mirrors the ruff gate locally (`pre-commit install`, then
+`pre-commit run --all-files`). CI remains the source of truth — hooks are a
+convenience, not a substitute for the quality workflow.
 
 Secrets live in `.env` (gitignored); copy `.env.example` and add provider keys for
 live runs. The example runtime defaults to **DeepSeek** (`DEEPSEEK_API_KEY` +
@@ -143,3 +149,24 @@ pin `source`/`sha256sums` and push the AUR package — see the
 
 Pinning a concrete provider/model inside a `.mkl` — machines route by capability tier
 only (ADR 0003). See `SPEC.md §9` for the current non-goals.
+
+## Maintainer: GitHub repository settings
+
+These are not files in the tree; keep them aligned with the quality gate:
+
+- **Ruleset on the default branch** (not classic branch protection): required
+  status checks from the quality matrix (`checks` + `test (…)` jobs),
+  `non_fast_forward`, and `deletion` blocked. Prefer
+  [repository rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)
+  over the legacy branch-protection API. Repository admins may bypass (solo
+  maintainer direct-push); PR merges still need the required checks green.
+- **Docs site:** the `docs` workflow builds with MkDocs and deploys via
+  `actions/deploy-pages` (OIDC / `github-pages` environment). Pages
+  `build_type` is **workflow**, not the legacy `gh-pages` branch publish.
+- **Dependabot:** version updates via [`.github/dependabot.yml`](./.github/dependabot.yml);
+  also keep **Dependabot alerts** and **Dependabot security updates** on in
+  the repo Security settings.
+- **Secret scanning** and **push protection** should stay on (public repo default).
+- Vulnerability reports go through private
+  [Security Advisories](https://github.com/gianlucamazza/mklang/security/advisories/new)
+  — see [`SECURITY.md`](./SECURITY.md).

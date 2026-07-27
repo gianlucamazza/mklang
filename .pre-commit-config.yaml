@@ -1,0 +1,25 @@
+# Optional local hooks mirroring the CI quality gate. CI remains source of truth.
+# Install: pre-commit install
+# Run all: pre-commit run --all-files
+#
+# Keep the ruff rev in step with the resolved ruff in uv.lock / [dependency-groups]
+# (or `uv run ruff --version`). Dependabot does not update this file.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Match locked ruff (see uv.lock); bump together when upgrading the linter.
+    rev: v0.15.22
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
