@@ -1,9 +1,65 @@
 # mklang — Roadmap & improvement areas
 
 Where mklang stands (package **1.0.12**, language **0.3**) and where it can grow —
-technical **and** organizational. Items are marked **[next]** (clear near-term),
-**[later]** (valuable, not urgent), or **[maybe]** (worth evaluating). ADRs in
-[`docs/adr/`](./docs/adr) record decisions as they're made.
+technical **and** organizational.
+
+**Tracking rule:** every **Now** / **Next** bullet has a GitHub issue. Work lives
+in [issues](https://github.com/gianlucamazza/mklang/issues) +
+[project board](https://github.com/users/gianlucamazza/projects/2); this file is
+the strategic index. ADRs in [`docs/adr/`](./docs/adr) record decisions.
+Milestone **[1.1 — maturity & embed docs](https://github.com/gianlucamazza/mklang/milestone/1)**
+is the active package horizon (spec stays **0.3**).
+
+Horizon tags below: **[now]** / **[next]** / **[later]** / **[maybe]**.
+
+---
+
+## Now
+
+Active focus (milestone 1.1, `horizon:now`):
+
+- **[now] Live-verify Anthropic** (three-provider gate-divergence) — [#60](https://github.com/gianlucamazza/mklang/issues/60)
+- **[now] Five-reader distribution test (D1)** — [#61](https://github.com/gianlucamazza/mklang/issues/61)
+- **[now] Release-gate per-machine agreement floors** — [#64](https://github.com/gianlucamazza/mklang/issues/64)
+
+## Next
+
+Accepted for milestone 1.1 (`horizon:next`):
+
+- **[next] Freeze release-gate floor policy** (when to promote machines) — [#69](https://github.com/gianlucamazza/mklang/issues/69)
+- **[next] Production embedding guide** (`run` / `resume` / checkpoint / secrets) — [#70](https://github.com/gianlucamazza/mklang/issues/70)
+- **[next] Versioned run/resume result JSON Schema for hosts** — [#71](https://github.com/gianlucamazza/mklang/issues/71)
+- **[next] Anthropic secret + credit runbook** — [#72](https://github.com/gianlucamazza/mklang/issues/72)
+
+## Later
+
+Valuable, not in 1.1 (open issues only when ready to pull into a milestone):
+
+- **[later] Truncation `continue` stitching** (ADR 0018)
+- **[later] Editor tooling / LSP**
+- **[later] Language 0.4 candidates** (each needs ADR + conformance — see BP §16):
+  `parse: json` / object, portable `on_truncate`, per-gate `hitl:`, budget split
+- **[later] Host HTTP tool as documented plugin** (not core language)
+- **[later] Context Layer 2 zones/pin** (ADR 0017; provenance taint already ADR 0025)
+
+## Maybe
+
+Worth evaluating; not committed:
+
+- **[maybe]** Async fan-out beyond `ThreadPoolExecutor(5)`; per-state caching
+- **[maybe]** External console client (MCP-only); LangGraph interop
+- **[maybe]** OpenTelemetry export from the run trace
+- **[maybe]** Separate host package (webhook + scheduler) — product host, not language core
+- **[maybe]** FS multi-root / path rules (ADR 0024 defer)
+
+## Non-goals
+
+Permanent or deferred-out of the 0.3 stable surface — see
+[SPEC §9](./SPEC.md) and [stability guide](./docs/guides/stability.md):
+formal types in `structure`, provider/model pinning in `.mkl`, dual-channel
+CaMeL control planes (research).
+
+---
 
 ## Where we are (language 0.3 / package 1.0.12)
 
@@ -256,42 +312,18 @@ technical **and** organizational. Items are marked **[next]** (clear near-term),
   analog and per-path allow/deny rules (`Read(...)`/`Edit(...)` syntax shared
   by Claude Code and Grok); ADR 0024 defers both until a real use case appears.
 
-## Near-term after 0.15.0
+## Path to 1.0 (shipped summary)
 
-The 0.13–0.15 cycle shifted from feature growth to **maturity**: quality gates,
-untrusted-context delimiting, packaging, hygiene. The remaining gaps to a
-"mature framework" are stability and evidence, not more surface:
+The 0.13–0.15 cycle shifted from feature growth to **maturity**; 1.0.0 froze the
+0.3 surface. Active Now/Next work is at the top of this file (milestone 1.1).
 
-- **[shipped] Path to 1.0 — prep** — every open question in [SPEC §9](./SPEC.md)
-  is closed as a permanent non-goal, deferred with rationale, or resolved by
-  measurement ([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md),
-  [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md)), and a stated
-  **stability & deprecation policy** pins the package / spec-version contract
-  ([guide](./docs/guides/stability.md), ADR 0026). Spec stays **0.3**.
-- **[shipped] Cut 1.0.0** — drop the `Development Status :: 4 - Beta` classifier,
-  bump the package to **1.0.0** (spec stays 0.3), and run the live release gate
-  (DeepSeek + OpenAI agreement 1.0; Anthropic re-runs when credits allow). The
-  last explicit item the maturity assessment named.
-- **[shipped] 1.0.1 validation follow-ups** — authoring-loop
-  `blind_spot = 0.0167` (no `test_machine`), ADR 0028 provisional 1.0 posture,
-  `cmd_doctor` CC cut, CI format-check + tag↔CHANGELOG enforcement; protocol for
-  the five-reader distribution test. Anthropic live re-run still open.
-- **[shipped] Showcase refresh** — the demo suite was refocused and pruned to
-  the two product surfaces: **`agent`** (console TUI) and **`language`**
-  (`react.mkl`); the peripheral recordings (`cli`, `search`, `console`,
-  `orchestrate`, `hitl`, `test`) are gone, the README leads with the two
-  surfaces, and `check-drift` also fails on orphan asset files.
-- **[shipped] gate-divergence at scale** — four-machine suite on DeepSeek +
-  OpenAI (×3). First full run (2026-07-23): **1.0 per machine**. 1.0.1 re-run
-  (2026-07-24): three machines still **1.0**, `severity_escalate` at **0.667**
-  (contestability under repeats). Release gate (single machine) stays **1.0**.
-  Dated table in
-  [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md).
-- **[next] Live-verify Anthropic** — needs `ANTHROPIC_API_KEY` in local `.env`
-  **and** GitHub Actions secrets (currently absent from both) plus account
-  credit; already wired in the live matrix and divergence harness.
-- **[later] Truncation `continue` stitching** (ADR 0018).
-- **[later] Editor tooling / LSP**; **[maybe]** budget split, async fan-out,
-  per-state caching, external console client, OTel export, LangGraph interop.
-
-Defer: context Layer 2 zones/pin.
+- **[shipped] Path to 1.0 — prep** — SPEC §9 closed; [ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md),
+  [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md); [stability guide](./docs/guides/stability.md).
+- **[shipped] Cut 1.0.0** — package 1.0.0, live release gate DeepSeek + OpenAI.
+- **[shipped] 1.0.1 validation follow-ups** — authoring-loop `blind_spot = 0.0167`,
+  ADR 0028 provisional 1.0 posture, CI format-check + tag↔CHANGELOG; five-reader
+  protocol (execution: [#61](https://github.com/gianlucamazza/mklang/issues/61)).
+- **[shipped] Showcase refresh** — demos focused on **`agent`** + **`language`**.
+- **[shipped] gate-divergence at scale** — four-machine suite DeepSeek + OpenAI;
+  dated table in [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md).
+  Anthropic third-provider pass: [#60](https://github.com/gianlucamazza/mklang/issues/60).
