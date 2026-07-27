@@ -8,9 +8,19 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.10`).
+  `pyproject.toml` (currently `1.0.11`).
 
 ## [Unreleased]
+
+## [1.0.11] — 2026-07-27
+
+Documentation coherence for the host `tools:` config surface.
+
+### Fixed
+
+- ADR 0016 Status (and the ADR index) no longer claim the runtime.yaml
+  `tools:` block is deferred — it shipped with the generalized host-tool
+  config; a release-suite guard pins the status against that drift.
 
 ## [1.0.10] — 2026-07-26
 
@@ -1048,7 +1058,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.10...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.11...HEAD
+[1.0.11]: https://github.com/gianlucamazza/mklang/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/gianlucamazza/mklang/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/gianlucamazza/mklang/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/gianlucamazza/mklang/compare/v1.0.7...v1.0.8

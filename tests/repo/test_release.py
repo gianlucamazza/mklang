@@ -130,6 +130,25 @@ def test_console_docs_link_to_host_path_ssot():
     assert f"best-practices.md{anchor}" in console
 
 
+def test_adr_0016_status_matches_shipped_tools_block():
+    """ADR 0016 once deferred the runtime.yaml tools: block; it shipped later.
+
+    Keep the Status line and the ADR index in sync with the body (and with
+    toolconfig.py / doctor), so a half-updated status cannot reappear.
+    """
+    adr = (ROOT / "docs/adr/0016-host-web-search-tool.md").read_text(encoding="utf-8")
+    index = (ROOT / "docs/adr/README.md").read_text(encoding="utf-8")
+    status = next(line for line in adr.splitlines() if line.startswith("Status:"))
+
+    assert "tools block deferred" not in status.lower()
+    assert "shipped" in status.lower()
+    assert "`runtime.yaml` tools.search block" in adr
+    assert "**done**" in adr
+    # Index may abbreviate; it must not re-introduce the deferred claim.
+    assert "0016" in index
+    assert "tools block deferred" not in index
+
+
 def test_release_gate_requires_every_core_repeat():
     _ci_errors = _gate_divergence_module()._ci_errors
 
