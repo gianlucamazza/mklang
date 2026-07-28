@@ -105,3 +105,38 @@ semantics — genuine language rules, not host behavior — into the suite. Stil
 excluded (genuinely host behavior): checkpoint/suspend/HITL (ADR 0007/0008),
 provider adapters, and trace cost/reasoning annotations. Trace matching is a
 skeleton by design — implementations may add annotation keys freely.
+
+## What conformance does and does not guarantee
+
+Every case in this suite runs against a **scripted** LLM: the produce texts and
+the judge's verdicts come from the case file, not from a model. That is what
+makes the suite a specification instead of a benchmark — and it fixes exactly
+how far a passing result reaches.
+
+**Conformance pins the mechanical skeleton.** Two conformant interpreters, given
+the same machine and the same sequence of oracle verdicts, produce the same
+trace: same states in the same order, same gate selected, same deposits, same
+budget arithmetic, same halt reason, same taint marks. Everything that is a
+function of the machine plus the verdicts is nailed down.
+
+**It does not pin behaviour in production.** In a real run the verdicts come from
+a model, and the model is not part of the contract. So two conformant runtimes
+can diverge arbitrarily on the same `.mkl` and the same input — different
+provider, different model version, or the same model on a different day
+(measured: `docs/experiments/gate-divergence.md`). Concretely, passing this suite
+says **nothing** about:
+
+- **which** gate a prose condition will fire on any given input — only what the
+  runtime must do once a verdict exists;
+- whether two providers, or two runs of one provider, agree;
+- whether a `repair` loop converges (`docs/experiments/repair-convergence.md`);
+- output quality, latency, or cost;
+- anything a `hook:` or `tool:` does — the suite scripts their return values, so
+  it pins how the runtime *uses* a host predicate, never what the host computes.
+
+So the accurate claim for a second implementation is: **"it matches the
+language's mechanical contract."** Not "it behaves the same." A machine whose
+outcome must hold across runtimes needs its consequential transitions on
+`hook:` gates or human review (SPEC §5, §8 _What a trace attests_, §11) — the
+conformance suite is what makes those hooks compose identically everywhere, not
+a substitute for them.

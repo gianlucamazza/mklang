@@ -35,3 +35,4 @@ change checklist in CONTRIBUTING says when to add one.
 | [0028](0028-provisional-1.0-posture.md)          | Provisional posture of package 1.0.0                                      | Accepted                               |
 | [0029](0029-internal-layout-refactor.md)         | Internal layout refactor (cli split, console bridge, tests mirror src)    | Accepted                               |
 | [0030](0030-control-flow-taint.md)                | Control-flow taint: the taint follows the choice                          | Accepted                               |
+| [0031](0031-what-would-force-a-language-0-4.md)   | What would force a language 0.4 (falsifiers for the 0.3 freeze)           | Accepted                               |

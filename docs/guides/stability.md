@@ -62,7 +62,10 @@ from 1.0.0 onward.
 reference implementation. A behavior change that is a valid reading of the 0.3
 spec is a _package_ change (SemVer), not a spec change. A change that needs new
 spec text is a _spec_ change (0.4+) and carries the conformance work the change
-checklist requires.
+checklist requires. What would actually *force* a 0.4 — rather than another
+deferral — is written down as falsifiable conditions in
+[ADR 0031](../adr/0031-what-would-force-a-language-0-4.md); a 0.4 proposal cites
+the evidence row that met one.
 
 ## The `.mkl` extension
 

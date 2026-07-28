@@ -59,6 +59,29 @@ All notable changes to mklang are documented here. The format follows
   and `flow_tainted` and fail safe when absent. `mklang lint` reports effectful
   tool states reachable from a prose-gated decision with no hook on the path
   (a `note:`, advisory under `--strict`). Conformance: four `flow-taint-*` cases.
+- **SPEC §8 “What a trace attests”** (normative): the trace records which gate
+  fired, under which policy, decided by whom (`gate_via`, `judge_model`, the
+  anomaly marks) — and explicitly does **not** attest why the verdict was what it
+  was, that it would repeat, or that it was correct. Written before anyone cites
+  a trace to justify a decision to a customer or an auditor. The §8 examples now
+  use the field name the interpreter actually emits (`gate`, not `gate_fired`).
+- **Conformance boundary written down** (`conformance/README.md`, ADR 0009
+  amendment): every case scripts the oracle, so conformance pins what a runtime
+  does *given* a verdict and nothing about which verdict a model gives — two
+  conformant runtimes can diverge arbitrarily in production. The README's claim
+  is now "matches the mechanical contract", not "behaves the same".
+- **ADR 0031 — what would force a language 0.4.** ADR 0028 called the 0.3 freeze
+  "provisional on evidence" but named conditions only for a package 2.0. The
+  falsifiers now exist, each with a named measurement and a threshold set before
+  the data: an unenforceable normative default, a totality hole authors keep
+  shipping, a failed reliability measurement (repair convergence, paraphrase
+  invariance, gate blind spot), or one external contract-shaped defect.
+- **`scripts/repair_convergence.py`** — does `repair(N)` converge, or is the
+  budget doing the work? Pass rate per attempt index over bundled repair
+  machines, with `lift = p(2) − p(1)` as the claim under test and a `--self-check`
+  offline mode. The selection effect (attempt *k* is conditioned on *k−1*
+  failures) is documented as biasing the lift downwards. No live rows yet:
+  `docs/experiments/repair-convergence.md`.
 - **Gate-divergence harness: metrics that can fail.** Agreement 1.0 on four easy
   machines has no discriminating power, so `scripts/gate_divergence.py` gains a
   **boundary corpus** (`threshold_edge` marginal condition, `priority_shadow`

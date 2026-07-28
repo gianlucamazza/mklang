@@ -912,7 +912,7 @@ A run produces a **trace**: an ordered list of steps. A plain step:
   state: draft_reply
   output: "<the output produced by the state>"
   reasoning: "<the chain-of-thought, if reason: true>" # optional (§4.5)
-  gate_fired: "the reply resolves the request and is in the required tone"
+  gate: "the reply resolves the request and is in the required tone" # the `when` that fired
   policy: ok # ok | repair | escalate | fail
   to: send
   cost?: { input_tokens: …, output_tokens: … } # if the host tracks it
@@ -925,7 +925,7 @@ Two shapes carry nested detail:
 - step: 1
   state: sample_answers
   branches: ["<candidate 1>", "<candidate 2>", "…"] # the produced list
-  gate_fired: otherwise
+  gate: otherwise
   policy: ok
   to: vote
 
@@ -934,14 +934,64 @@ Two shapes carry nested detail:
   state: map_summarize
   output: ["<summary 1>", "…"]
   sub_trace: [{ step: 1, state: … }, …] # (one per branch when over+call)
-  gate_fired: otherwise
+  gate: otherwise
   policy: ok
   to: combine
 ```
 
-The trace is the primary debugging artifact: it makes inspectable _why_ the machine
-took a given path — indispensable when the runtime is an LLM, and doubly so once
-fan-out and sub-machines nest.
+The trace is the primary debugging artifact: it records _which_ path the machine
+took and on whose verdict — indispensable when the runtime is an LLM, and doubly
+so once fan-out and sub-machines nest.
+
+### What a trace attests (normative)
+
+Traces get used as evidence. Once a run decides something a person or an
+organisation must answer for — an approval, a refusal, a reply that went out —
+the trace is what gets shown, and it must not be read as more than it is. This
+section fixes that boundary so it is written down **before** someone cites a
+trace to justify a decision to a customer or an auditor.
+
+A conformant trace **attests**, for each step:
+
+- **which state ran**, in what order, and how many steps the run cost;
+- **which gate fired** (`gate`, the `when` text), under **which policy**
+  (`ok` / `repair` / `escalate` / `fail`) and to **which destination**;
+- **how the gate was decided** — `gate_via: hook | llm | otherwise`, plus the
+  `hook` name, the `judge_model`, and the anomaly annotations (`judge_fallback`,
+  `judge_raw`, `judge_parse`, `judge_none`, `judge_forced_choice`, §5);
+- **what the state produced** (`output`, `branches`, `sub_trace`) and, when the
+  state used `reason: true`, the scratchpad the judge was shown (`reasoning`);
+- **provenance and control-flow marks**: `decision_tainted`,
+  `untrusted_control_flow`, `truncated` (§6).
+
+A trace does **not** attest:
+
+- **Why the verdict was what it was.** `gate_via: llm` records that a judge
+  chose condition _k_, not any reason for choosing it. A `reasoning` field is a
+  model's self-report, produced by the same oracle whose judgement is in
+  question; it is evidence about the model's output, never a justification of
+  the decision.
+- **That the same inputs would decide the same way.** Gate judging is
+  non-deterministic across providers, model versions, and repeats of one model
+  (`docs/experiments/gate-divergence.md`). A trace is a record of **one** run.
+- **That the decision was correct**, by any standard outside the machine.
+  Firing `when: the refund is within policy` records that a judge said so, not
+  that it was so.
+- **That the recorded verdicts were reproducible after the fact.** The trace
+  names the `judge_model` but pins no model weights; providers change what a
+  name resolves to.
+
+The auditable parts of a decision are therefore the ones a `hook:` decided:
+`gate_via: hook` names host code whose behaviour can be re-run, reviewed, and
+version-pinned. **A machine whose consequential transitions must be defensible
+after the fact should put them on hooks or on `escalate` + HITL, not on prose
+gates** — the same conclusion §11 reaches from the security side, reached here
+from the evidentiary one.
+
+Hosts MAY add annotation keys, and a host that retains traces as records SHOULD
+record alongside them what the trace itself cannot carry: the provider and model
+identifiers actually used, the machine file's hash (checkpoints already record
+one, §7), and the interpreter version.
 
 ---
 
@@ -969,6 +1019,13 @@ measurement**. The [stability & deprecation policy](./docs/guides/stability.md)
   suffix collided with Makefile includes in some tooling; `.mkl` (mklang) sheds
   that. The suffix is a discovery convention, not a language contract
   ([ADR 0027](./docs/adr/0027-adopt-mkl-extension.md)).
+
+The freeze itself is **provisional on evidence** (ADR 0028). What would force a
+**0.4** — an unenforceable normative default, a totality hole authors keep
+shipping, a failed reliability measurement, or one external contract-shaped
+defect — is written as falsifiable conditions with named measurements in
+[ADR 0031](./docs/adr/0031-what-would-force-a-language-0-4.md), so "deferred"
+below has an exit condition rather than an indefinite one.
 
 ### Deferred (valuable, later — not in 1.0, not ruled out)
 
