@@ -1,0 +1,38 @@
+case: judge-none-falls-through
+description: The fused judge may answer "none of these conditions is true"; evaluation continues to the catch-all.
+machine:
+  machine: jn
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: draft
+      output: o
+      gates:
+        - { when: the draft is a formal apology, then: ok, to: apology }
+        - { when: the draft is an invoice, then: ok, to: invoice }
+        - { when: otherwise, then: ok, to: fallback }
+    apology:
+      structure: s
+      prompt: apology path
+      output: o2
+      gates: [{ when: otherwise, then: ok, to: END }]
+    invoice:
+      structure: s
+      prompt: invoice path
+      output: o2
+      gates: [{ when: otherwise, then: ok, to: END }]
+    fallback:
+      structure: s
+      prompt: fallback path
+      output: o2
+      gates: [{ when: otherwise, then: ok, to: END }]
+llm:
+  produce: ["neither of those", "handled"]
+  judge: ["none"]
+expect:
+  status: done
+  trace:
+    - { state: a, gate: otherwise, gate_via: otherwise, to: fallback }
+    - { state: fallback, policy: ok, to: END }

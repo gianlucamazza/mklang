@@ -62,6 +62,10 @@ The runner must provide an LLM whose behavior is fully determined by the case:
   cost-budget cases). Default zero.
 - **judge**: return the listed indices in order (an index into the presented
   condition batch); once one entry remains, keep returning it. The string
+  `"none"` is the **none of the above** verdict (SPEC §5 _Totality_: every
+  condition in that batch is false, so evaluation continues at the gate after
+  the batch); an implementation surfaces it as the extra `N+1` option and its
+  runner must accept it wherever an index is accepted. The string
   `"unparseable"` means every judge call fails as unparseable (SPEC §7:
   soft-fallback to an eligible `otherwise`, else halt `judge-unparseable`).
 - **hooks**: each `hook: <name>` maps to a boolean sequence; the runtime returns
@@ -77,7 +81,10 @@ The runner must provide an LLM whose behavior is fully determined by the case:
 
 Covered: gate policies (ok/repair/escalate/fail), `otherwise`, fused judging,
 **hook precedence** (a later hook must not preempt an earlier prose gate — §5
-document order), repair budgets, step and cost budgets, **fan-out step charging**
+document order), **transition totality** (§5: a `none` verdict falls through to
+the next gate — catch-all or hook — and off the end of the gate list halts
+`no-gate-matched`; an unresolvable `hook:` halts rather than reading as False),
+repair budgets, step and cost budgets, **fan-out step charging**
 (`max(1, len(branches))`, §7), `call` (incl. failure propagation), fan-out
 (`sample` incl. per-branch `{{index}}`, `over`), `accumulate`, **`tool` states**
 (observation deposit, unknown-tool halt), **output parsing** (0.3 `parse: list`:

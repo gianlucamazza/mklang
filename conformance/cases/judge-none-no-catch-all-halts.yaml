@@ -1,0 +1,22 @@
+case: judge-none-no-catch-all-halts
+description: Without a catch-all the transition relation is partial — a "none" verdict halts with no-gate-matched.
+machine:
+  machine: jnp
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: draft
+      output: o
+      gates:
+        - { when: the draft is a formal apology, then: ok, to: END }
+llm:
+  produce: ["an invoice, actually"]
+  judge: ["none"]
+expect:
+  status: halt
+  error: no-gate-matched
+  at: a
+  trace:
+    - { state: a, policy: no-gate-matched, to: null }

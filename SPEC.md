@@ -490,19 +490,31 @@ with a policy and (except for `fail`) a destination.
 - Optional top-level **`hooks:`** declarations document expected names (like
   `tools:`); `mklang check` warns if a gate references an undeclared hook.
 - **`when: otherwise`** is a **reserved catch-all**: always true when evaluation
-  reaches it (no LLM, hook ignored). Every non-terminal state **should** end with
-  an `otherwise` gate. If no gate matches, the run halts with `no-gate-matched`.
+  reaches it (no LLM, hook ignored). Every state **should** end with an
+  `otherwise` gate — that is what makes its transition function total (see
+  _Totality and determinism_ below); `mklang lint` reports states that lack one.
+  If no gate matches, the run halts with `no-gate-matched`.
 - **Prose gates** (no `hook`, not `otherwise`): the runtime judges whether `when`
   is true given the output and context. Consecutive prose gates may be **fused**
-  into a single `LLM.judge` call; the first true among that batch wins.
+  into a single `LLM.judge` call; the first true among that batch wins. A batch
+  whose conditions are **all false** falls through to the next gate, exactly like
+  a `hook` that returned False.
 - **Judge protocol (normative):** the fused condition list is presented
-  **1-based** (`1..N`). The judge replies with JSON `{"choice": k}` where `k` is
-  in that range. The runtime converts to a 0-based index. **Out-of-range**
-  choices (including a 0-based misread such as `{"choice": 0}`) and unparseable
-  text are **anomalies**: they must **not** be silently clamped to a valid gate.
-  They follow the same path as unparseable judges — soft-fallback to an eligible
-  `when: otherwise` (trace: `judge_fallback`, `judge_raw`) or hard-halt
-  `judge-unparseable` (§7).
+  **1-based** (`1..N`), followed by one further option — **`N+1`, “none of the
+  above conditions is true”**. The judge replies with JSON `{"choice": k}` where
+  `k` is in `1..N+1`. The runtime converts to a 0-based index; `N+1` is not a
+  gate but the **none** verdict, which resumes evaluation at the gate after the
+  batch. Offering the none option is **normative**: without it the judge is a
+  forced choice among the author's conditions, which silently turns _first true_
+  into _best match_ and makes `when: otherwise` unreachable whenever a prose gate
+  precedes it. **Out-of-range** choices (including a 0-based misread such as
+  `{"choice": 0}`, or a value above `N+1`) and unparseable text are **anomalies**:
+  they must **not** be silently clamped to a valid gate. They follow the same path
+  as unparseable judges — soft-fallback to an eligible `when: otherwise` (trace:
+  `judge_fallback`, `judge_raw`) or hard-halt `judge-unparseable` (§7). The
+  reference interpreter traces a none verdict as `judge_none: <count>`, and a
+  verdict from a host adapter that could not offer the option as
+  `judge_forced_choice: true`.
 - **Judge CONTEXT (host):** the host MAY truncate the context JSON passed to the
   judge. The reference interpreter caps it at **4000** characters
   (`JUDGE_CONTEXT_CHARS`) and, when truncating, keeps a head and tail with an
@@ -524,6 +536,58 @@ with a policy and (except for `fail`) a destination.
   ("Condition 1 fails… Condition 2 holds…") is **out of contract**: map the `judge:`
   tier (or a native-thinking model used as a judge) to an instruct-style model, or
   keep reasoning private so only the final choice is emitted.
+
+### Totality and determinism (normative)
+
+A `gates:` list is a **relation**, not a function: several conditions may hold at
+once and none has to. What makes the machine an FSM is that the runtime turns
+that relation into a single transition by a rule fixed here, not by the judge's
+discretion.
+
+**Selection.** Let `G` be the state's gates in author order and `E ⊆ G` the
+**eligible** gates — `G` minus every `repair` gate whose budget is spent (§7).
+Eligibility is computed **before** selection and depends only on the run's repair
+counters. The runtime scans `E` once, left to right, and fires the **first** gate
+that evaluates true:
+
+| Gate kind          | True when                                                             | False → |
+| ------------------ | --------------------------------------------------------------------- | ------- |
+| `hook: <name>`     | the host predicate returns a truthy value                             | next gate |
+| prose (fused batch) | the judge returns this condition's number                             | next gate after the whole batch |
+| `when: otherwise`  | always                                                                | — |
+
+**No tie-break exists, because ties are impossible.** Position in `E` is a total
+order and the scan stops at the first true gate; two conditions that are both
+true resolve to the earlier one by construction. Authors therefore order gates by
+priority, not by likelihood — a broad condition placed first **shadows** every
+narrower one below it, which `mklang lint` cannot detect for prose.
+
+**Determinism given the verdict.** Write `v` for the tuple of oracle answers a
+state's evaluation consumed (each hook's boolean, each judged batch's choice).
+Then `δ(state, E, v)` is a **pure, total function** to a transition: the runtime
+contributes no randomness, no reordering, no clamping, and no re-judging. All
+non-determinism of a run lives in `v` — which is why divergence is measured on
+`v`'s consequences (`docs/experiments/gate-divergence.md`) and why a `hook:` gate,
+whose part of `v` is host code, is the only way to make a decision reproducible.
+
+**Totality.** `δ` is total over verdicts, but the scan itself can run off the end
+of `E`: every hook returned False and every judged batch answered *none*. That
+outcome is defined — the run halts with `no-gate-matched` (§7) — but it is a halt,
+not a transition. A state's transition function is **total in the useful sense**
+iff `E` always contains a `when: otherwise` gate, which requires the catch-all to
+be present **and** not to be a `repair` gate (its budget can empty `E` of it).
+`mklang lint` reports both defects (`no catch-all gate`, `the only when: otherwise
+gate is a repair`), and a machine that passes `lint --strict` has a total
+transition function at every state.
+
+Conformance pins the three edges: `judge-none-falls-through`,
+`judge-none-then-hook`, `judge-none-no-catch-all-halts`.
+
+**Host predicate contract.** A `hook:` is a **pure predicate**. It must return a
+boolean, must not mutate `context` or `output`, and must not raise: an exception
+(including an unregistered hook name) is **not** the value `False` — it halts the
+run with `state-error: …`, because a predicate that fails to answer leaves the
+transition undefined rather than negative.
 
 ### The four policies
 

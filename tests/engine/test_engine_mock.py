@@ -558,3 +558,153 @@ def test_judge_sees_reasoning():
     assert r.status == "done"
     assert seen["reasoning"] == "step-by-step why"
     assert seen["out"] == "ans"
+
+
+# --- Judge totality (SPEC §5): the fused judge may answer "none of the above" ---
+
+
+def _two_prose_then_catch_all(to_catch="c"):
+    return M(
+        {
+            "machine": "jt",
+            "entry": "a",
+            "budget": 6,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        gate("the output is an apology", then="ok", to="b"),
+                        gate("the output is an invoice", then="ok", to="b"),
+                        gate("otherwise", then="ok", to=to_catch),
+                    ],
+                },
+                "b": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o2",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+                "c": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o2",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+
+
+def test_judge_is_offered_the_none_option():
+    """The engine always asks for the none option: forced choice turns 'first true'
+    into 'best match' (SPEC §5)."""
+    llm = MockLLM(judge_fn=lambda *a: 0)
+    run1(_two_prose_then_catch_all(), llm)
+    assert llm.judge_calls[0]["allow_none"] is True
+    # The author's conditions are passed bare; the none option is the adapter's.
+    assert llm.judge_calls[0]["conditions"] == [
+        "the output is an apology",
+        "the output is an invoice",
+    ]
+
+
+def test_judge_none_falls_through_to_catch_all():
+    """`len(conditions)` is the none verdict: the scan resumes after the batch."""
+    llm = MockLLM(judge_fn=lambda _m, conditions, *a: len(conditions))
+    r = run1(_two_prose_then_catch_all(), llm)
+    assert r.status == "done"
+    first = r.trace[0]
+    assert (first["to"], first["gate_via"], first["gate"]) == ("c", "otherwise", "otherwise")
+    assert first["judge_none"] == 1
+
+
+def test_judge_none_without_catch_all_halts():
+    """Without a catch-all the transition relation is partial — no-gate-matched."""
+    m = M(
+        {
+            "machine": "jtp",
+            "entry": "a",
+            "budget": 6,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [gate("the output is an apology", then="ok", to="END")],
+                }
+            },
+        }
+    )
+    r = run1(m, MockLLM(judge_fn=lambda _m, conditions, *a: len(conditions)))
+    assert (r.status, r.error, r.at) == ("halt", "no-gate-matched", "a")
+
+
+def test_judge_none_out_of_range_is_still_an_anomaly():
+    """One past the none option is out of range: anomaly, never a silent clamp."""
+    llm = MockLLM(judge_fn=lambda _m, conditions, *a: len(conditions) + 1)
+    r = run1(_two_prose_then_catch_all(), llm)
+    assert r.status == "done"
+    assert r.trace[0]["judge_fallback"] is True
+    assert r.trace[0]["gate_via"] == "otherwise"
+
+
+def test_legacy_adapter_without_allow_none_is_traced_as_forced_choice():
+    """A provider plugin predating `allow_none` still runs — and says so in the trace."""
+
+    class LegacyLLM(MockLLM):
+        def judge(self, model, conditions, output, context, reasoning=None):
+            self.judge_calls.append({"model": model, "conditions": list(conditions)})
+            return 0
+
+    r = run1(_two_prose_then_catch_all(), LegacyLLM())
+    assert r.status == "done"
+    assert r.trace[0]["judge_forced_choice"] is True
+    assert r.trace[0]["gate_via"] == "llm"
+
+
+def test_judge_none_charges_every_batch_it_consulted():
+    """A none verdict still costs tokens; both judge calls are charged to the step."""
+
+    class CountingLLM(MockLLM):
+        last_judge_usage = (3, 1)
+
+        def judge(self, model, conditions, output, context, reasoning=None, allow_none=False):
+            self.judge_calls.append({"model": model, "conditions": list(conditions)})
+            # Reject the first batch, accept the hook-separated second one.
+            return len(conditions) if len(self.judge_calls) == 1 else 0
+
+    m = M(
+        {
+            "machine": "jtc",
+            "entry": "a",
+            "budget": 6,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        gate("the output is an apology", then="ok", to="END"),
+                        gate("policy says stop", hook="never", then="ok", to="END"),
+                        gate("the output is an invoice", then="ok", to="b"),
+                        gate("otherwise", then="ok", to="b"),
+                    ],
+                },
+                "b": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o2",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+    llm = CountingLLM()
+    r = run(m, {}, {m.name: m}, llm, TIERS, "m", hooks={"never": lambda ctx, out: False})
+    assert r.status == "done"
+    assert len(llm.judge_calls) == 2
+    assert r.trace[0]["cost"]["input_tokens"] == 6  # two judge calls charged
+    assert r.trace[0]["judge_none"] == 1
+    assert r.trace[0]["to"] == "b"

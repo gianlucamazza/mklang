@@ -131,6 +131,36 @@ def _when_line_has_unquoted_hash(line: str) -> bool:
     return "#" in core
 
 
+def _catch_all_findings(sid: str, s: State, repair_only: bool) -> list[str]:
+    """`missing-catch-all`: the state's transition relation is partial (SPEC §5).
+
+    A state's gates are a *relation*, not a function: hooks return False, and since
+    the fused judge may answer "none of the above" a prose batch can reject every
+    condition. Evaluation then runs off the end of the gate list and the run halts
+    with `no-gate-matched`. Only a `when: otherwise` gate makes the transition
+    function **total** — and only if it is still eligible, which a `repair` gate
+    stops being once its budget is spent (it also disables the `judge-unparseable`
+    soft-fallback, which needs an eligible catch-all).
+    """
+    catch_alls = [g for g in s.gates if g.when.strip().lower() == "otherwise"]
+    if not catch_alls:
+        # repair-only states already get a more specific finding; don't say it twice.
+        if repair_only:
+            return []
+        return [
+            f"{sid}: no catch-all gate — every gate is conditional, so a state whose "
+            "conditions are all false halts the run with no-gate-matched; end the "
+            "state with a `when: otherwise` gate"
+        ]
+    if all(g.kind == "repair" for g in catch_alls):
+        return [
+            f"{sid}: the only `when: otherwise` gate is a repair — once its budget is "
+            "spent the state has no eligible catch-all (no-gate-matched, and no "
+            "soft-fallback for an unparseable judge); add a non-repair catch-all"
+        ]
+    return []
+
+
 def lint_source(text: str) -> list[str]:
     """Source-level smells that need the raw YAML (not only the parsed machine)."""
     findings: list[str] = []
@@ -167,11 +197,13 @@ def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
             if g.kind == "escalate":
                 escalate_states.append(sid)
         # Repair-only states are a guaranteed no-gate-matched halt once budgets exhaust.
-        if s.gates and all(g.kind == "repair" for g in s.gates):
+        repair_only = bool(s.gates) and all(g.kind == "repair" for g in s.gates)
+        if repair_only:
             findings.append(
                 f"{sid}: every gate is a repair — once repair budgets exhaust the run "
                 "halts with no-gate-matched; add an ok/escalate/fail route"
             )
+        findings.extend(_catch_all_findings(sid, s, repair_only))
         # Outputs nobody reads are usually a leftover or a mistyped reference
         # elsewhere. Exempt: terminal states (their output is the run's implicit
         # result or a divergent terminal's outcome record) and states with prose

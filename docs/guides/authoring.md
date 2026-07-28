@@ -139,10 +139,13 @@ draft: no 'otherwise' catch-all gate            # warning
 result key 'answr' is not produced by any state's output   # warning
 ```
 
-`mklang lint` adds static smells: dead gates after `otherwise`, repair-only
-states, outputs never read, and `unresolved-interpolation` (a `{{key}}` whose
-root is no context key or output — typos like `{{ticket.bod}}` included).
-`--strict` promotes lint findings to failures.
+`mklang lint` adds static smells: dead gates after `otherwise`, **states with no
+catch-all** (or whose only catch-all is a `repair`, which stops being eligible
+once its budget is spent — SPEC §5 _Totality_), repair-only states, outputs never
+read, and `unresolved-interpolation` (a `{{key}}` whose root is no context key or
+output — typos like `{{ticket.bod}}` included). `--strict` promotes lint findings
+to failures, so a machine that passes it has a total transition function at every
+state.
 
 ## Which example to copy
 

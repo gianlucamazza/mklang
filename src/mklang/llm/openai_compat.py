@@ -116,12 +116,14 @@ class OpenAICompatLLM:
         output: str,
         context: dict,
         reasoning: str | None = None,
+        allow_none: bool = False,
     ) -> tuple[int, str | None]:
         user = build_judge_user(
             conditions,
             output,
             format_judge_context(context, JUDGE_CONTEXT_CHARS),
             reasoning=reasoning,
+            allow_none=allow_none,
         )
         r = self._create(
             model=model,
@@ -133,7 +135,7 @@ class OpenAICompatLLM:
             temperature=0,
         )
         text = r.choices[0].message.content or ""
-        idx, method = parse_choice(text, len(conditions))
+        idx, method = parse_choice(text, len(conditions) + (1 if allow_none else 0))
         if idx is None:
             raise JudgeUnparseable(text[:200] or "(empty)")
         self.last_judge_usage = _usage(r)

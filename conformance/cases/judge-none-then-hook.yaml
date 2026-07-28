@@ -1,0 +1,38 @@
+case: judge-none-then-hook
+description: A "none" verdict resumes the scan at the next gate — a hook after the prose batch still gets its turn.
+machine:
+  machine: jnh
+  entry: a
+  budget: 5
+  hooks:
+    - name: over_limit
+      description: True when the amount exceeds the auto-approve limit.
+  states:
+    a:
+      structure: s
+      prompt: draft
+      output: o
+      gates:
+        - { when: the draft is a formal apology, then: ok, to: apology }
+        - { when: the amount is over the limit, hook: over_limit, escalate: true, to: review }
+        - { when: otherwise, then: ok, to: END }
+    apology:
+      structure: s
+      prompt: apology path
+      output: o2
+      gates: [{ when: otherwise, then: ok, to: END }]
+    review:
+      structure: s
+      prompt: review path
+      output: o2
+      gates: [{ when: otherwise, then: ok, to: END }]
+llm:
+  produce: ["a purchase request for 900", "reviewed"]
+  judge: ["none"]
+hooks:
+  over_limit: [true]
+expect:
+  status: done
+  trace:
+    - { state: a, gate_via: hook, policy: escalate, to: review }
+    - { state: review, policy: ok, to: END }

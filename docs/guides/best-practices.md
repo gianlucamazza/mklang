@@ -276,7 +276,7 @@ Continue-stitching after length stop is **deferred** (not default).
 | Layer              | Command                                   | Role                              |
 | ------------------ | ----------------------------------------- | --------------------------------- |
 | Schema + semantics | `mklang check`                            | Blocking shape/graph              |
-| Static smells      | `mklang lint` (`--strict` in CI)          | Typos, dead gates, unread outputs |
+| Static smells      | `mklang lint` (`--strict` in CI)          | Typos, dead gates, missing catch-alls |
 | Prose gate overlap | `mklang lint --llm`                       | Advisory only                     |
 | Path pinning       | `mklang test … --script …`                | No API keys; escape hatches       |
 | Language contract  | `pytest` + `conformance/`                 | Interpreter semantics             |

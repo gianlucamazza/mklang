@@ -198,3 +198,46 @@ def test_fanout_vars_outside_fanout_flagged():
         }
     )
     assert not any("index" in f for f in lint_machine(ok_sample))
+
+
+def test_missing_catch_all_flagged():
+    """A state with only conditional gates has a partial transition relation (SPEC §5)."""
+    m = M({"a": state(gates=[gate("the draft is complete", then="ok", to="END")])})
+    findings = lint_machine(m)
+    assert any("no catch-all gate" in f and "no-gate-matched" in f for f in findings)
+    # A `when: otherwise` of any policy makes it total again.
+    ok = M(
+        {
+            "a": state(
+                gates=[
+                    gate("the draft is complete", then="ok", to="END"),
+                    gate("otherwise", fail=True),
+                ]
+            )
+        }
+    )
+    assert not any("catch-all" in f for f in lint_machine(ok))
+
+
+def test_repair_only_catch_all_flagged():
+    """A repair `otherwise` stops being eligible once its budget is spent."""
+    m = M(
+        {
+            "a": state(
+                gates=[
+                    gate("the draft is complete", then="ok", to="END"),
+                    gate("otherwise", repair=2, to="a"),
+                ]
+            )
+        }
+    )
+    findings = lint_machine(m)
+    assert any("only `when: otherwise` gate is a repair" in f for f in findings)
+
+
+def test_repair_only_state_is_not_double_reported():
+    """Repair-only states already get a specific finding; no duplicate catch-all note."""
+    m = M({"a": state(gates=[gate("has gaps", repair=1, to="a")])})
+    findings = [f for f in lint_machine(m) if "a:" in f]
+    assert any("every gate is a repair" in f for f in findings)
+    assert not any("no catch-all gate" in f for f in findings)

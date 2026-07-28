@@ -12,6 +12,39 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Gate judging is total (SPEC §5, observable behaviour).** The fused judge is
+  now offered one extra option — *none of the above conditions is true* — and a
+  `none` verdict falls through to the next gate exactly like a `hook` that
+  returned False. Previously the judge was a **forced choice** among the batch's
+  conditions: it had to name one even when none held, which silently turned
+  "first true" into "best match" and made a `when: otherwise` after a prose gate
+  unreachable except through the unparseable-judge fallback. Machines whose
+  catch-all was effectively dead will now route to it. New trace annotations:
+  `judge_none` (verdicts declined), `judge_forced_choice` (a provider adapter
+  that predates the option — those adapters keep working unchanged).
+- `LLM.judge` takes `allow_none: bool = False`; `build_judge_user` renders the
+  extra numbered option. Third-party adapters that do not accept the keyword are
+  detected and called in the old forced-choice form.
+- An unresolvable `hook:` now halts with a clean
+  `state-error: hook: unknown hook '<name>' …` (it raises `LookupError`, whose
+  `str()` does not re-quote the message, instead of `KeyError`).
+
+### Added
+
+- SPEC §5 **“Totality and determinism”** (normative): selection rule, why no
+  tie-break exists, `δ(state, E, v)` as a pure total function of the oracle
+  verdicts, and the exact condition under which a state's transition function is
+  total (an eligible, non-`repair` catch-all).
+- Lint findings `no catch-all gate` and `the only when: otherwise gate is a
+  repair` — both structural, so `lint --strict` fails on a partial transition.
+  `mklang check`'s catch-all warning now covers **single**-gate states too (a
+  lone conditional gate is the sharpest case, not an exempt one).
+- Conformance cases `judge-none-falls-through`, `judge-none-then-hook`,
+  `judge-none-no-catch-all-halts`, `hook-unknown-halts`. The scripted-judge
+  contract gains the `"none"` verdict.
+
 ## [1.0.13] — 2026-07-28
 
 Dogfood from meeting2workflow emission path: deterministic control-flow hooks

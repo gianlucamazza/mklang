@@ -11,7 +11,7 @@ outer process in [Host embedding](../guides/host-embedding.md) (JSON wire shape:
 | [`run`](#run)           | execute a machine against a provider                                   |
 | [`resume`](#resume)     | resume a suspended run from a checkpoint                               |
 | [`check`](#check)       | validate machines (schema + semantics)                                 |
-| [`lint`](#lint)         | check + static analysis (dead gates, unread outputs, typos)            |
+| [`lint`](#lint)         | check + static analysis (dead gates, missing catch-alls, typos)        |
 | [`test`](#test)         | run scenario tests against a machine with a scripted LLM (no API keys) |
 | [`machines`](#machines) | list commissionable machines (stdlib, plugins) as JSON                 |
 | [`init`](#init)         | scaffold project or user config without overwriting files              |
@@ -121,8 +121,8 @@ JSON-Schema validation plus semantic checks (unknown targets, missing entry,
 mklang lint MACHINE... [--strict] [--llm]
 ```
 
-Everything `check` does, plus advisory static analysis: dead gates, unread
-outputs, likely typos.
+Everything `check` does, plus advisory static analysis: dead gates, missing
+catch-alls (partial transitions, SPEC §5), unread outputs, likely typos.
 
 | Flag                      | Effect                                                                                         |
 | ------------------------- | ---------------------------------------------------------------------------------------------- |

@@ -128,7 +128,9 @@ def _call_hook(gate: Gate, ctx: dict, result: object, hooks: dict) -> bool:
 
     fn = resolve_hook(gate.hook, hooks)
     if fn is None:
-        raise KeyError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
+        # LookupError, not KeyError: KeyError's str() re-quotes the whole message,
+        # so the halt reason would read state-error: "hook: unknown hook 'x' …".
+        raise LookupError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
     return bool(fn(ctx, result))
 
 
@@ -147,6 +149,43 @@ def _collect_prose_batch(eligible: Eligible, start: int) -> list[tuple[int, Gate
     return batch
 
 
+def _call_judge(
+    deps: _Ctx,
+    judge_model: str,
+    conditions: list[str],
+    result: object,
+    ctx: dict,
+    judge_reasoning: str | None,
+) -> tuple[object, bool]:
+    """Judge a condition batch, asking for the *none of the above* option (SPEC §5).
+
+    Returns ``(verdict, total)``. Adapters written before ``allow_none`` (third-party
+    provider plugins) keep working as a forced choice; ``total`` is False for them so
+    the step can be traced as judged under the older, non-total protocol.
+    """
+    try:
+        return (
+            deps.llm.judge(
+                judge_model,
+                conditions,
+                fmt(result),
+                ctx,
+                reasoning=judge_reasoning,
+                allow_none=True,
+            ),
+            True,
+        )
+    except TypeError:
+        verdict = deps.llm.judge(
+            judge_model,
+            conditions,
+            fmt(result),
+            ctx,
+            reasoning=judge_reasoning,
+        )
+        return verdict, False
+
+
 def _judge_prose_batch(
     batch: list[tuple[int, Gate]],
     eligible: Eligible,
@@ -157,15 +196,17 @@ def _judge_prose_batch(
     judge_reasoning: str | None,
     judge_model: str,
     ann: dict,
-) -> tuple[int, Gate, dict, tuple[int, int]]:
-    """Fused LLM judge over a prose batch; otherwise-fallback on JudgeUnparseable."""
+) -> tuple[int | None, Gate | None, dict, tuple[int, int]]:
+    """Fused LLM judge over a prose batch (SPEC §5).
+
+    Returns ``(gate_index, gate, ann, usage)``; a ``None`` gate means the judge
+    answered *none of the above* — every condition in the batch is false, so the
+    caller resumes the scan at the gate after the batch. `JudgeUnparseable` still
+    soft-falls back to an eligible `otherwise`.
+    """
     try:
-        verdict = deps.llm.judge(
-            judge_model,
-            [g.when for _, g in batch],
-            fmt(result),
-            ctx,
-            reasoning=judge_reasoning,
+        verdict, total = _call_judge(
+            deps, judge_model, [g.when for _, g in batch], result, ctx, judge_reasoning
         )
         # Adapters return the chosen index, optionally paired with the parse
         # method ("json" / "bare" / "last-number"). Mock/scripted judges return
@@ -174,18 +215,30 @@ def _judge_prose_batch(
             local, parse_method = verdict[:2]
         else:
             local, parse_method = verdict, None
-        # Adapters must return an index in [0, len(batch)); do not clamp here —
-        # silent clamp would misroute with gate_via: llm and no anomaly flag.
-        if not isinstance(local, int) or local < 0 or local >= len(batch):
-            raise JudgeUnparseable(f"out-of-range choice {local!r} for n={len(batch)}")
+        # Adapters must return an index in [0, len(batch)] — the last value is the
+        # *none of the above* option, and only when it was offered. Do not clamp:
+        # a silent clamp would misroute with gate_via: llm and no anomaly flag.
+        top = len(batch) if total else len(batch) - 1
+        if not isinstance(local, int) or local < 0 or local > top:
+            raise JudgeUnparseable(f"out-of-range choice {local!r} for n={top + 1}")
+        usage = getattr(deps.llm, "last_judge_usage", (0, 0))
+        cost = (int(usage[0] or 0), int(usage[1] or 0))
+        if local == len(batch):  # no condition in this batch holds — keep scanning
+            ann["judge_model"] = judge_model
+            ann["judge_none"] = int(ann.get("judge_none", 0)) + 1
+            if parse_method and parse_method != "json":
+                ann["judge_parse"] = parse_method
+            return None, None, ann, cost
         gi, gate = batch[local]
         ann["gate_via"] = "llm"
         ann["judge_model"] = judge_model
+        if not total:
+            # Forced choice: this verdict cannot express "none of these hold".
+            ann["judge_forced_choice"] = True
         # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
         if parse_method and parse_method != "json":
             ann["judge_parse"] = parse_method
-        usage = getattr(deps.llm, "last_judge_usage", (0, 0))
-        return gi, gate, ann, (int(usage[0] or 0), int(usage[1] or 0))
+        return gi, gate, ann, cost
     except JudgeUnparseable as e:
         ann["judge_fallback"] = True
         ann["judge_raw"] = str(e)[:200]
@@ -209,10 +262,16 @@ def _select_gate(
 ) -> tuple[int, Gate, dict, tuple[int, int]]:
     """Pick the first true gate (hooks / otherwise / fused LLM prose batch).
 
+    One left-to-right scan over the eligible gates, exactly as SPEC §5 defines it:
+    a hook that returns False and a prose batch the judge rejects both fall
+    through to the next gate. Reaching the end without a true gate is
+    `no-gate-matched` — the partial-transition halt a catch-all gate prevents.
+
     `judge_model` is the model this state's prose gates are judged by (SPEC §2.1).
-    Returns (gate_index_in_state, gate, step_annotations).
+    Returns (gate_index_in_state, gate, step_annotations, judge_usage).
     """
     ann: dict = {}
+    spent_in = spent_out = 0
     i = 0
     while i < len(eligible):
         gi, gate = eligible[i]
@@ -220,19 +279,26 @@ def _select_gate(
             if _call_hook(gate, ctx, result, deps.hooks):
                 ann["gate_via"] = "hook"
                 ann["hook"] = gate.hook
-                return gi, gate, ann, (0, 0)
+                return gi, gate, ann, (spent_in, spent_out)
             i += 1
             continue
         if _is_otherwise(gate):
             ann["gate_via"] = "otherwise"
-            return gi, gate, ann, (0, 0)
+            return gi, gate, ann, (spent_in, spent_out)
         batch = _collect_prose_batch(eligible, i)
         if not batch:
             i += 1
             continue
-        return _judge_prose_batch(
+        bi, bgate, ann, (batch_in, batch_out) = _judge_prose_batch(
             batch, eligible, i, result, ctx, deps, judge_reasoning, judge_model, ann
         )
+        spent_in += batch_in
+        spent_out += batch_out
+        if bgate is None:  # judge: none of these conditions is true — keep scanning
+            i += len(batch)
+            continue
+        assert bi is not None
+        return bi, bgate, ann, (spent_in, spent_out)
     raise RuntimeError("no-gate-matched")
 
 

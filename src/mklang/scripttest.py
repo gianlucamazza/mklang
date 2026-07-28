@@ -87,14 +87,26 @@ class ScriptedLLM:
         output: str,
         context: dict,
         reasoning: str | None = None,
+        allow_none: bool = False,
     ) -> int:
         if self._judge == "unparseable":
             raise JudgeUnparseable("scripted")
+        pick: object = None
         with self._lock:
             if isinstance(self._judge, list) and self._judge:
                 # Pop in order; once one entry remains, keep returning it.
-                return self._judge.pop(0) if len(self._judge) > 1 else self._judge[0]
-        return len(conditions) - 1
+                pick = self._judge.pop(0) if len(self._judge) > 1 else self._judge[0]
+        if pick is None:
+            return len(conditions) - 1
+        # `none` scripts the "no condition in this batch is true" verdict (SPEC §5):
+        # evaluation continues at the gate after the batch.
+        if isinstance(pick, str):
+            if pick.strip().lower() != "none":
+                raise AssertionError(f"scripted judge: expected an index or 'none', got {pick!r}")
+            return len(conditions)
+        if not isinstance(pick, int):
+            raise AssertionError(f"scripted judge: expected an index or 'none', got {pick!r}")
+        return pick
 
 
 class _ScriptedSeq:
