@@ -15,7 +15,7 @@ All notable changes to mklang are documented here. The format follows
 ### Changed
 
 - **Gate judging is total (SPEC §5, observable behaviour).** The fused judge is
-  now offered one extra option — *none of the above conditions is true* — and a
+  now offered one extra option — _none of the above conditions is true_ — and a
   `none` verdict falls through to the next gate exactly like a `hook` that
   returned False. Previously the judge was a **forced choice** among the batch's
   conditions: it had to name one even when none held, which silently turned
@@ -27,7 +27,7 @@ All notable changes to mklang are documented here. The format follows
 - `LLM.judge` takes `allow_none: bool = False`; `build_judge_user` renders the
   extra numbered option. Third-party adapters that do not accept the keyword are
   detected via signature inspection (not by catching `TypeError`) and called in
-  the old forced-choice form, so a `TypeError` raised *inside* a modern adapter
+  the old forced-choice form, so a `TypeError` raised _inside_ a modern adapter
   is not misread as "legacy".
 - An unresolvable `hook:` now halts with a clean
   `state-error: hook: unknown hook '<name>' …` (it raises `LookupError`, whose
@@ -40,14 +40,14 @@ All notable changes to mklang are documented here. The format follows
   verdicts, and the exact condition under which a state's transition function is
   total (an eligible, non-`repair` catch-all).
 - Lint findings `no catch-all gate` and `the only when: otherwise gate is a
-  repair` — both structural, so `lint --strict` fails on a partial transition.
+repair` — both structural, so `lint --strict` fails on a partial transition.
   `mklang check`'s catch-all warning now covers **single**-gate states too (a
   lone conditional gate is the sharpest case, not an exempt one).
 - Conformance cases `judge-none-falls-through`, `judge-none-then-hook`,
   `judge-none-no-catch-all-halts`, `hook-unknown-halts`. The scripted-judge
   contract gains the `"none"` verdict.
 - **Control-flow taint (SPEC §6, ADR 0030).** ADR 0025 stopped untrusted values
-  from being *read* as instructions; it said nothing about the transition a gate
+  from being _read_ as instructions; it said nothing about the transition a gate
   picks after reading them. The engine now tracks `external ⊆ tainted` (data that
   came from outside the run: host inputs, tool observations, call results, and
   anything derived from them), marks a transition `decision_tainted` when a judge
@@ -55,13 +55,17 @@ All notable changes to mklang are documented here. The format follows
   or a human reply at resume (`human.reply` present — a bare `human` key is not
   confirmation). A tainted decision reaching an **effectful** tool
   state is recorded as `untrusted_control_flow`; `run(..., on_untrusted_flow=
-  "halt")` / `--untrusted-flow halt` refuses the effect with
+"halt")` / `--untrusted-flow halt` refuses the effect with
   `untrusted-control-flow`. Tools are classified read-only/effectful
   (`mklang.controlflow.TOOL_EFFECTS`, host override via `tool_effects=`);
   **unclassified tools count as effectful**. Checkpoint frames carry `external`
-  and `flow_tainted` and fail safe when absent. `mklang lint` reports effectful
-  tool states reachable from a prose-gated decision with no hook on the path
-  (a `note:`, advisory under `--strict`). Conformance: four `flow-taint-*` cases.
+  and `flow_tainted` and fail safe when absent. The flag is **inherited by a
+  sub-run**, so routing a tainted decision through a `call:` does not launder it:
+  the sub-machine's effect halts and the caller reports `call-failed:
+untrusted-control-flow`. `mklang lint` reports effectful tool states reachable
+  from a prose-gated decision with no hook on the path — and, given a registry,
+  the `call:` states whose sub-machine reaches one (a `note:`, advisory under
+  `--strict`). Conformance: five `flow-taint-*` cases.
 - **SPEC §8 “What a trace attests”** (normative): the trace records which gate
   fired, under which policy, decided by whom (`gate_via`, `judge_model`, the
   anomaly marks) — and explicitly does **not** attest why the verdict was what it
@@ -70,7 +74,7 @@ All notable changes to mklang are documented here. The format follows
   use the field name the interpreter actually emits (`gate`, not `gate_fired`).
 - **Conformance boundary written down** (`conformance/README.md`, ADR 0009
   amendment): every case scripts the oracle, so conformance pins what a runtime
-  does *given* a verdict and nothing about which verdict a model gives — two
+  does _given_ a verdict and nothing about which verdict a model gives — two
   conformant runtimes can diverge arbitrarily in production. The README's claim
   is now "matches the mechanical contract", not "behaves the same".
 - **ADR 0031 — what would force a language 0.4.** ADR 0028 called the 0.3 freeze
@@ -82,7 +86,7 @@ All notable changes to mklang are documented here. The format follows
 - **`scripts/repair_convergence.py`** — does `repair(N)` converge, or is the
   budget doing the work? Pass rate per attempt index over bundled repair
   machines, with `lift = p(2) − p(1)` as the claim under test and a `--self-check`
-  offline mode. The selection effect (attempt *k* is conditioned on *k−1*
+  offline mode. The selection effect (attempt _k_ is conditioned on _k−1_
   failures) is documented as biasing the lift downwards. No live rows yet:
   `docs/experiments/repair-convergence.md`.
 - **Gate-divergence harness: metrics that can fail.** Agreement 1.0 on four easy
@@ -107,7 +111,7 @@ and safer gate authoring.
   `eq:key:value` / `neq:key:value` (string equality on a top-level context key).
 - Builtin hook `write_failed` for write_file-style observations (`error` or
   `written: false`).
-- `lint_source` / `lint_machine(..., source=)`: flag unquoted `#` *inside*
+- `lint_source` / `lint_machine(..., source=)`: flag unquoted `#` _inside_
   raw `when:` conditions (YAML comment truncation of markdown headings);
   trailing comments after a complete token (e.g. `when: otherwise # note`)
   are not flagged.

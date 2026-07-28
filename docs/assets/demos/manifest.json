@@ -41,8 +41,8 @@
       "width": 1200
     }
   },
-  "generated_at": "2026-07-28T21:08:50.827852+00:00",
-  "generated_from": "4172a6ee7e821b65063aa3de01b315b307c30a6d",
+  "generated_at": "2026-07-28T21:30:34.339414+00:00",
+  "generated_from": "81be40eb644909ba206fc593e3ce1ceccae70b1b",
   "models": {
     "balanced": "deepseek-v4-flash",
     "fast": "deepseek-v4-flash",
@@ -60,7 +60,7 @@
       "examples/news_search.mkl": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mkl": "c2fabb98ec3458cb6454f25ea1ef3cbc4c6dbd28797b5825fa13433c2696a7bc",
       "scripts/demo_assets.py": "c6eb140c79b955755093dbeb8ed29119ab2f84e6529417852744dabfda119560",
-      "src/mklang/cli.py": "ff6a19bcf01caf8253973bd418f0f92c66f3025827052493852c4b3cac74d450",
+      "src/mklang/cli.py": "0d01202d42496d0863fb9cba7922082d6ca148dc669c3d329fbb9c8e400c28c7",
       "src/mklang/config.py": "7f70ab9d8c4e101fee24e8b5c8353a55827412ec7ab06c3273f8df0cb2fedd90",
       "src/mklang/console/__init__.py": "89e07bbecf189192a684db26463237ecdc31a4cca146e68c5374029450d0ac2c",
       "src/mklang/console/app.py": "c41d023d90adc034c6f0b8e6c36eab46a933ba9b9b0c8568fb148775a53fc2c4",
@@ -73,7 +73,7 @@
       "src/mklang/console/widgets.py": "d428853d0690343c8f6c38b5da191f6fdb1cb9f6678bdf03b3b6408836af46bc",
       "src/mklang/console/workspace.py": "c597e853bc2ab0f85dc33aba80f9ea6c391346b6b8fb8c474ee1a092825668c6",
       "src/mklang/data/console/agent.mkl": "0caf6b10c3b542db26cc46a1497f1d42a9045c3d416e9f54d6ce7ccd3363fe76",
-      "src/mklang/engine.py": "a21fa07268ef1aeaeb34a440b59845b168914e59b3eefde7e32e0de7b0e441d0",
+      "src/mklang/engine.py": "93148cdcd79eba937308b6c43a5a3a576ca2e0f188db6750252740ba01deee94",
       "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
       "src/mklang/llm/anthropic.py": "258c4743ff4ea73c69cbf2098c6d4fd5c74123a5eb8f50baeb38f268c0da52fe",
       "src/mklang/llm/base.py": "2750c38570e6f3760b8054a90863767da8a1dcb48ab298d18a669c1ff9c7f8b7",
@@ -86,7 +86,7 @@
       "src/mklang/search.py": "2e0f08175e3e4902e8c933dd5f429f9e303e210ca9f93aee50bd669b7ebe36c5",
       "src/mklang/tools.py": "2ac751ef995dbcade7eef2bb2e3d34af472ca4d190f6aade453d94f3cdb03fb2"
     },
-    "sha256": "1d1790eee8798bc124b444bc1e3f1a04796ee3af37d20c89271f9e79de9371ad"
+    "sha256": "e5628ed1703e8e9e08566bd9c65b4b5dabdf167adf3e339619e975457ed308bd"
   },
   "toolchain": {
     "font": {

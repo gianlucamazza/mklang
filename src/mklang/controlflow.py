@@ -22,7 +22,7 @@ This module supplies the two static ingredients of the rule in SPEC §6
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from .model import Machine
 
@@ -69,6 +69,29 @@ def is_effectful(tool: str | None, overrides: Mapping[str, str] | None = None) -
     return TOOL_EFFECTS.get(tool, "effect") == "effect"
 
 
+def _reaches_tool(
+    machine: Machine | None,
+    registry: Mapping[str, Machine],
+    counts: Callable[[str | None], bool],
+    seen: frozenset[str],
+) -> bool:
+    """Does `machine` reach a `tool:` state `counts` accepts, following `call:` edges?
+
+    Reachability, not path feasibility — a deliberate over-approximation shared by
+    both callers below."""
+    if machine is None or machine.name in seen:
+        return False
+    seen = seen | {machine.name}
+    for state in machine.states.values():
+        if state.kind == "tool" and counts(state.tool):
+            return True
+        if state.kind == "call" and _reaches_tool(
+            registry.get(state.call or ""), registry, counts, seen
+        ):
+            return True
+    return False
+
+
 def machine_touches_tools(
     machine: Machine | None,
     registry: Mapping[str, Machine],
@@ -76,18 +99,21 @@ def machine_touches_tools(
 ) -> bool:
     """True when `machine` can reach a `tool:` state, following `call:` edges.
 
-    Used to decide whether a `call` result is external data. It is a deliberate
-    over-approximation — reachability, not path feasibility — because the cost of
-    being wrong is asymmetric: a false "external" costs one extra confirmation, a
-    false "trusted" costs the invariant."""
-    if machine is None or machine.name in _seen:
-        return False
-    seen = _seen | {machine.name}
-    for state in machine.states.values():
-        if state.kind == "tool":
-            return True
-        if state.kind == "call" and machine_touches_tools(
-            registry.get(state.call or ""), registry, seen
-        ):
-            return True
-    return False
+    Used to decide whether a `call` result is external data. The over-approximation
+    is deliberate: the cost of being wrong is asymmetric — a false "external" costs
+    one extra confirmation, a false "trusted" costs the invariant."""
+    return _reaches_tool(machine, registry, lambda _tool: True, _seen)
+
+
+def machine_touches_effects(
+    machine: Machine | None,
+    registry: Mapping[str, Machine],
+    overrides: Mapping[str, str] | None = None,
+    _seen: frozenset[str] = frozenset(),
+) -> bool:
+    """True when `machine` can reach an **effectful** `tool:` state.
+
+    The effect surface does not stop at a `call:` boundary — a sub-machine acts on
+    the world through the same tool registry — so the static check in `lint` needs
+    this whenever a registry is available to resolve `call:` targets."""
+    return _reaches_tool(machine, registry, lambda tool: is_effectful(tool, overrides), _seen)

@@ -7,7 +7,7 @@ Status: Accepted
 ADR 0025 made untrusted values structurally distinguishable from instructions:
 tainted interpolations ride `<data-NONCE>` fences in produce prompts, the judge's
 OUTPUT / REASONING / CONTEXT are fenced unconditionally, and the model is told
-fenced spans are evidence, never directives. That closed the *reading* half of
+fenced spans are evidence, never directives. That closed the _reading_ half of
 SPEC §11's declared gap.
 
 It left the other half open, and the fences make its shape precise: **the gate
@@ -22,7 +22,7 @@ data with instructions; it is a legitimate decision made from poisoned evidence.
 Two existing pieces are half the answer and were the tempting places to stop:
 
 - **ADR 0017 Layer 2 “context zones”** would separate untrusted regions of the
-  blackboard. Necessary, not sufficient: zoning the *text* still lets a judge
+  blackboard. Necessary, not sufficient: zoning the _text_ still lets a judge
   reading the untrusted zone pick the effectful branch.
 - **SPEC §11 author discipline** (“put high-stakes transitions on hooks”) is
   correct advice with no enforcement, no static check, and no trace evidence.
@@ -34,7 +34,7 @@ Normative in SPEC §6 (“Control-flow taint”).
 
 ### 1. A narrower taint class: `external`
 
-The existing tainted set cannot carry this rule. Under ADR 0025 *every* deposit
+The existing tainted set cannot carry this rule. Under ADR 0025 _every_ deposit
 is tainted — produce output is oracle-derived even from author literals — so
 after one state, everything is tainted and a rule keyed on it would fire on every
 prose gate in every machine, i.e. mean nothing.
@@ -64,6 +64,13 @@ read-only vs effectful in `controlflow.TOOL_EFFECTS`. **Unclassified tools —
 every third-party plugin — count as effectful**: silence is not a safety claim.
 Hosts classify their own via `run(..., tool_effects=...)`.
 
+The surface does not stop at a `call:`. A sub-run **inherits** the caller's
+`flow_tainted`, so one level of indirection (route into a `call:` whose
+sub-machine writes the file) does not launder the decision; the sub-run halts on
+its own effect and the caller reports `call-failed: untrusted-control-flow`.
+Confirmation is not symmetric: a `hook:` inside the sub-machine clears the
+sub-machine's chain only, never the caller's.
+
 A tainted decision reaching an effectful tool state is always **recorded**
 (`untrusted_control_flow: true`). Whether it is **refused** is host policy:
 `report` (default) or `halt` (`--untrusted-flow halt`), which halts with
@@ -72,16 +79,19 @@ A tainted decision reaching an effectful tool state is always **recorded**
 ### 4. Static counterpart
 
 `mklang lint` walks the transition graph and reports effectful tool states
-reachable from a prose-gated decision with no `hook:` on the path. It is a
-`note:` (advisory under `--strict`): a machine whose context is entirely
-author-controlled has nothing to inject, and only the author knows that.
+reachable from a prose-gated decision with no `hook:` on the path — plus the
+`call:` states whose sub-machine reaches one, when the caller supplies a registry
+to resolve the target (the CLI and `host.check` do; a machine linted with no
+registry skips that half rather than guessing). It is a `note:` (advisory under
+`--strict`): a machine whose context is entirely author-controlled has nothing to
+inject, and only the author knows that.
 
 ## Alternatives considered
 
 - **Refuse at the gate instead of at the effect.** "A tainted gate may not select
   a transition into an effectful state" needs the destination's effect status at
   selection time, which misses the common shape — route to a produce state that
-  unconditionally routes to the tool. Checking on *entry* to the effect catches
+  unconditionally routes to the tool. Checking on _entry_ to the effect catches
   both and needs no reachability analysis at run time.
 - **A new `effects: true` state field.** Cleaner to read, but it is a language
   change, and language 0.3 is frozen (ADR 0026): it would need a 0.4 and a
@@ -106,8 +116,14 @@ author-controlled has nothing to inject, and only the author knows that.
   costs one confirmation gate; false "trusted" costs the invariant — the
   asymmetry is deliberate.
 - Negative: not a dual control plane. A tainted decision routing into a
-  *generative* state is unconstrained; the judge still reads untrusted content.
+  _generative_ state is unconstrained; the judge still reads untrusted content.
   This bounds what an injection can **cause**, not what it can **say**.
+- Neutral: inheritance is one-directional. A sub-machine that gates its own
+  effect on a `hook:` clears the inherited flag for its own run — host code chose
+  that transition, which is exactly the rule — but nothing the sub-run confirms
+  travels back to the caller. So a caller whose decision was tainted stays
+  tainted after the call returns, and an author who wants the effect allowed puts
+  the confirmation on whichever transition actually selects it.
 - Follow-up: revisit `halt` as the default in language 0.4; revisit
   per-state effect declarations if the registry classification proves too coarse;
   ADR 0017 Layer 2 zones remain the complementary work.

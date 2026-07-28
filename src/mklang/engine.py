@@ -346,6 +346,7 @@ def _exec_call(
     depth: int,
     resume: list[dict] | None,
     tainted: set[str],
+    flow_tainted: bool = False,
 ) -> ExecOut:
     sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
     # An input key is trusted in the sub-run unless its value interpolates
@@ -378,6 +379,11 @@ def _exec_call(
         trusted_keys=trusted_inputs,
         on_untrusted_flow=deps.on_untrusted_flow,
         tool_effects=deps.tool_effects,
+        # A tainted decision is not laundered by one level of indirection: the
+        # sub-run inherits it, so the guard fires on the effect the sub-machine
+        # performs (SPEC §6 / ADR 0030). The sub-run's own confirmation does not
+        # travel back up — it clears the sub-machine's decision chain, not ours.
+        flow_tainted=flow_tainted,
     )
     u = sub.usage or {}
     tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -446,15 +452,17 @@ def _exec_one(
     depth: int,
     resume: list[dict] | None = None,
     tainted: set[str] | None = None,
+    flow_tainted: bool = False,
 ) -> ExecOut:
     """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
 
     ``meta`` carries produce-side annotations (ADR 0018 truncation). Empty for
-    tool/call states.
+    tool/call states. ``flow_tainted`` is only consumed by `call`: it hands the
+    run's control-flow taint to the sub-run (ADR 0030).
     """
     tainted = tainted if tainted is not None else set()
     if state.kind == "call":
-        return _exec_call(state, ctx, deps, machine, depth, resume, tainted)
+        return _exec_call(state, ctx, deps, machine, depth, resume, tainted, flow_tainted)
     if state.kind == "tool":
         return _exec_tool(state, ctx, deps)
     return _exec_produce(state, ctx, feedback, deps, machine, tainted)
@@ -489,6 +497,7 @@ def _safe_exec(
     machine: Machine,
     depth: int,
     tainted: set[str] | None = None,
+    flow_tainted: bool = False,
 ) -> ExecOut:
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
@@ -502,6 +511,7 @@ def _safe_exec(
             machine,
             depth,
             tainted=tainted,
+            flow_tainted=flow_tainted,
         )
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
@@ -696,6 +706,7 @@ def _execute_fanout(
     steps: int,
     trace: list[dict],
     usage_tokens: tuple[int, int],
+    flow_tainted: bool = False,
 ) -> tuple[object, str | None, int, int, int, dict] | RunResult:
     """Run a sample/over fan-out.
 
@@ -731,6 +742,7 @@ def _execute_fanout(
                         machine,
                         depth,
                         branch_tainted,
+                        flow_tainted,
                     ),
                     branches,
                 )
@@ -769,6 +781,7 @@ class _Runner:
         trusted_keys: set[str] | None = None,
         on_untrusted_flow: str = "report",
         tool_effects: dict[str, str] | None = None,
+        flow_tainted: bool = False,
     ) -> None:
         self.machine = machine
         self.depth = depth
@@ -782,9 +795,11 @@ class _Runner:
         # Control-flow taint (SPEC §6 / ADR 0030): `external` ⊆ `tainted` holds the
         # keys carrying data from outside the run; `flow_tainted` records that the
         # transition which brought us here was chosen by a judge reading such data,
-        # with no hook or human confirmation since.
+        # with no hook or human confirmation since. A sub-run starts from the
+        # caller's flag: `call:` is not a laundering step. A checkpoint frame, when
+        # one applies, overrides it in `_from_resume`.
         self.external: set[str] = set()
-        self.flow_tainted: bool = False
+        self.flow_tainted: bool = flow_tainted
         self.state_id: str = machine.entry
         self.trace: list[dict] = []
         self.steps: int = 0
@@ -1080,6 +1095,7 @@ class _Runner:
             self.steps,
             self.trace,
             (self.total_in, self.total_out),
+            self.flow_tainted,
         )
         if isinstance(fan, RunResult):
             return fan
@@ -1138,6 +1154,7 @@ class _Runner:
                 self.depth,
                 resume=sub_resume,
                 tainted=self.tainted,
+                flow_tainted=self.flow_tainted,
             )
         except _Suspend as s:
             return self._handle_suspend(s)
@@ -1284,6 +1301,7 @@ def run(
     trusted_keys: set[str] | None = None,
     on_untrusted_flow: str = "report",
     tool_effects: dict[str, str] | None = None,
+    flow_tainted: bool = False,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
@@ -1294,7 +1312,10 @@ def run(
     ``"report"`` annotates the trace when a judge-made decision over external data
     reaches an effectful tool state; ``"halt"`` refuses the effect.
     ``tool_effects`` lets a host classify its own tools (``"read"`` / ``"effect"``);
-    unclassified tools are treated as effectful.
+    unclassified tools are treated as effectful. ``flow_tainted`` seeds the run's
+    control-flow taint — the engine sets it on a sub-run whose `call:` was reached
+    by a tainted decision; an embedder that has already made an untrusted routing
+    decision of its own can set it too.
     """
     result = _Runner(
         machine,
@@ -1320,6 +1341,7 @@ def run(
         trusted_keys,
         on_untrusted_flow,
         tool_effects,
+        flow_tainted,
     ).go()
     if on_event is not None:
         with contextlib.suppress(Exception):

@@ -550,11 +550,11 @@ Eligibility is computed **before** selection and depends only on the run's repai
 counters. The runtime scans `E` once, left to right, and fires the **first** gate
 that evaluates true:
 
-| Gate kind          | True when                                                             | False → |
-| ------------------ | --------------------------------------------------------------------- | ------- |
-| `hook: <name>`     | the host predicate returns a truthy value                             | next gate |
-| prose (fused batch) | the judge returns this condition's number                             | next gate after the whole batch |
-| `when: otherwise`  | always                                                                | — |
+| Gate kind           | True when                                 | False →                         |
+| ------------------- | ----------------------------------------- | ------------------------------- |
+| `hook: <name>`      | the host predicate returns a truthy value | next gate                       |
+| prose (fused batch) | the judge returns this condition's number | next gate after the whole batch |
+| `when: otherwise`   | always                                    | —                               |
 
 **No tie-break exists, because ties are impossible.** Position in `E` is a total
 order and the scan stops at the first true gate; two conditions that are both
@@ -571,7 +571,7 @@ non-determinism of a run lives in `v` — which is why divergence is measured on
 whose part of `v` is host code, is the only way to make a decision reproducible.
 
 **Totality.** `δ` is total over verdicts, but the scan itself can run off the end
-of `E`: every hook returned False and every judged batch answered *none*. That
+of `E`: every hook returned False and every judged batch answered _none_. That
 outcome is defined — the run halts with `no-gate-matched` (§7) — but it is a halt,
 not a transition. A state's transition function is **total in the useful sense**
 iff `E` always contains a `when: otherwise` gate, which requires the catch-all to
@@ -818,6 +818,10 @@ only the value.
   `execution` cannot invoke host tools), so the rule binds there. Tools are
   classified **read-only** or **effectful**; a tool the host has not classified is
   **effectful**, because an unclassified tool is one nobody has thought about.
+  The surface does not stop at a `call:` boundary: a sub-run **inherits** the
+  caller's tainted decision, so an effect performed inside a sub-machine is
+  covered by the same rule. Confirmation does not travel back — a `hook:` inside
+  the sub-machine clears only the sub-machine's decision chain.
 - **The rule.** _A tainted decision reaching an effectful `tool:` state MUST be
   recorded_ (`untrusted_control_flow: true` on the step). Whether it is also
   **refused** is host policy: the reference interpreter defaults to `report` and
@@ -828,11 +832,13 @@ only the value.
 
 The author's remedy is a gate, not a better prompt: put a `hook:` (or `--hitl`)
 on the transition into the effect. `mklang lint` reports effectful tool states
-reachable from a prose-gated decision with no hook on the path.
+reachable from a prose-gated decision with no hook on the path — and, when the
+host gives it a registry to resolve `call:` targets, the sub-machines that reach
+one.
 
 **Scope, honestly.** This is privilege separation at the effect boundary, not a
 dual control plane: the judge still reads untrusted content, and a tainted
-decision that routes into a *generative* state is unconstrained. It bounds what
+decision that routes into a _generative_ state is unconstrained. It bounds what
 an injection can **cause**, not what it can **say**.
 
 ---

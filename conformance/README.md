@@ -96,8 +96,9 @@ into the callee; mixed templates still render text), result selection, the
 halt-reason taxonomy, and **untrusted-context delimiting** (SPEC §6 / ADR 0025: the four
 `taint-*` cases pin fenced tool observations, host inputs, and call results,
 plus bare author literals), plus **control-flow taint** (SPEC §6 / ADR 0030: the
-four `flow-taint-*` cases pin the marked decision, the effect-surface boundary,
-the `hook:` confirmation, and the `halt` policy). Judge-prompt fencing is adapter
+five `flow-taint-*` cases pin the marked decision, the effect-surface boundary,
+the `hook:` confirmation, the `halt` policy, and that a `call:` does not launder
+the tainted decision away from the sub-machine's effect). Judge-prompt fencing is adapter
 behavior → unit tests, not conformance.
 
 Scripted `hook:`/`tool:` bindings (above) bring hook precedence and tool-state
@@ -132,7 +133,7 @@ says **nothing** about:
 - whether a `repair` loop converges (`docs/experiments/repair-convergence.md`);
 - output quality, latency, or cost;
 - anything a `hook:` or `tool:` does — the suite scripts their return values, so
-  it pins how the runtime *uses* a host predicate, never what the host computes.
+  it pins how the runtime _uses_ a host predicate, never what the host computes.
 
 So the accurate claim for a second implementation is: **"it matches the
 language's mechanical contract."** Not "it behaves the same." A machine whose

@@ -291,6 +291,48 @@ def test_unknown_tool_counts_as_effectful():
     assert any("effectful tool 'acme_plugin'" in f for f in lint_machine(m))
 
 
+def test_call_into_an_effectful_sub_machine_is_flagged_with_a_registry():
+    """The effect surface does not stop at a `call:` — but resolving the target
+    needs a registry, so the check is skipped when the file is linted alone."""
+    writer = parse_machine(
+        {
+            "machine": "writer",
+            "entry": "w",
+            "budget": 3,
+            "states": {"w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")])},
+        }
+    )
+    reader = parse_machine(
+        {
+            "machine": "reader",
+            "entry": "r",
+            "budget": 3,
+            "states": {"r": _tool_state("search_kb", [gate("otherwise", then="ok", to="END")])},
+        }
+    )
+    m = M(
+        {
+            "a": state(gates=[gate("the plan is to act", then="ok", to="c")]),
+            "c": {
+                "call": "writer",
+                "input": {},
+                "output": "sub",
+                "gates": [gate("otherwise", then="ok", to="END")],
+            },
+        }
+    )
+    registry = {"writer": writer, "reader": reader}
+    assert any(
+        "sub-machine 'writer' reaches an effectful tool" in f and f.startswith("note:")
+        for f in lint_machine(m, registry=registry)
+    )
+    # No registry → nothing to resolve, and no guess.
+    assert not any("sub-machine" in f for f in lint_machine(m))
+    # A read-only sub-machine is not an effect.
+    m.states["c"].call = "reader"
+    assert not any("sub-machine" in f for f in lint_machine(m, registry=registry))
+
+
 def test_taint_carries_through_an_otherwise_but_not_from_the_entry():
     """`otherwise` is a default, not a confirmation — it carries the mark; a state
     reached only by defaults from the entry was never judged."""

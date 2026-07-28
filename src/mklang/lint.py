@@ -8,6 +8,7 @@ outputs, template typos, repair-only dead ends.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 
 from .model import Machine, State
 
@@ -131,7 +132,9 @@ def _when_line_has_unquoted_hash(line: str) -> bool:
     return "#" in core
 
 
-def _flow_taint_findings(machine: Machine) -> list[str]:
+def _flow_taint_findings(
+    machine: Machine, registry: Mapping[str, Machine] | None = None
+) -> list[str]:
     """`note:` — an effect a prose gate can select on its own (SPEC §6, ADR 0030).
 
     Static counterpart of the engine's control-flow taint. Walks the transition
@@ -144,11 +147,17 @@ def _flow_taint_findings(machine: Machine) -> list[str]:
       a confirmation.
 
     Effectful tool states (see `controlflow.TOOL_EFFECTS`; unknown tools count as
-    effectful) reachable while judged are reported. This is advisory: a machine
-    whose context is entirely author-controlled has nothing to inject. It is a
-    `note:` for that reason — the author decides, `--untrusted-flow halt` enforces.
+    effectful) reachable while judged are reported. So are `call:` states whose
+    sub-machine reaches one — the runtime hands the tainted decision to the sub-run,
+    so `call:` is not a laundering step here either. That half needs `registry` to
+    resolve the target; without one (a single file linted out of context) the
+    `call:` check is skipped rather than guessed.
+
+    This is advisory: a machine whose context is entirely author-controlled has
+    nothing to inject. It is a `note:` for that reason — the author decides,
+    `--untrusted-flow halt` enforces.
     """
-    from .controlflow import is_effectful
+    from .controlflow import is_effectful, machine_touches_effects
 
     judged: dict[str, bool] = {sid: False for sid in machine.states}
     changed = True
@@ -169,13 +178,24 @@ def _flow_taint_findings(machine: Machine) -> list[str]:
                     changed = True
     findings = []
     for sid, s in machine.states.items():
-        if s.kind == "tool" and judged[sid] and is_effectful(s.tool):
-            findings.append(
-                f"note: {sid}: effectful tool '{s.tool}' is reachable from a prose-gated "
-                "decision with no hook confirmation on the path — untrusted context can "
-                "steer the judge into selecting this effect (SPEC §6). Gate it with a "
-                "`hook:` (or run with --untrusted-flow halt)"
-            )
+        if not judged[sid]:
+            continue
+        if s.kind == "tool" and is_effectful(s.tool):
+            what = f"effectful tool '{s.tool}' is reachable"
+        elif (
+            s.kind == "call"
+            and registry is not None
+            and machine_touches_effects(registry.get(s.call or ""), registry)
+        ):
+            what = f"sub-machine '{s.call}' reaches an effectful tool and is itself reachable"
+        else:
+            continue
+        findings.append(
+            f"note: {sid}: {what} from a prose-gated "
+            "decision with no hook confirmation on the path — untrusted context can "
+            "steer the judge into selecting this effect (SPEC §6). Gate it with a "
+            "`hook:` (or run with --untrusted-flow halt)"
+        )
     return findings
 
 
@@ -222,11 +242,18 @@ def lint_source(text: str) -> list[str]:
     return findings
 
 
-def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
+def lint_machine(
+    machine: Machine,
+    *,
+    source: str | None = None,
+    registry: Mapping[str, Machine] | None = None,
+) -> list[str]:
     """Return advisory findings (never errors — those belong to semantic_check).
 
     Pass ``source`` (raw .mkl text) to also run source-level checks (e.g. unquoted
-    ``#`` in ``when`` lines that YAML comment-truncates before parse).
+    ``#`` in ``when`` lines that YAML comment-truncates before parse). Pass
+    ``registry`` to let the control-flow-taint check follow `call:` edges into
+    sub-machines (ADR 0030); without it those edges are skipped.
     """
     findings: list[str] = []
     if source is not None:
@@ -283,6 +310,6 @@ def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
             "see docs/experiments/gate-divergence.md"
         )
 
-    findings.extend(_flow_taint_findings(machine))
+    findings.extend(_flow_taint_findings(machine, registry))
     findings.extend(_unresolved_interpolation(machine))
     return findings

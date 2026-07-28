@@ -190,7 +190,7 @@ def check_machine(
         "ok": not errors,
         "errors": errors,
         "warnings": warnings,
-        "lint": lint_machine(machine, source=source_text),
+        "lint": lint_machine(machine, source=source_text, registry=registry),
     }
 
 

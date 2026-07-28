@@ -7,10 +7,10 @@ effectful state is a decision made by external data, and the runtime says so.
 
 import pytest
 
-from mklang.controlflow import is_effectful, machine_touches_tools
+from mklang.controlflow import is_effectful, machine_touches_effects, machine_touches_tools
 from mklang.engine import run
 from mklang.llm.mock import MockLLM
-from mklang.model import parse_machine
+from mklang.model import Machine, parse_machine
 
 TIERS = {"fast": "m", "balanced": "m", "reasoning": "m"}
 
@@ -330,6 +330,104 @@ def test_machine_touches_tools_follows_calls_without_looping():
     assert machine_touches_tools(parent, registry) is True
     assert machine_touches_tools(selfish, registry) is False  # recursion terminates
     assert machine_touches_tools(None, registry) is False
+
+
+def _call_indirection() -> tuple[Machine, Machine]:
+    """`read` judges over host input, then routes into a `call:` whose sub-machine
+    performs the effect. One level of indirection must not launder the decision."""
+    parent = parse_machine(
+        {
+            "machine": "cf_parent",
+            "entry": "read",
+            "budget": 8,
+            "context": {"request": ""},
+            "states": {
+                "read": {
+                    "structure": "s",
+                    "prompt": "Handle: {{request}}",
+                    "output": "plan",
+                    "gates": [
+                        gate("the plan is to act", then="ok", to="act"),
+                        gate("otherwise", then="ok", to="END"),
+                    ],
+                },
+                "act": {
+                    "call": "cf_sub",
+                    "input": {"content": "{{plan}}"},
+                    "output": "done",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+    sub = parse_machine(
+        {
+            "machine": "cf_sub",
+            "entry": "write",
+            "budget": 4,
+            "context": {"content": ""},
+            "states": {
+                "write": {
+                    "tool": "write_file",
+                    "input": {"path": "out.txt", "content": "{{content}}"},
+                    "output": "res",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                }
+            },
+        }
+    )
+    return parent, sub
+
+
+def _go_call(policy: str):
+    parent, sub = _call_indirection()
+    return run(
+        parent,
+        {"request": "please write it"},
+        {parent.name: parent, sub.name: sub},
+        MockLLM(judge_fn=lambda *a: 0),
+        TIERS,
+        "m",
+        tools={"write_file": lambda i: "written"},
+        on_untrusted_flow=policy,
+    )
+
+
+def test_call_does_not_launder_a_tainted_decision():
+    """The sub-run inherits the flag, so the guard fires on the effect it performs."""
+    r = _go_call("halt")
+    assert (r.status, r.error) == ("halt", "call-failed: untrusted-control-flow")
+    assert "done" not in r.context  # the sub-machine's tool never ran
+    assert r.trace[-1]["sub_trace"][-1]["policy"] == "untrusted-control-flow"
+
+
+def test_call_indirection_is_recorded_under_report():
+    r = _go_call("report")
+    assert r.status == "done"
+    assert r.trace[-1]["sub_trace"][-1]["untrusted_control_flow"] is True
+
+
+def test_machine_touches_effects_ignores_read_only_tools():
+    reader = parse_machine(
+        {
+            "machine": "reader",
+            "entry": "t",
+            "budget": 3,
+            "states": {
+                "t": {
+                    "tool": "search_kb",
+                    "input": {},
+                    "output": "o",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                }
+            },
+        }
+    )
+    _, writer = _call_indirection()
+    registry = {"reader": reader, writer.name: writer}
+    assert machine_touches_effects(writer, registry) is True
+    assert machine_touches_effects(reader, registry) is False
+    assert machine_touches_effects(reader, registry, {"search_kb": "effect"}) is True
 
 
 def test_invalid_policy_is_rejected():
