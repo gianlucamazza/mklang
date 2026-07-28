@@ -113,3 +113,18 @@ def test_cli_test_missing_scenarios_key(tmp_path):
     mk = _write(tmp_path, "gate.mkl", _MK)
     script = _write(tmp_path, "empty.test.yaml", "notscenarios: []\n")
     assert main(["test", mk, "--script", script]) == 2
+
+
+def test_scripted_judge_accepts_none_and_rejects_junk():
+    """`judge: ["none"]` is the none-of-the-above verdict (SPEC §5 Totality)."""
+    import pytest
+
+    from mklang.scripttest import ScriptedLLM
+
+    conditions = ["a", "b"]
+    assert ScriptedLLM({"judge": ["none"]}).judge("m", conditions, "out", {}) == 2
+    assert ScriptedLLM({"judge": [1]}).judge("m", conditions, "out", {}) == 1
+    with pytest.raises(AssertionError, match="index or 'none'"):
+        ScriptedLLM({"judge": ["maybe"]}).judge("m", conditions, "out", {})
+    with pytest.raises(AssertionError, match="index or 'none'"):
+        ScriptedLLM({"judge": [1.5]}).judge("m", conditions, "out", {})

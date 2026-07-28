@@ -241,3 +241,72 @@ def test_repair_only_state_is_not_double_reported():
     findings = [f for f in lint_machine(m) if "a:" in f]
     assert any("every gate is a repair" in f for f in findings)
     assert not any("no catch-all gate" in f for f in findings)
+
+
+def _tool_state(tool, gates):
+    return {"tool": tool, "input": {}, "output": "obs", "gates": gates}
+
+
+def test_effectful_tool_after_a_prose_gate_is_flagged():
+    """Static half of control-flow taint (SPEC §6): untrusted context can steer
+    the judge into selecting the effect."""
+    m = M(
+        {
+            "a": state(gates=[gate("the plan is to write", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    findings = lint_machine(m)
+    assert any("effectful tool 'write_file'" in f and f.startswith("note:") for f in findings)
+
+
+def test_hook_on_the_path_clears_the_flow_finding():
+    m = M(
+        {
+            "a": state(gates=[gate("the host approves", hook="approved", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert not any("effectful tool" in f for f in lint_machine(m))
+
+
+def test_read_only_tool_is_not_flagged():
+    m = M(
+        {
+            "a": state(gates=[gate("a lookup is needed", then="ok", to="w")]),
+            "w": _tool_state("search_kb", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert not any("effectful tool" in f for f in lint_machine(m))
+
+
+def test_unknown_tool_counts_as_effectful():
+    """Silence is not a safety claim: an unclassified plugin is flagged."""
+    m = M(
+        {
+            "a": state(gates=[gate("the plan is to act", then="ok", to="w")]),
+            "w": _tool_state("acme_plugin", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert any("effectful tool 'acme_plugin'" in f for f in lint_machine(m))
+
+
+def test_taint_carries_through_an_otherwise_but_not_from_the_entry():
+    """`otherwise` is a default, not a confirmation — it carries the mark; a state
+    reached only by defaults from the entry was never judged."""
+    tainted = M(
+        {
+            "a": state(gates=[gate("the plan is to act", then="ok", to="b")]),
+            "b": state(output="o2", gates=[gate("otherwise", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert any("effectful tool" in f for f in lint_machine(tainted))
+    clean = M(
+        {
+            "a": state(gates=[gate("otherwise", then="ok", to="b")]),
+            "b": state(output="o2", gates=[gate("otherwise", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert not any("effectful tool" in f for f in lint_machine(clean))
