@@ -8,7 +8,25 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.1.0`).
+  `pyproject.toml` (currently `1.1.1`).
+
+## [1.1.1] — 2026-07-29
+
+### Fixed
+
+- **The 1.1.0 sdist could not be packaged for a distro on MCP SDK 1.x.** 1.1.0
+  moved the MCP host surface to SDK **v2** (`MCPServer`, `Client`) and pinned the
+  extra at `mcp>=2`, but `tests/mcp/test_mcp.py` guarded only on `import mcp` —
+  so with an older SDK *installed* the tests failed instead of skipping. Arch's
+  `extra/python-mcp` is **1.28.1**, and the AUR recipe runs the offline suite
+  against system packages in `check()`: `makepkg` on mklang 1.1.0 fails on a
+  fully up-to-date Arch box. The suite now probes `mcp.server.mcpserver` (the v2
+  module it actually needs) and skips when it is absent. Found by building the
+  AUR package locally — the repo CI cannot see this, because it always installs
+  the extra at its declared floor.
+- `mklang-mcp` now says which SDK it needs and echoes the import error, so "the
+  package is installed but too old" is distinguishable from "not installed".
+- `packaging/arch/PKGBUILD` records the `python-mcp>=2` floor in `optdepends`.
 
 ## [1.1.0] — 2026-07-29
 
@@ -1213,7 +1231,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/gianlucamazza/mklang/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/gianlucamazza/mklang/compare/v1.0.13...v1.1.0
 [1.0.13]: https://github.com/gianlucamazza/mklang/compare/v1.0.12...v1.0.13
 [1.0.12]: https://github.com/gianlucamazza/mklang/compare/v1.0.11...v1.0.12
