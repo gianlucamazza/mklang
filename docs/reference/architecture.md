@@ -19,10 +19,13 @@ a contributor's map, not language semantics — those live in the SPEC. The
 - `model.py` — dataclasses for a machine and its states, parsed from the plain
   dict post-YAML.
 - `engine.py` — the runtime (SPEC §6): the produce → judge-gates → transition
-  loop, budgets and termination (SPEC §7), fan-out, `call`, `tool` states, and
-  provenance-taint tracking with produce-prompt fencing (SPEC §6, ADR 0025).
-  Suspension writes checkpoint frames via `checkpoint.py` (ADR 0007) — frames
-  carry the `"tainted"` key set (`taint_frame` marks resume-injected values).
+  loop, budgets and termination (SPEC §7), fan-out, `call`, `tool` states,
+  provenance-taint tracking with produce-prompt fencing (SPEC §6, ADR 0025), and
+  control-flow taint — the `external` subset, the `flow_tainted` decision mark,
+  and the guard at the effect surface (ADR 0030), which a sub-run inherits across
+  `call:`. Suspension writes checkpoint frames via `checkpoint.py` (ADR 0007) —
+  frames carry the `"tainted"` key set (`taint_frame` marks resume-injected
+  values) plus `"external"` / `"flow_tainted"`, all fail-safe when absent.
 - `interpolate.py` — `{{key.path}}` interpolation and value formatting for
   prompts; `render_delimited` fences tainted substitutions with a per-call
   nonce (ADR 0025).
@@ -87,6 +90,7 @@ Plugins hook in via entry-point groups; builtins register the same way.
 | `paths.py`                                     | XDG host layout and config/machine discovery (ADR 0021)                                         |
 | `errors.py`                                    | typed adapter errors the engine maps to halt reasons                                            |
 | `lint.py` / `llmlint.py`                       | static analysis / LLM-assisted lint (ADR 0010)                                                  |
+| `controlflow.py`                               | tool effect classes + `call:`-following reachability for control-flow taint (ADR 0030)          |
 | `scripttest.py`                                | scripted-LLM harness — single source of truth shared by `mklang test` and the conformance suite |
 | `search.py`, `kb.py`, `mail.py`, `tool_obs.py` | host tool stubs + shared observation envelope (ADR 0016/0020)                                   |
 | `fs.py`                                        | filesystem data tools: workspace-confined reads, opt-in writes (ADR 0024)                       |

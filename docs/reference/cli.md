@@ -68,16 +68,16 @@ mklang run MACHINE [--set k.path=value]... [options]
 
 `MACHINE` is a path or a registered machine name (e.g. `std_cot`).
 
-| Flag                         | Effect                                                                                                     |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `--set k.path=value`         | seed the initial context (repeatable)                                                                      |
-| `--config PATH`              | runtime config (auto-discovered when omitted)                                                              |
-| `--provider NAME`            | override the config's `active` provider                                                                    |
-| `--max-tokens N`             | cost budget: halt once total produce + judge tokens reach this                                            |
-| `--checkpoint PATH`          | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11; frames record the taint set, SPEC §6) |
-| `--hitl`                     | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)   |
-| `--strict`                   | refuse to run a document whose `mklang:` version is unsupported (default: warning)                         |
-| `--on-truncate report\|halt` | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)         |
+| Flag                            | Effect                                                                                                                                                                                             |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--set k.path=value`            | seed the initial context (repeatable)                                                                                                                                                              |
+| `--config PATH`                 | runtime config (auto-discovered when omitted)                                                                                                                                                      |
+| `--provider NAME`               | override the config's `active` provider                                                                                                                                                            |
+| `--max-tokens N`                | cost budget: halt once total produce + judge tokens reach this                                                                                                                                     |
+| `--checkpoint PATH`             | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11; frames record the taint set, SPEC §6)                                                   |
+| `--hitl`                        | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)                                                                                           |
+| `--strict`                      | refuse to run a document whose `mklang:` version is unsupported (default: warning)                                                                                                                 |
+| `--on-truncate report\|halt`    | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)                                                                                                 |
 | `--untrusted-flow report\|halt` | control-flow taint (SPEC §6 / ADR 0030): annotate the trace when a judge-made decision over external data reaches an effectful `tool:` state (default), or refuse it with `untrusted-control-flow` |
 
 ```bash
@@ -91,17 +91,17 @@ mklang run examples/self_consistency.mkl \
 mklang resume CHECKPOINT [--set k.path=value]... [options]
 ```
 
-| Flag                         | Effect                                                                        |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| `--set k.path=value`         | inject values (e.g. the human reply) into the suspended run's context — untrusted by provenance, fenced in prompts (SPEC §6); pre-taint checkpoints resume all-tainted |
-| `--config` / `--provider`    | as in `run`                                                                   |
-| `--max-tokens N`             | new total budget, including tokens spent before the suspend                   |
-| `--hitl`                     | keep suspending on escalate gates even if the checkpoint didn't record it     |
-| `--machine PATH`             | machine path override (if the `.mkl` moved)                                    |
-| `--checkpoint PATH`          | where to write the checkpoint on re-suspension (default: overwrite the input) |
-| `--force`                    | resume even if the machine file changed                                       |
-| `--on-truncate report\|halt` | as in `run`                                                                   |
-| `--untrusted-flow report\|halt` | as in `run`                                                                   |
+| Flag                            | Effect                                                                                                                                                                 |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--set k.path=value`            | inject values (e.g. the human reply) into the suspended run's context — untrusted by provenance, fenced in prompts (SPEC §6); pre-taint checkpoints resume all-tainted |
+| `--config` / `--provider`       | as in `run`                                                                                                                                                            |
+| `--max-tokens N`                | new total budget, including tokens spent before the suspend                                                                                                            |
+| `--hitl`                        | keep suspending on escalate gates even if the checkpoint didn't record it                                                                                              |
+| `--machine PATH`                | machine path override (if the `.mkl` moved)                                                                                                                            |
+| `--checkpoint PATH`             | where to write the checkpoint on re-suspension (default: overwrite the input)                                                                                          |
+| `--force`                       | resume even if the machine file changed                                                                                                                                |
+| `--on-truncate report\|halt`    | as in `run`                                                                                                                                                            |
+| `--untrusted-flow report\|halt` | as in `run`                                                                                                                                                            |
 
 ```bash
 mklang run examples/expense_approval.mkl --checkpoint ck.json --hitl
@@ -124,11 +124,15 @@ mklang lint MACHINE... [--strict] [--llm]
 ```
 
 Everything `check` does, plus advisory static analysis: dead gates, missing
-catch-alls (partial transitions, SPEC §5), unread outputs, likely typos.
+catch-alls (partial transitions, SPEC §5), unread outputs, likely typos, and
+`note:` findings — prose `escalate`, plus the control-flow-taint note on an
+effectful `tool:` (or a `call:` whose sub-machine reaches one) that a prose gate
+can select with no `hook:` on the path (SPEC §6 / ADR 0030). Resolving `call:`
+targets needs the sibling machines, which the CLI loads from the file's directory.
 
 | Flag                      | Effect                                                                                         |
 | ------------------------- | ---------------------------------------------------------------------------------------------- |
-| `--strict`                | exit 1 when static findings exist (`--llm` findings stay advisory)                             |
+| `--strict`                | exit 1 when structural findings exist (`note:` and `--llm` findings stay advisory)             |
 | `--llm`                   | probe prose-gate ambiguity with a live judge (ADR 0010) — costs real tokens, non-deterministic |
 | `--llm-samples K`         | synthetic outputs per multi-gate state (default 5)                                             |
 | `--llm-repeats R`         | judge repeats per synthetic output (default 3)                                                 |

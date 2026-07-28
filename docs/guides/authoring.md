@@ -49,12 +49,12 @@ Required top-level keys: `machine`, `entry`, `budget`, `states`. A state is
 
 Core (generative states — SPEC §4):
 
-| Face        | Answers        | LLM channel (ref. interpreter) | Notes                                                    |
-| ----------- | -------------- | ------------------------------ | -------------------------------------------------------- |
-| `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated                    |
-| `execution` | how to act?    | **system** (produce)           | sticky policy — **never** side effects; not interpolated |
+| Face        | Answers        | LLM channel (ref. interpreter) | Notes                                                                                 |
+| ----------- | -------------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated                                                 |
+| `execution` | how to act?    | **system** (produce)           | sticky policy — **never** side effects; not interpolated                              |
 | `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation — tainted values arrive fenced (SPEC §6) |
-| `gates`     | when to exit?  | judge (separate call)          | transition table (below)                                 |
+| `gates`     | when to exit?  | judge (separate call)          | transition table (below)                                                              |
 
 Durable role/constraints → `structure` / `execution`. Turn data (`{{today}}`,
 history, user text) → `prompt` only. Details: [Best practices §3](best-practices.md).
@@ -135,17 +135,23 @@ draft: gate -> unknown state 'sendd'            # typo in to:
 combine: call -> unknown machine 'summarize'    # missing sibling .mkl
 no reachable path to END
 budget-infeasible: budget 2 is below the 4-step shortest path to END
-draft: no 'otherwise' catch-all gate            # warning
-result key 'answr' is not produced by any state's output   # warning
+draft: no 'otherwise' catch-all gate — the transition is partial
+       (all conditions false halts with no-gate-matched)          # warning
+result key 'answr' is not produced by any state's output          # warning
 ```
 
 `mklang lint` adds static smells: dead gates after `otherwise`, **states with no
 catch-all** (or whose only catch-all is a `repair`, which stops being eligible
 once its budget is spent — SPEC §5 _Totality_), repair-only states, outputs never
 read, and `unresolved-interpolation` (a `{{key}}` whose root is no context key or
-output — typos like `{{ticket.bod}}` included). `--strict` promotes lint findings
-to failures, so a machine that passes it has a total transition function at every
-state.
+output — typos like `{{ticket.bod}}` included).
+
+Findings prefixed **`note:`** are advisory judgement calls the author has to
+make, and stay advisory even under `--strict`: prose `escalate`, and the
+control-flow-taint note (an effectful `tool:` — or a `call:` into a sub-machine
+that reaches one — selectable by a prose gate with no `hook:` on the path, SPEC
+§6). Everything else is structural: `--strict` turns it into a failure, so a
+machine that passes has a total transition function at every state.
 
 ## Which example to copy
 
@@ -153,8 +159,8 @@ Before writing a generic architecture yourself, check the [machine stdlib](../re
 CoT, self-consistency, refine, ToT, debate, map-reduce and cascade ship as ready
 `std_*` machines you can `call:` or run by name.
 
-| Pattern                                    | Example                                                                                                                                                        |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pattern                                    | Example                                                                                                                                                          |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Minimal single state                       | [`summarize_doc.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/summarize_doc.mkl)                                                              |
 | Branching FSM + real tools + scenario test | [`triage.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/triage.mkl)                                                                            |
 | Reason/act/observe loop (`accumulate`)     | [`react.mkl`](https://github.com/gianlucamazza/mklang/blob/main/examples/react.mkl)                                                                              |

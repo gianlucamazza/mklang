@@ -26,7 +26,8 @@ registry: # optional: extra machines resolvable by `call`
 llm: # the scripted LLM (see contract below)
   produce: ["text", ...] # list → sequential; or a map {prompt-substring: text}
   tokens: [in, out] # optional: cost charged per produce (default [0, 0])
-  judge: [0, 1, ...] # sequential judge picks; or the string "unparseable"
+  judge: [0, "none", ...] # sequential judge picks; "none" = no condition in the
+  # batch holds (SPEC §5, falls through); or the string "unparseable" for the whole run
 hooks: # optional scripted gate hooks (host bool predicates, §5)
   over_limit: [false, true] # name -> boolean sequence, one per invocation
 tools: # optional scripted tool callables (§4.9)
