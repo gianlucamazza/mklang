@@ -78,6 +78,7 @@ mklang run MACHINE [--set k.path=value]... [options]
 | `--hitl`                     | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)   |
 | `--strict`                   | refuse to run a document whose `mklang:` version is unsupported (default: warning)                         |
 | `--on-truncate report\|halt` | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)         |
+| `--untrusted-flow report\|halt` | control-flow taint (SPEC §6 / ADR 0030): annotate the trace when a judge-made decision over external data reaches an effectful `tool:` state (default), or refuse it with `untrusted-control-flow` |
 
 ```bash
 mklang run examples/self_consistency.mkl \
@@ -100,6 +101,7 @@ mklang resume CHECKPOINT [--set k.path=value]... [options]
 | `--checkpoint PATH`          | where to write the checkpoint on re-suspension (default: overwrite the input) |
 | `--force`                    | resume even if the machine file changed                                       |
 | `--on-truncate report\|halt` | as in `run`                                                                   |
+| `--untrusted-flow report\|halt` | as in `run`                                                                   |
 
 ```bash
 mklang run examples/expense_approval.mkl --checkpoint ck.json --hitl

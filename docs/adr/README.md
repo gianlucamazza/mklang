@@ -34,3 +34,4 @@ change checklist in CONTRIBUTING says when to add one.
 | [0027](0027-adopt-mkl-extension.md)              | Adopt the `.mkl` extension (rename from `.mk`)                            | Accepted                               |
 | [0028](0028-provisional-1.0-posture.md)          | Provisional posture of package 1.0.0                                      | Accepted                               |
 | [0029](0029-internal-layout-refactor.md)         | Internal layout refactor (cli split, console bridge, tests mirror src)    | Accepted                               |
+| [0030](0030-control-flow-taint.md)                | Control-flow taint: the taint follows the choice                          | Accepted                               |

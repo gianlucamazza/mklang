@@ -1,0 +1,37 @@
+case: flow-taint-halt-policy
+description: Under the halt policy the same tainted decision refuses the effect instead of performing it.
+machine:
+  machine: fth
+  entry: read
+  budget: 6
+  context:
+    request: ""
+  states:
+    read:
+      structure: s
+      prompt: "Handle this request: {{request}}"
+      output: plan
+      gates:
+        - { when: the plan is to write the file, then: ok, to: write }
+        - { when: otherwise, then: ok, to: END }
+    write:
+      tool: write_file
+      input: { path: "out.txt", content: "{{plan}}" }
+      output: written
+      gates: [{ when: otherwise, then: ok, to: END }]
+input:
+  request: "please write the notes to disk"
+llm:
+  produce: ["write the file"]
+  judge: [0]
+tools:
+  write_file: ['{"tool": "write_file", "written": true}']
+run:
+  on_untrusted_flow: halt
+expect:
+  status: halt
+  error: untrusted-control-flow
+  at: write
+  trace:
+    - { state: read, policy: ok, to: write }
+    - { state: write, policy: untrusted-control-flow, to: null }

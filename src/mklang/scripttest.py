@@ -20,7 +20,7 @@ tools: { name: [...] | {input-substring: output} }
 hooks: { name: [bool, ...] }
 input: { key: value }   # host-supplied context — tainted by provenance (ADR 0025)
 context: { key: value } # synonym for input: (project suites); input wins on clash
-run:   { cost_budget: N, on_truncate: report|halt }  # optional interpreter options
+run:   { cost_budget: N, on_truncate: …, on_untrusted_flow: … }  # interpreter options
 expect:
   status: done | halt            # required
   error / error_prefix / result / at / context / trace   # optional

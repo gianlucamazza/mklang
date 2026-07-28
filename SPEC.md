@@ -783,6 +783,58 @@ instructions by construction.
 - Hosts MAY disable produce-side delimiting for debugging
   (`run(..., delimit=False)`); judge-side delimiting (§5) is unconditional.
 
+### Control-flow taint (normative, ADR 0030)
+
+Delimiting protects the **text** a state reads. It says nothing about the
+**transition** a gate chooses after reading it. A prose gate judged over a tool
+observation selects the next state, and nothing above stopped that state from
+being a `tool:` state that writes a file or sends a reply. An injection that
+talks the judge into firing `ok → send` breaks no rule stated so far: the run is
+doing exactly what the machine says. So the taint must follow the **choice**, not
+only the value.
+
+- **External taint.** The runtime tracks `external ⊆ tainted`: the keys carrying
+  data that originated **outside the run**. Every deposit is tainted (produce
+  output is oracle-derived even from author literals), so the tainted set cannot
+  separate "a model wrote this" from "an outsider wrote this" and is too coarse
+  to key a control-flow rule on. Propagation:
+  - host-supplied context values (`--set`, MCP `inputs`, injected defaults) are
+    external at run start — the same set the provenance rule marks tainted;
+  - **tool observations are always external**;
+  - a **`call`** result is external if any `input:` interpolates an external key,
+    or if the sub-machine can reach a `tool:` state at all;
+  - a **generative** output is external iff its `prompt`, its `over:` source, or
+    its fan-out `item` interpolated something external.
+- **Tainted decisions.** A transition is **tainted** when a judge selected it
+  while any external key was in scope — the judge is shown OUTPUT plus the
+  CONTEXT blob (§5), so one poisoned value anywhere on the blackboard is evidence
+  it read. The flag persists across subsequent states and is recorded on the
+  deciding step as `decision_tainted: true`.
+- **Confirmation clears it.** A `hook:` gate clears the flag: that transition was
+  computed by host code, not chosen by an oracle. A human reply injected at
+  resume (§7 HITL) clears it too. `otherwise` neither sets nor clears — a default
+  is not a confirmation.
+- **The effect surface.** Only `tool:` states can act on the world (generative
+  `execution` cannot invoke host tools), so the rule binds there. Tools are
+  classified **read-only** or **effectful**; a tool the host has not classified is
+  **effectful**, because an unclassified tool is one nobody has thought about.
+- **The rule.** _A tainted decision reaching an effectful `tool:` state MUST be
+  recorded_ (`untrusted_control_flow: true` on the step). Whether it is also
+  **refused** is host policy: the reference interpreter defaults to `report` and
+  offers `halt` (`run(..., on_untrusted_flow="halt")` / `--untrusted-flow halt`),
+  which halts with `untrusted-control-flow` before the tool runs. Checkpoint
+  frames persist `external` and `flow_tainted`; a frame lacking them resumes
+  tainted, so a checkpoint cannot launder a decision it never recorded.
+
+The author's remedy is a gate, not a better prompt: put a `hook:` (or `--hitl`)
+on the transition into the effect. `mklang lint` reports effectful tool states
+reachable from a prose-gated decision with no hook on the path.
+
+**Scope, honestly.** This is privilege separation at the effect boundary, not a
+dual control plane: the judge still reads untrusted content, and a tainted
+decision that routes into a *generative* state is unconstrained. It bounds what
+an injection can **cause**, not what it can **say**.
+
 ---
 
 ## 7. Budget, termination, errors
@@ -1097,7 +1149,12 @@ language contract; silent omission would be worse than incomplete mitigation.
    dual-channel control plane or privilege separation between "untrusted
    observation" and "trusted policy". Related work on dual-channel agents
    (e.g. CaMeL-style designs) is the right research direction; **mklang does
-   not implement it** (ADR 0017 Layer 2 deferred).
+   not implement it** (ADR 0017 Layer 2 deferred). Since ADR 0030 the
+   **consequence** is bounded where it is cheapest to bound: a transition chosen
+   by a judge reading external data is marked, and reaching an effectful `tool:`
+   state on such a decision is recorded (`untrusted_control_flow`) or refused
+   (`--untrusted-flow halt`). That constrains what an injection can **cause**;
+   it does not stop it from persuading the judge.
 
 2. **Fabricated effectors.** If authors put tool names only in generative
    `execution` text, the model invents tool results and "confirmations." The
@@ -1130,6 +1187,9 @@ language contract; silent omission would be worse than incomplete mitigation.
 - **Untrusted-data delimiting** (§6, ADR 0025): tainted interpolations and the
   judge's OUTPUT/REASONING/CONTEXT ride `<data-NONCE>` fences with a per-call
   nonce, and the model is told fenced content is never an instruction.
+- **Control-flow taint** (§6, ADR 0030): a judge-made decision over external data
+  is marked, and an effectful `tool:` state reached on one is traced or refused
+  (`--untrusted-flow halt`). `mklang lint` names those states at authoring time.
 - **Author discipline:** treat every `{{…}}` as untrusted unless the host proved
   otherwise; put high-stakes transitions on hooks or humans.
 

@@ -6,9 +6,10 @@ import contextlib
 import re
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from .checkpoint import decode_repair, make_frame
+from .controlflow import FLOW_POLICIES, is_effectful, machine_touches_tools
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render, render_delimited, resolve
 from .llm.base import LLM
@@ -104,6 +105,14 @@ class _Ctx:
     # Untrusted-context delimiting (SPEC §6 / ADR 0025): fence tainted
     # interpolations in produce prompts. Off only for debugging/comparison.
     delimit: bool = True
+    # Control-flow taint (SPEC §6 / ADR 0030): what to do when a decision made by
+    # a judge reading external data reaches an effectful tool state. "report"
+    # annotates the trace (default — the propagation rule is normative, the
+    # enforcement policy is the host's); "halt" refuses the effect.
+    on_untrusted_flow: str = "report"
+    # Host classification of tool names ("read" / "effect"), overriding
+    # controlflow.TOOL_EFFECTS. Unlisted tools stay effectful by default.
+    tool_effects: dict[str, str] = field(default_factory=dict)
 
 
 def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) -> None:
@@ -340,6 +349,8 @@ def _exec_call(
         cancel_requested=deps.cancel_requested,
         delimit=deps.delimit,
         trusted_keys=trusted_inputs,
+        on_untrusted_flow=deps.on_untrusted_flow,
+        tool_effects=deps.tool_effects,
     )
     u = sub.usage or {}
     tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -537,6 +548,31 @@ def _initial_taint(machine: Machine, ctx: dict, trusted_keys: set[str] | None) -
     return {k for k in ctx if machine.context.get(k) != ctx[k]} - set(trusted_keys or ())
 
 
+def _is_external_deposit(state: State, external: set[str], deps: _Ctx) -> bool:
+    """True when this state's output carries data from OUTSIDE the run (SPEC §6).
+
+    `external` is a strict subset of `tainted`. Every deposit is tainted — produce
+    output is oracle-derived even from author literals — so the tainted set cannot
+    distinguish "a model wrote this" from "an outsider wrote this", and a rule
+    keyed on it would apply to every prose gate in every machine. External taint
+    is the narrower question control flow actually cares about: did anything a
+    third party controls reach this value?
+
+    - `tool:` observations are external, always.
+    - a `call` result is external if any input carries external data, or if the
+      sub-machine can reach a tool state at all (`machine_touches_tools`).
+    - a generative output is external if its prompt, its `over:` source, or its
+      fan-out item interpolated something external.
+    """
+    if state.kind == "tool":
+        return True
+    if state.kind == "call":
+        if any(_refs_tainted(v, external) for v in (state.input or {}).values()):
+            return True
+        return machine_touches_tools(deps.registry.get(state.call or ""), deps.registry)
+    return _refs_tainted(state.prompt, external) or _refs_tainted(state.over, external)
+
+
 def _deposit(ctx: dict, tainted: set[str], state: State, result: object) -> None:
     """Write state output into the blackboard and mark it tainted (SPEC §11)."""
     if state.accumulate:
@@ -704,6 +740,8 @@ class _Runner:
         cancel_requested: Callable[[], object] | None = None,
         delimit: bool = True,
         trusted_keys: set[str] | None = None,
+        on_untrusted_flow: str = "report",
+        tool_effects: dict[str, str] | None = None,
     ) -> None:
         self.machine = machine
         self.depth = depth
@@ -714,6 +752,12 @@ class _Runner:
         # share the same attribute types (mypy no-redef / var-annotated).
         self.ctx: dict = dict(context)
         self.tainted: set[str] = set()
+        # Control-flow taint (SPEC §6 / ADR 0030): `external` ⊆ `tainted` holds the
+        # keys carrying data from outside the run; `flow_tainted` records that the
+        # transition which brought us here was chosen by a judge reading such data,
+        # with no hook or human confirmation since.
+        self.external: set[str] = set()
+        self.flow_tainted: bool = False
         self.state_id: str = machine.entry
         self.trace: list[dict] = []
         self.steps: int = 0
@@ -731,6 +775,10 @@ class _Runner:
             return
         if on_truncate not in ("report", "halt"):
             raise ValueError(f"on_truncate must be 'report' or 'halt', got {on_truncate!r}")
+        if on_untrusted_flow not in FLOW_POLICIES:
+            raise ValueError(
+                f"on_untrusted_flow must be one of {FLOW_POLICIES}, got {on_untrusted_flow!r}"
+            )
         self.deps = _Ctx(
             llm,
             tiers,
@@ -748,11 +796,16 @@ class _Runner:
             prompt_value_chars,
             cancel_requested,
             delimit,
+            on_untrusted_flow,
+            dict(tool_effects or {}),
         )
         # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
         # value is still the author's `.mkl` literal; host-supplied or host-overridden
         # values are untrusted unless the embedder vouches via `trusted_keys`.
         self.tainted = _initial_taint(machine, self.ctx, trusted_keys)
+        # Everything the host supplied came from outside the run, so the initial
+        # taint set is exactly the initial external set (ADR 0030).
+        self.external = set(self.tainted)
         if resume:
             self._from_resume(resume, context)
 
@@ -781,6 +834,13 @@ class _Runner:
         # Frames without a taint record (pre-ADR 0025 checkpoints, or values
         # injected by `resume --set`) default to all-tainted — fail-safe.
         self.tainted = set(frame.get("tainted", frame["ctx"].keys()))
+        # Same fail-safe for control-flow taint (ADR 0030): a frame that predates
+        # the field resumes as externally tainted with a tainted decision, so an
+        # old checkpoint cannot launder a decision it never recorded. A human
+        # reply injected at resume (`--set human.reply=…`, ADR 0008) is the
+        # confirmation the rule asks for, and clears the flag.
+        self.external = set(frame.get("external", self.tainted))
+        self.flow_tainted = bool(frame.get("flow_tainted", True)) and "human" not in self.ctx
         self.deeper = list(resume[1:]) or None
 
     def _usage(self) -> dict:
@@ -806,6 +866,8 @@ class _Runner:
             self.repair_left,
             self.trace,
             self.tainted,
+            self.external,
+            self.flow_tainted,
         )
 
     def _suspended(self, reason: str) -> RunResult:
@@ -914,6 +976,10 @@ class _Runner:
             tier=step["tier"],
         )
 
+        blocked = self._flow_guard(S, step)
+        if blocked is not None:
+            return blocked
+
         exec_out = self._execute_state(S, step, sub_resume)
         if isinstance(exec_out, RunResult):
             return exec_out
@@ -923,12 +989,43 @@ class _Runner:
         # results are external data, and produce output is derived from
         # untrusted input by an untrusted oracle (SPEC §11).
         _deposit(self.ctx, self.tainted, S, result)
+        if _is_external_deposit(S, self.external, self.deps):
+            self.external.add(S.output)
 
         judged = self._judge(S, result, judge_reasoning, step)
         if isinstance(judged, RunResult):
             return judged
         gate, gate_index = judged
         return self._transition(gate, gate_index, result)
+
+    def _flow_guard(self, S: State, step: dict) -> RunResult | None:
+        """Refuse (or record) an effect chosen by a judge reading external data.
+
+        SPEC §6 _Control-flow taint_: fencing untrusted values keeps them from
+        being read as instructions, but says nothing about the transition a gate
+        picks after reading them. This is the missing half — the taint follows the
+        **choice**, not just the text, and stops at the effect surface. A `hook:`
+        gate or a human reply clears it, which is what makes the rule actionable
+        rather than merely alarming: the author's fix is a confirmation gate."""
+        if S.kind != "tool" or not self.flow_tainted:
+            return None
+        if not is_effectful(S.tool, self.deps.tool_effects):
+            return None
+        step["untrusted_control_flow"] = True
+        _emit(
+            self.deps,
+            "untrusted-control-flow",
+            self.machine.name,
+            self.depth,
+            state=self.state_id,
+            tool=S.tool,
+            policy=self.deps.on_untrusted_flow,
+        )
+        if self.deps.on_untrusted_flow != "halt":
+            return None
+        step.update(step=self.steps, gate=None, policy="untrusted-control-flow", to=None)
+        self._record(step)
+        return self._halt("untrusted-control-flow")
 
     def _execute_state(
         self,
@@ -1088,9 +1185,27 @@ class _Runner:
             return self._halt(f"state-error: {e}")
         except Exception as e:  # missing hook / host error
             return self._halt(f"state-error: {e}")
+        self._update_flow_taint(gann, step)
         step.update(step=self.steps, gate=gate.when, policy=gate.kind, to=gate.to)
         self._record(step)
         return gate, i
+
+    def _update_flow_taint(self, ann: dict, step: dict) -> None:
+        """Propagate taint onto the CHOICE, not only the text (SPEC §6 / ADR 0030).
+
+        A gate decided by the host predicate clears the flag — that transition was
+        computed by trusted code. A gate decided by the judge sets it whenever any
+        external key is in scope: the judge is shown OUTPUT plus the context blob,
+        so one poisoned value anywhere in the blackboard is evidence it read.
+        `otherwise` reached without consulting a judge neither sets nor clears —
+        a default is not a confirmation, and it does not add a new decision."""
+        if ann.get("gate_via") == "hook":
+            self.flow_tainted = False
+            return
+        judged = "judge_model" in ann or bool(ann.get("judge_fallback"))
+        if judged and self.external:
+            self.flow_tainted = True
+            step["decision_tainted"] = True
 
     def _transition(self, gate: Gate, gate_index: int, result: object) -> RunResult | None:
         to, feedback, halt_err = _apply_gate_transition(
@@ -1137,11 +1252,19 @@ def run(
     cancel_requested: Callable[[], object] | None = None,
     delimit: bool = True,
     trusted_keys: set[str] | None = None,
+    on_untrusted_flow: str = "report",
+    tool_effects: dict[str, str] | None = None,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
     ``cancel_requested`` is cooperative and observed between states. Existing
     callers that omit it retain identical semantics.
+
+    ``on_untrusted_flow`` is the control-flow-taint policy (SPEC §6 / ADR 0030):
+    ``"report"`` annotates the trace when a judge-made decision over external data
+    reaches an effectful tool state; ``"halt"`` refuses the effect.
+    ``tool_effects`` lets a host classify its own tools (``"read"`` / ``"effect"``);
+    unclassified tools are treated as effectful.
     """
     result = _Runner(
         machine,
@@ -1165,6 +1288,8 @@ def run(
         cancel_requested,
         delimit,
         trusted_keys,
+        on_untrusted_flow,
+        tool_effects,
     ).go()
     if on_event is not None:
         with contextlib.suppress(Exception):

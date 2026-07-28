@@ -44,6 +44,21 @@ All notable changes to mklang are documented here. The format follows
 - Conformance cases `judge-none-falls-through`, `judge-none-then-hook`,
   `judge-none-no-catch-all-halts`, `hook-unknown-halts`. The scripted-judge
   contract gains the `"none"` verdict.
+- **Control-flow taint (SPEC §6, ADR 0030).** ADR 0025 stopped untrusted values
+  from being *read* as instructions; it said nothing about the transition a gate
+  picks after reading them. The engine now tracks `external ⊆ tainted` (data that
+  came from outside the run: host inputs, tool observations, call results, and
+  anything derived from them), marks a transition `decision_tainted` when a judge
+  selected it with external data in scope, and clears the mark on a `hook:` gate
+  or a human reply at resume. A tainted decision reaching an **effectful** tool
+  state is recorded as `untrusted_control_flow`; `run(..., on_untrusted_flow=
+  "halt")` / `--untrusted-flow halt` refuses the effect with
+  `untrusted-control-flow`. Tools are classified read-only/effectful
+  (`mklang.controlflow.TOOL_EFFECTS`, host override via `tool_effects=`);
+  **unclassified tools count as effectful**. Checkpoint frames carry `external`
+  and `flow_tainted` and fail safe when absent. `mklang lint` reports effectful
+  tool states reachable from a prose-gated decision with no hook on the path
+  (a `note:`, advisory under `--strict`). Conformance: four `flow-taint-*` cases.
 - **Gate-divergence harness: metrics that can fail.** Agreement 1.0 on four easy
   machines has no discriminating power, so `scripts/gate_divergence.py` gains a
   **boundary corpus** (`threshold_edge` marginal condition, `priority_shadow`

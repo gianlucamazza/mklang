@@ -105,6 +105,14 @@ def build_parser(handlers: Mapping[str, Handler]) -> argparse.ArgumentParser:
         help="when produce hits max_tokens/length: annotate the trace (report, default) "
         "or halt with state-error: output-truncated (halt) — ADR 0018",
     )
+    r.add_argument(
+        "--untrusted-flow",
+        choices=("report", "halt"),
+        default="report",
+        help="when a gate judged over external data routes into an effectful tool "
+        "state: annotate the trace (report, default) or refuse the effect with "
+        "untrusted-control-flow (halt) — SPEC §6 / ADR 0030",
+    )
     presentation_args(r)
     logging_args(r)
     r.set_defaults(fn=handlers["run"])
@@ -145,6 +153,12 @@ def build_parser(handlers: Mapping[str, Handler]) -> argparse.ArgumentParser:
         choices=("report", "halt"),
         default="report",
         help="produce truncation policy on resume (same as run; ADR 0018)",
+    )
+    s.add_argument(
+        "--untrusted-flow",
+        choices=("report", "halt"),
+        default="report",
+        help="control-flow-taint policy on resume (same as run; ADR 0030)",
     )
     presentation_args(s)
     logging_args(s)

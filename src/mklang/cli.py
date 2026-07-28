@@ -204,6 +204,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         suspendable=args.checkpoint is not None,
         escalate_suspend=args.hitl,
         on_truncate=getattr(args, "on_truncate", "report"),
+        on_untrusted_flow=getattr(args, "untrusted_flow", "report"),
     )
     return _emit(
         res,
@@ -280,6 +281,7 @@ def cmd_resume(args: argparse.Namespace) -> int:
         escalate_suspend=hitl,
         resume=ck["frames"],
         on_truncate=getattr(args, "on_truncate", "report"),
+        on_untrusted_flow=getattr(args, "untrusted_flow", "report"),
     )
     return _emit(res, out_path, machine, machine_path, cost_budget, args, prov.name, hitl=hitl)
 

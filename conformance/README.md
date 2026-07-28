@@ -35,6 +35,7 @@ input: # optional host-supplied context, merged over `context:` —
   task: "…" # tainted by provenance (SPEC §6, ADR 0025)
 run: # optional interpreter options (e.g. cost_budget)
   cost_budget: 20
+  on_untrusted_flow: halt # control-flow-taint policy (SPEC §6): report (default) | halt
 expect:
   status: done | halt # required
   error: <halt reason> # optional — exact match on the kebab-case reason
@@ -94,8 +95,10 @@ exactly one `{{path}}` placeholder passes the raw context value — e.g. a list 
 into the callee; mixed templates still render text), result selection, the
 halt-reason taxonomy, and **untrusted-context delimiting** (SPEC §6 / ADR 0025: the four
 `taint-*` cases pin fenced tool observations, host inputs, and call results,
-plus bare author literals). Judge-prompt fencing is adapter behavior → unit
-tests, not conformance.
+plus bare author literals), plus **control-flow taint** (SPEC §6 / ADR 0030: the
+four `flow-taint-*` cases pin the marked decision, the effect-surface boundary,
+the `hook:` confirmation, and the `halt` policy). Judge-prompt fencing is adapter
+behavior → unit tests, not conformance.
 
 Scripted `hook:`/`tool:` bindings (above) bring hook precedence and tool-state
 semantics — genuine language rules, not host behavior — into the suite. Still

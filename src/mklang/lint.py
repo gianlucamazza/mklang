@@ -131,6 +131,54 @@ def _when_line_has_unquoted_hash(line: str) -> bool:
     return "#" in core
 
 
+def _flow_taint_findings(machine: Machine) -> list[str]:
+    """`note:` — an effect a prose gate can select on its own (SPEC §6, ADR 0030).
+
+    Static counterpart of the engine's control-flow taint. Walks the transition
+    graph marking each state with "was some gate on the way here decided by a
+    judge, with no `hook:` confirming a transition since". Edges:
+
+    - a prose gate marks its destination **judged**;
+    - a `hook:` gate marks its destination **confirmed** (host code chose it);
+    - `otherwise` carries the source's mark through unchanged — a default is not
+      a confirmation.
+
+    Effectful tool states (see `controlflow.TOOL_EFFECTS`; unknown tools count as
+    effectful) reachable while judged are reported. This is advisory: a machine
+    whose context is entirely author-controlled has nothing to inject. It is a
+    `note:` for that reason — the author decides, `--untrusted-flow halt` enforces.
+    """
+    from .controlflow import is_effectful
+
+    judged: dict[str, bool] = {sid: False for sid in machine.states}
+    changed = True
+    while changed:  # tiny fixed point: booleans over a small graph
+        changed = False
+        for sid, s in machine.states.items():
+            for g in s.gates:
+                if g.to is None or g.to == "END" or g.to not in judged:
+                    continue
+                if g.hook and g.when.strip().lower() != "otherwise":
+                    mark = False  # host predicate decided this transition
+                elif g.when.strip().lower() == "otherwise":
+                    mark = judged[sid]
+                else:
+                    mark = True
+                if mark and not judged[g.to]:
+                    judged[g.to] = True
+                    changed = True
+    findings = []
+    for sid, s in machine.states.items():
+        if s.kind == "tool" and judged[sid] and is_effectful(s.tool):
+            findings.append(
+                f"note: {sid}: effectful tool '{s.tool}' is reachable from a prose-gated "
+                "decision with no hook confirmation on the path — untrusted context can "
+                "steer the judge into selecting this effect (SPEC §6). Gate it with a "
+                "`hook:` (or run with --untrusted-flow halt)"
+            )
+    return findings
+
+
 def _catch_all_findings(sid: str, s: State, repair_only: bool) -> list[str]:
     """`missing-catch-all`: the state's transition relation is partial (SPEC §5).
 
@@ -235,5 +283,6 @@ def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
             "see docs/experiments/gate-divergence.md"
         )
 
+    findings.extend(_flow_taint_findings(machine))
     findings.extend(_unresolved_interpolation(machine))
     return findings

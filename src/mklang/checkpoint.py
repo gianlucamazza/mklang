@@ -53,6 +53,8 @@ def make_frame(
     repair_left: dict[tuple[str, int], int],
     trace: list[dict],
     tainted: set[str] | None = None,
+    external: set[str] | None = None,
+    flow_tainted: bool = True,
 ) -> dict:
     """Snapshot one run() loop-top: everything needed to re-enter the loop."""
     return {
@@ -68,6 +70,11 @@ def make_frame(
         # Provenance taint (ADR 0025). Resume treats a missing field as
         # all-tainted, so pre-0025 checkpoints stay resumable and fail safe.
         "tainted": sorted(tainted or ()),
+        # Control-flow taint (ADR 0030): the external subset of `tainted`, and
+        # whether the decision that reached this state was judged over external
+        # data. Both default to the unsafe side on a frame that lacks them.
+        "external": sorted(external if external is not None else (tainted or ())),
+        "flow_tainted": bool(flow_tainted),
     }
 
 
@@ -75,10 +82,13 @@ def taint_frame(frame: dict, keys: Iterable[str]) -> None:
     """Mark host-injected top-level keys tainted in a checkpoint frame.
 
     Every `resume --set` / resume-inputs path must call this beside the ctx
-    write: values crossing the host boundary are untrusted (ADR 0025)."""
+    write: values crossing the host boundary are untrusted (ADR 0025) and, having
+    come from outside the run, external for control-flow purposes (ADR 0030)."""
+    injected = {k.split(".")[0] for k in keys}
     current = set(frame.get("tainted", frame.get("ctx", {}).keys()))
-    current.update(k.split(".")[0] for k in keys)
-    frame["tainted"] = sorted(current)
+    frame["tainted"] = sorted(current | injected)
+    external = set(frame.get("external", frame.get("tainted", frame.get("ctx", {}).keys())))
+    frame["external"] = sorted(external | injected)
 
 
 def file_sha256(path: str | Path) -> str | None:
