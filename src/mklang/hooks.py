@@ -68,9 +68,7 @@ def write_failed(_ctx: dict, output: Any) -> bool:
         return False
     if obs.get("error") is not None:
         return True
-    if "written" in obs and obs.get("written") is False:
-        return True
-    return False
+    return "written" in obs and obs.get("written") is False
 
 
 def console_workspace_ready(ctx: dict, _output: Any) -> bool:
