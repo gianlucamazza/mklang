@@ -620,13 +620,24 @@ def _machine_rates(rows: list[dict]) -> dict[str, dict]:
     They get their own `paraphrase` block."""
     done = [r for r in _done(rows) if _variant_of(r) == BASE_VARIANT]
     per: dict[str, dict] = {}
-    for machine in sorted({r.get("machine") for r in done}, key=lambda x: (x is None, x)):
+    # Narrow to str: row dicts are untyped, so r.get("machine") is Any | None.
+    machines = sorted({m for r in done if isinstance(m := r.get("machine"), str)})
+    for machine in machines:
         group = [r for r in done if r.get("machine") == machine]
-        per[machine or "default"] = {
+        per[machine] = {
             "runs_done": len(group),
             **_agreement_block(group),
             **_accuracy_block(group),
             "distinct_signatures": sorted({r["signature"] for r in group}),
+        }
+    # Rows without a machine name (legacy fixtures) land under "default".
+    bare = [r for r in done if not isinstance(r.get("machine"), str)]
+    if bare:
+        per["default"] = {
+            "runs_done": len(bare),
+            **_agreement_block(bare),
+            **_accuracy_block(bare),
+            "distinct_signatures": sorted({r["signature"] for r in bare}),
         }
     return per
 
@@ -639,7 +650,7 @@ def _paraphrase_rates(rows: list[dict]) -> dict[str, dict]:
     reading the evidence; one that is not is reading the phrasing."""
     done = _done(rows)
     per: dict[str, dict] = {}
-    machines = sorted({r.get("machine") for r in done if r.get("machine")})
+    machines = sorted({m for r in done if isinstance(m := r.get("machine"), str)})
     for machine in machines:
         group = [r for r in done if r.get("machine") == machine]
         variants = sorted({_variant_of(r) for r in group})
@@ -673,7 +684,7 @@ def _summary(rows: list[dict], names: list[str]) -> dict:
     accuracy = _accuracy_block(done)
     summary = {
         "providers_attempted": names,
-        "machines": sorted({r.get("machine") for r in done if r.get("machine")}),
+        "machines": sorted({m for r in done if isinstance(m := r.get("machine"), str)}),
         "runs_done": len(done),
         "runs_skipped": sum(1 for r in rows if r.get("skipped")),
         "runs_failed": sum(1 for r in rows if not r.get("skipped") and r.get("status") != "done"),
