@@ -49,7 +49,7 @@ dev = [
   "types-PyYAML>=6",
   "types-jsonschema>=4",
 ]
-mcp = ["mcp>=1.10"]
+mcp = ["mcp>=2"]
 completions = ["argcomplete>=3"]
 
 [project.scripts]

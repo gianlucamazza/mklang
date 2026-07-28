@@ -32,7 +32,7 @@ already taken by LLM-assisted lint.)
 Add an **optional MCP stdio server** as a new, non-default host surface. Ship it as an
 in-repo extra, not a separate package: module `src/mklang/mcp/`, dependency group
 `mklang[mcp]`, console script `mklang-mcp`. Built on the official MCP Python SDK (the
-`mcp` package — FastMCP + stdio transport); the exact version is pinned by the
+`mcp` package — MCPServer + stdio transport; SDK v2); the exact version is pinned by the
 implementation change, not this ADR.
 
 - **Reuse the CLI seams, do not fork logic.** The server calls the same

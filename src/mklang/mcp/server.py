@@ -22,14 +22,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from mcp.server.fastmcp import Context, FastMCP
+    from mcp.server.mcpserver import Context, MCPServer
 else:
     try:
-        # Real Context enables FastMCP's ctx injection; the annotation must resolve
+        # Real Context enables MCPServer's ctx injection; the annotation must resolve
         # from module globals because `from __future__ import annotations` stringifies
         # it. The fallback keeps `import mklang.mcp.server` working without the extra
         # (main() then shows the friendly install hint).
-        from mcp.server.fastmcp import Context
+        from mcp.server.mcpserver import Context
     except ImportError:  # pragma: no cover - exercised by the no-extra install
 
         class Context:  # placeholder type so annotations resolve; never instantiated
@@ -65,12 +65,14 @@ def _error(slug: str, errors: list[str], warnings: list[str] | None = None) -> d
 def _event_forwarder(ctx):
     """Bridge engine events to MCP logging notifications (ADR 0015 live seam).
 
-    The forwarder is created on the server's event loop (FastMCP invokes sync
-    tools there), but engine events may fire from fan-out worker threads too —
-    so the captured loop plus `run_coroutine_threadsafe` is the one scheduling
-    path safe from any thread, without blocking the emitter. Forwarding is
-    isolated like the engine's own observer: a transport hiccup never touches
-    the run. Returns None (no callback) when the request carries no context."""
+    Must be built on the server's event-loop thread (an ``async def`` tool body
+    under MCP SDK v2): ``def`` tools run on a worker thread and have no running
+    loop. Engine events may still fire from fan-out workers, so the captured
+    loop plus ``run_coroutine_threadsafe`` is the one scheduling path safe from
+    any thread without blocking the emitter. Forwarding is isolated like the
+    engine's own observer: a transport hiccup never touches the run. Returns
+    None when the request carries no context or no loop is available.
+    """
     if ctx is None:
         return None
     import asyncio
@@ -380,16 +382,24 @@ def check_tool(source: str | None = None, path: str | None = None, strict: bool 
     return host.check_machine(source, path, strict=strict)
 
 
-def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None) -> FastMCP:
-    """Build the FastMCP server. Requires the `mcp` package (`pip install mklang[mcp]`)."""
-    from mcp.server.fastmcp import FastMCP
+def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = None) -> MCPServer:
+    """Build the MCP server. Requires the `mcp` package (`pip install mklang[mcp]`).
 
-    server = FastMCP("mklang")
+    MCP SDK v2: high-level surface is ``MCPServer`` (was ``FastMCP``). Tools that
+    need a live event loop for logging (``run`` / ``resume``) are ``async def``
+    so the body runs on the server loop; the blocking engine call is offloaded
+    with ``asyncio.to_thread`` (v2 runs plain ``def`` tools on a worker thread).
+    """
+    import asyncio
+
+    from mcp.server.mcpserver import MCPServer
+
+    server = MCPServer("mklang")
     store = SessionStore()
     defaults = {"config": config, "provider": provider}
 
     @server.tool()
-    def run(
+    async def run(
         source: str | None = None,
         path: str | None = None,
         inputs: dict | None = None,
@@ -419,7 +429,9 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         stream as logging notifications (logger "mklang.event", JSON payloads).
         A `status: "error"` reply carries validation `errors` (nothing was
         run)."""
-        return run_tool(
+        on_event = _event_forwarder(ctx)
+        return await asyncio.to_thread(
+            run_tool,
             store,
             defaults,
             source=source,
@@ -431,12 +443,12 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
             hitl=hitl,
             strict=strict,
             checkpoint_path=checkpoint_path,
-            on_event=_event_forwarder(ctx),
+            on_event=on_event,
             on_truncate=on_truncate,
         )
 
     @server.tool()
-    def resume(
+    async def resume(
         checkpoint: str,
         inputs: dict | None = None,
         cost_budget: int | None = None,
@@ -455,7 +467,9 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         If the run suspends again, the reply carries a NEW handle, and a file
         checkpoint is rewritten in place (or to `checkpoint_path`). `force: true`
         resumes even if the machine file changed since the checkpoint."""
-        return resume_tool(
+        on_event = _event_forwarder(ctx)
+        return await asyncio.to_thread(
+            resume_tool,
             store,
             checkpoint,
             inputs=inputs,
@@ -463,7 +477,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
             defaults=defaults,
             checkpoint_path=checkpoint_path,
             force=force,
-            on_event=_event_forwarder(ctx),
+            on_event=on_event,
             on_truncate=on_truncate,
         )
 

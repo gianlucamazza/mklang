@@ -348,9 +348,20 @@ def test_durable_resume_of_cli_checkpoint(monkeypatch, store, tmp_path):
     assert done["status"] == "done"
 
 
+def _tool_body(res) -> dict:
+    """Unwrap a CallToolResult under MCP SDK v2 (snake_case; structured optional)."""
+    body = res.structured_content
+    if body is None and res.content:
+        body = json.loads(res.content[0].text)
+    if isinstance(body, dict) and "status" not in body and "result" in body:
+        body = body["result"]
+    assert isinstance(body, dict)
+    return body
+
+
 def test_live_events_stream_as_logging_notifications(monkeypatch):
     """ADR 0016: a run's engine events arrive as `mklang.event` log notifications."""
-    from mcp.shared.memory import create_connected_server_and_client_session as connect
+    from mcp.client import Client
 
     monkeypatch.setattr(srv, "_build_llm", lambda prov: echo_llm())
     server = srv.create_server()
@@ -361,11 +372,10 @@ def test_live_events_stream_as_logging_notifications(monkeypatch):
             events.append(json.loads(params.data))
 
     async def drive():
-        async with connect(server._mcp_server, logging_callback=on_log) as client:
+        # log_level opts the client into SEP-2577 logging delivery on 2026-era links.
+        async with Client(server, logging_callback=on_log, log_level="info") as client:
             res = await client.call_tool("run", {"path": "std_cot", "inputs": {"task": "2+2?"}})
-            body = res.structuredContent or json.loads(res.content[0].text)
-            if "status" not in body and "result" in body:
-                body = body["result"]
+            body = _tool_body(res)
             assert body["status"] == "done"
 
     asyncio.run(drive())
@@ -377,12 +387,12 @@ def test_live_events_stream_as_logging_notifications(monkeypatch):
 
 
 def test_protocol_smoke_inmemory():
-    from mcp.shared.memory import create_connected_server_and_client_session as connect
+    from mcp.client import Client
 
     server = srv.create_server()
 
     async def smoke():
-        async with connect(server._mcp_server) as client:
+        async with Client(server) as client:
             tools = await client.list_tools()
             assert sorted(t.name for t in tools.tools) == [
                 "check",
@@ -392,13 +402,7 @@ def test_protocol_smoke_inmemory():
                 "run",
             ]
             res = await client.call_tool("run", {})  # invalid-request domain payload
-            payload = (
-                res.structuredContent
-                if res.structuredContent is not None
-                else json.loads(res.content[0].text)
-            )
-            if "status" not in payload and "result" in payload:
-                payload = payload["result"]
+            payload = _tool_body(res)
             assert payload["status"] == "error"
 
     asyncio.run(smoke())

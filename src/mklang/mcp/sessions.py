@@ -39,7 +39,7 @@ class Session:
 
 
 class SessionStore:
-    """FIFO-capped, thread-safe (FastMCP runs sync tools from a thread pool)."""
+    """FIFO-capped, thread-safe (MCPServer may run handlers off the event loop)."""
 
     def __init__(self, max_entries: int = MAX_ENTRIES):
         self._max = max_entries
