@@ -120,6 +120,8 @@ def _check(
     from .hooks import load_hook_registry
     from .tools import load_tool_registry
 
+    from .hooks import resolve_hook
+
     tools = load_tool_registry()
     hooks = load_hook_registry()
     for sid, s in machine.states.items():
@@ -129,7 +131,8 @@ def _check(
                 f"{sorted(tools)} — the run halts if it is reached"
             )
         for g in s.gates:
-            if g.hook and g.hook not in hooks:
+            # Parametric hooks (eq:/neq:) resolve without a registry entry.
+            if g.hook and resolve_hook(g.hook, hooks) is None:
                 warnings.append(
                     f"state '{sid}' uses hook '{g.hook}' not in the registry "
                     f"{sorted(hooks)} — the run halts if it is reached"
