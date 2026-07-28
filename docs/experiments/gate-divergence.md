@@ -33,19 +33,38 @@ Script: [`scripts/gate_divergence.py`](../../scripts/gate_divergence.py).
    - `severity_escalate` — an `escalate` gate that decides whether a human is
      paged (control-flow-critical divergence, SPEC §11);
    - `grounding_repair` — a `repair` loop on "grounded in the given fact".
+
+   Plus a **boundary corpus** (added 2026-07-28) where the answer is defensible
+   but not obvious, so the measurement can actually fail:
+   - `threshold_edge` — a **marginal condition**: the amount sits exactly on the
+     limit and the gate says "strictly greater";
+   - `priority_shadow` — **near-overlapping gates**: both conditions are true and
+     the narrower one is second, so SPEC §5's first-true rule fixes the answer;
+   - `none_holds` — the output satisfies **no** condition, so the catch-all is
+     correct and can only be reached through the judge's *none of the above*
+     verdict (SPEC §5 _Totality_).
 2. For each selected machine and each provider in the runtime config with an
-   API key, run it (`--repeats N` optional).
-3. Record per-run **gate signature**: ordered `state|gate|gate_via|to` (not
-   full free-text outputs).
+   API key, run it (`--repeats N` optional). With `--paraphrase`, also run each
+   machine's **reworded variants** — same states, same targets, same prompts,
+   different `when` text.
+3. Record per-run **gate signature** (ordered `state|gate|gate_via|to`, not full
+   free-text outputs), the **route** (`state>to`, wording-independent), and
+   whether the route equals the machine's **gold** route where one exists.
 4. Report pairwise `same_signature` and `signature_agreement_rate`, **computed
-   within each machine** (cross-machine signatures differ by construction), plus
-   a `per_machine` breakdown. The release gate enforces `--min-agreement`
-   per-machine so no single machine hides behind a high pooled average.
+   within each machine and wording variant** (cross-machine signatures differ by
+   construction; a reworded variant is a different input), plus a `per_machine`
+   breakdown, the cross/intra-provider decomposition, accuracy, and paraphrase
+   invariance. The release gate enforces `--min-agreement` per-machine so no
+   single machine hides behind a high pooled average.
 
 ```bash
 uv run python scripts/gate_divergence.py
 uv run python scripts/gate_divergence.py --machines all --providers deepseek,openai --repeats 3 \
   --jsonl /tmp/gate-div.jsonl
+# boundary corpus + wording sensitivity + the metrics that can fail:
+uv run python scripts/gate_divergence.py --machines all --paraphrase \
+  --providers deepseek,openai --repeats 3 \
+  --min-cross-agreement 0.8 --min-intra-agreement 0.8 --min-accuracy 0.8
 # force one judge tier across providers (comparable to pre-0.5.2 fast-judge runs):
 uv run python scripts/gate_divergence.py --judge-tier fast
 ```
@@ -59,19 +78,67 @@ uv run python scripts/gate_divergence.py --judge-tier fast
 
 ## Metrics
 
-| Metric                     | Definition                                           |
-| -------------------------- | ---------------------------------------------------- |
-| `signature`                | Compact routing trace (gates + via + destinations)   |
-| `same_signature`           | Pairwise equality of signatures                      |
-| `signature_agreement_rate` | Fraction of within-machine provider pairs that agree |
-| `per_machine`              | Same metrics broken down per suite machine           |
-| `distinct_signatures`      | Set of observed routing patterns                     |
+| Metric                          | Definition                                                                   |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `signature`                     | Compact routing trace (gates + via + destinations)                           |
+| `route`                         | Path only (`state>to`) — comparable across wordings                          |
+| `same_signature`                | Pairwise equality of signatures                                              |
+| `signature_agreement_rate`      | Fraction of within-group pairs that agree — **pooled over both pair kinds**  |
+| `cross_provider_agreement_rate` | Agreement over pairs of **different** providers (the portability claim)      |
+| `intra_provider_agreement_rate` | Agreement over repeats of the **same** provider (self-consistency)           |
+| `accuracy`                      | Fraction of runs taking the **gold** route, where a machine declares one     |
+| `gate_blind_spot`               | `agreement − accuracy`: how much consensus overstates correctness            |
+| `paraphrase_invariance_rate`    | Same provider, same evidence, reworded conditions → same route?              |
+| `per_machine` / `paraphrase`    | The same metrics broken down per suite machine / per wording set             |
+| `distinct_signatures`           | Set of observed routing patterns                                             |
+
+### Why the headline number was not enough
+
+Through 2026-07-27 the reported figure was a single pooled
+`signature_agreement_rate`, and it read **1.0** on four machines. That is not
+evidence of judge reliability; it is a measure with **no discriminating power**,
+for three separable reasons — each now has its own metric:
+
+1. **The tasks were easy.** Every machine had an obvious right answer, so
+   agreement had nowhere to go but 1.0. The boundary corpus (`threshold_edge`,
+   `priority_shadow`, `none_holds`) puts the decision where competent judges can
+   legitimately differ.
+2. **Agreement ≠ correctness.** Two providers can concur on the *wrong* route,
+   and the pooled rate scores that as perfect. `accuracy` against the gold route
+   is the missing half; `gate_blind_spot` is the gap between them — the
+   gate-judging analogue of the authoring-loop
+   [`blind_spot`](./authoring-blind-spot.md).
+3. **The pool mixed two questions.** With `--repeats 3` the pairwise set
+   contained same-provider pairs (does one model repeat itself?) alongside
+   cross-provider pairs (do two models agree?). Repeats of one model at
+   `temperature=0` agree far more easily, so pooling them **inflates** the
+   portability number. The two rates are now reported separately;
+   `signature_agreement_rate` is kept, unchanged in meaning, so the pinned
+   release history stays comparable — it is just no longer the number to quote.
+
+Paraphrase invariance answers a fourth question none of the above can: whether a
+verdict tracks the evidence or the phrasing. It compares a single provider
+against itself across reworded conditions, so a low rate is unambiguous — the
+same model, the same output, a different route, because the author wrote the
+condition differently.
 
 Optional later: majority vote over `N` repeats; Cohen's κ on first-step gate;
 temperature ablation.
 
 ## Limitations
 
+- **The boundary corpus has no live rows yet.** `threshold_edge`,
+  `priority_shadow`, `none_holds`, the cross/intra decomposition, accuracy and
+  paraphrase invariance are implemented and covered offline (scripted judges,
+  `tests/repo/test_gate_divergence_script.py`); no dated live run has produced
+  numbers for them. Until one appears in **Results**, treat them as
+  instrumentation, not findings — and do not cite the 1.0 history as if it
+  covered them.
+- Gold routes encode **author intent under SPEC §5**, not a universal truth.
+  `priority_shadow`'s gold follows from the first-true rule; `threshold_edge`'s
+  from "strictly greater"; `none_holds`' from the catch-all. A machine with no
+  defensible answer (`sentiment_borderline`) has no gold entry on purpose —
+  scoring taste as correctness would be worse than not scoring at all.
 - Live and non-deterministic; results change with model versions and dates.
 - Small synthetic task — not a support-triage benchmark.
 - Conformance suite remains the contract for **engine** semantics; this experiment
@@ -268,6 +335,12 @@ record the reason in the next results row.
 | ------- | -------------------- |
 | `sentiment_borderline` | Contestable free-text; routing has been 1.0 but free-text diverges — useful measurement, redundant with anchor for release |
 | `grounding_repair` | Anchored repair loop; stable 1.0 — candidate for promotion if release cost allows and we want repair coverage |
+| `threshold_edge` | Boundary corpus, **no live evidence yet** — promotion needs ≥2 dated rows per the rules above |
+| `priority_shadow` | Boundary corpus, no live evidence yet. If it turns out judges routinely pick the narrower second gate, that is a finding about the priority rule, not a floor to lower |
+| `none_holds` | Boundary corpus, no live evidence yet. Measures the *none of the above* verdict (SPEC §5); before that existed the machine could not route correctly at all |
+
+Boundary machines must not enter the release gate on a floor invented before the
+first live row: an unmeasured floor is a guess with CI authority.
 
 ## Anthropic secret + credit runbook
 

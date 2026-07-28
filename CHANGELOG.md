@@ -44,6 +44,16 @@ All notable changes to mklang are documented here. The format follows
 - Conformance cases `judge-none-falls-through`, `judge-none-then-hook`,
   `judge-none-no-catch-all-halts`, `hook-unknown-halts`. The scripted-judge
   contract gains the `"none"` verdict.
+- **Gate-divergence harness: metrics that can fail.** Agreement 1.0 on four easy
+  machines has no discriminating power, so `scripts/gate_divergence.py` gains a
+  **boundary corpus** (`threshold_edge` marginal condition, `priority_shadow`
+  near-overlapping gates, `none_holds` no-condition-true), **gold routes** with
+  `accuracy` and `gate_blind_spot` (agreement − accuracy), the **cross- vs
+  intra-provider** decomposition (the pooled rate silently mixed portability with
+  self-consistency), and `--paraphrase` **wording-invariance** runs. New opt-in
+  release floors: `--min-cross-agreement`, `--min-intra-agreement`,
+  `--min-accuracy`, `--min-paraphrase-invariance`. `signature_agreement_rate`
+  keeps its meaning so the pinned release history stays comparable.
 
 ## [1.0.13] — 2026-07-28
 
