@@ -116,6 +116,33 @@ states:
 """
 
 
+EFFECTFUL = """\
+machine: eff
+entry: draft
+budget: 10
+result: sent
+context:
+  request: ""
+states:
+  draft:
+    structure: s
+    prompt: "handle: {{request}}"
+    output: reply
+    gates:
+      - when: the reply is ready to send
+        then: ok
+        to: send
+      - when: otherwise
+        then: ok
+        to: END
+  send:
+    tool: send_reply
+    input: { to: "someone@example.com", body: "{{reply}}" }
+    output: sent
+    gates: [{when: otherwise, then: ok, to: END}]
+"""
+
+
 def echo_llm(judge=0):
     return MockLLM(
         produce_fn=lambda model, system, user, reason: Produced(text=user),
@@ -186,6 +213,42 @@ def test_on_truncate_invalid_is_error_payload(store):
     out = srv.run_tool(store, DEFAULTS, source=LINEAR, on_truncate="continue")
     assert out["status"] == "error"
     assert out["error"] == "invalid-request"
+
+
+def test_untrusted_flow_halt_parity(monkeypatch, store):
+    """MCP exposes the same control-flow-taint policy as the CLI (ADR 0030):
+    a judged decision over host-supplied input may not reach an effectful tool."""
+    use_llm(monkeypatch, echo_llm)
+    inputs = {"request": "please send it"}
+    reported = srv.run_tool(store, DEFAULTS, source=EFFECTFUL, inputs=inputs)
+    assert reported["status"] == "done"  # default policy records, never refuses
+    assert reported["trace"][0]["decision_tainted"] is True
+
+    refused = srv.run_tool(
+        store, DEFAULTS, source=EFFECTFUL, inputs=inputs, on_untrusted_flow="halt"
+    )
+    assert (refused["status"], refused["error"], refused["at"]) == (
+        "halt",
+        "untrusted-control-flow",
+        "send",
+    )
+
+
+def test_untrusted_flow_invalid_is_error_payload(store):
+    out = srv.run_tool(store, DEFAULTS, source=LINEAR, on_untrusted_flow="ignore")
+    assert out["status"] == "error"
+    assert out["error"] == "invalid-request"
+    bad_resume = srv.resume_tool(store, "no-such-handle", on_untrusted_flow="ignore")
+    assert bad_resume["error"] == "invalid-request"
+
+
+def test_untrusted_flow_policy_sticks_to_the_session(monkeypatch, store):
+    """A run started under `halt` must not continue under the laxer default just
+    because `resume` omitted the argument."""
+    use_llm(monkeypatch, costly_llm)
+    out = srv.run_tool(store, DEFAULTS, source=LINEAR, cost_budget=20, on_untrusted_flow="halt")
+    assert out["status"] == "suspended"
+    assert store.get(out["checkpoint"]).on_untrusted_flow == "halt"
 
 
 def test_run_invalid_source_is_error_payload(monkeypatch, store):

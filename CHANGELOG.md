@@ -52,8 +52,10 @@ repair` — both structural, so `lint --strict` fails on a partial transition.
   came from outside the run: host inputs, tool observations, call results, and
   anything derived from them), marks a transition `decision_tainted` when a judge
   selected it with external data in scope, and clears the mark on a `hook:` gate
-  or a human reply at resume (`human.reply` present — a bare `human` key is not
-  confirmation). A tainted decision reaching an **effectful** tool
+  or a human reply injected **for that suspension** (a bare `human` key is not a
+  reply, and a reply left on the blackboard by an earlier HITL cycle does not
+  confirm a later decision — every resume path records what it injected as
+  `resume_injected` in the frame). A tainted decision reaching an **effectful** tool
   state is recorded as `untrusted_control_flow`; `run(..., on_untrusted_flow=
 "halt")` / `--untrusted-flow halt` refuses the effect with
   `untrusted-control-flow`. Tools are classified read-only/effectful
@@ -62,10 +64,13 @@ repair` — both structural, so `lint --strict` fails on a partial transition.
   and `flow_tainted` and fail safe when absent. The flag is **inherited by a
   sub-run**, so routing a tainted decision through a `call:` does not launder it:
   the sub-machine's effect halts and the caller reports `call-failed:
-untrusted-control-flow`. `mklang lint` reports effectful tool states reachable
-  from a prose-gated decision with no hook on the path — and, given a registry,
-  the `call:` states whose sub-machine reaches one (a `note:`, advisory under
-  `--strict`). Conformance: five `flow-taint-*` cases.
+untrusted-control-flow`. The policy is available on **every surface** —
+  `--untrusted-flow` on `run`/`resume`, `on_untrusted_flow=` on `engine.run`, the
+  MCP `run`/`resume` tools (stored on the session, so a `resume` that omits it
+  cannot fall back to the default), and `ConsoleTools`. `mklang lint` reports
+  effectful tool states reachable from a prose-gated decision with no hook on the
+  path — and, given a registry, the `call:` states whose sub-machine reaches one
+  (a `note:`, advisory under `--strict`). Conformance: five `flow-taint-*` cases.
 - **SPEC §8 “What a trace attests”** (normative): the trace records which gate
   fired, under which policy, decided by whom (`gate_via`, `judge_model`, the
   anomaly marks) — and explicitly does **not** attest why the verdict was what it
@@ -99,6 +104,22 @@ untrusted-control-flow`. `mklang lint` reports effectful tool states reachable
   release floors: `--min-cross-agreement`, `--min-intra-agreement`,
   `--min-accuracy`, `--min-paraphrase-invariance`. `signature_agreement_rate`
   keeps its meaning so the pinned release history stays comparable.
+
+### Fixed
+
+- **Console HITL replies were not marked untrusted.** The console writes the
+  human's answer straight into the suspended frame's context; unlike every other
+  resume path it never called `taint_frame`, so the reply rendered **bare** in the
+  resumed prompt instead of inside a `<data-NONCE>` fence (ADR 0025) — the one
+  value in the run typed by a person answering a machine's question. It is now
+  marked like any other host-injected value, which also makes it the HITL
+  confirmation for control-flow taint (ADR 0030).
+- **One source of truth for tool effect classes.** `console/capabilities.py`
+  restated read-only/effectful alongside `controlflow.TOOL_EFFECTS`; the two
+  agreed by luck, not by construction. `ToolMetadata.read_only` is now derived
+  from the language's classification (a test pins the agreement), and the console
+  keeps only what the engine has no opinion about — egress, reversibility,
+  sensitivity.
 
 ## [1.0.13] — 2026-07-28
 

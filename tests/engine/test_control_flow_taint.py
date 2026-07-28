@@ -7,6 +7,7 @@ effectful state is a decision made by external data, and the runtime says so.
 
 import pytest
 
+from mklang.checkpoint import taint_frame
 from mklang.controlflow import is_effectful, machine_touches_effects, machine_touches_tools
 from mklang.engine import run
 from mklang.llm.mock import MockLLM
@@ -212,22 +213,28 @@ def test_resume_without_the_field_fails_safe():
     assert r.error == "untrusted-control-flow"
 
 
-def test_human_reply_at_resume_clears_the_flag():
-    """HITL is the other confirmation: a human decided, so the effect proceeds."""
-    m = machine()
-    approved = {
+def _suspended_frame(**over) -> dict:
+    frame = {
         "machine": "cf",
         "state": "act",
-        "ctx": {"request": "x", "plan": "act", "human": {"reply": "approved"}},
+        "ctx": {"request": "x", "plan": "act"},
         "steps": 1,
         "total_in": 0,
         "total_out": 0,
         "feedback": "",
         "repair_left": [],
         "trace": [],
-        "tainted": ["request", "plan", "human"],
+        "tainted": ["request", "plan"],
+        "external": ["request", "plan"],
+        "flow_tainted": True,
     }
-    r = run(
+    frame.update(over)
+    return frame
+
+
+def _resume(frame: dict):
+    m = machine()
+    return run(
         m,
         {},
         {m.name: m},
@@ -235,10 +242,43 @@ def test_human_reply_at_resume_clears_the_flag():
         TIERS,
         "m",
         tools={"write_file": lambda i: "written"},
-        resume=[approved],
+        resume=[frame],
         on_untrusted_flow="halt",
     )
-    assert r.status == "done"
+
+
+def test_human_reply_at_resume_clears_the_flag():
+    """HITL is the other confirmation: a human decided, so the effect proceeds."""
+    approved = _suspended_frame(
+        ctx={"request": "x", "plan": "act", "human": {"reply": "approved"}},
+        tainted=["request", "plan", "human"],
+        external=["request", "plan", "human"],
+    )
+    taint_frame(approved, ["human.reply"])  # what every resume path does
+    assert _resume(approved).status == "done"
+
+
+def test_a_reply_from_an_earlier_cycle_is_not_a_confirmation():
+    """The reply stays in the blackboard across suspensions. It confirmed the
+    decision it was given for — not the next one the human never saw."""
+    stale = _suspended_frame(
+        ctx={"request": "x", "plan": "act", "human": {"reply": "approved"}},
+        tainted=["request", "plan", "human"],
+        external=["request", "plan", "human"],
+        resume_injected=[],  # this resume injected nothing
+    )
+    assert _resume(stale).error == "untrusted-control-flow"
+
+
+def test_an_unrelated_injection_does_not_confirm():
+    """Only a human path counts: injecting some other key at resume is not HITL."""
+    other = _suspended_frame(
+        ctx={"request": "x", "plan": "act", "human": {"reply": "approved"}},
+        tainted=["request", "plan", "human"],
+        external=["request", "plan", "human"],
+    )
+    taint_frame(other, ["request"])
+    assert _resume(other).error == "untrusted-control-flow"
 
 
 def test_human_key_without_reply_does_not_clear_taint():

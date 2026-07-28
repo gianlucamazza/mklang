@@ -25,7 +25,9 @@ a contributor's map, not language semantics — those live in the SPEC. The
   and the guard at the effect surface (ADR 0030), which a sub-run inherits across
   `call:`. Suspension writes checkpoint frames via `checkpoint.py` (ADR 0007) —
   frames carry the `"tainted"` key set (`taint_frame` marks resume-injected
-  values) plus `"external"` / `"flow_tainted"`, all fail-safe when absent.
+  values) plus `"external"` / `"flow_tainted"` / `"resume_injected"` (what _this_
+  resume supplied, so a stale human reply cannot confirm a later decision), all
+  fail-safe when absent.
 - `interpolate.py` — `{{key.path}}` interpolation and value formatting for
   prompts; `render_delimited` fences tainted substitutions with a per-call
   nonce (ADR 0025).

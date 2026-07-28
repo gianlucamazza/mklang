@@ -176,12 +176,25 @@ def _judge_supports_none(llm: object) -> bool:
     return any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
 
 
-def _human_reply_present(ctx: dict) -> bool:
-    """HITL confirmation at resume: a ``human.reply`` value was injected (ADR 0008).
+def _human_confirmed(frame: dict, ctx: dict) -> bool:
+    """HITL confirmation at resume: a ``human.reply`` injected for THIS suspension.
 
-    Only a reply clears control-flow taint — the bare presence of a ``human`` key
-    (author context schema, empty placeholder, unrelated payload) must not.
+    Two things must hold, and each rules out a way the confirmation could be
+    forged by accident (ADR 0008 / ADR 0030):
+
+    - the frame records a `human*` path among the values this resume injected
+      (`resume_injected`, written by `checkpoint.taint_frame`). A reply left in
+      the blackboard by an earlier HITL cycle is not a confirmation of a decision
+      taken after it; a frame with no record at all — pre-0030 checkpoint, or a
+      resume that injected nothing — confirms nothing;
+    - the value is actually a reply. The bare presence of a `human` key (author
+      context schema, empty placeholder, unrelated payload) is not one.
     """
+    injected = frame.get("resume_injected")
+    if not isinstance(injected, list):
+        return False
+    if not any(str(k).split(".")[0] == "human" for k in injected):
+        return False
     human = ctx.get("human")
     return isinstance(human, dict) and "reply" in human
 
@@ -879,12 +892,11 @@ class _Runner:
         # Same fail-safe for control-flow taint (ADR 0030): a frame that predates
         # the field resumes as externally tainted with a tainted decision, so an
         # old checkpoint cannot launder a decision it never recorded. A human
-        # reply injected at resume (`--set human.reply=…`, ADR 0008) is the
-        # confirmation the rule asks for, and clears the flag — only when the
-        # reply itself is present, not merely a `human` key in the context.
+        # reply injected at THIS resume (`--set human.reply=…`, ADR 0008) is the
+        # confirmation the rule asks for, and clears the flag.
         self.external = set(frame.get("external", self.tainted))
-        self.flow_tainted = bool(frame.get("flow_tainted", True)) and not _human_reply_present(
-            self.ctx
+        self.flow_tainted = bool(frame.get("flow_tainted", True)) and not _human_confirmed(
+            frame, self.ctx
         )
         self.deeper = list(resume[1:]) or None
 

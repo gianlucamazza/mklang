@@ -52,17 +52,24 @@ scope. Scope is the whole blackboard on purpose: the judge is shown OUTPUT plus
 the CONTEXT blob, so one poisoned value anywhere is evidence it read. The flag
 persists (`flow_tainted`), is recorded on the deciding step as
 `decision_tainted`, and is cleared by exactly two things: a `hook:` gate (host
-code chose that transition) and a human reply injected at resume
-(`human.reply` present under ADR 0008 — a bare `human` key is not confirmation).
-`otherwise` neither sets nor clears — a default is not a confirmation.
+code chose that transition) and a human reply injected at resume **for this
+suspension** (ADR 0008). Both halves of that phrase matter: a bare `human` key is
+not a reply, and a reply left on the blackboard by an earlier HITL cycle is not a
+confirmation of a decision taken after it — so every resume path records what it
+injected (`resume_injected` in the frame, written by `checkpoint.taint_frame`)
+and a frame with no such record confirms nothing. `otherwise` neither sets nor
+clears — a default is not a confirmation.
 
 ### 3. The rule binds at the effect surface
 
 Only `tool:` states can act on the world (generative `execution` cannot invoke
 host tools), so the effect surface is exactly the tool registry, classified
-read-only vs effectful in `controlflow.TOOL_EFFECTS`. **Unclassified tools —
-every third-party plugin — count as effectful**: silence is not a safety claim.
-Hosts classify their own via `run(..., tool_effects=...)`.
+read-only vs effectful in `controlflow.TOOL_EFFECTS` — the single place that
+answers "can this tool change the world"; the console's richer host policy
+(`console/capabilities.py`: egress, reversibility, sensitivity) derives its
+`read_only` from it rather than restating it. **Unclassified tools — every
+third-party plugin — count as effectful**: silence is not a safety claim. Hosts
+classify their own via `run(..., tool_effects=...)`.
 
 The surface does not stop at a `call:`. A sub-run **inherits** the caller's
 `flow_tainted`, so one level of indirection (route into a `call:` whose
@@ -73,8 +80,13 @@ sub-machine's chain only, never the caller's.
 
 A tainted decision reaching an effectful tool state is always **recorded**
 (`untrusted_control_flow: true`). Whether it is **refused** is host policy:
-`report` (default) or `halt` (`--untrusted-flow halt`), which halts with
-`untrusted-control-flow` before the tool runs.
+`report` (default) or `halt`, which halts with `untrusted-control-flow` before
+the tool runs. Every surface carries the policy — `--untrusted-flow` on
+`run`/`resume`, `on_untrusted_flow=` on `engine.run`, the MCP `run`/`resume`
+tools, and `ConsoleTools` — because a policy available on one surface only is a
+policy a host can lose by changing how it invokes the same machine. On MCP it is
+stored on the session, so a `resume` that omits it continues under the policy the
+run started with, never under the laxer default.
 
 ### 4. Static counterpart
 

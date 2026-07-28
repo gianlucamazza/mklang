@@ -84,11 +84,16 @@ def taint_frame(frame: dict, keys: Iterable[str]) -> None:
     Every `resume --set` / resume-inputs path must call this beside the ctx
     write: values crossing the host boundary are untrusted (ADR 0025) and, having
     come from outside the run, external for control-flow purposes (ADR 0030)."""
-    injected = {k.split(".")[0] for k in keys}
+    paths = [str(k) for k in keys]
+    injected = {k.split(".")[0] for k in paths}
     current = set(frame.get("tainted", frame.get("ctx", {}).keys()))
     frame["tainted"] = sorted(current | injected)
     external = set(frame.get("external", frame.get("tainted", frame.get("ctx", {}).keys())))
     frame["external"] = sorted(external | injected)
+    # What THIS resume injected (ADR 0030). Overwritten, never merged, and absent
+    # from a freshly made frame: a human reply confirms the suspension it was
+    # given for, not every later one it happens to still be sitting in.
+    frame["resume_injected"] = sorted(paths)
 
 
 def file_sha256(path: str | Path) -> str | None:

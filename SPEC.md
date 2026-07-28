@@ -812,8 +812,12 @@ only the value.
   deciding step as `decision_tainted: true`.
 - **Confirmation clears it.** A `hook:` gate clears the flag: that transition was
   computed by host code, not chosen by an oracle. A human reply injected at
-  resume (§7 HITL) clears it too. `otherwise` neither sets nor clears — a default
-  is not a confirmation.
+  resume (§7 HITL) clears it too — but only the reply supplied **for that
+  suspension**: a `human.reply` still sitting on the blackboard from an earlier
+  HITL cycle confirms the decision it was given for, not a later one, so a host
+  MUST record which values a resume injected (the reference interpreter writes
+  `resume_injected` into the frame). `otherwise` neither sets nor clears — a
+  default is not a confirmation.
 - **The effect surface.** Only `tool:` states can act on the world (generative
   `execution` cannot invoke host tools), so the rule binds there. Tools are
   classified **read-only** or **effectful**; a tool the host has not classified is
@@ -825,10 +829,11 @@ only the value.
 - **The rule.** _A tainted decision reaching an effectful `tool:` state MUST be
   recorded_ (`untrusted_control_flow: true` on the step). Whether it is also
   **refused** is host policy: the reference interpreter defaults to `report` and
-  offers `halt` (`run(..., on_untrusted_flow="halt")` / `--untrusted-flow halt`),
-  which halts with `untrusted-control-flow` before the tool runs. Checkpoint
-  frames persist `external` and `flow_tainted`; a frame lacking them resumes
-  tainted, so a checkpoint cannot launder a decision it never recorded.
+  offers `halt` (`run(..., on_untrusted_flow="halt")` / `--untrusted-flow halt`;
+  the MCP `run` / `resume` tools and the console take the same policy), which
+  halts with `untrusted-control-flow` before the tool runs. Checkpoint frames
+  persist `external` and `flow_tainted`; a frame lacking them resumes tainted, so
+  a checkpoint cannot launder a decision it never recorded.
 
 The author's remedy is a gate, not a better prompt: put a `hook:` (or `--hitl`)
 on the transition into the effect. `mklang lint` reports effectful tool states

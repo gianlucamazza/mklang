@@ -336,14 +336,17 @@ emits a `note:` on machines that use escalate (advisory even under `--strict`).
   and reaching an effectful `tool:` under it is recorded as
   `untrusted_control_flow` — including through a `call:`, since a sub-run
   inherits the mark. Run production paths with `--untrusted-flow halt`
-  (`run(..., on_untrusted_flow="halt")`) to refuse the effect instead of
-  recording it, and classify your own tools with `run(..., tool_effects={"x":
-"read"})` — an unclassified tool counts as effectful. Today the policy is a
-  CLI/library knob: the MCP server and the console run with the default
-  (`report`). `mklang lint` flags the same shape statically.
+  (`run(..., on_untrusted_flow="halt")`, MCP `run`/`resume` `on_untrusted_flow`,
+  `ConsoleTools(on_untrusted_flow=…)`) to refuse the effect instead of recording
+  it, and classify your own tools with `run(..., tool_effects={"x": "read"})` —
+  an unclassified tool counts as effectful. On MCP the policy sticks to the
+  session, so a `resume` that omits it cannot continue a `halt` run under the
+  default. `mklang lint` flags the same shape statically.
 - Prefer **hooks + HITL** before irreversible tools: a `hook:` gate (or a
-  `human.reply` at resume) is what clears the mark, so the fix for a
-  control-flow-taint finding is a confirmation gate, not a better prompt.
+  `human.reply` injected **for that suspension**) is what clears the mark, so the
+  fix for a control-flow-taint finding is a confirmation gate, not a better
+  prompt. A reply still sitting in the blackboard from an earlier HITL cycle does
+  not confirm a later decision.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
 - Checkpoints may carry additive host metadata such as capability policy,
   request IDs and suspension reason; metadata must be redacted and must never

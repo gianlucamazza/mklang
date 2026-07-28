@@ -40,6 +40,7 @@ from collections.abc import Callable
 
 from .. import fs, host
 from ..checkpoint import load_checkpoint, save_checkpoint, taint_frame, verify_hash
+from ..controlflow import FLOW_POLICIES
 from ..engine import RunResult
 from ..engine import run as run_machine
 from ..logs import LEVELS, setup_process_logging
@@ -134,6 +135,7 @@ def _session_from(
     origin_path: str | None,
     origin_source: str | None,
     on_truncate: str = "report",
+    on_untrusted_flow: str = "report",
 ) -> Session:
     return Session(
         machine=p.machine,
@@ -149,6 +151,7 @@ def _session_from(
         origin_path=origin_path,
         origin_source=origin_source,
         on_truncate=on_truncate,
+        on_untrusted_flow=on_untrusted_flow,
     )
 
 
@@ -166,6 +169,7 @@ def run_tool(
     checkpoint_path: str | None = None,
     on_event: Callable[[dict], None] | None = None,
     on_truncate: str = "report",
+    on_untrusted_flow: str = "report",
 ) -> dict:
     if (source is None) == (path is None):
         return _error("invalid-request", ["provide exactly one of `source` or `path`"])
@@ -173,6 +177,11 @@ def run_tool(
         return _error(
             "invalid-request",
             [f"on_truncate must be 'report' or 'halt', got {on_truncate!r}"],
+        )
+    if on_untrusted_flow not in FLOW_POLICIES:
+        return _error(
+            "invalid-request",
+            [f"on_untrusted_flow must be one of {FLOW_POLICIES}, got {on_untrusted_flow!r}"],
         )
     cfg = config or defaults["config"]
     prov_name = provider or defaults["provider"]
@@ -204,8 +213,17 @@ def run_tool(
         escalate_suspend=hitl,
         on_event=on_event,
         on_truncate=on_truncate,
+        on_untrusted_flow=on_untrusted_flow,
     )
-    session = _session_from(p, cost_budget, hitl, path, source, on_truncate=on_truncate)
+    session = _session_from(
+        p,
+        cost_budget,
+        hitl,
+        path,
+        source,
+        on_truncate=on_truncate,
+        on_untrusted_flow=on_untrusted_flow,
+    )
     return _finish(store, res, p.warnings, session, checkpoint_path)
 
 
@@ -232,6 +250,7 @@ def _rerun(
         resume=frames,
         on_event=on_event,
         on_truncate=on_truncate if on_truncate is not None else session.on_truncate,
+        on_untrusted_flow=session.on_untrusted_flow,
     )
 
 
@@ -254,6 +273,7 @@ def _resume_from_file(
     force: bool,
     on_event: Callable[[dict], None] | None = None,
     on_truncate: str = "report",
+    on_untrusted_flow: str = "report",
 ) -> dict:
     try:
         ck = load_checkpoint(ck_path)
@@ -291,6 +311,7 @@ def _resume_from_file(
         None if source else machine_path,
         source,
         on_truncate=on_truncate,
+        on_untrusted_flow=on_untrusted_flow,
     )
     res = _rerun(session, ck["frames"], budget, on_event, on_truncate)
     # Re-suspension persists to the file it came from unless redirected.
@@ -308,8 +329,14 @@ def resume_tool(
     force: bool = False,
     on_event: Callable[[dict], None] | None = None,
     on_truncate: str | None = None,
+    on_untrusted_flow: str | None = None,
 ) -> dict:
     defaults = defaults or {"config": DEFAULT_CONFIG, "provider": None}
+    if on_untrusted_flow is not None and on_untrusted_flow not in FLOW_POLICIES:
+        return _error(
+            "invalid-request",
+            [f"on_untrusted_flow must be one of {FLOW_POLICIES}, got {on_untrusted_flow!r}"],
+        )
     s = store.get(checkpoint)
     if s is None:
         if Path(checkpoint).is_file():
@@ -323,6 +350,7 @@ def resume_tool(
                 force,
                 on_event,
                 on_truncate=on_truncate or "report",
+                on_untrusted_flow=on_untrusted_flow or "report",
             )
         return _error(
             "unknown-checkpoint",
@@ -345,6 +373,8 @@ def resume_tool(
                 [f"on_truncate must be 'report' or 'halt', got {on_truncate!r}"],
             )
         s.on_truncate = on_truncate
+    if on_untrusted_flow is not None:
+        s.on_untrusted_flow = on_untrusted_flow
     res = _rerun(s, s.frames, budget, on_event, s.on_truncate)
     store.delete(checkpoint)
     s.cost_budget = budget
@@ -410,6 +440,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         strict: bool = False,
         checkpoint_path: str | None = None,
         on_truncate: str = "report",
+        on_untrusted_flow: str = "report",
         ctx: Context | None = None,
     ) -> dict:
         """Commission an mklang machine and return its result with full provenance
@@ -421,7 +452,11 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         two. Inline sources may `call:` bundled machines. `inputs` merges values
         into the machine's context by dotted key (e.g. {"ticket.body": "..."});
         list values are allowed. `cost_budget` caps total tokens. `on_truncate` is
-        `report` (default: annotate truncated produce) or `halt` (ADR 0018). With
+        `report` (default: annotate truncated produce) or `halt` (ADR 0018).
+        `on_untrusted_flow` is `report` (default: mark an effectful tool reached
+        through a decision a judge made over external data) or `halt` (refuse it —
+        SPEC §6 / ADR 0030); the choice sticks to the session, so `resume`
+        continues under it. With
         `hitl: true`, a fired escalate gate suspends the run: the reply has
         `status: "suspended"` and an opaque single-use `checkpoint` handle for
         `resume`; pass `checkpoint_path` to ALSO persist the suspension to a file
@@ -445,6 +480,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
             checkpoint_path=checkpoint_path,
             on_event=on_event,
             on_truncate=on_truncate,
+            on_untrusted_flow=on_untrusted_flow,
         )
 
     @server.tool()
@@ -455,6 +491,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         checkpoint_path: str | None = None,
         force: bool = False,
         on_truncate: str | None = None,
+        on_untrusted_flow: str | None = None,
         ctx: Context | None = None,
     ) -> dict:
         """Resume a suspended run. `checkpoint` is either the opaque single-use
@@ -463,7 +500,8 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
         --checkpoint` works too). `inputs` injects values into the suspended
         context — e.g. the human reply as {"human.reply": "approve"}.
         `cost_budget` sets a new total token budget (must exceed the exhausted one
-        to make progress). `on_truncate` overrides the session policy if set.
+        to make progress). `on_truncate` and `on_untrusted_flow` override the
+        session policy if set (otherwise the policy the run started under holds).
         If the run suspends again, the reply carries a NEW handle, and a file
         checkpoint is rewritten in place (or to `checkpoint_path`). `force: true`
         resumes even if the machine file changed since the checkpoint."""
@@ -479,6 +517,7 @@ def create_server(config: str | None = DEFAULT_CONFIG, provider: str | None = No
             force=force,
             on_event=on_event,
             on_truncate=on_truncate,
+            on_untrusted_flow=on_untrusted_flow,
         )
 
     @server.tool()
