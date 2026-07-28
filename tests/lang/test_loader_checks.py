@@ -39,7 +39,13 @@ def test_semantic_check_flags_call_dead_and_result():
     assert any("result key 'missing'" in w for w in warnings)
 
 
-def test_single_gate_terminal_does_not_warn_catchall():
+def test_single_conditional_gate_warns_catchall():
+    """A lone prose gate is the sharpest partial transition (SPEC §5 Totality).
+
+    This used to be exempt on the theory that one gate always fires. It does not:
+    the fused judge can answer *none of the above*, so a state whose only gate is
+    conditional halts with `no-gate-matched` whenever that condition is false.
+    """
     m = mk(
         {
             "machine": "t",
@@ -56,7 +62,25 @@ def test_single_gate_terminal_does_not_warn_catchall():
         }
     )
     _, warnings = semantic_check(m, {"t": m})
-    assert not any("catch-all" in w for w in warnings)
+    assert any("catch-all" in w for w in warnings)
+    # A catch-all — of any policy — clears it.
+    ok = mk(
+        {
+            "machine": "t",
+            "entry": "a",
+            "budget": 3,
+            "states": {
+                "a": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    _, ok_warnings = semantic_check(ok, {"t": ok})
+    assert not any("catch-all" in w for w in ok_warnings)
 
 
 def test_load_registry_skips_malformed_siblings(tmp_path):

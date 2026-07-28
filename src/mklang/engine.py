@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import contextlib
+import inspect
 import re
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from .checkpoint import decode_repair, make_frame
+from .controlflow import FLOW_POLICIES, is_effectful, machine_touches_tools
 from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render, render_delimited, resolve
 from .llm.base import LLM
@@ -104,6 +106,14 @@ class _Ctx:
     # Untrusted-context delimiting (SPEC §6 / ADR 0025): fence tainted
     # interpolations in produce prompts. Off only for debugging/comparison.
     delimit: bool = True
+    # Control-flow taint (SPEC §6 / ADR 0030): what to do when a decision made by
+    # a judge reading external data reaches an effectful tool state. "report"
+    # annotates the trace (default — the propagation rule is normative, the
+    # enforcement policy is the host's); "halt" refuses the effect.
+    on_untrusted_flow: str = "report"
+    # Host classification of tool names ("read" / "effect"), overriding
+    # controlflow.TOOL_EFFECTS. Unlisted tools stay effectful by default.
+    tool_effects: dict[str, str] = field(default_factory=dict)
 
 
 def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) -> None:
@@ -128,7 +138,9 @@ def _call_hook(gate: Gate, ctx: dict, result: object, hooks: dict) -> bool:
 
     fn = resolve_hook(gate.hook, hooks)
     if fn is None:
-        raise KeyError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
+        # LookupError, not KeyError: KeyError's str() re-quotes the whole message,
+        # so the halt reason would read state-error: "hook: unknown hook 'x' …".
+        raise LookupError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
     return bool(fn(ctx, result))
 
 
@@ -147,6 +159,82 @@ def _collect_prose_batch(eligible: Eligible, start: int) -> list[tuple[int, Gate
     return batch
 
 
+def _judge_supports_none(llm: object) -> bool:
+    """True when ``llm.judge`` accepts the ``allow_none`` keyword (SPEC §5).
+
+    Inspect the signature instead of calling with the kwarg and catching
+    ``TypeError``: a TypeError raised *inside* a modern adapter (bug, bad
+    argument) must not be misread as "legacy forced-choice adapter".
+    ``**kwargs`` adapters count as supporting the option.
+    """
+    try:
+        params = inspect.signature(llm.judge).parameters  # type: ignore[attr-defined]
+    except (TypeError, ValueError):
+        return False
+    if "allow_none" in params:
+        return True
+    return any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+
+
+def _human_confirmed(frame: dict, ctx: dict) -> bool:
+    """HITL confirmation at resume: a ``human.reply`` injected for THIS suspension.
+
+    Two things must hold, and each rules out a way the confirmation could be
+    forged by accident (ADR 0008 / ADR 0030):
+
+    - the frame records a `human*` path among the values this resume injected
+      (`resume_injected`, written by `checkpoint.taint_frame`). A reply left in
+      the blackboard by an earlier HITL cycle is not a confirmation of a decision
+      taken after it; a frame with no record at all — pre-0030 checkpoint, or a
+      resume that injected nothing — confirms nothing;
+    - the value is actually a reply. The bare presence of a `human` key (author
+      context schema, empty placeholder, unrelated payload) is not one.
+    """
+    injected = frame.get("resume_injected")
+    if not isinstance(injected, list):
+        return False
+    if not any(str(k).split(".")[0] == "human" for k in injected):
+        return False
+    human = ctx.get("human")
+    return isinstance(human, dict) and "reply" in human
+
+
+def _call_judge(
+    deps: _Ctx,
+    judge_model: str,
+    conditions: list[str],
+    result: object,
+    ctx: dict,
+    judge_reasoning: str | None,
+) -> tuple[object, bool]:
+    """Judge a condition batch, asking for the *none of the above* option (SPEC §5).
+
+    Returns ``(verdict, total)``. Adapters written before ``allow_none`` (third-party
+    provider plugins) keep working as a forced choice; ``total`` is False for them so
+    the step can be traced as judged under the older, non-total protocol.
+    """
+    if _judge_supports_none(deps.llm):
+        return (
+            deps.llm.judge(
+                judge_model,
+                conditions,
+                fmt(result),
+                ctx,
+                reasoning=judge_reasoning,
+                allow_none=True,
+            ),
+            True,
+        )
+    verdict = deps.llm.judge(
+        judge_model,
+        conditions,
+        fmt(result),
+        ctx,
+        reasoning=judge_reasoning,
+    )
+    return verdict, False
+
+
 def _judge_prose_batch(
     batch: list[tuple[int, Gate]],
     eligible: Eligible,
@@ -157,15 +245,17 @@ def _judge_prose_batch(
     judge_reasoning: str | None,
     judge_model: str,
     ann: dict,
-) -> tuple[int, Gate, dict, tuple[int, int]]:
-    """Fused LLM judge over a prose batch; otherwise-fallback on JudgeUnparseable."""
+) -> tuple[int | None, Gate | None, dict, tuple[int, int]]:
+    """Fused LLM judge over a prose batch (SPEC §5).
+
+    Returns ``(gate_index, gate, ann, usage)``; a ``None`` gate means the judge
+    answered *none of the above* — every condition in the batch is false, so the
+    caller resumes the scan at the gate after the batch. `JudgeUnparseable` still
+    soft-falls back to an eligible `otherwise`.
+    """
     try:
-        verdict = deps.llm.judge(
-            judge_model,
-            [g.when for _, g in batch],
-            fmt(result),
-            ctx,
-            reasoning=judge_reasoning,
+        verdict, total = _call_judge(
+            deps, judge_model, [g.when for _, g in batch], result, ctx, judge_reasoning
         )
         # Adapters return the chosen index, optionally paired with the parse
         # method ("json" / "bare" / "last-number"). Mock/scripted judges return
@@ -174,18 +264,30 @@ def _judge_prose_batch(
             local, parse_method = verdict[:2]
         else:
             local, parse_method = verdict, None
-        # Adapters must return an index in [0, len(batch)); do not clamp here —
-        # silent clamp would misroute with gate_via: llm and no anomaly flag.
-        if not isinstance(local, int) or local < 0 or local >= len(batch):
-            raise JudgeUnparseable(f"out-of-range choice {local!r} for n={len(batch)}")
+        # Adapters must return an index in [0, len(batch)] — the last value is the
+        # *none of the above* option, and only when it was offered. Do not clamp:
+        # a silent clamp would misroute with gate_via: llm and no anomaly flag.
+        top = len(batch) if total else len(batch) - 1
+        if not isinstance(local, int) or local < 0 or local > top:
+            raise JudgeUnparseable(f"out-of-range choice {local!r} for n={top + 1}")
+        usage = getattr(deps.llm, "last_judge_usage", (0, 0))
+        cost = (int(usage[0] or 0), int(usage[1] or 0))
+        if local == len(batch):  # no condition in this batch holds — keep scanning
+            ann["judge_model"] = judge_model
+            ann["judge_none"] = int(ann.get("judge_none", 0)) + 1
+            if parse_method and parse_method != "json":
+                ann["judge_parse"] = parse_method
+            return None, None, ann, cost
         gi, gate = batch[local]
         ann["gate_via"] = "llm"
         ann["judge_model"] = judge_model
+        if not total:
+            # Forced choice: this verdict cannot express "none of these hold".
+            ann["judge_forced_choice"] = True
         # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
         if parse_method and parse_method != "json":
             ann["judge_parse"] = parse_method
-        usage = getattr(deps.llm, "last_judge_usage", (0, 0))
-        return gi, gate, ann, (int(usage[0] or 0), int(usage[1] or 0))
+        return gi, gate, ann, cost
     except JudgeUnparseable as e:
         ann["judge_fallback"] = True
         ann["judge_raw"] = str(e)[:200]
@@ -209,10 +311,16 @@ def _select_gate(
 ) -> tuple[int, Gate, dict, tuple[int, int]]:
     """Pick the first true gate (hooks / otherwise / fused LLM prose batch).
 
+    One left-to-right scan over the eligible gates, exactly as SPEC §5 defines it:
+    a hook that returns False and a prose batch the judge rejects both fall
+    through to the next gate. Reaching the end without a true gate is
+    `no-gate-matched` — the partial-transition halt a catch-all gate prevents.
+
     `judge_model` is the model this state's prose gates are judged by (SPEC §2.1).
-    Returns (gate_index_in_state, gate, step_annotations).
+    Returns (gate_index_in_state, gate, step_annotations, judge_usage).
     """
     ann: dict = {}
+    spent_in = spent_out = 0
     i = 0
     while i < len(eligible):
         gi, gate = eligible[i]
@@ -220,19 +328,26 @@ def _select_gate(
             if _call_hook(gate, ctx, result, deps.hooks):
                 ann["gate_via"] = "hook"
                 ann["hook"] = gate.hook
-                return gi, gate, ann, (0, 0)
+                return gi, gate, ann, (spent_in, spent_out)
             i += 1
             continue
         if _is_otherwise(gate):
             ann["gate_via"] = "otherwise"
-            return gi, gate, ann, (0, 0)
+            return gi, gate, ann, (spent_in, spent_out)
         batch = _collect_prose_batch(eligible, i)
         if not batch:
             i += 1
             continue
-        return _judge_prose_batch(
+        bi, bgate, ann, (batch_in, batch_out) = _judge_prose_batch(
             batch, eligible, i, result, ctx, deps, judge_reasoning, judge_model, ann
         )
+        spent_in += batch_in
+        spent_out += batch_out
+        if bgate is None:  # judge: none of these conditions is true — keep scanning
+            i += len(batch)
+            continue
+        assert bi is not None
+        return bi, bgate, ann, (spent_in, spent_out)
     raise RuntimeError("no-gate-matched")
 
 
@@ -244,6 +359,7 @@ def _exec_call(
     depth: int,
     resume: list[dict] | None,
     tainted: set[str],
+    flow_tainted: bool = False,
 ) -> ExecOut:
     sub_input = {k: resolve(v, ctx) for k, v in (state.input or {}).items()}
     # An input key is trusted in the sub-run unless its value interpolates
@@ -274,6 +390,13 @@ def _exec_call(
         cancel_requested=deps.cancel_requested,
         delimit=deps.delimit,
         trusted_keys=trusted_inputs,
+        on_untrusted_flow=deps.on_untrusted_flow,
+        tool_effects=deps.tool_effects,
+        # A tainted decision is not laundered by one level of indirection: the
+        # sub-run inherits it, so the guard fires on the effect the sub-machine
+        # performs (SPEC §6 / ADR 0030). The sub-run's own confirmation does not
+        # travel back up — it clears the sub-machine's decision chain, not ours.
+        flow_tainted=flow_tainted,
     )
     u = sub.usage or {}
     tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -342,15 +465,17 @@ def _exec_one(
     depth: int,
     resume: list[dict] | None = None,
     tainted: set[str] | None = None,
+    flow_tainted: bool = False,
 ) -> ExecOut:
     """Execute a state once → (output, sub_trace|None, reasoning|None, (in,out), meta).
 
     ``meta`` carries produce-side annotations (ADR 0018 truncation). Empty for
-    tool/call states.
+    tool/call states. ``flow_tainted`` is only consumed by `call`: it hands the
+    run's control-flow taint to the sub-run (ADR 0030).
     """
     tainted = tainted if tainted is not None else set()
     if state.kind == "call":
-        return _exec_call(state, ctx, deps, machine, depth, resume, tainted)
+        return _exec_call(state, ctx, deps, machine, depth, resume, tainted, flow_tainted)
     if state.kind == "tool":
         return _exec_tool(state, ctx, deps)
     return _exec_produce(state, ctx, feedback, deps, machine, tainted)
@@ -385,6 +510,7 @@ def _safe_exec(
     machine: Machine,
     depth: int,
     tainted: set[str] | None = None,
+    flow_tainted: bool = False,
 ) -> ExecOut:
     """Execute one fan-out branch; a branch failure becomes a marker, not a crash."""
     try:
@@ -398,6 +524,7 @@ def _safe_exec(
             machine,
             depth,
             tainted=tainted,
+            flow_tainted=flow_tainted,
         )
     except CallFailed as e:
         # Preserve nested trace + token usage from a sub-machine halt.
@@ -469,6 +596,31 @@ def _refs_tainted(value: object, tainted: set[str]) -> bool:
 def _initial_taint(machine: Machine, ctx: dict, trusted_keys: set[str] | None) -> set[str]:
     """Top-level keys whose values differ from the authoring literal (SPEC §6)."""
     return {k for k in ctx if machine.context.get(k) != ctx[k]} - set(trusted_keys or ())
+
+
+def _is_external_deposit(state: State, external: set[str], deps: _Ctx) -> bool:
+    """True when this state's output carries data from OUTSIDE the run (SPEC §6).
+
+    `external` is a strict subset of `tainted`. Every deposit is tainted — produce
+    output is oracle-derived even from author literals — so the tainted set cannot
+    distinguish "a model wrote this" from "an outsider wrote this", and a rule
+    keyed on it would apply to every prose gate in every machine. External taint
+    is the narrower question control flow actually cares about: did anything a
+    third party controls reach this value?
+
+    - `tool:` observations are external, always.
+    - a `call` result is external if any input carries external data, or if the
+      sub-machine can reach a tool state at all (`machine_touches_tools`).
+    - a generative output is external if its prompt, its `over:` source, or its
+      fan-out item interpolated something external.
+    """
+    if state.kind == "tool":
+        return True
+    if state.kind == "call":
+        if any(_refs_tainted(v, external) for v in (state.input or {}).values()):
+            return True
+        return machine_touches_tools(deps.registry.get(state.call or ""), deps.registry)
+    return _refs_tainted(state.prompt, external) or _refs_tainted(state.over, external)
 
 
 def _deposit(ctx: dict, tainted: set[str], state: State, result: object) -> None:
@@ -567,6 +719,7 @@ def _execute_fanout(
     steps: int,
     trace: list[dict],
     usage_tokens: tuple[int, int],
+    flow_tainted: bool = False,
 ) -> tuple[object, str | None, int, int, int, dict] | RunResult:
     """Run a sample/over fan-out.
 
@@ -602,6 +755,7 @@ def _execute_fanout(
                         machine,
                         depth,
                         branch_tainted,
+                        flow_tainted,
                     ),
                     branches,
                 )
@@ -638,6 +792,9 @@ class _Runner:
         cancel_requested: Callable[[], object] | None = None,
         delimit: bool = True,
         trusted_keys: set[str] | None = None,
+        on_untrusted_flow: str = "report",
+        tool_effects: dict[str, str] | None = None,
+        flow_tainted: bool = False,
     ) -> None:
         self.machine = machine
         self.depth = depth
@@ -648,6 +805,14 @@ class _Runner:
         # share the same attribute types (mypy no-redef / var-annotated).
         self.ctx: dict = dict(context)
         self.tainted: set[str] = set()
+        # Control-flow taint (SPEC §6 / ADR 0030): `external` ⊆ `tainted` holds the
+        # keys carrying data from outside the run; `flow_tainted` records that the
+        # transition which brought us here was chosen by a judge reading such data,
+        # with no hook or human confirmation since. A sub-run starts from the
+        # caller's flag: `call:` is not a laundering step. A checkpoint frame, when
+        # one applies, overrides it in `_from_resume`.
+        self.external: set[str] = set()
+        self.flow_tainted: bool = flow_tainted
         self.state_id: str = machine.entry
         self.trace: list[dict] = []
         self.steps: int = 0
@@ -665,28 +830,37 @@ class _Runner:
             return
         if on_truncate not in ("report", "halt"):
             raise ValueError(f"on_truncate must be 'report' or 'halt', got {on_truncate!r}")
+        if on_untrusted_flow not in FLOW_POLICIES:
+            raise ValueError(
+                f"on_untrusted_flow must be one of {FLOW_POLICIES}, got {on_untrusted_flow!r}"
+            )
         self.deps = _Ctx(
             llm,
             tiers,
             judge,
             registry,
-            tier_params or {},
-            tools or {},
-            hooks or {},
-            max_workers,
-            cost_budget,
-            suspendable,
-            escalate_suspend,
-            on_event,
-            on_truncate,
-            prompt_value_chars,
-            cancel_requested,
-            delimit,
+            tier_params=tier_params or {},
+            tools=tools or {},
+            hooks=hooks or {},
+            max_workers=max_workers,
+            cost_budget=cost_budget,
+            suspendable=suspendable,
+            escalate_suspend=escalate_suspend,
+            on_event=on_event,
+            on_truncate=on_truncate,
+            prompt_value_chars=prompt_value_chars,
+            cancel_requested=cancel_requested,
+            delimit=delimit,
+            on_untrusted_flow=on_untrusted_flow,
+            tool_effects=dict(tool_effects or {}),
         )
         # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
         # value is still the author's `.mkl` literal; host-supplied or host-overridden
         # values are untrusted unless the embedder vouches via `trusted_keys`.
         self.tainted = _initial_taint(machine, self.ctx, trusted_keys)
+        # Everything the host supplied came from outside the run, so the initial
+        # taint set is exactly the initial external set (ADR 0030).
+        self.external = set(self.tainted)
         if resume:
             self._from_resume(resume, context)
 
@@ -715,6 +889,15 @@ class _Runner:
         # Frames without a taint record (pre-ADR 0025 checkpoints, or values
         # injected by `resume --set`) default to all-tainted — fail-safe.
         self.tainted = set(frame.get("tainted", frame["ctx"].keys()))
+        # Same fail-safe for control-flow taint (ADR 0030): a frame that predates
+        # the field resumes as externally tainted with a tainted decision, so an
+        # old checkpoint cannot launder a decision it never recorded. A human
+        # reply injected at THIS resume (`--set human.reply=…`, ADR 0008) is the
+        # confirmation the rule asks for, and clears the flag.
+        self.external = set(frame.get("external", self.tainted))
+        self.flow_tainted = bool(frame.get("flow_tainted", True)) and not _human_confirmed(
+            frame, self.ctx
+        )
         self.deeper = list(resume[1:]) or None
 
     def _usage(self) -> dict:
@@ -740,6 +923,8 @@ class _Runner:
             self.repair_left,
             self.trace,
             self.tainted,
+            self.external,
+            self.flow_tainted,
         )
 
     def _suspended(self, reason: str) -> RunResult:
@@ -848,6 +1033,10 @@ class _Runner:
             tier=step["tier"],
         )
 
+        blocked = self._flow_guard(S, step)
+        if blocked is not None:
+            return blocked
+
         exec_out = self._execute_state(S, step, sub_resume)
         if isinstance(exec_out, RunResult):
             return exec_out
@@ -857,12 +1046,43 @@ class _Runner:
         # results are external data, and produce output is derived from
         # untrusted input by an untrusted oracle (SPEC §11).
         _deposit(self.ctx, self.tainted, S, result)
+        if _is_external_deposit(S, self.external, self.deps):
+            self.external.add(S.output)
 
         judged = self._judge(S, result, judge_reasoning, step)
         if isinstance(judged, RunResult):
             return judged
         gate, gate_index = judged
         return self._transition(gate, gate_index, result)
+
+    def _flow_guard(self, S: State, step: dict) -> RunResult | None:
+        """Refuse (or record) an effect chosen by a judge reading external data.
+
+        SPEC §6 _Control-flow taint_: fencing untrusted values keeps them from
+        being read as instructions, but says nothing about the transition a gate
+        picks after reading them. This is the missing half — the taint follows the
+        **choice**, not just the text, and stops at the effect surface. A `hook:`
+        gate or a human reply clears it, which is what makes the rule actionable
+        rather than merely alarming: the author's fix is a confirmation gate."""
+        if S.kind != "tool" or not self.flow_tainted:
+            return None
+        if not is_effectful(S.tool, self.deps.tool_effects):
+            return None
+        step["untrusted_control_flow"] = True
+        _emit(
+            self.deps,
+            "untrusted-control-flow",
+            self.machine.name,
+            self.depth,
+            state=self.state_id,
+            tool=S.tool,
+            policy=self.deps.on_untrusted_flow,
+        )
+        if self.deps.on_untrusted_flow != "halt":
+            return None
+        step.update(step=self.steps, gate=None, policy="untrusted-control-flow", to=None)
+        self._record(step)
+        return self._halt("untrusted-control-flow")
 
     def _execute_state(
         self,
@@ -887,6 +1107,7 @@ class _Runner:
             self.steps,
             self.trace,
             (self.total_in, self.total_out),
+            self.flow_tainted,
         )
         if isinstance(fan, RunResult):
             return fan
@@ -945,6 +1166,7 @@ class _Runner:
                 self.depth,
                 resume=sub_resume,
                 tainted=self.tainted,
+                flow_tainted=self.flow_tainted,
             )
         except _Suspend as s:
             return self._handle_suspend(s)
@@ -1022,9 +1244,27 @@ class _Runner:
             return self._halt(f"state-error: {e}")
         except Exception as e:  # missing hook / host error
             return self._halt(f"state-error: {e}")
+        self._update_flow_taint(gann, step)
         step.update(step=self.steps, gate=gate.when, policy=gate.kind, to=gate.to)
         self._record(step)
         return gate, i
+
+    def _update_flow_taint(self, ann: dict, step: dict) -> None:
+        """Propagate taint onto the CHOICE, not only the text (SPEC §6 / ADR 0030).
+
+        A gate decided by the host predicate clears the flag — that transition was
+        computed by trusted code. A gate decided by the judge sets it whenever any
+        external key is in scope: the judge is shown OUTPUT plus the context blob,
+        so one poisoned value anywhere in the blackboard is evidence it read.
+        `otherwise` reached without consulting a judge neither sets nor clears —
+        a default is not a confirmation, and it does not add a new decision."""
+        if ann.get("gate_via") == "hook":
+            self.flow_tainted = False
+            return
+        judged = "judge_model" in ann or bool(ann.get("judge_fallback"))
+        if judged and self.external:
+            self.flow_tainted = True
+            step["decision_tainted"] = True
 
     def _transition(self, gate: Gate, gate_index: int, result: object) -> RunResult | None:
         to, feedback, halt_err = _apply_gate_transition(
@@ -1071,34 +1311,52 @@ def run(
     cancel_requested: Callable[[], object] | None = None,
     delimit: bool = True,
     trusted_keys: set[str] | None = None,
+    on_untrusted_flow: str = "report",
+    tool_effects: dict[str, str] | None = None,
+    flow_tainted: bool = False,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
     ``cancel_requested`` is cooperative and observed between states. Existing
     callers that omit it retain identical semantics.
+
+    ``on_untrusted_flow`` is the control-flow-taint policy (SPEC §6 / ADR 0030):
+    ``"report"`` annotates the trace when a judge-made decision over external data
+    reaches an effectful tool state; ``"halt"`` refuses the effect.
+    ``tool_effects`` lets a host classify its own tools (``"read"`` / ``"effect"``);
+    unclassified tools are treated as effectful. ``flow_tainted`` seeds the run's
+    control-flow taint — the engine sets it on a sub-run whose `call:` was reached
+    by a tainted decision; an embedder that has already made an untrusted routing
+    decision of its own can set it too.
     """
+    # Keyword, not positional: this list is long and grows with every host policy,
+    # and a misordering between two same-typed neighbours (e.g. on_truncate /
+    # on_untrusted_flow) would be a silent behaviour swap no type checker catches.
     result = _Runner(
         machine,
         context,
         registry,
         llm,
         tiers,
-        judge,
-        depth,
-        max_workers,
-        tier_params,
-        cost_budget,
-        tools,
-        hooks,
-        suspendable,
-        escalate_suspend,
-        resume,
-        on_event,
-        on_truncate,
-        prompt_value_chars,
-        cancel_requested,
-        delimit,
-        trusted_keys,
+        judge=judge,
+        depth=depth,
+        max_workers=max_workers,
+        tier_params=tier_params,
+        cost_budget=cost_budget,
+        tools=tools,
+        hooks=hooks,
+        suspendable=suspendable,
+        escalate_suspend=escalate_suspend,
+        resume=resume,
+        on_event=on_event,
+        on_truncate=on_truncate,
+        prompt_value_chars=prompt_value_chars,
+        cancel_requested=cancel_requested,
+        delimit=delimit,
+        trusted_keys=trusted_keys,
+        on_untrusted_flow=on_untrusted_flow,
+        tool_effects=tool_effects,
+        flow_tainted=flow_tainted,
     ).go()
     if on_event is not None:
         with contextlib.suppress(Exception):

@@ -26,7 +26,8 @@ registry: # optional: extra machines resolvable by `call`
 llm: # the scripted LLM (see contract below)
   produce: ["text", ...] # list → sequential; or a map {prompt-substring: text}
   tokens: [in, out] # optional: cost charged per produce (default [0, 0])
-  judge: [0, 1, ...] # sequential judge picks; or the string "unparseable"
+  judge: [0, "none", ...] # sequential judge picks; "none" = no condition in the
+  # batch holds (SPEC §5, falls through); or the string "unparseable" for the whole run
 hooks: # optional scripted gate hooks (host bool predicates, §5)
   over_limit: [false, true] # name -> boolean sequence, one per invocation
 tools: # optional scripted tool callables (§4.9)
@@ -35,6 +36,7 @@ input: # optional host-supplied context, merged over `context:` —
   task: "…" # tainted by provenance (SPEC §6, ADR 0025)
 run: # optional interpreter options (e.g. cost_budget)
   cost_budget: 20
+  on_untrusted_flow: halt # control-flow-taint policy (SPEC §6): report (default) | halt
 expect:
   status: done | halt # required
   error: <halt reason> # optional — exact match on the kebab-case reason
@@ -62,6 +64,10 @@ The runner must provide an LLM whose behavior is fully determined by the case:
   cost-budget cases). Default zero.
 - **judge**: return the listed indices in order (an index into the presented
   condition batch); once one entry remains, keep returning it. The string
+  `"none"` is the **none of the above** verdict (SPEC §5 _Totality_: every
+  condition in that batch is false, so evaluation continues at the gate after
+  the batch); an implementation surfaces it as the extra `N+1` option and its
+  runner must accept it wherever an index is accepted. The string
   `"unparseable"` means every judge call fails as unparseable (SPEC §7:
   soft-fallback to an eligible `otherwise`, else halt `judge-unparseable`).
 - **hooks**: each `hook: <name>` maps to a boolean sequence; the runtime returns
@@ -77,7 +83,10 @@ The runner must provide an LLM whose behavior is fully determined by the case:
 
 Covered: gate policies (ok/repair/escalate/fail), `otherwise`, fused judging,
 **hook precedence** (a later hook must not preempt an earlier prose gate — §5
-document order), repair budgets, step and cost budgets, **fan-out step charging**
+document order), **transition totality** (§5: a `none` verdict falls through to
+the next gate — catch-all or hook — and off the end of the gate list halts
+`no-gate-matched`; an unresolvable `hook:` halts rather than reading as False),
+repair budgets, step and cost budgets, **fan-out step charging**
 (`max(1, len(branches))`, §7), `call` (incl. failure propagation), fan-out
 (`sample` incl. per-branch `{{index}}`, `over`), `accumulate`, **`tool` states**
 (observation deposit, unknown-tool halt), **output parsing** (0.3 `parse: list`:
@@ -87,11 +96,49 @@ exactly one `{{path}}` placeholder passes the raw context value — e.g. a list 
 into the callee; mixed templates still render text), result selection, the
 halt-reason taxonomy, and **untrusted-context delimiting** (SPEC §6 / ADR 0025: the four
 `taint-*` cases pin fenced tool observations, host inputs, and call results,
-plus bare author literals). Judge-prompt fencing is adapter behavior → unit
-tests, not conformance.
+plus bare author literals), plus **control-flow taint** (SPEC §6 / ADR 0030: the
+five `flow-taint-*` cases pin the marked decision, the effect-surface boundary,
+the `hook:` confirmation, the `halt` policy, and that a `call:` does not launder
+the tainted decision away from the sub-machine's effect). Judge-prompt fencing is adapter
+behavior → unit tests, not conformance.
 
 Scripted `hook:`/`tool:` bindings (above) bring hook precedence and tool-state
 semantics — genuine language rules, not host behavior — into the suite. Still
 excluded (genuinely host behavior): checkpoint/suspend/HITL (ADR 0007/0008),
 provider adapters, and trace cost/reasoning annotations. Trace matching is a
 skeleton by design — implementations may add annotation keys freely.
+
+## What conformance does and does not guarantee
+
+Every case in this suite runs against a **scripted** LLM: the produce texts and
+the judge's verdicts come from the case file, not from a model. That is what
+makes the suite a specification instead of a benchmark — and it fixes exactly
+how far a passing result reaches.
+
+**Conformance pins the mechanical skeleton.** Two conformant interpreters, given
+the same machine and the same sequence of oracle verdicts, produce the same
+trace: same states in the same order, same gate selected, same deposits, same
+budget arithmetic, same halt reason, same taint marks. Everything that is a
+function of the machine plus the verdicts is nailed down.
+
+**It does not pin behaviour in production.** In a real run the verdicts come from
+a model, and the model is not part of the contract. So two conformant runtimes
+can diverge arbitrarily on the same `.mkl` and the same input — different
+provider, different model version, or the same model on a different day
+(measured: `docs/experiments/gate-divergence.md`). Concretely, passing this suite
+says **nothing** about:
+
+- **which** gate a prose condition will fire on any given input — only what the
+  runtime must do once a verdict exists;
+- whether two providers, or two runs of one provider, agree;
+- whether a `repair` loop converges (`docs/experiments/repair-convergence.md`);
+- output quality, latency, or cost;
+- anything a `hook:` or `tool:` does — the suite scripts their return values, so
+  it pins how the runtime _uses_ a host predicate, never what the host computes.
+
+So the accurate claim for a second implementation is: **"it matches the
+language's mechanical contract."** Not "it behaves the same." A machine whose
+outcome must hold across runtimes needs its consequential transitions on
+`hook:` gates or human review (SPEC §5, §8 _What a trace attests_, §11) — the
+conformance suite is what makes those hooks compose identically everywhere, not
+a substitute for them.

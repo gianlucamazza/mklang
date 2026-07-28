@@ -72,7 +72,7 @@ jobs:
           tree=$(echo "$work"/mklang-*)
           uv venv "$work/venv"
           # Runtime deps from the sdist + AUR checkdepends equivalents.
-          uv pip install --python "$work/venv/bin/python" "$sdist" pytest "mcp>=1.10"
+          uv pip install --python "$work/venv/bin/python" "$sdist" pytest "mcp>=2"
           cd "$tree"
           "$work/venv/bin/python" -m pytest tests -q
 

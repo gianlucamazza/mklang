@@ -96,9 +96,15 @@ def _check_states_and_gates(
             errors.append(f"{sid}: call -> unknown machine '{s.call}'")
         if s.kind == "tool" and machine.tools and s.tool not in declared_tools:
             warnings.append(f"{sid}: tool '{s.tool}' is not declared in the machine's tools:")
-        # a multi-gate state without a catch-all can leave no transition firing
-        if len(s.gates) > 1 and not any(g.when.strip().lower() == "otherwise" for g in s.gates):
-            warnings.append(f"{sid}: no 'otherwise' catch-all gate (a transition may fail to fire)")
+        # A state without a catch-all has a partial transition relation (SPEC §5):
+        # hooks return False and the fused judge can answer "none of the above", so
+        # the scan runs off the end of the gate list and halts. This is not about
+        # gate *count* — a single conditional gate is the sharpest version of it.
+        if not any(g.when.strip().lower() == "otherwise" for g in s.gates):
+            warnings.append(
+                f"{sid}: no 'otherwise' catch-all gate — the transition is partial "
+                "(all conditions false halts with no-gate-matched)"
+            )
     if machine.result and machine.result not in produced:
         warnings.append(f"result key '{machine.result}' is not produced by any state's output")
     return errors, warnings

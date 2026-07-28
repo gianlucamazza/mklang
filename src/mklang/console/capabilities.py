@@ -11,6 +11,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from ..controlflow import is_effectful
+
 
 @dataclass(frozen=True)
 class ToolMetadata:
@@ -26,18 +28,25 @@ class ToolMetadata:
         return self.name
 
 
+def _meta(name: str, **policy: Any) -> ToolMetadata:
+    """Host policy for a tool, with `read_only` taken from the language's own
+    effect classification (`controlflow.TOOL_EFFECTS`, ADR 0030).
+
+    The question "can this tool change the world" is answered in exactly one
+    place. The console adds what the engine has no opinion about — egress,
+    reversibility, sensitivity — and never restates the effect class, which is
+    how the two could have drifted apart."""
+    return ToolMetadata(name, read_only=not is_effectful(name), **policy)
+
+
 TOOL_METADATA: dict[str, ToolMetadata] = {
-    "calc": ToolMetadata("calc"),
-    "search": ToolMetadata("search", external_egress=True, sensitivity="external"),
-    "search_kb": ToolMetadata("search_kb", external_egress=True),
-    "send_reply": ToolMetadata(
-        "send_reply", read_only=False, external_egress=True, irreversible=True, sensitivity="high"
-    ),
-    "list_files": ToolMetadata("list_files"),
-    "read_file": ToolMetadata("read_file", sensitivity="workspace"),
-    "write_file": ToolMetadata(
-        "write_file", read_only=False, irreversible=False, sensitivity="workspace"
-    ),
+    "calc": _meta("calc"),
+    "search": _meta("search", external_egress=True, sensitivity="external"),
+    "search_kb": _meta("search_kb", external_egress=True),
+    "send_reply": _meta("send_reply", external_egress=True, irreversible=True, sensitivity="high"),
+    "list_files": _meta("list_files"),
+    "read_file": _meta("read_file", sensitivity="workspace"),
+    "write_file": _meta("write_file", irreversible=False, sensitivity="workspace"),
 }
 
 
@@ -84,12 +93,15 @@ def redact(value: Any, *, key: str = "") -> Any:
 
 
 def metadata_for(tool: str) -> ToolMetadata:
-    """Return conservative metadata for unknown third-party tools."""
+    """Return conservative metadata for unknown third-party tools.
+
+    The unknown default agrees with the engine by construction: an unclassified
+    tool is effectful there (ADR 0030) and not read-only here."""
     return TOOL_METADATA.get(
         tool,
         ToolMetadata(
             tool,
-            read_only=False,
+            read_only=not is_effectful(tool),
             external_egress=True,
             irreversible=True,
             sensitivity="unknown",

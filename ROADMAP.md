@@ -29,6 +29,25 @@ Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianluc
 - **[next]** After Anthropic key + credit: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
 - **[next]** Five-reader distribution test — [#61](https://github.com/gianlucamazza/mklang/issues/61)
 
+### Evidence backlog (harness in, numbers missing — no issue filed yet)
+
+Three measurements are implemented, covered offline, and have **zero live rows**.
+They need a maintainer with keys, not more code. Until they run, none of them may
+be cited as a finding — and two of them are named falsifiers in
+[ADR 0031](./docs/adr/0031-what-would-force-a-language-0-4.md), so the freeze's
+exit condition stays unmeasured while they sit here.
+
+- **Boundary corpus + decomposed metrics** — `gate_divergence.py --machines all
+  --paraphrase`: cross- vs intra-provider agreement, accuracy against gold
+  routes, `gate_blind_spot`, paraphrase invariance
+  ([gate divergence](./docs/experiments/gate-divergence.md)).
+- **Repair convergence** — `repair_convergence.py --repeats 5`: does the feedback
+  make attempt 2 better than attempt 1, or is the budget doing the work
+  ([repair convergence](./docs/experiments/repair-convergence.md))?
+- **Control-flow-taint incidence** — how many effectful tool states in real
+  machines are reachable on a tainted decision (`mklang lint` notes). ADR 0031
+  §1 puts the 0.4 trigger at more than one in four.
+
 ## Later
 
 Valuable, not in 1.1 (open issues only when ready to pull into a milestone):
@@ -137,6 +156,16 @@ CaMeL control planes (research).
   tier — add-only — for eleven leaf modules, targeted tests for the three
   weakest modules lifting total coverage to **92%**) and the gate-divergence
   harness widened from one synthetic machine to a **four-machine suite**.
+- **Unreleased (architecture pass):** the gate transition function is **total
+  and deterministic given the verdict** — the fused judge may now answer "none of
+  the above" instead of being forced to name a condition (SPEC §5 _Totality_),
+  with lint requiring a catch-all; **control-flow taint** (ADR 0030) propagates
+  provenance onto the *choice* and binds it at the effect surface; the
+  gate-divergence harness gained metrics that can fail (boundary corpus, gold
+  routes, cross/intra split, paraphrase invariance); `repair` convergence has a
+  harness; and the three things that were promising more than they pinned are now
+  written down — what a trace attests (SPEC §8), what conformance guarantees
+  (`conformance/README.md`), and what would force a language 0.4 (ADR 0031).
 - **Live (release 0.14.0 & 0.15.0 matrices):** DeepSeek + OpenAI live smoke
   and cross-provider gate agreement **1.0** green through both release
   pipelines (PyPI Trusted Publishing). Anthropic remains unit-tested; live

@@ -490,19 +490,31 @@ with a policy and (except for `fail`) a destination.
 - Optional top-level **`hooks:`** declarations document expected names (like
   `tools:`); `mklang check` warns if a gate references an undeclared hook.
 - **`when: otherwise`** is a **reserved catch-all**: always true when evaluation
-  reaches it (no LLM, hook ignored). Every non-terminal state **should** end with
-  an `otherwise` gate. If no gate matches, the run halts with `no-gate-matched`.
+  reaches it (no LLM, hook ignored). Every state **should** end with an
+  `otherwise` gate — that is what makes its transition function total (see
+  _Totality and determinism_ below); `mklang lint` reports states that lack one.
+  If no gate matches, the run halts with `no-gate-matched`.
 - **Prose gates** (no `hook`, not `otherwise`): the runtime judges whether `when`
   is true given the output and context. Consecutive prose gates may be **fused**
-  into a single `LLM.judge` call; the first true among that batch wins.
+  into a single `LLM.judge` call; the first true among that batch wins. A batch
+  whose conditions are **all false** falls through to the next gate, exactly like
+  a `hook` that returned False.
 - **Judge protocol (normative):** the fused condition list is presented
-  **1-based** (`1..N`). The judge replies with JSON `{"choice": k}` where `k` is
-  in that range. The runtime converts to a 0-based index. **Out-of-range**
-  choices (including a 0-based misread such as `{"choice": 0}`) and unparseable
-  text are **anomalies**: they must **not** be silently clamped to a valid gate.
-  They follow the same path as unparseable judges — soft-fallback to an eligible
-  `when: otherwise` (trace: `judge_fallback`, `judge_raw`) or hard-halt
-  `judge-unparseable` (§7).
+  **1-based** (`1..N`), followed by one further option — **`N+1`, “none of the
+  above conditions is true”**. The judge replies with JSON `{"choice": k}` where
+  `k` is in `1..N+1`. The runtime converts to a 0-based index; `N+1` is not a
+  gate but the **none** verdict, which resumes evaluation at the gate after the
+  batch. Offering the none option is **normative**: without it the judge is a
+  forced choice among the author's conditions, which silently turns _first true_
+  into _best match_ and makes `when: otherwise` unreachable whenever a prose gate
+  precedes it. **Out-of-range** choices (including a 0-based misread such as
+  `{"choice": 0}`, or a value above `N+1`) and unparseable text are **anomalies**:
+  they must **not** be silently clamped to a valid gate. They follow the same path
+  as unparseable judges — soft-fallback to an eligible `when: otherwise` (trace:
+  `judge_fallback`, `judge_raw`) or hard-halt `judge-unparseable` (§7). The
+  reference interpreter traces a none verdict as `judge_none: <count>`, and a
+  verdict from a host adapter that could not offer the option as
+  `judge_forced_choice: true`.
 - **Judge CONTEXT (host):** the host MAY truncate the context JSON passed to the
   judge. The reference interpreter caps it at **4000** characters
   (`JUDGE_CONTEXT_CHARS`) and, when truncating, keeps a head and tail with an
@@ -524,6 +536,58 @@ with a policy and (except for `fail`) a destination.
   ("Condition 1 fails… Condition 2 holds…") is **out of contract**: map the `judge:`
   tier (or a native-thinking model used as a judge) to an instruct-style model, or
   keep reasoning private so only the final choice is emitted.
+
+### Totality and determinism (normative)
+
+A `gates:` list is a **relation**, not a function: several conditions may hold at
+once and none has to. What makes the machine an FSM is that the runtime turns
+that relation into a single transition by a rule fixed here, not by the judge's
+discretion.
+
+**Selection.** Let `G` be the state's gates in author order and `E ⊆ G` the
+**eligible** gates — `G` minus every `repair` gate whose budget is spent (§7).
+Eligibility is computed **before** selection and depends only on the run's repair
+counters. The runtime scans `E` once, left to right, and fires the **first** gate
+that evaluates true:
+
+| Gate kind           | True when                                 | False →                         |
+| ------------------- | ----------------------------------------- | ------------------------------- |
+| `hook: <name>`      | the host predicate returns a truthy value | next gate                       |
+| prose (fused batch) | the judge returns this condition's number | next gate after the whole batch |
+| `when: otherwise`   | always                                    | —                               |
+
+**No tie-break exists, because ties are impossible.** Position in `E` is a total
+order and the scan stops at the first true gate; two conditions that are both
+true resolve to the earlier one by construction. Authors therefore order gates by
+priority, not by likelihood — a broad condition placed first **shadows** every
+narrower one below it, which `mklang lint` cannot detect for prose.
+
+**Determinism given the verdict.** Write `v` for the tuple of oracle answers a
+state's evaluation consumed (each hook's boolean, each judged batch's choice).
+Then `δ(state, E, v)` is a **pure, total function** to a transition: the runtime
+contributes no randomness, no reordering, no clamping, and no re-judging. All
+non-determinism of a run lives in `v` — which is why divergence is measured on
+`v`'s consequences (`docs/experiments/gate-divergence.md`) and why a `hook:` gate,
+whose part of `v` is host code, is the only way to make a decision reproducible.
+
+**Totality.** `δ` is total over verdicts, but the scan itself can run off the end
+of `E`: every hook returned False and every judged batch answered _none_. That
+outcome is defined — the run halts with `no-gate-matched` (§7) — but it is a halt,
+not a transition. A state's transition function is **total in the useful sense**
+iff `E` always contains a `when: otherwise` gate, which requires the catch-all to
+be present **and** not to be a `repair` gate (its budget can empty `E` of it).
+`mklang lint` reports both defects (`no catch-all gate`, `the only when: otherwise
+gate is a repair`), and a machine that passes `lint --strict` has a total
+transition function at every state.
+
+Conformance pins the three edges: `judge-none-falls-through`,
+`judge-none-then-hook`, `judge-none-no-catch-all-halts`.
+
+**Host predicate contract.** A `hook:` is a **pure predicate**. It must return a
+boolean, must not mutate `context` or `output`, and must not raise: an exception
+(including an unregistered hook name) is **not** the value `False` — it halts the
+run with `state-error: …`, because a predicate that fails to answer leaves the
+transition undefined rather than negative.
 
 ### The four policies
 
@@ -719,6 +783,69 @@ instructions by construction.
 - Hosts MAY disable produce-side delimiting for debugging
   (`run(..., delimit=False)`); judge-side delimiting (§5) is unconditional.
 
+### Control-flow taint (normative, ADR 0030)
+
+Delimiting protects the **text** a state reads. It says nothing about the
+**transition** a gate chooses after reading it. A prose gate judged over a tool
+observation selects the next state, and nothing above stopped that state from
+being a `tool:` state that writes a file or sends a reply. An injection that
+talks the judge into firing `ok → send` breaks no rule stated so far: the run is
+doing exactly what the machine says. So the taint must follow the **choice**, not
+only the value.
+
+- **External taint.** The runtime tracks `external ⊆ tainted`: the keys carrying
+  data that originated **outside the run**. Every deposit is tainted (produce
+  output is oracle-derived even from author literals), so the tainted set cannot
+  separate "a model wrote this" from "an outsider wrote this" and is too coarse
+  to key a control-flow rule on. Propagation:
+  - host-supplied context values (`--set`, MCP `inputs`, injected defaults) are
+    external at run start — the same set the provenance rule marks tainted;
+  - **tool observations are always external**;
+  - a **`call`** result is external if any `input:` interpolates an external key,
+    or if the sub-machine can reach a `tool:` state at all;
+  - a **generative** output is external iff its `prompt`, its `over:` source, or
+    its fan-out `item` interpolated something external.
+- **Tainted decisions.** A transition is **tainted** when a judge selected it
+  while any external key was in scope — the judge is shown OUTPUT plus the
+  CONTEXT blob (§5), so one poisoned value anywhere on the blackboard is evidence
+  it read. The flag persists across subsequent states and is recorded on the
+  deciding step as `decision_tainted: true`.
+- **Confirmation clears it.** A `hook:` gate clears the flag: that transition was
+  computed by host code, not chosen by an oracle. A human reply injected at
+  resume (§7 HITL) clears it too — but only the reply supplied **for that
+  suspension**: a `human.reply` still sitting on the blackboard from an earlier
+  HITL cycle confirms the decision it was given for, not a later one, so a host
+  MUST record which values a resume injected (the reference interpreter writes
+  `resume_injected` into the frame). `otherwise` neither sets nor clears — a
+  default is not a confirmation.
+- **The effect surface.** Only `tool:` states can act on the world (generative
+  `execution` cannot invoke host tools), so the rule binds there. Tools are
+  classified **read-only** or **effectful**; a tool the host has not classified is
+  **effectful**, because an unclassified tool is one nobody has thought about.
+  The surface does not stop at a `call:` boundary: a sub-run **inherits** the
+  caller's tainted decision, so an effect performed inside a sub-machine is
+  covered by the same rule. Confirmation does not travel back — a `hook:` inside
+  the sub-machine clears only the sub-machine's decision chain.
+- **The rule.** _A tainted decision reaching an effectful `tool:` state MUST be
+  recorded_ (`untrusted_control_flow: true` on the step). Whether it is also
+  **refused** is host policy: the reference interpreter defaults to `report` and
+  offers `halt` (`run(..., on_untrusted_flow="halt")` / `--untrusted-flow halt`;
+  the MCP `run` / `resume` tools and the console take the same policy), which
+  halts with `untrusted-control-flow` before the tool runs. Checkpoint frames
+  persist `external` and `flow_tainted`; a frame lacking them resumes tainted, so
+  a checkpoint cannot launder a decision it never recorded.
+
+The author's remedy is a gate, not a better prompt: put a `hook:` (or `--hitl`)
+on the transition into the effect. `mklang lint` reports effectful tool states
+reachable from a prose-gated decision with no hook on the path — and, when the
+host gives it a registry to resolve `call:` targets, the sub-machines that reach
+one.
+
+**Scope, honestly.** This is privilege separation at the effect boundary, not a
+dual control plane: the judge still reads untrusted content, and a tainted
+decision that routes into a _generative_ state is unconstrained. It bounds what
+an injection can **cause**, not what it can **say**.
+
 ---
 
 ## 7. Budget, termination, errors
@@ -796,7 +923,7 @@ A run produces a **trace**: an ordered list of steps. A plain step:
   state: draft_reply
   output: "<the output produced by the state>"
   reasoning: "<the chain-of-thought, if reason: true>" # optional (§4.5)
-  gate_fired: "the reply resolves the request and is in the required tone"
+  gate: "the reply resolves the request and is in the required tone" # the `when` that fired
   policy: ok # ok | repair | escalate | fail
   to: send
   cost?: { input_tokens: …, output_tokens: … } # if the host tracks it
@@ -809,7 +936,7 @@ Two shapes carry nested detail:
 - step: 1
   state: sample_answers
   branches: ["<candidate 1>", "<candidate 2>", "…"] # the produced list
-  gate_fired: otherwise
+  gate: otherwise
   policy: ok
   to: vote
 
@@ -818,14 +945,64 @@ Two shapes carry nested detail:
   state: map_summarize
   output: ["<summary 1>", "…"]
   sub_trace: [{ step: 1, state: … }, …] # (one per branch when over+call)
-  gate_fired: otherwise
+  gate: otherwise
   policy: ok
   to: combine
 ```
 
-The trace is the primary debugging artifact: it makes inspectable _why_ the machine
-took a given path — indispensable when the runtime is an LLM, and doubly so once
-fan-out and sub-machines nest.
+The trace is the primary debugging artifact: it records _which_ path the machine
+took and on whose verdict — indispensable when the runtime is an LLM, and doubly
+so once fan-out and sub-machines nest.
+
+### What a trace attests (normative)
+
+Traces get used as evidence. Once a run decides something a person or an
+organisation must answer for — an approval, a refusal, a reply that went out —
+the trace is what gets shown, and it must not be read as more than it is. This
+section fixes that boundary so it is written down **before** someone cites a
+trace to justify a decision to a customer or an auditor.
+
+A conformant trace **attests**, for each step:
+
+- **which state ran**, in what order, and how many steps the run cost;
+- **which gate fired** (`gate`, the `when` text), under **which policy**
+  (`ok` / `repair` / `escalate` / `fail`) and to **which destination**;
+- **how the gate was decided** — `gate_via: hook | llm | otherwise`, plus the
+  `hook` name, the `judge_model`, and the anomaly annotations (`judge_fallback`,
+  `judge_raw`, `judge_parse`, `judge_none`, `judge_forced_choice`, §5);
+- **what the state produced** (`output`, `branches`, `sub_trace`) and, when the
+  state used `reason: true`, the scratchpad the judge was shown (`reasoning`);
+- **provenance and control-flow marks**: `decision_tainted`,
+  `untrusted_control_flow`, `truncated` (§6).
+
+A trace does **not** attest:
+
+- **Why the verdict was what it was.** `gate_via: llm` records that a judge
+  chose condition _k_, not any reason for choosing it. A `reasoning` field is a
+  model's self-report, produced by the same oracle whose judgement is in
+  question; it is evidence about the model's output, never a justification of
+  the decision.
+- **That the same inputs would decide the same way.** Gate judging is
+  non-deterministic across providers, model versions, and repeats of one model
+  (`docs/experiments/gate-divergence.md`). A trace is a record of **one** run.
+- **That the decision was correct**, by any standard outside the machine.
+  Firing `when: the refund is within policy` records that a judge said so, not
+  that it was so.
+- **That the recorded verdicts were reproducible after the fact.** The trace
+  names the `judge_model` but pins no model weights; providers change what a
+  name resolves to.
+
+The auditable parts of a decision are therefore the ones a `hook:` decided:
+`gate_via: hook` names host code whose behaviour can be re-run, reviewed, and
+version-pinned. **A machine whose consequential transitions must be defensible
+after the fact should put them on hooks or on `escalate` + HITL, not on prose
+gates** — the same conclusion §11 reaches from the security side, reached here
+from the evidentiary one.
+
+Hosts MAY add annotation keys, and a host that retains traces as records SHOULD
+record alongside them what the trace itself cannot carry: the provider and model
+identifiers actually used, the machine file's hash (checkpoints already record
+one, §7), and the interpreter version.
 
 ---
 
@@ -853,6 +1030,13 @@ measurement**. The [stability & deprecation policy](./docs/guides/stability.md)
   suffix collided with Makefile includes in some tooling; `.mkl` (mklang) sheds
   that. The suffix is a discovery convention, not a language contract
   ([ADR 0027](./docs/adr/0027-adopt-mkl-extension.md)).
+
+The freeze itself is **provisional on evidence** (ADR 0028). What would force a
+**0.4** — an unenforceable normative default, a totality hole authors keep
+shipping, a failed reliability measurement, or one external contract-shaped
+defect — is written as falsifiable conditions with named measurements in
+[ADR 0031](./docs/adr/0031-what-would-force-a-language-0-4.md), so "deferred"
+below has an exit condition rather than an indefinite one.
 
 ### Deferred (valuable, later — not in 1.0, not ruled out)
 
@@ -1033,7 +1217,12 @@ language contract; silent omission would be worse than incomplete mitigation.
    dual-channel control plane or privilege separation between "untrusted
    observation" and "trusted policy". Related work on dual-channel agents
    (e.g. CaMeL-style designs) is the right research direction; **mklang does
-   not implement it** (ADR 0017 Layer 2 deferred).
+   not implement it** (ADR 0017 Layer 2 deferred). Since ADR 0030 the
+   **consequence** is bounded where it is cheapest to bound: a transition chosen
+   by a judge reading external data is marked, and reaching an effectful `tool:`
+   state on such a decision is recorded (`untrusted_control_flow`) or refused
+   (`--untrusted-flow halt`). That constrains what an injection can **cause**;
+   it does not stop it from persuading the judge.
 
 2. **Fabricated effectors.** If authors put tool names only in generative
    `execution` text, the model invents tool results and "confirmations." The
@@ -1066,6 +1255,9 @@ language contract; silent omission would be worse than incomplete mitigation.
 - **Untrusted-data delimiting** (§6, ADR 0025): tainted interpolations and the
   judge's OUTPUT/REASONING/CONTEXT ride `<data-NONCE>` fences with a per-call
   nonce, and the model is told fenced content is never an instruction.
+- **Control-flow taint** (§6, ADR 0030): a judge-made decision over external data
+  is marked, and an effectful `tool:` state reached on one is traced or refused
+  (`--untrusted-flow halt`). `mklang lint` names those states at authoring time.
 - **Author discipline:** treat every `{{…}}` as untrusted unless the host proved
   otherwise; put high-stakes transitions on hooks or humans.
 

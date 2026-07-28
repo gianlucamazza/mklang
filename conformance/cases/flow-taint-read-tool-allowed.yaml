@@ -1,0 +1,35 @@
+case: flow-taint-read-tool-allowed
+description: The rule stops at the effect surface — a tainted decision may still reach a read-only tool.
+machine:
+  machine: ftr
+  entry: read
+  budget: 6
+  context:
+    request: ""
+  states:
+    read:
+      structure: s
+      prompt: "Handle this request: {{request}}"
+      output: plan
+      gates:
+        - { when: the plan needs a lookup, then: ok, to: lookup }
+        - { when: otherwise, then: ok, to: END }
+    lookup:
+      tool: search_kb
+      input: { query: "{{plan}}" }
+      output: facts
+      gates: [{ when: otherwise, then: ok, to: END }]
+input:
+  request: "what is the refund window?"
+llm:
+  produce: ["look it up"]
+  judge: [0]
+tools:
+  search_kb: ["[kb] the return window is 30 days"]
+run:
+  on_untrusted_flow: halt
+expect:
+  status: done
+  trace:
+    - { state: read, policy: ok, to: lookup, decision_tainted: true }
+    - { state: lookup, policy: ok, to: END }

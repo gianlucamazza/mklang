@@ -38,9 +38,9 @@ GH="https://github.com/gianlucamazza/mklang"
 # depth 2 (docs/guides/*, docs/reference/*); all their root-doc prefixes
 # (./ , ../ , ../../) denote the repo root.
 find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
-	-e "s|(\./conformance/README\.md)|(conformance.md)|g" \
-	-e "s|(\.\./\.\./conformance/README\.md)|(conformance.md)|g" \
-	-e "s|(\.\./conformance/README\.md)|(conformance.md)|g" \
+	-e "s|(\./conformance/README\.md|(conformance.md|g" \
+	-e "s|(\.\./\.\./conformance/README\.md|(conformance.md|g" \
+	-e "s|(\.\./conformance/README\.md|(conformance.md|g" \
 	-e "s|(\./docs/guides/|(|g" \
 	-e "s|(\./docs/reference/|(|g" \
 	-e "s|(\.\./guides/|(|g" \
@@ -91,7 +91,7 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 find site-src/adr -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./guides/|(../|g" \
 	-e "s|(\.\./reference/|(../|g" \
-	-e "s|(\.\./\.\./conformance/README\.md)|(../conformance.md)|g" \
+	-e "s|(\.\./\.\./conformance/README\.md|(../conformance.md|g" \
 	-e "s|(\.\./\.\./SPEC\.md|(../SPEC.md|g" \
 	-e "s|(\.\./\.\./examples/|($GH/blob/main/examples/|g" \
 	-e "s|(\.\./\.\./scripts/|($GH/blob/main/scripts/|g" \

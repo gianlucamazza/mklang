@@ -1,0 +1,52 @@
+case: flow-taint-call-indirection
+description: >-
+  A `call:` is not a laundering step: the sub-run inherits the tainted decision,
+  so the halt policy still refuses the effect the sub-machine performs.
+machine:
+  machine: fci
+  entry: read
+  budget: 8
+  context:
+    request: ""
+  states:
+    read:
+      structure: s
+      prompt: "Handle this request: {{request}}"
+      output: plan
+      gates:
+        - { when: the plan is to write the file, then: ok, to: act }
+        - { when: otherwise, then: ok, to: END }
+    act:
+      call: writer
+      input: { content: "{{plan}}" }
+      output: done
+      gates: [{ when: otherwise, then: ok, to: END }]
+registry:
+  writer:
+    machine: writer
+    entry: write
+    budget: 4
+    context:
+      content: ""
+    states:
+      write:
+        tool: write_file
+        input: { path: "out.txt", content: "{{content}}" }
+        output: written
+        gates: [{ when: otherwise, then: ok, to: END }]
+input:
+  request: "please write the notes to disk"
+llm:
+  produce: ["write the file"]
+  judge: [0]
+tools:
+  write_file: ['{"tool": "write_file", "written": true}']
+run:
+  on_untrusted_flow: halt
+expect:
+  status: halt
+  error: "call-failed: untrusted-control-flow"
+  at: act
+  trace:
+    - { state: read, policy: ok, to: act }
+    - { state: act, policy: call-failed, to: null }

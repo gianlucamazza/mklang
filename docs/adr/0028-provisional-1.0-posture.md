@@ -94,6 +94,18 @@ A MAJOR (2.0.0) that breaks the 1.0 stable surface is acceptable when **any** of
 Absent those, prefer MINOR additive work and docs. Do not burn a MAJOR for
 cosmetic refactors (`cmd_doctor`, presentation, host-only tooling).
 
+### 6b. Conditions that would force a language 0.4
+
+§6 above names when a package **2.0** is acceptable. It does not say what would
+force a **spec** bump, which is what "provisional on evidence" (§5) actually
+claims to be provisional about — and an exit condition that is never written is
+not provisional, it is permanent with a friendlier label. Those falsifiers are
+now written down in
+[ADR 0031](0031-what-would-force-a-language-0-4.md): an unenforceable normative
+default, a totality hole authors keep shipping, a failed reliability measurement
+(repair convergence, paraphrase invariance, gate blind spot), or one external
+contract-shaped defect. Each names the file where the number will appear.
+
 ### 7. Operational rule until #61 completes
 
 - Treat the 1.0 surface as **stable for SemVer purposes** (ADR 0026 still binds).

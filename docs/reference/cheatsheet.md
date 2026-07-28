@@ -66,8 +66,10 @@ A state is exactly one of generative (`prompt`), call (`call`), or tool
 
 ## Gates (SPEC §5)
 
-Evaluated top to bottom, first true wins. Every non-terminal state should end
-with `when: otherwise`; if no gate matches, the run halts (`no-gate-matched`).
+Evaluated top to bottom, first true wins. A hook that returns False and a prose
+batch the judge answers _none of the above_ both fall through to the next gate,
+so every state should end with `when: otherwise` — that is what makes its
+transition total; if no gate matches, the run halts (`no-gate-matched`).
 
 ```yaml
 gates:
@@ -91,9 +93,12 @@ gates:
 `{{key.path}}` reads the context blackboard (SPEC §3). Interpolations of
 **tainted** keys (host inputs, tool observations, deposits) render inside a
 `<data-NONCE>…</data-NONCE>` fence; author `context:` literals render bare
-(SPEC §6, ADR 0025). Machine-declared empty `today` / `now` keys MAY be filled
-by the host with the ISO date / timestamp (SPEC §6) — declare them instead of
-asking the model for the date.
+(SPEC §6, ADR 0025). A transition a judge chose while such data was in scope is
+marked `decision_tainted`, and reaching an effectful `tool:` under it is recorded
+— or refused with `--untrusted-flow halt` (SPEC §6, ADR 0030); a `hook:` gate or
+a human reply at resume clears the mark. Machine-declared empty `today` / `now`
+keys MAY be filled by the host with the ISO date / timestamp (SPEC §6) — declare
+them instead of asking the model for the date.
 
 ## Tiers (SPEC §2.1)
 

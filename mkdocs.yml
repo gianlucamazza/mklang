@@ -51,6 +51,7 @@ nav:
   - Research:
       - Gate divergence: experiments/gate-divergence.md
       - Authoring blind spot: experiments/authoring-blind-spot.md
+      - Repair convergence: experiments/repair-convergence.md
       - Validation report 2026-07-23: experiments/validation-report-2026-07-23.md
       - Five-reader distribution: experiments/distribution-five-reader.md
   - Project:

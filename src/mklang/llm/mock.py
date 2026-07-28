@@ -11,7 +11,9 @@ from .base import Produced
 class MockLLM:
     """produce_fn/judge_fn inspect the call args and return deterministic results.
 
-    Defaults: echo a fixed answer, always pick the last (catch-all) condition."""
+    Defaults: echo a fixed answer, always pick the last condition. ``judge_fn``
+    receives the author conditions only; returning ``len(conditions)`` selects the
+    synthetic *none of the above* option (SPEC §5) when the engine offered it."""
 
     def __init__(
         self,
@@ -44,8 +46,11 @@ class MockLLM:
         output: str,
         context: dict,
         reasoning: str | None = None,
+        allow_none: bool = False,
     ) -> int:
-        self.judge_calls.append({"model": model, "conditions": list(conditions)})
+        self.judge_calls.append(
+            {"model": model, "conditions": list(conditions), "allow_none": allow_none}
+        )
         if self._judge:
             # Pass reasoning only when the callback accepts it (existing tests use *a / 4 args).
             try:
@@ -65,5 +70,6 @@ class UnparseableJudgeLLM(MockLLM):
         output: str,
         context: dict,
         reasoning: str | None = None,
+        allow_none: bool = False,
     ) -> int:
         raise JudgeUnparseable("not a choice")

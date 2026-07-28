@@ -8,6 +8,7 @@ outputs, template typos, repair-only dead ends.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 
 from .model import Machine, State
 
@@ -131,6 +132,103 @@ def _when_line_has_unquoted_hash(line: str) -> bool:
     return "#" in core
 
 
+def _flow_taint_findings(
+    machine: Machine, registry: Mapping[str, Machine] | None = None
+) -> list[str]:
+    """`note:` — an effect a prose gate can select on its own (SPEC §6, ADR 0030).
+
+    Static counterpart of the engine's control-flow taint. Walks the transition
+    graph marking each state with "was some gate on the way here decided by a
+    judge, with no `hook:` confirming a transition since". Edges:
+
+    - a prose gate marks its destination **judged**;
+    - a `hook:` gate marks its destination **confirmed** (host code chose it);
+    - `otherwise` carries the source's mark through unchanged — a default is not
+      a confirmation.
+
+    Effectful tool states (see `controlflow.TOOL_EFFECTS`; unknown tools count as
+    effectful) reachable while judged are reported. So are `call:` states whose
+    sub-machine reaches one — the runtime hands the tainted decision to the sub-run,
+    so `call:` is not a laundering step here either. That half needs `registry` to
+    resolve the target; without one (a single file linted out of context) the
+    `call:` check is skipped rather than guessed.
+
+    This is advisory: a machine whose context is entirely author-controlled has
+    nothing to inject. It is a `note:` for that reason — the author decides,
+    `--untrusted-flow halt` enforces.
+    """
+    from .controlflow import is_effectful, machine_touches_effects
+
+    judged: dict[str, bool] = {sid: False for sid in machine.states}
+    changed = True
+    while changed:  # tiny fixed point: booleans over a small graph
+        changed = False
+        for sid, s in machine.states.items():
+            for g in s.gates:
+                if g.to is None or g.to == "END" or g.to not in judged:
+                    continue
+                if g.hook and g.when.strip().lower() != "otherwise":
+                    mark = False  # host predicate decided this transition
+                elif g.when.strip().lower() == "otherwise":
+                    mark = judged[sid]
+                else:
+                    mark = True
+                if mark and not judged[g.to]:
+                    judged[g.to] = True
+                    changed = True
+    findings = []
+    for sid, s in machine.states.items():
+        if not judged[sid]:
+            continue
+        if s.kind == "tool" and is_effectful(s.tool):
+            what = f"effectful tool '{s.tool}' is reachable"
+        elif (
+            s.kind == "call"
+            and registry is not None
+            and machine_touches_effects(registry.get(s.call or ""), registry)
+        ):
+            what = f"sub-machine '{s.call}' reaches an effectful tool and is itself reachable"
+        else:
+            continue
+        findings.append(
+            f"note: {sid}: {what} from a prose-gated "
+            "decision with no hook confirmation on the path — untrusted context can "
+            "steer the judge into selecting this effect (SPEC §6). Gate it with a "
+            "`hook:` (or run with --untrusted-flow halt)"
+        )
+    return findings
+
+
+def _catch_all_findings(sid: str, s: State, repair_only: bool) -> list[str]:
+    """`missing-catch-all`: the state's transition relation is partial (SPEC §5).
+
+    A state's gates are a *relation*, not a function: hooks return False, and since
+    the fused judge may answer "none of the above" a prose batch can reject every
+    condition. Evaluation then runs off the end of the gate list and the run halts
+    with `no-gate-matched`. Only a `when: otherwise` gate makes the transition
+    function **total** — and only if it is still eligible, which a `repair` gate
+    stops being once its budget is spent (it also disables the `judge-unparseable`
+    soft-fallback, which needs an eligible catch-all).
+    """
+    catch_alls = [g for g in s.gates if g.when.strip().lower() == "otherwise"]
+    if not catch_alls:
+        # repair-only states already get a more specific finding; don't say it twice.
+        if repair_only:
+            return []
+        return [
+            f"{sid}: no catch-all gate — every gate is conditional, so a state whose "
+            "conditions are all false halts the run with no-gate-matched; end the "
+            "state with a `when: otherwise` gate"
+        ]
+    if all(g.kind == "repair" for g in catch_alls):
+        return [
+            f"{sid}: the only `when: otherwise` gate is a repair — once its budget is "
+            "spent the state has no eligible catch-all (no-gate-matched, and no "
+            "soft-fallback for an unparseable judge); add a non-repair catch-all"
+        ]
+    return []
+
+
 def lint_source(text: str) -> list[str]:
     """Source-level smells that need the raw YAML (not only the parsed machine)."""
     findings: list[str] = []
@@ -144,11 +242,18 @@ def lint_source(text: str) -> list[str]:
     return findings
 
 
-def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
+def lint_machine(
+    machine: Machine,
+    *,
+    source: str | None = None,
+    registry: Mapping[str, Machine] | None = None,
+) -> list[str]:
     """Return advisory findings (never errors — those belong to semantic_check).
 
     Pass ``source`` (raw .mkl text) to also run source-level checks (e.g. unquoted
-    ``#`` in ``when`` lines that YAML comment-truncates before parse).
+    ``#`` in ``when`` lines that YAML comment-truncates before parse). Pass
+    ``registry`` to let the control-flow-taint check follow `call:` edges into
+    sub-machines (ADR 0030); without it those edges are skipped.
     """
     findings: list[str] = []
     if source is not None:
@@ -167,11 +272,13 @@ def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
             if g.kind == "escalate":
                 escalate_states.append(sid)
         # Repair-only states are a guaranteed no-gate-matched halt once budgets exhaust.
-        if s.gates and all(g.kind == "repair" for g in s.gates):
+        repair_only = bool(s.gates) and all(g.kind == "repair" for g in s.gates)
+        if repair_only:
             findings.append(
                 f"{sid}: every gate is a repair — once repair budgets exhaust the run "
                 "halts with no-gate-matched; add an ok/escalate/fail route"
             )
+        findings.extend(_catch_all_findings(sid, s, repair_only))
         # Outputs nobody reads are usually a leftover or a mistyped reference
         # elsewhere. Exempt: terminal states (their output is the run's implicit
         # result or a divergent terminal's outcome record) and states with prose
@@ -203,5 +310,6 @@ def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
             "see docs/experiments/gate-divergence.md"
         )
 
+    findings.extend(_flow_taint_findings(machine, registry))
     findings.extend(_unresolved_interpolation(machine))
     return findings

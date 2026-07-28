@@ -274,6 +274,10 @@ def test_run_machine_hitl_brokered_to_bridge(tools):
     assert "approved" in out["result"]
     assert len(tools.bridge.questions) == 1
     assert "escalated at review" in tools.bridge.questions[0]
+    # The reply crossed the host boundary, so it is untrusted by provenance and
+    # renders inside a data fence in the resumed prompt (ADR 0025) — the console
+    # must mark it exactly like `resume --set` does, not write it in bare.
+    assert "<data-" in out["result"]
 
 
 def test_run_machine_tool_consent(tools):

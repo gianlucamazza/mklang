@@ -119,12 +119,14 @@ class AnthropicLLM:
         output: str,
         context: dict,
         reasoning: str | None = None,
+        allow_none: bool = False,
     ) -> tuple[int, str | None]:
         user = build_judge_user(
             conditions,
             output,
             format_judge_context(context, JUDGE_CONTEXT_CHARS),
             reasoning=reasoning,
+            allow_none=allow_none,
         )
         msg = self._create(
             model=model,
@@ -134,7 +136,7 @@ class AnthropicLLM:
             temperature=0,
         )
         text = "".join(b.text for b in msg.content if b.type == "text")
-        idx, method = parse_choice(text, len(conditions))
+        idx, method = parse_choice(text, len(conditions) + (1 if allow_none else 0))
         if idx is None:
             raise JudgeUnparseable(text[:200] or "(empty)")
         usage = getattr(msg, "usage", None)

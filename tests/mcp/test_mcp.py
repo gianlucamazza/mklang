@@ -116,6 +116,33 @@ states:
 """
 
 
+EFFECTFUL = """\
+machine: eff
+entry: draft
+budget: 10
+result: sent
+context:
+  request: ""
+states:
+  draft:
+    structure: s
+    prompt: "handle: {{request}}"
+    output: reply
+    gates:
+      - when: the reply is ready to send
+        then: ok
+        to: send
+      - when: otherwise
+        then: ok
+        to: END
+  send:
+    tool: send_reply
+    input: { to: "someone@example.com", body: "{{reply}}" }
+    output: sent
+    gates: [{when: otherwise, then: ok, to: END}]
+"""
+
+
 def echo_llm(judge=0):
     return MockLLM(
         produce_fn=lambda model, system, user, reason: Produced(text=user),
@@ -186,6 +213,42 @@ def test_on_truncate_invalid_is_error_payload(store):
     out = srv.run_tool(store, DEFAULTS, source=LINEAR, on_truncate="continue")
     assert out["status"] == "error"
     assert out["error"] == "invalid-request"
+
+
+def test_untrusted_flow_halt_parity(monkeypatch, store):
+    """MCP exposes the same control-flow-taint policy as the CLI (ADR 0030):
+    a judged decision over host-supplied input may not reach an effectful tool."""
+    use_llm(monkeypatch, echo_llm)
+    inputs = {"request": "please send it"}
+    reported = srv.run_tool(store, DEFAULTS, source=EFFECTFUL, inputs=inputs)
+    assert reported["status"] == "done"  # default policy records, never refuses
+    assert reported["trace"][0]["decision_tainted"] is True
+
+    refused = srv.run_tool(
+        store, DEFAULTS, source=EFFECTFUL, inputs=inputs, on_untrusted_flow="halt"
+    )
+    assert (refused["status"], refused["error"], refused["at"]) == (
+        "halt",
+        "untrusted-control-flow",
+        "send",
+    )
+
+
+def test_untrusted_flow_invalid_is_error_payload(store):
+    out = srv.run_tool(store, DEFAULTS, source=LINEAR, on_untrusted_flow="ignore")
+    assert out["status"] == "error"
+    assert out["error"] == "invalid-request"
+    bad_resume = srv.resume_tool(store, "no-such-handle", on_untrusted_flow="ignore")
+    assert bad_resume["error"] == "invalid-request"
+
+
+def test_untrusted_flow_policy_sticks_to_the_session(monkeypatch, store):
+    """A run started under `halt` must not continue under the laxer default just
+    because `resume` omitted the argument."""
+    use_llm(monkeypatch, costly_llm)
+    out = srv.run_tool(store, DEFAULTS, source=LINEAR, cost_budget=20, on_untrusted_flow="halt")
+    assert out["status"] == "suspended"
+    assert store.get(out["checkpoint"]).on_untrusted_flow == "halt"
 
 
 def test_run_invalid_source_is_error_payload(monkeypatch, store):
@@ -348,9 +411,20 @@ def test_durable_resume_of_cli_checkpoint(monkeypatch, store, tmp_path):
     assert done["status"] == "done"
 
 
+def _tool_body(res) -> dict:
+    """Unwrap a CallToolResult under MCP SDK v2 (snake_case; structured optional)."""
+    body = res.structured_content
+    if body is None and res.content:
+        body = json.loads(res.content[0].text)
+    if isinstance(body, dict) and "status" not in body and "result" in body:
+        body = body["result"]
+    assert isinstance(body, dict)
+    return body
+
+
 def test_live_events_stream_as_logging_notifications(monkeypatch):
     """ADR 0016: a run's engine events arrive as `mklang.event` log notifications."""
-    from mcp.shared.memory import create_connected_server_and_client_session as connect
+    from mcp.client import Client
 
     monkeypatch.setattr(srv, "_build_llm", lambda prov: echo_llm())
     server = srv.create_server()
@@ -361,11 +435,10 @@ def test_live_events_stream_as_logging_notifications(monkeypatch):
             events.append(json.loads(params.data))
 
     async def drive():
-        async with connect(server._mcp_server, logging_callback=on_log) as client:
+        # log_level opts the client into SEP-2577 logging delivery on 2026-era links.
+        async with Client(server, logging_callback=on_log, log_level="info") as client:
             res = await client.call_tool("run", {"path": "std_cot", "inputs": {"task": "2+2?"}})
-            body = res.structuredContent or json.loads(res.content[0].text)
-            if "status" not in body and "result" in body:
-                body = body["result"]
+            body = _tool_body(res)
             assert body["status"] == "done"
 
     asyncio.run(drive())
@@ -377,12 +450,12 @@ def test_live_events_stream_as_logging_notifications(monkeypatch):
 
 
 def test_protocol_smoke_inmemory():
-    from mcp.shared.memory import create_connected_server_and_client_session as connect
+    from mcp.client import Client
 
     server = srv.create_server()
 
     async def smoke():
-        async with connect(server._mcp_server) as client:
+        async with Client(server) as client:
             tools = await client.list_tools()
             assert sorted(t.name for t in tools.tools) == [
                 "check",
@@ -392,13 +465,7 @@ def test_protocol_smoke_inmemory():
                 "run",
             ]
             res = await client.call_tool("run", {})  # invalid-request domain payload
-            payload = (
-                res.structuredContent
-                if res.structuredContent is not None
-                else json.loads(res.content[0].text)
-            )
-            if "status" not in payload and "result" in payload:
-                payload = payload["result"]
+            payload = _tool_body(res)
             assert payload["status"] == "error"
 
     asyncio.run(smoke())

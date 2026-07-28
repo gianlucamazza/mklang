@@ -1,0 +1,33 @@
+case: flow-taint-effect-reported
+description: A judge-made decision over external data reaching an effectful tool state is marked in the trace (SPEC §6 control-flow taint).
+machine:
+  machine: ft
+  entry: read
+  budget: 6
+  context:
+    request: ""
+  states:
+    read:
+      structure: s
+      prompt: "Handle this request: {{request}}"
+      output: plan
+      gates:
+        - { when: the plan is to write the file, then: ok, to: write }
+        - { when: otherwise, then: ok, to: END }
+    write:
+      tool: write_file
+      input: { path: "out.txt", content: "{{plan}}" }
+      output: written
+      gates: [{ when: otherwise, then: ok, to: END }]
+input:
+  request: "please write the notes to disk"
+llm:
+  produce: ["write the file"]
+  judge: [0]
+tools:
+  write_file: ['{"tool": "write_file", "written": true}']
+expect:
+  status: done
+  trace:
+    - { state: read, policy: ok, to: write, decision_tainted: true }
+    - { state: write, policy: ok, to: END, untrusted_control_flow: true }

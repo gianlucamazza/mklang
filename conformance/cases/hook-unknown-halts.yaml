@@ -1,0 +1,20 @@
+case: hook-unknown-halts
+description: An unresolvable `hook:` halts the run — a predicate that cannot answer is not False (SPEC §5).
+machine:
+  machine: hu
+  entry: a
+  budget: 5
+  states:
+    a:
+      structure: s
+      prompt: draft
+      output: o
+      gates:
+        - { when: policy allows it, hook: not_registered, then: ok, to: END }
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["v1"]
+expect:
+  status: halt
+  error_prefix: "state-error: hook: unknown hook"
+  at: a

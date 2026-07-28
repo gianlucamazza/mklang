@@ -6,6 +6,13 @@ agreement on which prose gate fires. This script runs a small routing machine
 once per provider (with API key) and reports pairwise agreement on the
 gate-trace signature.
 
+Agreement alone is a weak measure — it cannot fail on an easy task, it scores a
+shared wrong answer as perfect, and pooling same-provider repeats with
+cross-provider pairs inflates it. So the summary also reports the cross/intra
+decomposition, `accuracy` against a declared gold route, `gate_blind_spot`
+(agreement minus accuracy) and, under `--paraphrase`, invariance to how the author
+worded the condition. See docs/experiments/gate-divergence.md.
+
 Usage:
   uv run python scripts/gate_divergence.py
   uv run python scripts/gate_divergence.py --providers deepseek,openai --repeats 3
@@ -13,6 +20,8 @@ Usage:
   uv run python scripts/gate_divergence.py --repeats 3 \
     --require-providers deepseek,openai --min-agreement 1.0 \
     --summary-json summary.json
+  uv run python scripts/gate_divergence.py --machines all --paraphrase \
+    --repeats 3 --min-cross-agreement 0.8 --min-accuracy 0.8
 
 Requires keys in .env (same as `mklang run`). Skips providers without a key.
 See docs/experiments/gate-divergence.md.
@@ -21,6 +30,7 @@ See docs/experiments/gate-divergence.md.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import sys
@@ -212,8 +222,228 @@ MACHINES: dict[str, dict] = {
     },
 }
 
+# --- Boundary corpus -------------------------------------------------------
+# Machines 1-4 above measure agreement on tasks where a competent judge has an
+# easy time. Agreement 1.0 on those has no discriminating power: a measure that
+# cannot fail is not evidence. The machines below are built at the decision
+# boundary — the answer is defensible but not obvious — and each carries a GOLD
+# route, so agreement can be compared against *correctness* instead of standing
+# in for it.
+MACHINES.update(
+    {
+        # 5) Marginal condition: the amount sits EXACTLY on the limit and the gate
+        # says "strictly greater". The produced text is pinned, so the only thing
+        # under measurement is the judge's handling of the boundary.
+        "threshold_edge": {
+            "machine": "threshold_edge",
+            "entry": "assess",
+            "budget": 4,
+            "default_tier": "fast",
+            "result": "outcome",
+            "states": {
+                "assess": {
+                    "structure": 'The single line "AMOUNT 500.00 EUR / LIMIT 500.00 EUR".',
+                    "prompt": ("Reply with exactly: AMOUNT 500.00 EUR / LIMIT 500.00 EUR"),
+                    "output": "reading",
+                    "gates": [
+                        {
+                            "when": "the amount is strictly greater than the limit",
+                            "then": "ok",
+                            "to": "over",
+                        },
+                        {"when": "otherwise", "then": "ok", "to": "within"},
+                    ],
+                },
+                "over": {
+                    "structure": 'The word "OVER".',
+                    "prompt": "Reply with exactly OVER",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+                "within": {
+                    "structure": 'The word "WITHIN".',
+                    "prompt": "Reply with exactly WITHIN",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        },
+        # 6) Near-overlapping gates: both conditions are true of the same output
+        # and the narrower one is second. SPEC §5 says the FIRST true gate fires,
+        # so the language — not taste — fixes the gold route. This measures
+        # whether judges honour priority order rather than "best match".
+        "priority_shadow": {
+            "machine": "priority_shadow",
+            "entry": "draft",
+            "budget": 4,
+            "default_tier": "fast",
+            "result": "outcome",
+            "states": {
+                "draft": {
+                    "structure": 'The single line "REFUND 2000 EUR APPROVED FOR ORDER 71".',
+                    "prompt": "Reply with exactly: REFUND 2000 EUR APPROVED FOR ORDER 71",
+                    "output": "reply",
+                    "gates": [
+                        {"when": "the reply mentions a refund", "then": "ok", "to": "broad"},
+                        {
+                            "when": "the reply mentions a refund above 1000 EUR",
+                            "then": "ok",
+                            "to": "narrow",
+                        },
+                        {"when": "otherwise", "then": "ok", "to": "neither"},
+                    ],
+                },
+                "broad": {
+                    "structure": 'The word "BROAD".',
+                    "prompt": "Reply with exactly BROAD",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+                "narrow": {
+                    "structure": 'The word "NARROW".',
+                    "prompt": "Reply with exactly NARROW",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+                "neither": {
+                    "structure": 'The word "NEITHER".',
+                    "prompt": "Reply with exactly NEITHER",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        },
+        # 7) No condition holds. The catch-all is the correct route, which the
+        # judge can only reach by declining every listed condition (SPEC §5
+        # "none of the above"). Before that option existed this machine could not
+        # route correctly at all — it measures exactly what totality bought.
+        "none_holds": {
+            "machine": "none_holds",
+            "entry": "classify",
+            "budget": 4,
+            "default_tier": "fast",
+            "result": "outcome",
+            "states": {
+                "classify": {
+                    "structure": 'The single line "MAINTENANCE WINDOW SCHEDULED FOR SUNDAY".',
+                    "prompt": "Reply with exactly: MAINTENANCE WINDOW SCHEDULED FOR SUNDAY",
+                    "output": "ticket",
+                    "gates": [
+                        {
+                            "when": "the output reports a failed payment",
+                            "then": "ok",
+                            "to": "payment",
+                        },
+                        {
+                            "when": "the output reports a login problem",
+                            "then": "ok",
+                            "to": "login",
+                        },
+                        {"when": "otherwise", "then": "ok", "to": "other"},
+                    ],
+                },
+                "payment": {
+                    "structure": 'The word "PAYMENT".',
+                    "prompt": "Reply with exactly PAYMENT",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+                "login": {
+                    "structure": 'The word "LOGIN".',
+                    "prompt": "Reply with exactly LOGIN",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+                "other": {
+                    "structure": 'The word "OTHER".',
+                    "prompt": "Reply with exactly OTHER",
+                    "output": "outcome",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        },
+    }
+)
+
+# Author intent per machine, as a ROUTE signature (`state>to`, see
+# `_route_signature`). Only machines with a defensible right answer appear here:
+# `sentiment_borderline` deliberately has none, and listing a gold route for it
+# would smuggle taste in as ground truth.
+GOLD: dict[str, str] = {
+    "gate_divergence": "label>spam_path || spam_path>END",
+    "severity_escalate": "triage>auto || auto>END",
+    "grounding_repair": "answer>END",
+    "threshold_edge": "assess>within || within>END",
+    "priority_shadow": "draft>broad || broad>END",
+    "none_holds": "classify>other || other>END",
+}
+
+# Paraphrase variants: the SAME machine with reworded `when` conditions. States,
+# targets, and prompts are untouched, so the route space is identical and any
+# routing difference is the judge reacting to wording rather than to evidence.
+# Shape: machine -> [{"label": …, "gates": {state_id: {gate_index: new_when}}}].
+PARAPHRASES: dict[str, list[dict]] = {
+    "gate_divergence": [
+        {
+            "label": "p1",
+            "gates": {
+                "label": {
+                    0: "the classification given is spam",
+                    1: "the classification given is ham",
+                }
+            },
+        },
+    ],
+    "threshold_edge": [
+        {
+            "label": "p1",
+            "gates": {"assess": {0: "the amount exceeds the limit"}},
+        },
+        {
+            "label": "p2",
+            "gates": {"assess": {0: "the amount is above the limit, not merely equal to it"}},
+        },
+    ],
+    "priority_shadow": [
+        {
+            "label": "p1",
+            "gates": {
+                "draft": {
+                    0: "a refund is mentioned in the reply",
+                    1: "a refund larger than 1000 EUR is mentioned in the reply",
+                }
+            },
+        },
+    ],
+    "none_holds": [
+        {
+            "label": "p1",
+            "gates": {
+                "classify": {
+                    0: "the output is about a payment that did not go through",
+                    1: "the output is about being unable to sign in",
+                }
+            },
+        },
+    ],
+}
+
 # Back-compat alias for anything importing the original single machine.
 MACHINE = MACHINES["gate_divergence"]
+
+BASE_VARIANT = "base"
+
+
+def paraphrase_doc(machine: str, variant: dict) -> dict:
+    """Apply a paraphrase variant's `when` rewrites to a copy of the machine doc."""
+    doc = copy.deepcopy(MACHINES[machine])
+    for sid, changes in variant["gates"].items():
+        gates = doc["states"][sid]["gates"]
+        for index, text in changes.items():
+            if gates[index]["when"].strip().lower() == "otherwise":
+                raise ValueError(f"{machine}/{variant['label']}: refusing to reword `otherwise`")
+            gates[index]["when"] = text
+    return doc
 
 
 def _trace_signature(trace: list[dict]) -> str:
@@ -224,6 +454,16 @@ def _trace_signature(trace: list[dict]) -> str:
             f"{step.get('state')}|{step.get('gate')}|{step.get('gate_via')}|{step.get('to')}"
         )
     return " || ".join(parts)
+
+
+def _route_signature(trace: list[dict]) -> str:
+    """Signature of the PATH only — `state>to`, without the gate's `when` text.
+
+    Two runs of paraphrase variants have different `_trace_signature`s by
+    construction (the condition text is part of it), so route equality is the
+    only meaningful comparison across wordings. It is also the form author intent
+    is expressed in (`GOLD`)."""
+    return " || ".join(f"{s.get('state')}>{s.get('to')}" for s in trace)
 
 
 def _output_hash(trace: list[dict]) -> str:
@@ -237,6 +477,7 @@ def _run_once(
     judge_tier: str | None = None,
     machine_doc: dict | None = None,
     build_llm: Callable[[ProviderConfig], LLM] = _build_llm,
+    variant: str = BASE_VARIANT,
 ) -> dict:
     """Run one machine once for one provider. `build_llm` is injectable so the
     offline suite can drive the harness with a scripted LLM (no keys)."""
@@ -260,15 +501,21 @@ def _run_once(
         tier_params=prov.params,
         cost_budget=20_000,
     )
+    route = _route_signature(r.trace) if r.trace else ""
+    gold = GOLD.get(m.name)
     return {
         "provider": provider_name,
         "machine": m.name,
+        "variant": variant,
         "skipped": False,
         "status": r.status,
         "error": r.error,
         "judge_tier": judge_tier,
         "judge_override": judge_override,
         "signature": _trace_signature(r.trace) if r.trace else "",
+        "route": route,
+        # None when the machine has no defensible right answer (see GOLD).
+        "correct": None if gold is None else route == gold,
         "output_hash": _output_hash(r.trace) if r.trace else "",
         "gates": [
             {
@@ -285,62 +532,186 @@ def _run_once(
     }
 
 
+def _done(rows: list[dict]) -> list[dict]:
+    return [r for r in rows if not r.get("skipped") and r.get("status") == "done"]
+
+
+def _variant_of(row: dict) -> str:
+    return row.get("variant") or BASE_VARIANT
+
+
+def _rate(hits: int, total: int) -> float | None:
+    return (hits / total) if total else None
+
+
 def _pairwise_agreement(rows: list[dict]) -> list[dict]:
-    """Pairwise signature agreement, computed WITHIN each machine — cross-machine
-    signatures differ by construction, so pooling them would be meaningless."""
-    ok = [r for r in rows if not r.get("skipped") and r.get("status") == "done"]
+    """Pairwise signature agreement, computed WITHIN each machine AND paraphrase
+    variant — cross-machine signatures differ by construction, and a reworded
+    variant is a different input, so pooling either would be meaningless.
+
+    Each pair records `same_provider`: a pair of repeats from one provider
+    measures **self-consistency**, not cross-provider portability. Pooling the two
+    inflates the headline number, since repeats of one model agree more often than
+    two different models do."""
+    ok = _done(rows)
     out = []
-    machines = sorted({r.get("machine") for r in ok}, key=lambda x: (x is None, x))
-    for machine in machines:
-        group = [r for r in ok if r.get("machine") == machine]
+    groups = sorted(
+        {(r.get("machine"), _variant_of(r)) for r in ok},
+        key=lambda k: (k[0] is None, k[0], k[1]),
+    )
+    for machine, variant in groups:
+        group = [r for r in ok if r.get("machine") == machine and _variant_of(r) == variant]
         for a, b in combinations(group, 2):
             pair = {
                 "a": a["provider"],
                 "b": b["provider"],
+                "same_provider": a["provider"] == b["provider"],
                 "same_signature": a["signature"] == b["signature"],
                 "same_outputs": a["output_hash"] == b["output_hash"],
             }
             if machine is not None:
                 pair["machine"] = machine
+            if variant != BASE_VARIANT:
+                pair["variant"] = variant
             out.append(pair)
     return out
 
 
+def _agreement_block(rows: list[dict]) -> dict:
+    """Agreement over one comparable group, decomposed by pair kind."""
+    pairs = _pairwise_agreement(rows)
+    cross = [p for p in pairs if not p["same_provider"]]
+    intra = [p for p in pairs if p["same_provider"]]
+    return {
+        "pairs": len(pairs),
+        # Pooled over every within-group pair (both kinds) — the historical
+        # number the release gate is pinned to.
+        "signature_agreement_rate": _rate(sum(1 for p in pairs if p["same_signature"]), len(pairs)),
+        # Portability: do two DIFFERENT providers route the same way?
+        "cross_provider_agreement_rate": _rate(
+            sum(1 for p in cross if p["same_signature"]), len(cross)
+        ),
+        # Stability: does ONE provider route the same way on identical repeats?
+        # None with --repeats 1 — the run simply cannot answer it.
+        "intra_provider_agreement_rate": _rate(
+            sum(1 for p in intra if p["same_signature"]), len(intra)
+        ),
+    }
+
+
+def _accuracy_block(rows: list[dict]) -> dict:
+    """Correctness against author intent (GOLD), for machines that have one.
+
+    Agreement is a measure of *consensus*; it scores a shared wrong answer as
+    perfect. Accuracy is the missing half, and their gap is what agreement
+    overstates."""
+    scored = [r for r in _done(rows) if r.get("correct") is not None]
+    return {
+        "scored_runs": len(scored),
+        "accuracy": _rate(sum(1 for r in scored if r["correct"]), len(scored)),
+    }
+
+
 def _machine_rates(rows: list[dict]) -> dict[str, dict]:
-    """Per-machine agreement rate + distinct signatures over the done rows."""
-    done = [r for r in rows if not r.get("skipped") and r.get("status") == "done"]
+    """Per-machine rates over the base (un-paraphrased) runs.
+
+    Paraphrase variants are excluded here: they are a different input, so folding
+    them into the headline would silently change what the release floor means.
+    They get their own `paraphrase` block."""
+    done = [r for r in _done(rows) if _variant_of(r) == BASE_VARIANT]
     per: dict[str, dict] = {}
-    for machine in sorted({r.get("machine") for r in done}, key=lambda x: (x is None, x)):
+    # Narrow to str: row dicts are untyped, so r.get("machine") is Any | None.
+    machines = sorted({m for r in done if isinstance(m := r.get("machine"), str)})
+    for machine in machines:
         group = [r for r in done if r.get("machine") == machine]
-        pairs = _pairwise_agreement(group)
-        agree = sum(1 for pair in pairs if pair["same_signature"])
-        per[machine or "default"] = {
+        per[machine] = {
             "runs_done": len(group),
-            "pairs": len(pairs),
-            "signature_agreement_rate": (agree / len(pairs)) if pairs else None,
+            **_agreement_block(group),
+            **_accuracy_block(group),
             "distinct_signatures": sorted({r["signature"] for r in group}),
+        }
+    # Rows without a machine name (legacy fixtures) land under "default".
+    bare = [r for r in done if not isinstance(r.get("machine"), str)]
+    if bare:
+        per["default"] = {
+            "runs_done": len(bare),
+            **_agreement_block(bare),
+            **_accuracy_block(bare),
+            "distinct_signatures": sorted({r["signature"] for r in bare}),
+        }
+    return per
+
+
+def _paraphrase_rates(rows: list[dict]) -> dict[str, dict]:
+    """Paraphrase invariance: same evidence, reworded conditions — same route?
+
+    Computed per (machine, provider) across variants, so it isolates wording
+    sensitivity from cross-provider divergence. A judge that is invariant here is
+    reading the evidence; one that is not is reading the phrasing."""
+    done = _done(rows)
+    per: dict[str, dict] = {}
+    machines = sorted({m for r in done if isinstance(m := r.get("machine"), str)})
+    for machine in machines:
+        group = [r for r in done if r.get("machine") == machine]
+        variants = sorted({_variant_of(r) for r in group})
+        if len(variants) < 2:
+            continue
+        same = total = 0
+        for provider in sorted({r["provider"] for r in group}):
+            by_provider = [r for r in group if r["provider"] == provider]
+            for a, b in combinations(by_provider, 2):
+                if _variant_of(a) == _variant_of(b):
+                    continue  # same wording: that is the agreement metric, not this one
+                total += 1
+                same += a["route"] == b["route"]
+        per[machine] = {
+            "variants": variants,
+            "cross_variant_pairs": total,
+            "invariant_pairs": same,
+            "paraphrase_invariance_rate": _rate(same, total),
+            "distinct_routes": sorted({r["route"] for r in group}),
         }
     return per
 
 
 def _summary(rows: list[dict], names: list[str]) -> dict:
     pairs = _pairwise_agreement(rows)
-    done = [r for r in rows if not r.get("skipped") and r.get("status") == "done"]
-    agree = sum(1 for pair in pairs if pair["same_signature"])
+    done = _done(rows)
+    base = [r for r in done if _variant_of(r) == BASE_VARIANT]
     per_machine = _machine_rates(rows)
-    return {
+    paraphrase = _paraphrase_rates(rows)
+    agreement = _agreement_block(base)
+    accuracy = _accuracy_block(done)
+    summary = {
         "providers_attempted": names,
-        "machines": sorted({r.get("machine") for r in done if r.get("machine")}),
+        "machines": sorted({m for r in done if isinstance(m := r.get("machine"), str)}),
         "runs_done": len(done),
         "runs_skipped": sum(1 for r in rows if r.get("skipped")),
         "runs_failed": sum(1 for r in rows if not r.get("skipped") and r.get("status") != "done"),
         "pairwise": pairs,
-        # Pooled over all within-machine pairs; identical to the per-machine rate
-        # for a single machine, so the release gate keeps one comparable number.
-        "signature_agreement_rate": (agree / len(pairs)) if pairs else None,
+        # Pooled over all within-machine base pairs; identical to the per-machine
+        # rate for a single machine, so the release gate keeps one comparable
+        # number. It is NOT the discriminating one — see the decomposition below.
+        "signature_agreement_rate": agreement["signature_agreement_rate"],
+        "cross_provider_agreement_rate": agreement["cross_provider_agreement_rate"],
+        "intra_provider_agreement_rate": agreement["intra_provider_agreement_rate"],
+        "accuracy": accuracy["accuracy"],
+        "scored_runs": accuracy["scored_runs"],
+        # How much agreement overstates correctness on the machines that have a
+        # gold route — the gate-judging analogue of the authoring `blind_spot`
+        # (docs/experiments/authoring-blind-spot.md). Positive means the judges
+        # concur more often than they are right.
+        "gate_blind_spot": (
+            None
+            if agreement["signature_agreement_rate"] is None or accuracy["accuracy"] is None
+            else round(agreement["signature_agreement_rate"] - accuracy["accuracy"], 4)
+        ),
         "per_machine": per_machine,
         "distinct_signatures": sorted({r["signature"] for r in done}),
     }
+    if paraphrase:
+        summary["paraphrase"] = paraphrase
+    return summary
 
 
 def _parse_agreement_overrides(raw: str) -> dict[str, float]:
@@ -367,23 +738,29 @@ def _ci_errors(
     repeats: int,
     min_agreement: float | None,
     min_agreement_by_machine: dict[str, float] | None = None,
+    floors: dict[str, float] | None = None,
 ) -> list[str]:
     """Return release-gate failures without hiding unavailable or failed providers.
 
-    With `repeats` runs per (provider, machine), a required provider must have
-    `repeats * n_machines` successful rows; the agreement floor is enforced
+    With `repeats` runs per (provider, machine, variant), a required provider must
+    have `repeats * n_groups` successful rows; the agreement floor is enforced
     per-machine so no single machine can hide behind a high pooled average.
     `min_agreement_by_machine` overrides the global floor for named machines
-    (control-flow-critical shapes like ``severity_escalate``)."""
+    (control-flow-critical shapes like ``severity_escalate``).
+
+    `floors` carries the optional whole-suite floors for the decomposed metrics —
+    `cross_provider_agreement_rate`, `intra_provider_agreement_rate`, `accuracy`,
+    `paraphrase_invariance_rate` — none of which is enforced unless asked for, so
+    the pinned release history stays comparable."""
     errors: list[str] = []
     overrides = min_agreement_by_machine or {}
-    # Count only machines that actually ran. Skipped-provider rows carry no
-    # `machine` field (see `_run_once`), so a naive distinct-count over all rows
-    # would include `None` and inflate `repeats * n_machines` — failing the
+    # Count only (machine, variant) groups that actually ran. Skipped-provider
+    # rows carry no `machine` field (see `_run_once`), so a naive distinct-count
+    # over all rows would include `None` and inflate the expectation — failing the
     # release gate even with perfect agreement whenever any optional provider
     # lacks a key (the normal release-matrix state).
-    machines = {r.get("machine") for r in rows if r.get("machine") is not None}
-    expected = repeats * max(1, len(machines))
+    groups = {(r["machine"], _variant_of(r)) for r in rows if r.get("machine") is not None}
+    expected = repeats * max(1, len(groups))
     for name in required:
         provider_rows = [r for r in rows if r.get("provider") == name]
         if len(provider_rows) != expected:
@@ -398,17 +775,43 @@ def _ci_errors(
         if failed:
             errors.append(f"required provider {name!r}: {len(failed)} run(s) failed")
 
-    if min_agreement is None and not overrides:
-        return errors
     agreement_rows = [r for r in rows if not required or r.get("provider") in required]
-    for machine, stats in _machine_rates(agreement_rows).items():
-        rate = stats["signature_agreement_rate"]
-        floor = overrides.get(machine, min_agreement)
-        if floor is None:
-            continue
-        if rate is None or rate < floor:
-            label = "" if machine == "default" else f" [{machine}]"
-            errors.append(f"signature agreement {rate!r}{label} is below required {floor:.3f}")
+    if min_agreement is not None or overrides:
+        for machine, stats in _machine_rates(agreement_rows).items():
+            rate = stats["signature_agreement_rate"]
+            floor = overrides.get(machine, min_agreement)
+            if floor is None:
+                continue
+            if rate is None or rate < floor:
+                label = "" if machine == "default" else f" [{machine}]"
+                errors.append(f"signature agreement {rate!r}{label} is below required {floor:.3f}")
+    errors.extend(_decomposed_floor_errors(agreement_rows, floors or {}))
+    return errors
+
+
+def _decomposed_floor_errors(rows: list[dict], floors: dict[str, float]) -> list[str]:
+    """Enforce the opt-in floors on the metrics the pooled rate cannot express."""
+    if not floors:
+        return []
+    summary = _summary(rows, [])
+    measured: dict[str, float | None] = {
+        "cross_provider_agreement_rate": summary["cross_provider_agreement_rate"],
+        "intra_provider_agreement_rate": summary["intra_provider_agreement_rate"],
+        "accuracy": summary["accuracy"],
+    }
+    paraphrase = summary.get("paraphrase") or {}
+    if paraphrase:
+        measured["paraphrase_invariance_rate"] = _rate(
+            sum(stats["invariant_pairs"] for stats in paraphrase.values()),
+            sum(stats["cross_variant_pairs"] for stats in paraphrase.values()),
+        )
+    errors: list[str] = []
+    for metric, floor in floors.items():
+        rate = measured.get(metric)
+        if rate is None:
+            errors.append(f"{metric} was not measured by this run (floor {floor:.3f} requested)")
+        elif rate < floor:
+            errors.append(f"{metric} {rate!r} is below required {floor:.3f}")
     return errors
 
 
@@ -445,6 +848,41 @@ def main(argv: list[str] | None = None) -> int:
         "severity_escalate=0.5 — control-flow-critical shapes need a floor, not silence",
     )
     p.add_argument(
+        "--min-cross-agreement",
+        type=float,
+        default=None,
+        help="minimum agreement over pairs of DIFFERENT providers — the portability "
+        "claim. Not enforced unless given (the pooled --min-agreement also counts "
+        "same-provider repeats, which agree more easily)",
+    )
+    p.add_argument(
+        "--min-intra-agreement",
+        type=float,
+        default=None,
+        help="minimum agreement over repeats of the SAME provider at identical "
+        "inputs (self-consistency). Needs --repeats > 1 to be measurable",
+    )
+    p.add_argument(
+        "--min-accuracy",
+        type=float,
+        default=None,
+        help="minimum fraction of runs that take the GOLD route on machines that "
+        "declare one — agreement scores a shared wrong answer as perfect",
+    )
+    p.add_argument(
+        "--min-paraphrase-invariance",
+        type=float,
+        default=None,
+        help="minimum fraction of same-provider cross-wording pairs that route "
+        "identically (needs --paraphrase)",
+    )
+    p.add_argument(
+        "--paraphrase",
+        action="store_true",
+        help="also run each selected machine's reworded variants (same states, same "
+        "targets, different `when` text) and report paraphrase invariance",
+    )
+    p.add_argument(
         "--judge-tier",
         choices=("fast", "balanced", "reasoning"),
         default=None,
@@ -464,6 +902,23 @@ def main(argv: list[str] | None = None) -> int:
         p.error("--repeats must be at least 1")
     if args.min_agreement is not None and not 0 <= args.min_agreement <= 1:
         p.error("--min-agreement must be between 0 and 1")
+    floors: dict[str, float] = {}
+    for flag, metric in (
+        ("min_cross_agreement", "cross_provider_agreement_rate"),
+        ("min_intra_agreement", "intra_provider_agreement_rate"),
+        ("min_accuracy", "accuracy"),
+        ("min_paraphrase_invariance", "paraphrase_invariance_rate"),
+    ):
+        value = getattr(args, flag)
+        if value is None:
+            continue
+        if not 0 <= value <= 1:
+            p.error(f"--{flag.replace('_', '-')} must be between 0 and 1")
+        floors[metric] = value
+    if "intra_provider_agreement_rate" in floors and args.repeats < 2:
+        p.error("--min-intra-agreement needs --repeats 2 or more to be measurable")
+    if "paraphrase_invariance_rate" in floors and not args.paraphrase:
+        p.error("--min-paraphrase-invariance needs --paraphrase")
     try:
         agreement_overrides = _parse_agreement_overrides(args.min_agreement_by_machine)
     except ValueError as e:
@@ -486,33 +941,50 @@ def main(argv: list[str] | None = None) -> int:
         p.error(f"required providers not present in --providers: {', '.join(unknown_required)}")
     rows: list[dict] = []
     for machine_name in machine_names:
-        doc = MACHINES[machine_name]
-        for name in names:
-            for i in range(args.repeats):
-                try:
-                    row = _run_once(name, args.config, judge_tier=args.judge_tier, machine_doc=doc)
-                except Exception as e:  # provider/network/runtime failures become error rows
-                    row = {
-                        "provider": name,
-                        "machine": machine_name,
-                        "skipped": False,
-                        "status": "error",
-                        "error": f"{type(e).__name__}: {e}",
-                    }
-                row["repeat"] = i
-                rows.append(row)
-                tag = f"{machine_name}/{name}[{i}]"
-                if row.get("skipped"):
-                    print(f"# skip {tag}: {row.get('reason')}", file=sys.stderr)
-                elif row.get("status") != "done":
-                    print(f"# error {tag}: {row.get('error')}", file=sys.stderr)
-                else:
-                    print(
-                        f"{tag}: status={row['status']} sig={row['signature']!r}", file=sys.stderr
-                    )
-                if args.jsonl:
-                    with args.jsonl.open("a", encoding="utf-8") as f:
-                        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        docs = [(BASE_VARIANT, MACHINES[machine_name])]
+        if args.paraphrase:
+            docs += [
+                (v["label"], paraphrase_doc(machine_name, v))
+                for v in PARAPHRASES.get(machine_name, [])
+            ]
+            if len(docs) == 1:
+                print(f"# no paraphrase variants declared for {machine_name}", file=sys.stderr)
+        for variant, doc in docs:
+            for name in names:
+                for i in range(args.repeats):
+                    try:
+                        row = _run_once(
+                            name,
+                            args.config,
+                            judge_tier=args.judge_tier,
+                            machine_doc=doc,
+                            variant=variant,
+                        )
+                    except Exception as e:  # provider/network/runtime failures become error rows
+                        row = {
+                            "provider": name,
+                            "machine": machine_name,
+                            "variant": variant,
+                            "skipped": False,
+                            "status": "error",
+                            "error": f"{type(e).__name__}: {e}",
+                        }
+                    row["repeat"] = i
+                    rows.append(row)
+                    suffix = "" if variant == BASE_VARIANT else f"~{variant}"
+                    tag = f"{machine_name}{suffix}/{name}[{i}]"
+                    if row.get("skipped"):
+                        print(f"# skip {tag}: {row.get('reason')}", file=sys.stderr)
+                    elif row.get("status") != "done":
+                        print(f"# error {tag}: {row.get('error')}", file=sys.stderr)
+                    else:
+                        print(
+                            f"{tag}: status={row['status']} sig={row['signature']!r}",
+                            file=sys.stderr,
+                        )
+                    if args.jsonl:
+                        with args.jsonl.open("a", encoding="utf-8") as f:
+                            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     summary = _summary(rows, names)
     errors = _ci_errors(
@@ -521,6 +993,7 @@ def main(argv: list[str] | None = None) -> int:
         args.repeats,
         args.min_agreement,
         min_agreement_by_machine=agreement_overrides or None,
+        floors=floors or None,
     )
     summary["gate_errors"] = errors
     rendered = json.dumps(summary, indent=2, ensure_ascii=False)

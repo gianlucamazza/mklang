@@ -36,10 +36,14 @@ class Session:
     origin_source: str | None = None
     # Output anti-cutoff policy for this session (ADR 0018); resume reuses it.
     on_truncate: str = "report"
+    # Control-flow-taint policy for this session (ADR 0030); resume reuses it, so
+    # a run started under `halt` cannot be continued under the laxer default by
+    # omitting the argument.
+    on_untrusted_flow: str = "report"
 
 
 class SessionStore:
-    """FIFO-capped, thread-safe (FastMCP runs sync tools from a thread pool)."""
+    """FIFO-capped, thread-safe (MCPServer may run handlers off the event loop)."""
 
     def __init__(self, max_entries: int = MAX_ENTRIES):
         self._max = max_entries

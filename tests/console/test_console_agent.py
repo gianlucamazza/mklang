@@ -23,7 +23,19 @@ def test_agent_machine_is_clean():
     m = load_agent()
     errors, warnings = semantic_check(m, {m.name: m}, strict=True)
     assert errors == [] and warnings == []
-    assert lint_machine(m) == []
+    # Structural findings must be empty. The control-flow-taint notes are not
+    # structural and are expected here: the brain routes to write_machine /
+    # run_machine / update_task on prose gates over what the user typed, which is
+    # external by definition (SPEC §6). The mitigation lives in the host — the
+    # console asks for confirmation before an overwrite and before granting tool
+    # capabilities to a run — not in the machine, so the note stays visible
+    # instead of being suppressed.
+    assert [f for f in lint_machine(m) if not f.startswith("note:")] == []
+    assert sorted(f.split(":")[1].strip() for f in lint_machine(m) if "effectful tool" in f) == [
+        "do_run",
+        "save",
+        "task_update",
+    ]
     assert m.result == "reply"
     assert "workspace_root" in m.context
     assert {

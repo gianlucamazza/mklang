@@ -25,6 +25,7 @@ from typing import Protocol
 import yaml
 
 from .. import host
+from ..checkpoint import taint_frame
 from ..config import load_provider
 from ..engine import run as run_machine_engine
 from ..llm.base import LLM
@@ -64,6 +65,9 @@ class ConsoleTools:
     default_cost_budget: int | None = None
     # Output anti-cutoff policy for commissioned machines (ADR 0018).
     on_truncate: str = "report"
+    # Control-flow-taint policy for commissioned machines (ADR 0030). Same default
+    # as the CLI: record the tainted effect, let the operator opt into refusing it.
+    on_untrusted_flow: str = "report"
     build_llm: Callable[[object], LLM] | None = None
     cancel_requested: Callable[[], object] | None = None
     audit: Callable[[dict], object] | None = None
@@ -436,6 +440,7 @@ class ConsoleTools:
             escalate_suspend=True,
             on_event=lambda e: self.bridge.emit({"run": target, **e}),
             on_truncate=self.on_truncate,
+            on_untrusted_flow=self.on_untrusted_flow,
             cancel_requested=self.cancel_requested,
         )
         self._audit(
@@ -451,6 +456,10 @@ class ConsoleTools:
             # A suspended run always carries checkpoint frames.
             assert res.frames is not None
             host.set_path(res.frames[-1]["ctx"], "human.reply", reply)
+            # The reply crossed the host boundary like any other injected value:
+            # untrusted by provenance (ADR 0025), and the confirmation that clears
+            # this suspension's control-flow taint (ADR 0030).
+            taint_frame(res.frames[-1], ["human.reply"])
             res = run_machine_engine(
                 machine,
                 dict(machine.context),
@@ -467,6 +476,7 @@ class ConsoleTools:
                 resume=res.frames,
                 on_event=lambda e: self.bridge.emit({"run": target, **e}),
                 on_truncate=self.on_truncate,
+                on_untrusted_flow=self.on_untrusted_flow,
                 cancel_requested=self.cancel_requested,
             )
         # Compact + honest observation for the brain (ADR 0015/0017/0018):

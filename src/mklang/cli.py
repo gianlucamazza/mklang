@@ -204,6 +204,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         suspendable=args.checkpoint is not None,
         escalate_suspend=args.hitl,
         on_truncate=getattr(args, "on_truncate", "report"),
+        on_untrusted_flow=getattr(args, "untrusted_flow", "report"),
     )
     return _emit(
         res,
@@ -280,6 +281,7 @@ def cmd_resume(args: argparse.Namespace) -> int:
         escalate_suspend=hitl,
         resume=ck["frames"],
         on_truncate=getattr(args, "on_truncate", "report"),
+        on_untrusted_flow=getattr(args, "untrusted_flow", "report"),
     )
     return _emit(res, out_path, machine, machine_path, cost_budget, args, prov.name, hitl=hitl)
 
@@ -345,7 +347,7 @@ def cmd_lint(args: argparse.Namespace) -> int:
             source_text = Path(path).read_text(encoding="utf-8")
         except OSError:
             source_text = None
-        findings = lint_machine(machine, source=source_text)
+        findings = lint_machine(machine, source=source_text, registry=registry)
         findings_total += len(findings)
         # `note:` findings stay advisory under --strict (escalate policy); structural
         # smells (dead gates, repair-only, unresolved templates) still fail --strict.

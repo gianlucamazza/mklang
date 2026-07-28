@@ -17,11 +17,11 @@ Wire shape of outcomes:
 
 ## 1. Entry points (pick one)
 
-| Surface | When to use | Commission |
-| ------- | ----------- | ---------- |
-| **Library** (`mklang.host` + `mklang.run`) | In-process Python host | `prepare_path` / `prepare_source` → `engine.run` → `host.build_output` |
-| **CLI** `mklang run` / `resume` | Shell, cron, CI, n8n “Execute Command” | path or registered name; JSON on stdout |
-| **MCP** `mklang-mcp` | Agentic clients | tools `run` / `resume`; events as `mklang.event` |
+| Surface                                    | When to use                            | Commission                                                             |
+| ------------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------- |
+| **Library** (`mklang.host` + `mklang.run`) | In-process Python host                 | `prepare_path` / `prepare_source` → `engine.run` → `host.build_output` |
+| **CLI** `mklang run` / `resume`            | Shell, cron, CI, n8n “Execute Command” | path or registered name; JSON on stdout                                |
+| **MCP** `mklang-mcp`                       | Agentic clients                        | tools `run` / `resume`; events as `mklang.event`                       |
 
 All three share the same prepare → run → output seam. Prefer the library when
 you already own a Python process; CLI when the host is polyglot; MCP when the
@@ -56,6 +56,10 @@ res = run(
     suspendable=False,
     escalate_suspend=False,
     on_truncate="halt",  # or "report"
+    # Control-flow taint (SPEC §6 / ADR 0030): refuse an effectful tool reached
+    # through a decision a judge made over external data. Default "report".
+    on_untrusted_flow="halt",
+    tool_effects={"my_plugin_lookup": "read"},  # unclassified tools are effectful
 )
 out = host.build_output(res)
 # out["status"] in {"done", "halt", "suspended"}
@@ -64,7 +68,7 @@ out = host.build_output(res)
 CLI equivalent:
 
 ```bash
-mklang run machines/hello.mkl --format json --on-truncate halt
+mklang run machines/hello.mkl --format json --on-truncate halt --untrusted-flow halt
 # exit 0 done | 1 halt | 3 suspended | 2 usage/host error
 ```
 
@@ -72,19 +76,22 @@ mklang run machines/hello.mkl --format json --on-truncate halt
 
 ## 2. Run outcomes and exit codes
 
-| `status` | Meaning | CLI exit | Host action |
-| -------- | ------- | -------- | ----------- |
-| `done` | Finished; `result` is the machine result | 0 | Consume `result` / `trace` / `usage` |
-| `halt` | Aborted; not resumable from this result alone | 1 | Log `error` (+ `at`); fix inputs/machine; do not invent success |
-| `suspended` | Resumable (budget or HITL escalate) | 3 | Persist `checkpoint`; later `resume` |
-| `error` | MCP prepare/validation failure payload | (tool result) | Fix request; not an engine halt |
+| `status`    | Meaning                                       | CLI exit      | Host action                                                     |
+| ----------- | --------------------------------------------- | ------------- | --------------------------------------------------------------- |
+| `done`      | Finished; `result` is the machine result      | 0             | Consume `result` / `trace` / `usage`                            |
+| `halt`      | Aborted; not resumable from this result alone | 1             | Log `error` (+ `at`); fix inputs/machine; do not invent success |
+| `suspended` | Resumable (budget or HITL escalate)           | 3             | Persist `checkpoint`; later `resume`                            |
+| `error`     | MCP prepare/validation failure payload        | (tool result) | Fix request; not an engine halt                                 |
 
 Common `error` strings (non-exhaustive): `budget-exhausted`, `escalated`,
-`gate-fail`, `output-truncated`, `call-failed`, `call-depth-exceeded`, tool
-observation failures as judged by fail gates.
+`gate-fail`, `output-truncated`, `no-gate-matched`, `untrusted-control-flow`
+(only under `on_untrusted_flow="halt"`), `call-failed`, `call-depth-exceeded`,
+tool observation failures as judged by fail gates. A halt inside a sub-machine
+reaches the caller prefixed — `call-failed: <sub reason>` — so match on the
+prefix, not on equality.
 
 **Mapping tip for outer orchestrators:** treat exit 3 / `suspended` as
-*waiting* (human or budget), not as failure. Treat exit 1 / `halt` as failure
+_waiting_ (human or budget), not as failure. Treat exit 1 / `halt` as failure
 unless your product policy retries after changing inputs.
 
 ---
@@ -93,11 +100,11 @@ unless your product policy retries after changing inputs.
 
 ### Enabling suspend
 
-| Goal | Flags / knobs |
-| ---- | ------------- |
-| Pause on budget exhaustion | CLI `--checkpoint PATH` or `suspendable=True` + save frames |
-| Pause on `escalate` gates | CLI `--hitl` (implies checkpoint; default path under XDG state) or `escalate_suspend=True` |
-| Resume | `mklang resume CHECKPOINT --set human.reply=…` or MCP `resume` with handle/path |
+| Goal                       | Flags / knobs                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| Pause on budget exhaustion | CLI `--checkpoint PATH` or `suspendable=True` + save frames                                |
+| Pause on `escalate` gates  | CLI `--hitl` (implies checkpoint; default path under XDG state) or `escalate_suspend=True` |
+| Resume                     | `mklang resume CHECKPOINT --set human.reply=…` or MCP `resume` with handle/path            |
 
 Checkpoints are **plaintext JSON** of the blackboard and frames (mode `0600` is
 a floor, not encryption). Do **not** put API keys or long-lived secrets in
@@ -122,27 +129,28 @@ business fields.
 
 ## 4. Secrets, config, and tools
 
-| Concern | Rule |
-| ------- | ---- |
-| Provider API keys | Host `.env` / environment (`api_key_env` in `runtime.yaml`); never in `.mkl` |
-| Tool secrets (Tavily, …) | Same layering; `runtime.yaml` `tools:` is non-secret backend selection |
-| Config resolution | Explicit `--config` / `MKLANG_CONFIG` > project > user > system > bundled ([install](install.md)) |
-| FS workspace | `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace`; writes need `--allow-write` or config grant |
-| Tool plugins | Entry points `mklang.tools` — host registers callables; machines only name them |
+| Concern                  | Rule                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Provider API keys        | Host `.env` / environment (`api_key_env` in `runtime.yaml`); never in `.mkl`                         |
+| Tool secrets (Tavily, …) | Same layering; `runtime.yaml` `tools:` is non-secret backend selection                               |
+| Config resolution        | Explicit `--config` / `MKLANG_CONFIG` > project > user > system > bundled ([install](install.md))    |
+| FS workspace             | `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace`; writes need `--allow-write` or config grant |
+| Tool plugins             | Entry points `mklang.tools` — host registers callables; machines only name them                      |
 
-Capability policy: a machine may *request* a tool; only the host *grants* it.
+Capability policy: a machine may _request_ a tool; only the host _grants_ it.
 Unknown third-party tools should default to conservative risk metadata (BP §5.5).
 
 ---
 
 ## 5. Timeouts, budgets, truncation
 
-| Knob | Effect |
-| ---- | ------ |
-| Machine `budget:` | Step/loop guard (fan-out charges branch count) |
-| CLI `--max-tokens` / `cost_budget` | Shared produce+judge token budget; with checkpoint → suspend; else halt |
-| `--on-truncate report\|halt` | Produce cutoff (ADR 0018): annotate vs halt `output-truncated` |
-| Provider HTTP timeouts | Adapter/host concern; console implements cooperative cancel + `close()` |
+| Knob                               | Effect                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| Machine `budget:`                  | Step/loop guard (fan-out charges branch count)                           |
+| CLI `--max-tokens` / `cost_budget` | Shared produce+judge token budget; with checkpoint → suspend; else halt  |
+| `--on-truncate report\|halt`       | Produce cutoff (ADR 0018): annotate vs halt `output-truncated`           |
+| `--untrusted-flow report\|halt`    | Control-flow taint (ADR 0030): annotate vs halt `untrusted-control-flow` |
+| Provider HTTP timeouts             | Adapter/host concern; console implements cooperative cancel + `close()`  |
 
 Production hosts that must not silently ship partial rewrites should use
 `--on-truncate halt` (or the library equivalent) and surface `error` clearly.
@@ -159,18 +167,18 @@ Canonical core fields from `host.build_output(res)`:
   "error": null,
   "result": "…",
   "usage": { "input_tokens": 0, "output_tokens": 0 },
-  "trace": [ { "step": 1, "state": "…", "…": "…" } ]
+  "trace": [{ "step": 1, "state": "…", "…": "…" }]
 }
 ```
 
 Surface extensions:
 
-| Field | CLI | MCP |
-| ----- | --- | --- |
-| `at` | yes when set | yes when set |
-| `checkpoint` | path on suspend | handle (and path semantics differ) |
-| `checkpoint_file` | — | durable path when requested |
-| `warnings` | stderr, not always in JSON | array on result |
+| Field             | CLI                        | MCP                                |
+| ----------------- | -------------------------- | ---------------------------------- |
+| `at`              | yes when set               | yes when set                       |
+| `checkpoint`      | path on suspend            | handle (and path semantics differ) |
+| `checkpoint_file` | —                          | durable path when requested        |
+| `warnings`        | stderr, not always in JSON | array on result                    |
 
 Validate example payloads against
 [`schema/run-result.schema.json`](../../schema/run-result.schema.json).
@@ -196,9 +204,9 @@ envelope.
 
 ## 8. Out of scope (deliberate)
 
-- HTTP webhook server / cron daemon inside the language core  
-- Built-in WhatsApp / Supabase / Gmail connectors (host plugins only)  
-- Encrypting checkpoints at rest (host responsibility if required)  
+- HTTP webhook server / cron daemon inside the language core
+- Built-in WhatsApp / Supabase / Gmail connectors (host plugins only)
+- Encrypting checkpoints at rest (host responsibility if required)
 - Guaranteeing identical gate traces across providers (measure via
   [gate divergence](../../docs/experiments/gate-divergence.md); do not assume)
 

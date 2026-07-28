@@ -119,7 +119,11 @@ it still has no shell, git, or generic write access.
   different providers fire the same gates on the same run is measurable (see
   `scripts/gate_divergence.py`).
 - **Spec + conformance** — an implementation-neutral [conformance suite](./conformance/README.md)
-  pins interpreter semantics so a second runtime can match the language contract.
+  pins interpreter semantics so a second runtime can match the language's
+  **mechanical** contract: same machine, same oracle verdicts, same trace. Cases
+  run against a scripted LLM, so conformance says nothing about which gate a
+  model will fire — two conformant runtimes can still diverge in production
+  ([what conformance does and does not guarantee](./conformance/README.md#what-conformance-does-and-does-not-guarantee)).
 - **Language-agnostic runtime** — the spec assumes only "some host with an LLM".
 
 ## Reasoning architectures

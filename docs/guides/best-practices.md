@@ -11,11 +11,11 @@ This page answers: _what should I always do, never do, and where does each rule 
 
 ## 1. Layer discipline (do not mix layers)
 
-| Layer                | Owns                                                                                                                                  | Examples                                                                                                            |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Language (`.mkl`)** | Control flow, prose contracts, portable structure                                                                                     | states, gates, tiers, `tool:` _names_, `parse: list`                                                                |
-| **Host runtime**     | Bindings, budgets, clocks, truncation _policy_, LLM adapters, produce/judge prompt assembly, **ops logging**, FS data roots for tools | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py`, process loggers, plugin FS tools |
-| **Surface**          | UX, consent, compact observations, chrome vs content rendering, session audit                                                         | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, read-only workspace inspection and `.mkl` authoring |
+| Layer                 | Owns                                                                                                                                  | Examples                                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Language (`.mkl`)** | Control flow, prose contracts, portable structure                                                                                     | states, gates, tiers, `tool:` _names_, `parse: list`                                                                             |
+| **Host runtime**      | Bindings, budgets, clocks, truncation _policy_, LLM adapters, produce/judge prompt assembly, **ops logging**, FS data roots for tools | `tools={…}`, hooks, `on_truncate`, `context.today` / `now` fill, `llm/prompts.py`, process loggers, plugin FS tools              |
+| **Surface**           | UX, consent, compact observations, chrome vs content rendering, session audit                                                         | CLI flags, MCP tools, console brain, Markdown log, transcript/session paths, read-only workspace inspection and `.mkl` authoring |
 
 **Rules**
 
@@ -51,13 +51,13 @@ The reference interpreter builds LLM calls from language faces. There is **no**
 `system:` keyword in the language (that would be a 0.4 ADR). Map faces to
 channels:
 
-| Face / artifact     | LLM channel          | Interpolated?   | Put here                                                   |
-| ------------------- | -------------------- | --------------- | ---------------------------------------------------------- |
-| `structure`         | **system** (produce) | No              | Output contract / shape for this state                     |
-| `execution`         | **system** (produce) | No              | Sticky operational policy (never side effects)             |
+| Face / artifact     | LLM channel          | Interpolated?   | Put here                                                                        |
+| ------------------- | -------------------- | --------------- | ------------------------------------------------------------------------------- |
+| `structure`         | **system** (produce) | No              | Output contract / shape for this state                                          |
+| `execution`         | **system** (produce) | No              | Sticky operational policy (never side effects)                                  |
 | `prompt`            | **user** (produce)   | **Yes** `{{…}}` | This turn’s task + data — tainted values arrive `<data-NONCE>`-fenced (SPEC §6) |
-| `when:` conditions  | judge **user**       | No (prose)      | Gate selection only — stay bare (author-trusted)           |
-| Host `JUDGE_SYSTEM` | judge **system**     | fixed           | Choice protocol `{"choice": n}` — not authorable           |
+| `when:` conditions  | judge **user**       | No (prose)      | Gate selection only — stay bare (author-trusted)                                |
+| Host `JUDGE_SYSTEM` | judge **system**     | fixed           | Choice protocol `{"choice": n}` — not authorable                                |
 
 The judge user payload always presents OUTPUT / REASONING / CONTEXT as fenced
 data (shared `build_judge_user`, ADR 0025); the produce system message gains an
@@ -85,13 +85,13 @@ inventing a `system:` field; using `execution: call the search tool`.
 
 ## 4. Gates and reliability
 
-| Do                                                                             | Don't                                         |
-| ------------------------------------------------------------------------------ | --------------------------------------------- |
-| Put **hooks above** prose gates; keep `when` as the human-readable trace label | Ask the LLM to check `amount <= 100`          |
-| Cap `repair` at 1–2, then `escalate` or `fail`                                 | Open-ended repair-only states                 |
-| Give escalate a **safe sink** state (human / fallback)                         | Fail closed only when that is truly required  |
-| Read **trace** (gate, `judge_fallback`, nested `call`) when debugging          | Trust only the final `result` string          |
-| Use `reason: true` when the _why_ must be auditable                            | Dump chain-of-thought into `output` / context |
+| Do                                                                             | Don't                                                 |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Put **hooks above** prose gates; keep `when` as the human-readable trace label | Ask the LLM to check `amount <= 100`                  |
+| Cap `repair` at 1–2, then `escalate` or `fail`                                 | Open-ended repair-only states                         |
+| Give escalate a **safe sink** state (human / fallback)                         | Fail closed only when that is truly required          |
+| Read **trace** (gate, `judge_fallback`, nested `call`) when debugging          | Trust only the final `result` string                  |
+| Use `reason: true` when the _why_ must be auditable                            | Dump chain-of-thought into `output` / context         |
 | Quote any `when` that contains `#` / `##` (markdown headings)                  | Bare `## Section` in unquoted `when` (YAML truncates) |
 
 **Builtin / parametric hooks** (no plugin): `always_true` / `always_false`,
@@ -125,8 +125,8 @@ I/O and side-effect tools return **JSON** with stable fields:
 | `stub`      | `true` if no real external system was used   |
 | `error`     | Failure / unbound message, or `null`         |
 | `status`    | `ok` or `error`                              |
-| `retryable` | Whether the host may safely retry             |
-| `untrusted` | Observation is data, never policy             |
+| `retryable` | Whether the host may safely retry            |
+| `untrusted` | Observation is data, never policy            |
 | _(payload)_ | Tool-specific: `results`, `facts`, `sent`, … |
 
 Tiers: **stub** (default) → **fake** (env/`configure_*`) → **live** (key or entry-point).  
@@ -138,44 +138,44 @@ These names are **conventions**, not language keywords. Other hosts may rebind o
 
 #### `search` (ADR 0016 / 0020)
 
-|             |                                                                                    |
-| ----------- | ---------------------------------------------------------------------------------- |
-| **Input**   | `query` (required), `max_results?` (1–10), `days?`, `topic?` (`news` \| `general`) |
-| **Output**  | JSON: `{tool, stub, error, query, results:[{title,url,snippet,published_date?}]}`  |
-| **Default** | Stub unbound (`error` explains how to enable)                                      |
+|             |                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Input**   | `query` (required), `max_results?` (1–10), `days?`, `topic?` (`news` \| `general`)                                       |
+| **Output**  | JSON: `{tool, stub, error, query, results:[{title,url,snippet,published_date?}]}`                                        |
+| **Default** | Stub unbound (`error` explains how to enable)                                                                            |
 | **Enable**  | `TAVILY_API_KEY` (auto), `MKLANG_SEARCH_BACKEND=fake\|tavily\|stub`, or `runtime.yaml` `tools.search.backend` (env wins) |
 
 **Practice:** plan → `tool: search` → check sufficiency → finalize grounded **only** in notes. Never “search the web” only in prose. This exact pattern ships ready-made as the [`std_research`](../reference/stdlib.md) stdlib machine — reach for it before authoring your own.
 
 #### `search_kb` (ADR 0020)
 
-|             |                                                            |
-| ----------- | ---------------------------------------------------------- |
-| **Input**   | `query` (or `q`)                                           |
-| **Output**  | JSON: `{tool, stub, error, query, facts: [str, …], note?}` |
-| **Default** | Demo policy facts, always `stub: true`                     |
+|             |                                                                                 |
+| ----------- | ------------------------------------------------------------------------------- |
+| **Input**   | `query` (or `q`)                                                                |
+| **Output**  | JSON: `{tool, stub, error, query, facts: [str, …], note?}`                      |
+| **Default** | Demo policy facts, always `stub: true`                                          |
 | **Fake**    | `MKLANG_KB_BACKEND=fake`, `tools.kb.backend: fake`, or `mklang.kb.configure_kb` |
 
 Replace with real RAG via entry points in production.
 
 #### `send_reply` (ADR 0020)
 
-|                  |                                                                                                     |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| **Input**        | `body` (or `draft`), `to?`                                                                          |
-| **Output**       | JSON: `{tool, stub, sent, recorded, delivery, to, chars, preview, error, note?}`                    |
-| **Default stub** | `sent: false`, `delivery: "stub"` — **does not** claim real mail left the host                      |
+|                  |                                                                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Input**        | `body` (or `draft`), `to?`                                                                                                          |
+| **Output**       | JSON: `{tool, stub, sent, recorded, delivery, to, chars, preview, error, note?}`                                                    |
+| **Default stub** | `sent: false`, `delivery: "stub"` — **does not** claim real mail left the host                                                      |
 | **Fake**         | `MKLANG_MAIL_BACKEND=fake` (or `tools.mail.backend: fake`) → in-memory outbox, `delivery: "fake"`, `sent: true`, still `stub: true` |
 
 Never ask the model to “confirm the message was sent.” Gates should treat `sent: false` as no delivery.
 
 #### `list_files` / `read_file` / `write_file` (ADR 0024)
 
-|             |                                                                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Input**   | `list_files`: `path?` · `read_file`: `path`, `max_bytes?` · `write_file`: `path`, `content`, `overwrite?`                             |
-| **Output**  | JSON: `{tool, stub, error, path, …}` — `entries/count/truncated`, `content/bytes/truncated`, `bytes/written/existed`                  |
-| **Default** | **Live reads** confined to the selected workspace (`--workspace` for console/MCP, otherwise `MKLANG_FS_ROOT` or cwd); writes refused without a grant |
+|             |                                                                                                                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Input**   | `list_files`: `path?` · `read_file`: `path`, `max_bytes?` · `write_file`: `path`, `content`, `overwrite?`                                                                                                   |
+| **Output**  | JSON: `{tool, stub, error, path, …}` — `entries/count/truncated`, `content/bytes/truncated`, `bytes/written/existed`                                                                                        |
+| **Default** | **Live reads** confined to the selected workspace (`--workspace` for console/MCP, otherwise `MKLANG_FS_ROOT` or cwd); writes refused without a grant                                                        |
 | **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` / `tools.fs.write` · Offline: `MKLANG_FS_BACKEND=stub` or `tools.fs.backend: stub` |
 
 Relative paths only; `..`, absolute paths, and dotfiles are refused; writes are
@@ -220,7 +220,7 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 
 | Practice                             | Detail                                                                                                                                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use `tool: search`**               | `std_research` (stdlib, run by name), `research_web.mkl`, `research_compress.mkl`, `news_search.mkl`                                     |
+| **Use `tool: search`**               | `std_research` (stdlib, run by name), `research_web.mkl`, `research_compress.mkl`, `news_search.mkl`                                  |
 | **Declare `today: ""`**              | Host fills ISO `YYYY-MM-DD` when still empty after inputs (CLI / MCP / console)                                                       |
 | **Declare `now: ""` for wall-clock** | Host fills local ISO datetime with offset (e.g. `2026-07-17T14:32:05+02:00`) — use for “what time is it?”, not for news recency alone |
 | **Prompt with calendar / clock**     | `Today is {{today}}` / `Current local time is {{now}}`; include year in queries when time-sensitive                                   |
@@ -235,14 +235,14 @@ Live or news-like questions fail in predictable ways if the machine relies on mo
 
 ## 7. Output cutoff and context budgets (anti-cutoff)
 
-| Layer                        | What happens                                                                    | Practice                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Produce length stop**      | Trace/events get `truncated: true` (ADR 0018)                                   | Prefer adequate `max_tokens` in runtime `params`; use `--on-truncate halt` for strict runs |
-| **Default policy**           | `report` continues with partial text                                            | Do not treat partial finalize as complete without checking trace                           |
-| **`parse: list` + truncate** | Halts `parse-list-truncated`                                                    | Keep planner outputs short and well-structured                                             |
-| **Produce `{{…}}` budget**   | Long values end with `…[truncated]` (ADR 0017)                                  | Compress notes before the next loop (`research_compress.mkl`)                               |
-| **Judge CONTEXT**            | Head+tail + `…[context_truncated]…`                                             | Put critical facts in **state output**, not only deep context                              |
-| **Console observation**      | Compact JSON: `truncated`, `result_truncated`, `…[truncated]` on clipped result; accumulated search fields are bounded with the same marker | Brain/user must report cuts — never invent the missing tail; compress long research notes |
+| Layer                        | What happens                                                                                                                                | Practice                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Produce length stop**      | Trace/events get `truncated: true` (ADR 0018)                                                                                               | Prefer adequate `max_tokens` in runtime `params`; use `--on-truncate halt` for strict runs |
+| **Default policy**           | `report` continues with partial text                                                                                                        | Do not treat partial finalize as complete without checking trace                           |
+| **`parse: list` + truncate** | Halts `parse-list-truncated`                                                                                                                | Keep planner outputs short and well-structured                                             |
+| **Produce `{{…}}` budget**   | Long values end with `…[truncated]` (ADR 0017)                                                                                              | Compress notes before the next loop (`research_compress.mkl`)                              |
+| **Judge CONTEXT**            | Head+tail + `…[context_truncated]…`                                                                                                         | Put critical facts in **state output**, not only deep context                              |
+| **Console observation**      | Compact JSON: `truncated`, `result_truncated`, `…[truncated]` on clipped result; accumulated search fields are bounded with the same marker | Brain/user must report cuts — never invent the missing tail; compress long research notes  |
 
 Continue-stitching after length stop is **deferred** (not default).
 
@@ -273,14 +273,14 @@ Continue-stitching after length stop is **deferred** (not default).
 
 ## 10. Testing and CI
 
-| Layer              | Command                                   | Role                              |
-| ------------------ | ----------------------------------------- | --------------------------------- |
-| Schema + semantics | `mklang check`                            | Blocking shape/graph              |
-| Static smells      | `mklang lint` (`--strict` in CI)          | Typos, dead gates, unread outputs |
-| Prose gate overlap | `mklang lint --llm`                       | Advisory only                     |
-| Path pinning       | `mklang test … --script …`                | No API keys; escape hatches       |
-| Language contract  | `pytest` + `conformance/`                 | Interpreter semantics             |
-| Live smoke         | `MKLANG_LIVE=1 pytest tests/test_live.py` | Opt-in providers                  |
+| Layer              | Command                                   | Role                                  |
+| ------------------ | ----------------------------------------- | ------------------------------------- |
+| Schema + semantics | `mklang check`                            | Blocking shape/graph                  |
+| Static smells      | `mklang lint` (`--strict` in CI)          | Typos, dead gates, missing catch-alls |
+| Prose gate overlap | `mklang lint --llm`                       | Advisory only                         |
+| Path pinning       | `mklang test … --script …`                | No API keys; escape hatches           |
+| Language contract  | `pytest` + `conformance/`                 | Interpreter semantics                 |
+| Live smoke         | `MKLANG_LIVE=1 pytest tests/test_live.py` | Opt-in providers                      |
 
 Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, empty tool results, and search-unbound paths for web machines.
 
@@ -329,9 +329,24 @@ emits a `note:` on machines that use escalate (advisory even under `--strict`).
 - Tainted interpolations and the judge's OUTPUT/REASONING/CONTEXT are
   **automatically fenced** (`<data-NONCE>`, SPEC §6 / ADR 0025). Library
   hosts get `run(..., trusted_keys=...)` to vouch for keys and
-  `run(..., delimit=False)` for debugging. Fencing prevents *confusion*, not
-  *persuasion* — the next two bullets still apply.
-- Prefer **hooks + HITL** before irreversible tools.
+  `run(..., delimit=False)` for debugging. Fencing prevents _confusion_, not
+  _persuasion_ — the next two bullets still apply.
+- **Control-flow taint** (SPEC §6 / ADR 0030) covers the other half: a transition
+  a judge chose while external data was in scope is marked `decision_tainted`,
+  and reaching an effectful `tool:` under it is recorded as
+  `untrusted_control_flow` — including through a `call:`, since a sub-run
+  inherits the mark. Run production paths with `--untrusted-flow halt`
+  (`run(..., on_untrusted_flow="halt")`, MCP `run`/`resume` `on_untrusted_flow`,
+  `ConsoleTools(on_untrusted_flow=…)`) to refuse the effect instead of recording
+  it, and classify your own tools with `run(..., tool_effects={"x": "read"})` —
+  an unclassified tool counts as effectful. On MCP the policy sticks to the
+  session, so a `resume` that omits it cannot continue a `halt` run under the
+  default. `mklang lint` flags the same shape statically.
+- Prefer **hooks + HITL** before irreversible tools: a `hook:` gate (or a
+  `human.reply` injected **for that suspension**) is what clears the mark, so the
+  fix for a control-flow-taint finding is a confirmation gate, not a better
+  prompt. A reply still sitting in the blackboard from an earlier HITL cycle does
+  not confirm a later decision.
 - Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
 - Checkpoints may carry additive host metadata such as capability policy,
   request IDs and suspension reason; metadata must be redacted and must never
@@ -406,12 +421,12 @@ Three channels — do not merge them into one API.
 
 Generic bash/FS stay **out of core**. When you need disk, pick the class:
 
-| Class                       | Examples                                         | Where it lives                            | Controls                                                              |
-| --------------------------- | ------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------- |
-| **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir | CLI / host config                         | Operator-chosen paths; checkpoint mode `0600`                         |
-| **2. Workspace console**    | `list_workspace` / `read_workspace_file` / `search_workspace` (read-only) plus `write_machine` / `read_machine` (`.mkl`) | Console surface (ADR 0015) | Root defaults to the launch cwd and is injected as absolute `workspace_root`; `--workspace` overrides it; relative paths; reject escape, hidden/build/vendor/sensitive paths; bounded file/byte budgets; report truncation; confirm `.mkl` overwrite; project machines live in `machines/` |
-| **3. Machine data I/O**     | Read CSV, write a report                         | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch |
-| **4. Arbitrary FS / shell** | `rm`, bash, git                                  | **Never core**; explicit sandboxed plugin | Default off; high friction                                            |
+| Class                       | Examples                                                                                                                 | Where it lives                            | Controls                                                                                                                                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1. Host-owned paths**     | `runtime.yaml`, checkpoints, console session dir                                                                         | CLI / host config                         | Operator-chosen paths; checkpoint mode `0600`                                                                                                                                                                                                                                              |
+| **2. Workspace console**    | `list_workspace` / `read_workspace_file` / `search_workspace` (read-only) plus `write_machine` / `read_machine` (`.mkl`) | Console surface (ADR 0015)                | Root defaults to the launch cwd and is injected as absolute `workspace_root`; `--workspace` overrides it; relative paths; reject escape, hidden/build/vendor/sensitive paths; bounded file/byte budgets; report truncation; confirm `.mkl` overwrite; project machines live in `machines/` |
+| **3. Machine data I/O**     | Read CSV, write a report                                                                                                 | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch                                                                                                                                                                                                                      |
+| **4. Arbitrary FS / shell** | `rm`, bash, git                                                                                                          | **Never core**; explicit sandboxed plugin | Default off; high friction                                                                                                                                                                                                                                                                 |
 
 ### Current host layout (documentation SSOT)
 
@@ -477,13 +492,13 @@ an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
 The class model gives machines the same memory layering native coding agents
 use — each level has exactly one home:
 
-| Agent memory level                        | mklang home                                                       | Class |
-| ----------------------------------------- | ----------------------------------------------------------------- | ----- |
-| Working memory (in-run)                   | Blackboard `context` + `accumulate` (SPEC §4.6) — never on disk   | —     |
-| Session state / resume                    | Checkpoints (`0600`) and console `state.json` — outside workspace | 1     |
-| Project memory (`AGENTS.md`, `CLAUDE.md`) | Non-dotted files in the workspace, read via `read_workspace_file` in the console or `read_file` in a machine | 2/3 |
-| Plans / reports the machine produces      | `write_file` under the workspace, behind the write grant          | 3     |
-| Global config / memory hierarchy          | XDG roots + precedence (ADR 0021/0023)                            | 1     |
+| Agent memory level                        | mklang home                                                                                                  | Class |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----- |
+| Working memory (in-run)                   | Blackboard `context` + `accumulate` (SPEC §4.6) — never on disk                                              | —     |
+| Session state / resume                    | Checkpoints (`0600`) and console `state.json` — outside workspace                                            | 1     |
+| Project memory (`AGENTS.md`, `CLAUDE.md`) | Non-dotted files in the workspace, read via `read_workspace_file` in the console or `read_file` in a machine | 2/3   |
+| Plans / reports the machine produces      | `write_file` under the workspace, behind the write grant                                                     | 3     |
+| Global config / memory hierarchy          | XDG roots + precedence (ADR 0021/0023)                                                                       | 1     |
 
 For machine authors: keep durable machine memory in non-dotted data files in
 the workspace (e.g. `memory/notes.md`); update it with read → `write_file`
@@ -503,12 +518,12 @@ anti-pattern below structural, not just conventional.
 
 ## 14. Surfaces quick reference
 
-| Surface     | Best practice                                                                                                                                                                                                                           |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CLI**     | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled   |
-| **MCP**     | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL; **read-only to disk** — author/validate/run inline, no persist tool (§11, ADR 0011/0013)                    |
-| **Library / embed** | Prefer [`host-embedding`](host-embedding.md): `prepare_*` → `run` → `build_output`; map `done`/`suspended`/`halt`; validate against [`run-result.schema.json`](../../schema/run-result.schema.json) |
-| **Console** | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace inspection is read-only and `.mkl` authoring is the default write path — no generic FS/bash |
+| Surface             | Best practice                                                                                                                                                                                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CLI**             | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled                                                           |
+| **MCP**             | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL; **read-only to disk** — author/validate/run inline, no persist tool (§11, ADR 0011/0013)                                                                        |
+| **Library / embed** | Prefer [`host-embedding`](host-embedding.md): `prepare_*` → `run` → `build_output`; map `done`/`suspended`/`halt`; validate against [`run-result.schema.json`](../../schema/run-result.schema.json)                                                                                             |
+| **Console**         | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace inspection is read-only and `.mkl` authoring is the default write path — no generic FS/bash |
 
 ### Console cancellation and shutdown (documentation SSOT)
 
@@ -557,13 +572,13 @@ anti-pattern below structural, not just conventional.
 
 Candidates for a future **0.4** (need ADR + conformance) — **not** current practice requirements:
 
-| Candidate                             | Why it might become language         |
-| ------------------------------------- | ------------------------------------ |
-| `parse: json` / object                | Structured composition beyond lists  |
-| Machine/state `on_truncate` policy    | Portable anti-cutoff in the document |
+| Candidate                             | Why it might become language                                               |
+| ------------------------------------- | -------------------------------------------------------------------------- |
+| `parse: json` / object                | Structured composition beyond lists                                        |
+| Machine/state `on_truncate` policy    | Portable anti-cutoff in the document                                       |
 | Context zones / pin (ADR 0017 L2)     | Authorable trust zones — runtime provenance taint already ships (ADR 0025) |
-| Per-gate `hitl:`                      | Finer HITL than run-level            |
-| Budget split (steps vs fan-out width) | Clearer volume caps                  |
+| Per-gate `hitl:`                      | Finer HITL than run-level                                                  |
+| Budget split (steps vs fan-out width) | Clearer volume caps                                                        |
 
 Until then: use **host policy + patterns + this checklist**. Do **not** invent ad-hoc syntax outside the schema.
 
@@ -571,18 +586,18 @@ Until then: use **host policy + patterns + this checklist**. Do **not** invent a
 
 ## Related
 
-| Doc                                                    | Role                                                         |
-| ------------------------------------------------------ | ------------------------------------------------------------ |
-| [Getting started](getting-started.md)                  | First-run path: install → init → key → console               |
-| [Install](install.md)                                  | pipx / AUR install, host layout, completions                 |
-| [Authoring](authoring.md)                              | Recipe + skeleton + faces → LLM channels                     |
-| [Patterns](patterns.md)                                | Tiers, reliability, clocks, `execution` usage                |
-| [Stdlib](../reference/stdlib.md)                       | Ready `std_*` architectures                                  |
-| [Console](console.md)                                  | TUI, rendering, brain clocks, consent, workspace FS          |
-| [SPEC §4–§6](../../SPEC.md)                            | Faces + produce/judge semantics, normative §6 delimiting     |
-| [SPEC §8](../../SPEC.md)                               | Trace / observability                                        |
-| [SPEC §11](../../SPEC.md)                              | Threat model (injection, checkpoints at rest)                |
-| [ADR 0015](../adr/0015-console-surface.md)             | Console scope (not an IDE)                                   |
-| [ADR 0019](../adr/0019-mcp-live-events.md)             | `mklang.event` vs ops log                                    |
-| [ADR 0020](../adr/0020-host-tool-stub-architecture.md) | Tool envelope for I/O (incl. future FS tools)                |
-| [ROADMAP](../../ROADMAP.md)                            | OTel maybe; no bash/FS in core                               |
+| Doc                                                    | Role                                                     |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| [Getting started](getting-started.md)                  | First-run path: install → init → key → console           |
+| [Install](install.md)                                  | pipx / AUR install, host layout, completions             |
+| [Authoring](authoring.md)                              | Recipe + skeleton + faces → LLM channels                 |
+| [Patterns](patterns.md)                                | Tiers, reliability, clocks, `execution` usage            |
+| [Stdlib](../reference/stdlib.md)                       | Ready `std_*` architectures                              |
+| [Console](console.md)                                  | TUI, rendering, brain clocks, consent, workspace FS      |
+| [SPEC §4–§6](../../SPEC.md)                            | Faces + produce/judge semantics, normative §6 delimiting |
+| [SPEC §8](../../SPEC.md)                               | Trace / observability                                    |
+| [SPEC §11](../../SPEC.md)                              | Threat model (injection, checkpoints at rest)            |
+| [ADR 0015](../adr/0015-console-surface.md)             | Console scope (not an IDE)                               |
+| [ADR 0019](../adr/0019-mcp-live-events.md)             | `mklang.event` vs ops log                                |
+| [ADR 0020](../adr/0020-host-tool-stub-architecture.md) | Tool envelope for I/O (incl. future FS tools)            |
+| [ROADMAP](../../ROADMAP.md)                            | OTel maybe; no bash/FS in core                           |

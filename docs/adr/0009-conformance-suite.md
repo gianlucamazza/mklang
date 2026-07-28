@@ -37,7 +37,18 @@ observation deposit, unknown-tool halt, fan-out `{{index}}`, fan-out step
 charging) are **in the contract** — they pin language rules from SPEC §4.9 / §5,
 not host persistence or provider adapters. Checkpoint/HITL/provider behavior
 remains out of scope. Case inventory and format: [`conformance/README.md`](../../conformance/README.md)
-(21 cases as of 0.5.2+; 28 as of ADR 0025).
+(21 cases as of 0.5.2+; 28 as of ADR 0025; 37 as of ADR 0030).
+
+### Amendment (2026-07-28) — the boundary, written down
+
+The suite's reach was implicit and easy to over-read. It is now stated in
+`conformance/README.md` ("What conformance does and does not guarantee"): because
+every case scripts the oracle, conformance pins what a runtime must do **given**
+a verdict, and nothing about which verdict a model will give. Two conformant
+runtimes can diverge arbitrarily on the same document in production
+(`docs/experiments/gate-divergence.md` measures how much). The claim a second
+implementation may make is "matches the mechanical contract", not "behaves the
+same".
 
 ## Consequences
 

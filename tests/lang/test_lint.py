@@ -198,3 +198,157 @@ def test_fanout_vars_outside_fanout_flagged():
         }
     )
     assert not any("index" in f for f in lint_machine(ok_sample))
+
+
+def test_missing_catch_all_flagged():
+    """A state with only conditional gates has a partial transition relation (SPEC §5)."""
+    m = M({"a": state(gates=[gate("the draft is complete", then="ok", to="END")])})
+    findings = lint_machine(m)
+    assert any("no catch-all gate" in f and "no-gate-matched" in f for f in findings)
+    # A `when: otherwise` of any policy makes it total again.
+    ok = M(
+        {
+            "a": state(
+                gates=[
+                    gate("the draft is complete", then="ok", to="END"),
+                    gate("otherwise", fail=True),
+                ]
+            )
+        }
+    )
+    assert not any("catch-all" in f for f in lint_machine(ok))
+
+
+def test_repair_only_catch_all_flagged():
+    """A repair `otherwise` stops being eligible once its budget is spent."""
+    m = M(
+        {
+            "a": state(
+                gates=[
+                    gate("the draft is complete", then="ok", to="END"),
+                    gate("otherwise", repair=2, to="a"),
+                ]
+            )
+        }
+    )
+    findings = lint_machine(m)
+    assert any("only `when: otherwise` gate is a repair" in f for f in findings)
+
+
+def test_repair_only_state_is_not_double_reported():
+    """Repair-only states already get a specific finding; no duplicate catch-all note."""
+    m = M({"a": state(gates=[gate("has gaps", repair=1, to="a")])})
+    findings = [f for f in lint_machine(m) if "a:" in f]
+    assert any("every gate is a repair" in f for f in findings)
+    assert not any("no catch-all gate" in f for f in findings)
+
+
+def _tool_state(tool, gates):
+    return {"tool": tool, "input": {}, "output": "obs", "gates": gates}
+
+
+def test_effectful_tool_after_a_prose_gate_is_flagged():
+    """Static half of control-flow taint (SPEC §6): untrusted context can steer
+    the judge into selecting the effect."""
+    m = M(
+        {
+            "a": state(gates=[gate("the plan is to write", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    findings = lint_machine(m)
+    assert any("effectful tool 'write_file'" in f and f.startswith("note:") for f in findings)
+
+
+def test_hook_on_the_path_clears_the_flow_finding():
+    m = M(
+        {
+            "a": state(gates=[gate("the host approves", hook="approved", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert not any("effectful tool" in f for f in lint_machine(m))
+
+
+def test_read_only_tool_is_not_flagged():
+    m = M(
+        {
+            "a": state(gates=[gate("a lookup is needed", then="ok", to="w")]),
+            "w": _tool_state("search_kb", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert not any("effectful tool" in f for f in lint_machine(m))
+
+
+def test_unknown_tool_counts_as_effectful():
+    """Silence is not a safety claim: an unclassified plugin is flagged."""
+    m = M(
+        {
+            "a": state(gates=[gate("the plan is to act", then="ok", to="w")]),
+            "w": _tool_state("acme_plugin", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert any("effectful tool 'acme_plugin'" in f for f in lint_machine(m))
+
+
+def test_call_into_an_effectful_sub_machine_is_flagged_with_a_registry():
+    """The effect surface does not stop at a `call:` — but resolving the target
+    needs a registry, so the check is skipped when the file is linted alone."""
+    writer = parse_machine(
+        {
+            "machine": "writer",
+            "entry": "w",
+            "budget": 3,
+            "states": {"w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")])},
+        }
+    )
+    reader = parse_machine(
+        {
+            "machine": "reader",
+            "entry": "r",
+            "budget": 3,
+            "states": {"r": _tool_state("search_kb", [gate("otherwise", then="ok", to="END")])},
+        }
+    )
+    m = M(
+        {
+            "a": state(gates=[gate("the plan is to act", then="ok", to="c")]),
+            "c": {
+                "call": "writer",
+                "input": {},
+                "output": "sub",
+                "gates": [gate("otherwise", then="ok", to="END")],
+            },
+        }
+    )
+    registry = {"writer": writer, "reader": reader}
+    assert any(
+        "sub-machine 'writer' reaches an effectful tool" in f and f.startswith("note:")
+        for f in lint_machine(m, registry=registry)
+    )
+    # No registry → nothing to resolve, and no guess.
+    assert not any("sub-machine" in f for f in lint_machine(m))
+    # A read-only sub-machine is not an effect.
+    m.states["c"].call = "reader"
+    assert not any("sub-machine" in f for f in lint_machine(m, registry=registry))
+
+
+def test_taint_carries_through_an_otherwise_but_not_from_the_entry():
+    """`otherwise` is a default, not a confirmation — it carries the mark; a state
+    reached only by defaults from the entry was never judged."""
+    tainted = M(
+        {
+            "a": state(gates=[gate("the plan is to act", then="ok", to="b")]),
+            "b": state(output="o2", gates=[gate("otherwise", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert any("effectful tool" in f for f in lint_machine(tainted))
+    clean = M(
+        {
+            "a": state(gates=[gate("otherwise", then="ok", to="b")]),
+            "b": state(output="o2", gates=[gate("otherwise", then="ok", to="w")]),
+            "w": _tool_state("write_file", [gate("otherwise", then="ok", to="END")]),
+        }
+    )
+    assert not any("effectful tool" in f for f in lint_machine(clean))

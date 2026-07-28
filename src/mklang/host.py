@@ -117,10 +117,8 @@ def _check(
     warnings.extend(more)
     if errors:
         raise PrepareError(errors, warnings)
-    from .hooks import load_hook_registry
+    from .hooks import load_hook_registry, resolve_hook
     from .tools import load_tool_registry
-
-    from .hooks import resolve_hook
 
     tools = load_tool_registry()
     hooks = load_hook_registry()
@@ -192,7 +190,7 @@ def check_machine(
         "ok": not errors,
         "errors": errors,
         "warnings": warnings,
-        "lint": lint_machine(machine, source=source_text),
+        "lint": lint_machine(machine, source=source_text, registry=registry),
     }
 
 
