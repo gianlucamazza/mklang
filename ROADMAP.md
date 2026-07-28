@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **1.0.13**, language **0.3**) and where it can grow —
+Where mklang stands (package **1.1.0**, language **0.3**) and where it can grow —
 technical **and** organizational.
 
 **Tracking rule:** every **Now** / **Next** bullet has a GitHub issue. Work lives
@@ -78,7 +78,7 @@ CaMeL control planes (research).
 
 ---
 
-## Where we are (language 0.3 / package 1.0.13)
+## Where we are (language 0.3 / package 1.1.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
@@ -156,7 +156,7 @@ CaMeL control planes (research).
   tier — add-only — for eleven leaf modules, targeted tests for the three
   weakest modules lifting total coverage to **92%**) and the gate-divergence
   harness widened from one synthetic machine to a **four-machine suite**.
-- **Unreleased (architecture pass):** the gate transition function is **total
+- **1.1.0 (architecture pass):** the gate transition function is **total
   and deterministic given the verdict** — the fused judge may now answer "none of
   the above" instead of being forced to name a condition (SPEC §5 _Totality_),
   with lint requiring a catch-all; **control-flow taint** (ADR 0030) propagates

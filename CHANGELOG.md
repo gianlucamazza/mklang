@@ -8,9 +8,14 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.13`).
+  `pyproject.toml` (currently `1.1.0`).
 
-## [Unreleased]
+## [1.1.0] — 2026-07-29
+
+Three holes in the control model, closed together: a `gates:` list is a total,
+inspectable relation again; untrusted evidence can no longer select an effect on
+its own; and what the tooling actually pins — the trace, the conformance suite,
+the 0.3 freeze — is written down with named falsifiers instead of implied.
 
 ### Changed
 
@@ -1208,7 +1213,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.13...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/gianlucamazza/mklang/compare/v1.0.13...v1.1.0
 [1.0.13]: https://github.com/gianlucamazza/mklang/compare/v1.0.12...v1.0.13
 [1.0.12]: https://github.com/gianlucamazza/mklang/compare/v1.0.11...v1.0.12
 [1.0.11]: https://github.com/gianlucamazza/mklang/compare/v1.0.10...v1.0.11
