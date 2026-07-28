@@ -177,11 +177,19 @@ def check_machine(
     except Exception as e:  # load/validation failure of a path machine
         return {"ok": False, "errors": [getattr(e, "message", str(e))], "warnings": [], "lint": []}
     errors, warnings = semantic_check(machine, registry, strict=strict)
+    source_text = source
+    if source_text is None and path is not None:
+        try:
+            from pathlib import Path as _Path
+
+            source_text = _Path(path).read_text(encoding="utf-8")
+        except OSError:
+            source_text = None
     return {
         "ok": not errors,
         "errors": errors,
         "warnings": warnings,
-        "lint": lint_machine(machine),
+        "lint": lint_machine(machine, source=source_text),
     }
 
 

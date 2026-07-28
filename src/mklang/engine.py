@@ -124,7 +124,9 @@ def _is_otherwise(gate: Gate) -> bool:
 
 
 def _call_hook(gate: Gate, ctx: dict, result: object, hooks: dict) -> bool:
-    fn = hooks.get(gate.hook)
+    from .hooks import resolve_hook
+
+    fn = resolve_hook(gate.hook, hooks)
     if fn is None:
         raise KeyError(f"hook: unknown hook {gate.hook!r} (register it via run(hooks=...))")
     return bool(fn(ctx, result))

@@ -92,10 +92,16 @@ inventing a `system:` field; using `execution: call the search tool`.
 | Give escalate a **safe sink** state (human / fallback)                         | Fail closed only when that is truly required  |
 | Read **trace** (gate, `judge_fallback`, nested `call`) when debugging          | Trust only the final `result` string          |
 | Use `reason: true` when the _why_ must be auditable                            | Dump chain-of-thought into `output` / context |
+| Quote any `when` that contains `#` / `##` (markdown headings)                  | Bare `## Section` in unquoted `when` (YAML truncates) |
+
+**Builtin / parametric hooks** (no plugin): `always_true` / `always_false`,
+`write_failed` (write_file observation failed), `eq:key:value` /
+`neq:key:value` (string equality on a top-level context key). Put hooks **above**
+prose batches so control-flow does not depend on a judge fallback.
 
 Gate judging **follows the state tier** by default. Use config `judge:` only when all gates are deliberately cheap classifications (SPEC §2.1).
 
-Optional: `mklang lint --llm` to probe overlapping prose `when` conditions (advisory; not CI-blocking).
+Optional: `mklang lint --llm` to probe overlapping prose `when` conditions (advisory; not CI-blocking). `mklang lint` also flags unquoted `#` inside raw `when` lines.
 
 ---
 

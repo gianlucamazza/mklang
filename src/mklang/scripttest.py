@@ -19,6 +19,7 @@ llm:   { produce: [...], judge: [...], tokens: [in, out] }
 tools: { name: [...] | {input-substring: output} }
 hooks: { name: [bool, ...] }
 input: { key: value }   # host-supplied context — tainted by provenance (ADR 0025)
+context: { key: value } # synonym for input: (project suites); input wins on clash
 run:   { cost_budget: N, on_truncate: report|halt }  # optional interpreter options
 expect:
   status: done | halt            # required
@@ -162,11 +163,12 @@ def run_scenario(
 ) -> RunResult:
     """Execute `machine` under a scenario's scripted LLM/tools/hooks/run options.
 
-    The scenario is a dict with optional `llm`, `tools`, `hooks`, `input`, and
-    `run` keys — the shared conformance/scenario format. `input:` merges
-    host-supplied values over the machine's `context:`; the engine's provenance
-    rule marks them tainted (ADR 0025), so cases can exercise host-input
-    delimiting. Judging follows each state's tier (SPEC §2.1); with the
+    The scenario is a dict with optional `llm`, `tools`, `hooks`, `input`,
+    `context`, and `run` keys — the shared conformance/scenario format.
+    Host-supplied values merge over the machine's `context:` via ``input:``
+    and/or ``context:`` (``input`` wins on key clash; many project suites use
+    ``context:`` as a synonym). The engine's provenance rule marks them
+    tainted (ADR 0025). Judging follows each state's tier (SPEC §2.1); with the
     collapsed `TIERS` map every tier resolves to one model.
     """
     hooks = scripted_hooks(scenario.get("hooks"))
@@ -176,9 +178,11 @@ def run_scenario(
         from .hooks import BUILTINS
 
         hooks = {**BUILTINS, **hooks}
+    # Accept both `input:` (conformance name) and `context:` (common authoring alias).
+    overrides = {**(scenario.get("context") or {}), **(scenario.get("input") or {})}
     return run(
         machine,
-        {**machine.context, **(scenario.get("input") or {})},
+        {**machine.context, **overrides},
         registry,
         ScriptedLLM(scenario.get("llm")),
         tiers or TIERS,

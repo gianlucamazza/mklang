@@ -1,7 +1,7 @@
 """Code-hook gates: host predicates fire without the LLM (ADR 0006)."""
 
 from mklang.engine import run
-from mklang.hooks import BUILTINS, auto_approve_ok, load_hook_registry
+from mklang.hooks import BUILTINS, auto_approve_ok, load_hook_registry, resolve_hook, write_failed
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 from mklang.loader import semantic_check
@@ -197,3 +197,49 @@ def test_load_hook_registry_merges_extra():
     )
     assert reg["always_true"]({}, None) is False  # extra overrides builtin
     assert reg["auto_approve_ok"]({"amount": 1, "has_receipt": True}, None) is True
+
+
+def test_parametric_eq_hook_and_write_failed():
+    assert resolve_hook("eq:emit_mode:full")({"emit_mode": "full"}, None) is True
+    assert resolve_hook("eq:emit_mode:full")({"emit_mode": "followup_only"}, None) is False
+    assert resolve_hook("neq:emit_mode:full")({"emit_mode": "followup_only"}, None) is True
+    assert write_failed({}, '{"path":"x","written":true,"error":null}') is False
+    assert write_failed({}, '{"path":"x","written":false,"error":"no"}') is True
+    assert write_failed({}, {"written": True, "error": "boom"}) is True
+
+    m = M(
+        {
+            "machine": "h",
+            "entry": "a",
+            "budget": 3,
+            "context": {"emit_mode": "full"},
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        {
+                            "when": "full emit",
+                            "hook": "eq:emit_mode:full",
+                            "then": "ok",
+                            "to": "END",
+                        },
+                        {"when": "otherwise", "then": "ok", "to": "END"},
+                    ],
+                },
+            },
+        }
+    )
+    r = run(
+        m,
+        dict(m.context),
+        {m.name: m},
+        MockLLM(produce_fn=lambda *a: Produced("x")),
+        TIERS,
+        "m",
+        hooks={},  # parametric resolve does not require registry entry
+    )
+    assert r.status == "done"
+    assert r.trace[0]["gate_via"] == "hook"
+    assert r.trace[0]["hook"] == "eq:emit_mode:full"

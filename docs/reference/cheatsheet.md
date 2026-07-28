@@ -75,6 +75,8 @@ gates:
     hook: <name> # optional: host predicate (context, output) -> bool — no LLM
     then: ok # …or repair: N / escalate: true / fail: true
     to: <state-id|END> # omitted only for fail
+# parametric builtins (no plugin): hook: eq:emit_mode:full · neq:… · write_failed
+# quote when strings that contain # / ## (YAML comment truncation)
 ```
 
 | Policy      | Effect                                                                         |

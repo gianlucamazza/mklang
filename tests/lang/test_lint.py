@@ -1,6 +1,6 @@
 """Static-analysis findings from mklang.lint (advisory, never blocking)."""
 
-from mklang.lint import lint_machine
+from mklang.lint import lint_machine, lint_source
 from mklang.model import parse_machine
 
 
@@ -21,6 +21,33 @@ def state(prompt="p", output="o", gates=None):
         "output": output,
         "gates": gates or [gate("otherwise", then="ok", to="END")],
     }
+
+
+def test_unquoted_hash_in_when_source():
+    raw = (
+        "mklang: '0.3'\nmachine: m\nentry: a\nbudget: 2\nstates:\n"
+        "  a:\n    structure: s\n    prompt: p\n    output: o\n    gates:\n"
+        '      - when: the document lacks "# Activation" or any of the required ## sections\n'
+        "        then: ok\n        to: END\n"
+    )
+    findings = lint_source(raw)
+    assert any("unquoted '#'" in f for f in findings)
+    # Quoted when is fine even with ## inside.
+    ok = (
+        "mklang: '0.3'\nmachine: m\nentry: a\nbudget: 2\nstates:\n"
+        "  a:\n    structure: s\n    prompt: p\n    output: o\n    gates:\n"
+        '      - when: "lacks ## sections entirely"\n'
+        "        then: ok\n        to: END\n"
+    )
+    assert not any("unquoted '#'" in f for f in lint_source(ok))
+    # Trailing YAML comment after a complete token is fine (examples/triage.mkl).
+    trail = (
+        "mklang: '0.3'\nmachine: m\nentry: a\nbudget: 2\nstates:\n"
+        "  a:\n    structure: s\n    prompt: p\n    output: o\n    gates:\n"
+        "      - when: otherwise # the summary is prepared, then finish\n"
+        "        then: ok\n        to: END\n"
+    )
+    assert not any("unquoted '#'" in f for f in lint_source(trail))
 
 
 def test_dead_gates_after_otherwise():

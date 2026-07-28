@@ -104,9 +104,55 @@ def _unresolved_interpolation(machine: Machine) -> list[str]:
     return findings
 
 
-def lint_machine(machine: Machine) -> list[str]:
-    """Return advisory findings (never errors — those belong to semantic_check)."""
+def _when_line_has_unquoted_hash(line: str) -> bool:
+    """True when a raw `- when: …` line risks YAML treating `#` as a comment.
+
+    Plain (unquoted) scalars end at the first `` #`` (trailing comment). Authors
+    often write markdown headings like ``## Section`` *inside* the condition and
+    silently truncate it. Fully quoted ``when`` values are fine. A trailing
+    comment after a complete token (``when: otherwise # finish``) is fine too.
+    """
+    stripped = line.lstrip()
+    if not stripped.startswith("- when:"):
+        return False
+    value = stripped[len("- when:") :].strip()
+    if not value:
+        return False
+    # Fully quoted scalar (single line): # inside quotes is not a YAML comment.
+    if (value.startswith('"') and value.rstrip().endswith('"') and len(value) >= 2) or (
+        value.startswith("'") and value.rstrip().endswith("'") and len(value) >= 2
+    ):
+        return False
+    # Strip a trailing YAML comment (` # …`) from an unquoted scalar, then look
+    # for `#` that was *inside* the intended condition (esp. markdown `##`).
+    core = value.split(" #", 1)[0].rstrip()
+    if not core or core.lower() == "otherwise":
+        return False
+    return "#" in core
+
+
+def lint_source(text: str) -> list[str]:
+    """Source-level smells that need the raw YAML (not only the parsed machine)."""
     findings: list[str] = []
+    for i, line in enumerate(text.splitlines(), 1):
+        if _when_line_has_unquoted_hash(line):
+            findings.append(
+                f"line {i}: gate `when` contains unquoted '#' — YAML may treat it as a "
+                "comment and truncate the condition; quote the whole when string "
+                '(e.g. when: "… ## Section …")'
+            )
+    return findings
+
+
+def lint_machine(machine: Machine, *, source: str | None = None) -> list[str]:
+    """Return advisory findings (never errors — those belong to semantic_check).
+
+    Pass ``source`` (raw .mkl text) to also run source-level checks (e.g. unquoted
+    ``#`` in ``when`` lines that YAML comment-truncates before parse).
+    """
+    findings: list[str] = []
+    if source is not None:
+        findings.extend(lint_source(source))
     refs = _referenced_roots(machine)
     escalate_states: list[str] = []
 

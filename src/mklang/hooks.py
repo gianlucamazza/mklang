@@ -3,6 +3,13 @@
 Optional `hook: <name>` on a gate evaluates the named predicate without the LLM
 (ADR 0006 / SPEC §5). The CLI merges builtins with plugins from the
 ``mklang.hooks`` entry-point group (see ``load_hook_registry``).
+
+Parametric builtins (no plugin install needed):
+
+- ``eq:key:value`` / ``neq:key:value`` — string equality on a top-level context key
+  (strip both sides). Example: ``hook: eq:emit_mode:full``.
+- ``write_failed`` — true when the state output looks like a write_file observation
+  with non-null ``error`` or ``written`` is false (JSON object or JSON string).
 """
 
 from __future__ import annotations
@@ -49,6 +56,23 @@ def auto_approve_ok(ctx: dict, output: Any) -> bool:
     return has_receipt(ctx, output) and amount_le_100(ctx, output)
 
 
+def write_failed(_ctx: dict, output: Any) -> bool:
+    """True when output is a write_file-style observation that did not succeed."""
+    obs: Any = output
+    if isinstance(obs, str):
+        try:
+            obs = json.loads(obs)
+        except (TypeError, ValueError):
+            return False
+    if not isinstance(obs, dict):
+        return False
+    if obs.get("error") is not None:
+        return True
+    if "written" in obs and obs.get("written") is False:
+        return True
+    return False
+
+
 def console_workspace_ready(ctx: dict, _output: Any) -> bool:
     """Allow the console brain to reply only after required workspace evidence."""
     if not ctx.get("workspace_required"):
@@ -74,12 +98,39 @@ def console_workspace_ready(ctx: dict, _output: Any) -> bool:
     return False
 
 
+def _context_eq(key: str, value: str, *, negate: bool = False) -> HookFn:
+    def hook(ctx: dict, _output: Any, k: str = key, v: str = value, neg: bool = negate) -> bool:
+        actual = str(ctx.get(k, "")).strip()
+        match = actual == v
+        return (not match) if neg else match
+
+    return hook
+
+
+def resolve_hook(name: str | None, hooks: dict[str, HookFn] | None = None) -> HookFn | None:
+    """Look up a hook by name, including parametric ``eq:`` / ``neq:`` forms."""
+    if not name:
+        return None
+    reg = hooks or {}
+    if name in reg:
+        return reg[name]
+    if name in BUILTINS:
+        return BUILTINS[name]
+    if name.startswith("eq:") or name.startswith("neq:"):
+        parts = name.split(":", 2)
+        if len(parts) == 3 and parts[1]:
+            kind, key, value = parts
+            return _context_eq(key, value, negate=(kind == "neq"))
+    return None
+
+
 BUILTINS: dict[str, HookFn] = {
     "always_true": always_true,
     "always_false": always_false,
     "amount_le_100": amount_le_100,
     "has_receipt": has_receipt,
     "auto_approve_ok": auto_approve_ok,
+    "write_failed": write_failed,
     "console_workspace_ready": console_workspace_ready,
 }
 

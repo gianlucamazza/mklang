@@ -341,7 +341,11 @@ def cmd_lint(args: argparse.Namespace) -> int:
             ok = False
             continue
         errors, warnings = semantic_check(machine, registry, strict=args.strict)
-        findings = lint_machine(machine)
+        try:
+            source_text = Path(path).read_text(encoding="utf-8")
+        except OSError:
+            source_text = None
+        findings = lint_machine(machine, source=source_text)
         findings_total += len(findings)
         # `note:` findings stay advisory under --strict (escalate policy); structural
         # smells (dead gates, repair-only, unresolved templates) still fail --strict.

@@ -8,9 +8,31 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.3"`; `"0.2"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.0.12`).
+  `pyproject.toml` (currently `1.0.13`).
 
 ## [Unreleased]
+
+## [1.0.13] — 2026-07-28
+
+Dogfood from meeting2workflow emission path: deterministic control-flow hooks
+and safer gate authoring.
+
+### Added
+
+- Parametric host hooks resolved at gate time without registration:
+  `eq:key:value` / `neq:key:value` (string equality on a top-level context key).
+- Builtin hook `write_failed` for write_file-style observations (`error` or
+  `written: false`).
+- `lint_source` / `lint_machine(..., source=)`: flag unquoted `#` *inside*
+  raw `when:` conditions (YAML comment truncation of markdown headings);
+  trailing comments after a complete token (e.g. `when: otherwise # note`)
+  are not flagged.
+
+### Fixed
+
+- `mklang test` merges scenario `context:` as well as `input:` (input wins on
+  clash). Project suites that used `context:` as overrides were previously
+  ignored by the runner.
 
 ## [1.0.12] — 2026-07-27
 
@@ -1077,7 +1099,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.12...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.0.13...HEAD
+[1.0.13]: https://github.com/gianlucamazza/mklang/compare/v1.0.12...v1.0.13
 [1.0.12]: https://github.com/gianlucamazza/mklang/compare/v1.0.11...v1.0.12
 [1.0.11]: https://github.com/gianlucamazza/mklang/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/gianlucamazza/mklang/compare/v1.0.9...v1.0.10
