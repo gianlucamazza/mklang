@@ -636,6 +636,15 @@ def build_app(
                 resume=resume,
                 on_event=self.bridge.emit,
                 cancel_requested=self.cancel_event.is_set,
+                # The brain runs under the same host policies as the machines it
+                # commissions; both default to "report", so this changes nothing
+                # until an embedder asks for stricter. Note what `halt` would mean
+                # here: the operator's own message is external data like any other
+                # host input, so every brain decision is tainted and every
+                # effectful console tool (write_machine, run_machine, update_task)
+                # would be refused. That is a deliberate lockdown, not a default.
+                on_truncate=self.tools.on_truncate,
+                on_untrusted_flow=self.tools.on_untrusted_flow,
             )
 
         def _inject_workspace_context(self, ctx: dict) -> dict:
