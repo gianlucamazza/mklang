@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **1.1.0**, language **0.3**) and where it can grow —
+Where mklang stands (package **1.1.1**, language **0.3**) and where it can grow —
 technical **and** organizational.
 
 **Tracking rule:** every **Now** / **Next** bullet has a GitHub issue. Work lives
@@ -78,7 +78,7 @@ CaMeL control planes (research).
 
 ---
 
-## Where we are (language 0.3 / package 1.1.0)
+## Where we are (language 0.3 / package 1.1.1)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.

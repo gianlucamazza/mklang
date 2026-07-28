@@ -586,9 +586,15 @@ def main(argv: list[str] | None = None) -> int:
         fs.allow_writes(True)
     try:
         server = create_server(args.config, args.provider)
-    except ImportError:
+    except ImportError as e:
+        # Two different failures land here and need different fixes: the SDK is
+        # missing, or it is installed on the 1.x line (distro packages lag — Arch
+        # ships python-mcp 1.28 as of this release). Naming the floor and echoing
+        # the import error keeps the second case diagnosable instead of sending
+        # someone to reinstall a package they already have.
         print(
-            "the MCP surface needs the `mcp` package — install with: pip install 'mklang[mcp]'",
+            "the MCP surface needs the MCP Python SDK v2 — install with: "
+            f"pip install 'mklang[mcp]' (requires mcp>=2). Import failed: {e}",
             file=sys.stderr,
         )
         return 2

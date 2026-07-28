@@ -8,6 +8,13 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("mcp")
+# The host surface targets MCP SDK **v2** (`mcp>=2`, ADR 0011): `MCPServer` replaced
+# `FastMCP` and `Client` replaced the in-memory test helper. Probe the module the
+# suite actually needs instead of parsing a version string — and skip, never fail,
+# when an older SDK is installed. This suite runs against *system* packages in the
+# AUR `check()`, where python-mcp is still on the 1.x line; a distro that has not
+# caught up yet must not turn a packaging build into a red test run.
+pytest.importorskip("mcp.server.mcpserver")
 
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
