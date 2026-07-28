@@ -350,7 +350,7 @@ keys resolve server-side from the environment, never over the wire.
 
 ## Status
 
-**Language v0.3 / package 1.0.13** — core complete: states + gates + prose, tiers,
+**Language v0.3 / package 1.1.0** — core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
@@ -361,7 +361,12 @@ structured web `search` (offline stub by default); host tool stub architecture f
 `context.today` / `context.now`; sectioned produce system prompts from
 `structure`+`execution`; output anti-cutoff + context budgets (ADR 0016–0019);
 **untrusted-context delimiting** — provenance taint + `<data-NONCE>` fences in
-produce and judge prompts (SPEC §6, ADR 0025);
+produce and judge prompts (SPEC §6, ADR 0025); **total gate transitions** — the
+fused judge may answer _none of the above_ instead of being forced to name a
+condition, and `lint` requires a catch-all (SPEC §5 _Totality_);
+**control-flow taint** — a transition chosen by a judge reading external data is
+marked, and reaching an effectful `tool:` under it is recorded or refused
+(`--untrusted-flow halt`, SPEC §6 / ADR 0030);
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
