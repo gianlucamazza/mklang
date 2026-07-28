@@ -52,7 +52,8 @@ scope. Scope is the whole blackboard on purpose: the judge is shown OUTPUT plus
 the CONTEXT blob, so one poisoned value anywhere is evidence it read. The flag
 persists (`flow_tainted`), is recorded on the deciding step as
 `decision_tainted`, and is cleared by exactly two things: a `hook:` gate (host
-code chose that transition) and a human reply injected at resume (ADR 0008).
+code chose that transition) and a human reply injected at resume
+(`human.reply` present under ADR 0008 — a bare `human` key is not confirmation).
 `otherwise` neither sets nor clears — a default is not a confirmation.
 
 ### 3. The rule binds at the effect surface

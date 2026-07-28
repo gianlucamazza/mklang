@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import inspect
 import re
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -158,6 +159,33 @@ def _collect_prose_batch(eligible: Eligible, start: int) -> list[tuple[int, Gate
     return batch
 
 
+def _judge_supports_none(llm: object) -> bool:
+    """True when ``llm.judge`` accepts the ``allow_none`` keyword (SPEC §5).
+
+    Inspect the signature instead of calling with the kwarg and catching
+    ``TypeError``: a TypeError raised *inside* a modern adapter (bug, bad
+    argument) must not be misread as "legacy forced-choice adapter".
+    ``**kwargs`` adapters count as supporting the option.
+    """
+    try:
+        params = inspect.signature(llm.judge).parameters  # type: ignore[attr-defined]
+    except (TypeError, ValueError):
+        return False
+    if "allow_none" in params:
+        return True
+    return any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+
+
+def _human_reply_present(ctx: dict) -> bool:
+    """HITL confirmation at resume: a ``human.reply`` value was injected (ADR 0008).
+
+    Only a reply clears control-flow taint — the bare presence of a ``human`` key
+    (author context schema, empty placeholder, unrelated payload) must not.
+    """
+    human = ctx.get("human")
+    return isinstance(human, dict) and "reply" in human
+
+
 def _call_judge(
     deps: _Ctx,
     judge_model: str,
@@ -172,7 +200,7 @@ def _call_judge(
     provider plugins) keep working as a forced choice; ``total`` is False for them so
     the step can be traced as judged under the older, non-total protocol.
     """
-    try:
+    if _judge_supports_none(deps.llm):
         return (
             deps.llm.judge(
                 judge_model,
@@ -184,15 +212,14 @@ def _call_judge(
             ),
             True,
         )
-    except TypeError:
-        verdict = deps.llm.judge(
-            judge_model,
-            conditions,
-            fmt(result),
-            ctx,
-            reasoning=judge_reasoning,
-        )
-        return verdict, False
+    verdict = deps.llm.judge(
+        judge_model,
+        conditions,
+        fmt(result),
+        ctx,
+        reasoning=judge_reasoning,
+    )
+    return verdict, False
 
 
 def _judge_prose_batch(
@@ -838,9 +865,12 @@ class _Runner:
         # the field resumes as externally tainted with a tainted decision, so an
         # old checkpoint cannot launder a decision it never recorded. A human
         # reply injected at resume (`--set human.reply=…`, ADR 0008) is the
-        # confirmation the rule asks for, and clears the flag.
+        # confirmation the rule asks for, and clears the flag — only when the
+        # reply itself is present, not merely a `human` key in the context.
         self.external = set(frame.get("external", self.tainted))
-        self.flow_tainted = bool(frame.get("flow_tainted", True)) and "human" not in self.ctx
+        self.flow_tainted = bool(frame.get("flow_tainted", True)) and not _human_reply_present(
+            self.ctx
+        )
         self.deeper = list(resume[1:]) or None
 
     def _usage(self) -> dict:

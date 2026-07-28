@@ -664,6 +664,24 @@ def test_legacy_adapter_without_allow_none_is_traced_as_forced_choice():
     assert r.trace[0]["gate_via"] == "llm"
 
 
+def test_typeerror_inside_modern_judge_is_not_forced_choice():
+    """A TypeError from a judge that accepts allow_none must not degrade to forced choice.
+
+    The run path wraps host errors as state-error (it does not re-raise); the
+    regression is that we must not silently fall back to a forced-choice call.
+    """
+
+    class BrokenModernLLM(MockLLM):
+        def judge(self, model, conditions, output, context, reasoning=None, allow_none=False):
+            raise TypeError("internal adapter bug")
+
+    r = run1(_two_prose_then_catch_all(), BrokenModernLLM())
+    assert r.status == "halt"
+    assert r.error == "state-error: internal adapter bug"
+    # No successful gate selection — forced-choice fallback would have routed.
+    assert not r.trace or "judge_forced_choice" not in r.trace[0]
+
+
 def test_judge_none_charges_every_batch_it_consulted():
     """A none verdict still costs tokens; both judge calls are charged to the step."""
 

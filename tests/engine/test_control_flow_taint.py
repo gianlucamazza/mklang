@@ -241,6 +241,37 @@ def test_human_reply_at_resume_clears_the_flag():
     assert r.status == "done"
 
 
+def test_human_key_without_reply_does_not_clear_taint():
+    """A bare `human` key (schema placeholder / unrelated payload) is not confirmation."""
+    m = machine()
+    placeholder = {
+        "machine": "cf",
+        "state": "act",
+        "ctx": {"request": "x", "plan": "act", "human": ""},
+        "steps": 1,
+        "total_in": 0,
+        "total_out": 0,
+        "feedback": "",
+        "repair_left": [],
+        "trace": [],
+        "tainted": ["request", "plan", "human"],
+        "flow_tainted": True,
+        "external": ["request", "plan", "human"],
+    }
+    r = run(
+        m,
+        {},
+        {m.name: m},
+        MockLLM(judge_fn=lambda *a: 0),
+        TIERS,
+        "m",
+        tools={"write_file": lambda i: "written"},
+        resume=[placeholder],
+        on_untrusted_flow="halt",
+    )
+    assert r.error == "untrusted-control-flow"
+
+
 def test_unknown_tools_are_effectful_by_default():
     assert is_effectful("write_file") is True
     assert is_effectful("search_kb") is False

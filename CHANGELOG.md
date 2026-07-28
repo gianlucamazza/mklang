@@ -26,7 +26,9 @@ All notable changes to mklang are documented here. The format follows
   that predates the option — those adapters keep working unchanged).
 - `LLM.judge` takes `allow_none: bool = False`; `build_judge_user` renders the
   extra numbered option. Third-party adapters that do not accept the keyword are
-  detected and called in the old forced-choice form.
+  detected via signature inspection (not by catching `TypeError`) and called in
+  the old forced-choice form, so a `TypeError` raised *inside* a modern adapter
+  is not misread as "legacy".
 - An unresolvable `hook:` now halts with a clean
   `state-error: hook: unknown hook '<name>' …` (it raises `LookupError`, whose
   `str()` does not re-quote the message, instead of `KeyError`).
@@ -50,7 +52,8 @@ All notable changes to mklang are documented here. The format follows
   came from outside the run: host inputs, tool observations, call results, and
   anything derived from them), marks a transition `decision_tainted` when a judge
   selected it with external data in scope, and clears the mark on a `hook:` gate
-  or a human reply at resume. A tainted decision reaching an **effectful** tool
+  or a human reply at resume (`human.reply` present — a bare `human` key is not
+  confirmation). A tainted decision reaching an **effectful** tool
   state is recorded as `untrusted_control_flow`; `run(..., on_untrusted_flow=
   "halt")` / `--untrusted-flow halt` refuses the effect with
   `untrusted-control-flow`. Tools are classified read-only/effectful
