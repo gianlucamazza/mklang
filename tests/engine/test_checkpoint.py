@@ -2,10 +2,14 @@
 
 import json
 
+import pytest
+
 from mklang import cli
 from mklang.checkpoint import (
+    decode_checkpoint,
     decode_repair,
     encode_repair,
+    file_sha256,
     load_checkpoint,
     save_checkpoint,
     verify_hash,
@@ -367,3 +371,90 @@ def test_cli_resume_guards(tmp_path, capsys, monkeypatch, caplog):
     with caplog.at_level(logging.WARNING, logger="mklang.cli"):
         assert cli.main(["resume", str(ck_path), "--force"]) == 99
     assert any("changed since checkpoint" in r.message for r in caplog.records)
+
+
+# -- the store seam (ADR 0032) ------------------------------------------------
+
+
+class _Memory:
+    """A store that is not a filesystem, which is the whole point of the seam."""
+
+    def __init__(self) -> None:
+        self.blobs: dict[str, bytes] = {}
+
+    def put(self, data: bytes, *, key: str) -> str:
+        location = f"mem://{len(self.blobs)}"
+        self.blobs[location] = data
+        return location
+
+    def get(self, location: str) -> bytes:
+        return self.blobs[location]
+
+
+def _frames() -> list[dict]:
+    return [
+        {
+            "machine": "demo",
+            "state_id": "s",
+            "ctx": {"a": 1},
+            "steps": 1,
+            "total_in": 0,
+            "total_out": 0,
+            "feedback": "",
+            "repair_left": [],
+            "trace": [],
+        }
+    ]
+
+
+def test_a_store_that_is_not_a_path_round_trips(tmp_path):
+    """A location is opaque here: mklang never parses it, joins it, or assumes it is a
+    file. `mem://0` is a location a filesystem could not have produced."""
+    mk = tmp_path / "m.mkl"
+    mk.write_text(MK, encoding="utf-8")
+    store = _Memory()
+
+    location = save_checkpoint(
+        tmp_path / "unused.json", "demo", mk, "hitl", _frames(), 100, store=store
+    )
+
+    assert location == "mem://0"
+    assert not (tmp_path / "unused.json").exists(), "the default store still wrote a file"
+    assert load_checkpoint(location, store=store)["machine"] == "demo"
+
+
+def test_the_store_is_handed_bytes_it_does_not_have_to_understand(tmp_path):
+    """The envelope stays mklang's. A store that received a dict would have to know the
+    format in order to serialize it, and encryption would end up in this repository."""
+    mk = tmp_path / "m.mkl"
+    mk.write_text(MK, encoding="utf-8")
+    store = _Memory()
+
+    save_checkpoint(tmp_path / "c.json", "demo", mk, "hitl", _frames(), 100, store=store)
+    (data,) = store.blobs.values()
+
+    assert isinstance(data, bytes)
+    assert json.loads(data)["format"] == 1
+    assert decode_checkpoint(data)["machine_sha256"] == file_sha256(mk)
+
+
+def test_no_store_behaves_exactly_as_before(tmp_path):
+    """The seam is additive (ADR 0026): the seven existing call sites pass no store."""
+    mk = tmp_path / "m.mkl"
+    mk.write_text(MK, encoding="utf-8")
+    path = tmp_path / "c.json"
+
+    returned = save_checkpoint(path, "demo", mk, "hitl", _frames(), 100)
+
+    assert returned == str(path)
+    assert path.exists()
+    assert oct(path.stat().st_mode)[-3:] == "600", "0600 moved to the file store and stayed"
+    assert load_checkpoint(path)["machine"] == "demo"
+
+
+def test_a_blob_that_is_not_a_checkpoint_is_refused_whatever_the_store(tmp_path):
+    store = _Memory()
+    location = store.put(b'{"format": 99}', key="whatever")
+
+    with pytest.raises(ValueError, match="not an mklang checkpoint"):
+        load_checkpoint(location, store=store)
