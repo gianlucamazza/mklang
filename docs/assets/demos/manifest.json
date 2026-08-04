@@ -53,14 +53,13 @@
   "schema": 2,
   "source": {
     "files": {
-      "config/runtime.example.yaml": "08e4cca7c7d903528db7b6d6a122aed4178889a3e96193743c27fa867389f066",
+      "config/runtime.example.yaml#providers.deepseek": "754e021cbbdcdf873f0b133d797e84ad93bca506faea620a353378461efbed51",
       "demos/tapes/agent.tape": "2b5620047d7808574e527207720ffeceddcd0ada4142e2896731ddd77df6310a",
       "demos/tapes/language.tape": "1979c2a38fcf3a2bc20635a4172728d2e48e1ee183ef2e3e085a3a34505aeeb5",
       "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
       "examples/news_search.mkl": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mkl": "c2fabb98ec3458cb6454f25ea1ef3cbc4c6dbd28797b5825fa13433c2696a7bc",
-      "scripts/demo_assets.py": "c6eb140c79b955755093dbeb8ed29119ab2f84e6529417852744dabfda119560",
-      "src/mklang/cli.py": "0d01202d42496d0863fb9cba7922082d6ca148dc669c3d329fbb9c8e400c28c7",
+      "scripts/demo_assets.py": "f7532c1b3b82d1279dca48fb3d0728a9043c056e8dfebdd7f4c089eff0acce94",
       "src/mklang/config.py": "7f70ab9d8c4e101fee24e8b5c8353a55827412ec7ab06c3273f8df0cb2fedd90",
       "src/mklang/console/__init__.py": "89e07bbecf189192a684db26463237ecdc31a4cca146e68c5374029450d0ac2c",
       "src/mklang/console/app.py": "3f2eab62dfcb1fa895d769a4a2d39ff98b1507836d1bdad35cf93eadbeda3425",
@@ -86,7 +85,7 @@
       "src/mklang/search.py": "2e0f08175e3e4902e8c933dd5f429f9e303e210ca9f93aee50bd669b7ebe36c5",
       "src/mklang/tools.py": "2ac751ef995dbcade7eef2bb2e3d34af472ca4d190f6aade453d94f3cdb03fb2"
     },
-    "sha256": "d29f601fbd85dd77d868ad821746f5d3dcfe2c80033cb43044bee888c871d853"
+    "sha256": "ee14b133d4b69278bab84b2c4cdaaf66031e03bc872b39574b34a32f3ca8ac36"
   },
   "toolchain": {
     "font": {
@@ -96,7 +95,7 @@
     },
     "vhs": {
       "archive_sha256": "99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009",
-      "reported_version": "v0.11.0 (c6af91a)",
+      "reported_version": "v0.11.0",
       "version": "0.11.0"
     }
   }

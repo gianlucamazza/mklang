@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -24,20 +25,32 @@ MANIFEST = ASSET_DIR / "manifest.json"
 DEMOS = ("agent", "language")
 FORMATS = ("webm", "gif", "txt")
 
-# Only the files the two live demos actually exercise; editing one of these
-# should force a demo re-pin, nothing else. (agent → console + news_search live
-# web; language → react.mkl + the calc tool via the CLI.)
+PROVIDER = "deepseek"
+
+# Only the files the two live demos actually exercise. (agent → console +
+# news_search live web; language → react.mkl + the calc tool via the CLI.)
+#
+# Editing one of these makes the recordings *suspect*, not stale: it is a signal that a
+# regeneration may be due, and `check-drift` says so without failing. What it cannot do
+# is decide — 35 of the 42 manifest commits in the 90 days to 2026-08-04 re-pinned these
+# hashes with the assets byte-identical, because the changed file did not alter anything
+# on screen. A gate that is right one time in six is answering the wrong question; the
+# freshness guarantee lives in `MAX_AGE_DAYS` and the scheduled regeneration instead.
+#
+# Two entries are deliberately absent. `src/mklang/cli.py` is the most-edited file in the
+# repository (41 commits in that same window) and the demos show a handful of its output
+# lines: no file-level hash can tell those apart. `config/runtime.example.yaml` is here
+# instead as a *section* — see `_provider_section_digest` — because the demos run against
+# one provider and the rest of that file is never on screen.
 SOURCE_PATTERNS = (
     "demos/tapes/*.tape",
     "demos/toolchain.conf",
     "scripts/demo_assets.py",
-    "config/runtime.example.yaml",
     "examples/react.mkl",
     "examples/news_search.mkl",
     "src/mklang/search.py",
     "src/mklang/tools.py",
     "src/mklang/data/console/agent.mkl",
-    "src/mklang/cli.py",
     "src/mklang/config.py",
     "src/mklang/engine.py",
     "src/mklang/presentation.py",
@@ -45,6 +58,10 @@ SOURCE_PATTERNS = (
     "src/mklang/llm/*.py",
     "src/mklang/console/*.py",
 )
+
+RUNTIME_EXAMPLE = ROOT / "config" / "runtime.example.yaml"
+# Written like a path with a fragment so a drift message names what actually moved.
+PROVIDER_SECTION_KEY = f"config/runtime.example.yaml#providers.{PROVIDER}"
 
 REQUIRED_TEXT = {
     "agent": (
@@ -78,6 +95,15 @@ TOTAL_MAX = 16 * 1024 * 1024
 MIN_DURATION = 8.0
 # Agent + live web is latency-variable; 2026-07-27 CI hit ~63s wall playback.
 MAX_DURATION = 75.0
+# The freshness guarantee that replaces "the sources have not moved". Weaker and true,
+# rather than strong and asserted by hand: past this, the recordings are describing a
+# version of the software nobody is running. Checked from `generated_at`, reported by
+# `staleness`, and acted on by the scheduled regeneration — never by failing a build.
+MAX_AGE_DAYS = 90
+# A tape that fails twice is a real failure; a tape that fails once is usually the
+# provider being slow. Two attempts, not more: past that the run is paying for latency.
+RENDER_ATTEMPTS = 2
+RETRY_PAUSE_SECONDS = 5
 ANSI = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
@@ -131,8 +157,28 @@ def source_files() -> list[Path]:
     return sorted(paths)
 
 
+def _provider_section_digest() -> str:
+    """Hash of the canonical provider's block in the runtime example, not of the file.
+
+    The demos run against `PROVIDER` and never show the other providers, so renaming a
+    model in the OpenAI block used to invalidate two recordings it does not appear in.
+    Hashing the parsed section also makes the digest immune to comment and whitespace
+    edits, which is the majority of what that file receives.
+    """
+    config = yaml.safe_load(RUNTIME_EXAMPLE.read_text(encoding="utf-8"))
+    try:
+        section = config["providers"][PROVIDER]
+    except (KeyError, TypeError) as exc:
+        raise DemoError(
+            f"{RUNTIME_EXAMPLE.relative_to(ROOT)} has no providers.{PROVIDER} block"
+        ) from exc
+    encoded = json.dumps(section, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def source_state() -> dict:
     files = {path.relative_to(ROOT).as_posix(): _sha256(path) for path in source_files()}
+    files[PROVIDER_SECTION_KEY] = _provider_section_digest()
     encoded = json.dumps(files, sort_keys=True, separators=(",", ":")).encode()
     return {"sha256": hashlib.sha256(encoded).hexdigest(), "files": files}
 
@@ -147,11 +193,40 @@ def render() -> None:
     _verify_render_toolchain()
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
     for demo in DEMOS:
-        for extension in FORMATS:
-            _asset_path(demo, extension).unlink(missing_ok=True)
-        _run(["vhs", str(TAPE_DIR / f"{demo}.tape")])
+        _render_one(demo)
         _normalize_transcript(_asset_path(demo, "txt"))
         _derive_gif(_asset_path(demo, "webm"), _asset_path(demo, "gif"))
+
+
+def _render_one(demo: str, attempts: int = RENDER_ATTEMPTS) -> None:
+    """One tape, retried once.
+
+    The tapes wait on strings appearing on screen, from a console talking to a live
+    provider and a live search API. When the answer is slower than the tape's window,
+    VHS times out and the job dies — 2 successes in 7 runs to 2026-08-04, and the
+    failures were latency, not the change under test.
+
+    Retried per demo rather than per job: `DEMOS` renders in order, so without this a
+    slow `agent` also throws away a `language` that would have succeeded.
+    """
+    last: subprocess.CalledProcessError | None = None
+    for attempt in range(1, attempts + 1):
+        for extension in FORMATS:
+            _asset_path(demo, extension).unlink(missing_ok=True)
+        try:
+            _run(["vhs", str(TAPE_DIR / f"{demo}.tape")])
+            return
+        except subprocess.CalledProcessError as exc:
+            last = exc
+            if attempt < attempts:
+                print(
+                    f"demo-assets: {demo} tape failed (attempt {attempt}/{attempts}); "
+                    "retrying — live latency is the usual cause",
+                    file=sys.stderr,
+                )
+                time.sleep(RETRY_PAUSE_SECONDS)
+    assert last is not None
+    raise last
 
 
 def _verify_render_toolchain() -> None:
@@ -330,21 +405,40 @@ def validate() -> dict[str, dict]:
     return metadata
 
 
+def _provenance(metadata: dict[str, dict], commit: str) -> tuple[str, str]:
+    """When these recordings were made — not when the manifest was last rewritten.
+
+    `manifest` is run on its own to re-pin source hashes, with the assets untouched.
+    Stamping a fresh `generated_at` there would reset the clock `MAX_AGE_DAYS` reads,
+    so a file that never changes could keep the recordings "fresh" forever while they
+    aged. The timestamp therefore moves only when an asset hash does.
+    """
+    if MANIFEST.is_file():
+        previous = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        unchanged = {
+            path: entry.get("sha256") for path, entry in (previous.get("assets") or {}).items()
+        } == {path: entry.get("sha256") for path, entry in metadata.items()}
+        if unchanged and previous.get("generated_at") and previous.get("generated_from"):
+            return str(previous["generated_at"]), str(previous["generated_from"])
+    return datetime.now(UTC).isoformat(), commit
+
+
 def write_manifest(metadata: dict[str, dict] | None = None) -> None:
     from mklang import __version__
 
     metadata = metadata or validate()
-    config = yaml.safe_load((ROOT / "config/runtime.example.yaml").read_text(encoding="utf-8"))
-    tiers = config["providers"]["deepseek"]["tiers"]
+    config = yaml.safe_load(RUNTIME_EXAMPLE.read_text(encoding="utf-8"))
+    tiers = config["providers"][PROVIDER]["tiers"]
     commit = _run(["git", "rev-parse", "HEAD"], capture=True)
     vhs_version = _run(["vhs", "--version"], capture=True).removeprefix("vhs version ")
     toolchain = toolchain_config()
+    generated_at, generated_from = _provenance(metadata, commit)
     payload = {
         "schema": 2,
-        "provider": "deepseek",
+        "provider": PROVIDER,
         "models": tiers,
-        "generated_at": datetime.now(UTC).isoformat(),
-        "generated_from": commit,
+        "generated_at": generated_at,
+        "generated_from": generated_from,
         "package_version": __version__,
         "toolchain": {
             "vhs": {
@@ -364,12 +458,83 @@ def write_manifest(metadata: dict[str, dict] | None = None) -> None:
     MANIFEST.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def check_drift() -> None:
+def _read_manifest() -> dict:
     if not MANIFEST.is_file():
         raise DemoError(f"missing {MANIFEST.relative_to(ROOT)}; regenerate demos")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    if manifest.get("schema") != 2 or manifest.get("provider") != "deepseek":
+    if manifest.get("schema") != 2 or manifest.get("provider") != PROVIDER:
         raise DemoError("unsupported demo manifest or non-canonical provider")
+    return manifest
+
+
+def staleness(manifest: dict | None = None) -> dict:
+    """Whether the recordings are worth regenerating — a report, never a verdict.
+
+    Two independent reasons, deliberately kept apart from `check_drift`: a source moved
+    (the recordings *might* be out of date, and only a person or a re-render can say),
+    or they are older than `MAX_AGE_DAYS` (they describe a version nobody runs).
+
+    Neither is an error. This is what the scheduled regeneration reads to decide whether
+    to spend live provider calls, and what `check-drift` prints so the person who touched
+    a source knows why nothing failed.
+    """
+    manifest = manifest if manifest is not None else _read_manifest()
+    current = source_state()
+    recorded = manifest.get("source") or {}
+    changed: list[str] = []
+    if current["sha256"] != recorded.get("sha256"):
+        before = recorded.get("files") or {}
+        changed = sorted(
+            path
+            for path in set(before) | set(current["files"])
+            if before.get(path) != current["files"].get(path)
+        )
+
+    age_days: float | None = None
+    generated_at = manifest.get("generated_at")
+    if generated_at:
+        try:
+            age_days = (datetime.now(UTC) - datetime.fromisoformat(generated_at)).days
+        except ValueError:
+            age_days = None
+
+    expired = age_days is not None and age_days > MAX_AGE_DAYS
+    return {
+        "changed_sources": changed,
+        "age_days": age_days,
+        "expired": expired,
+        "stale": bool(changed) or expired,
+    }
+
+
+def report_staleness(manifest: dict | None = None) -> dict:
+    """`staleness`, said out loud on stderr. Returns the report so callers can branch."""
+    report = staleness(manifest)
+    if report["changed_sources"]:
+        print(
+            "demo-assets: sources moved since these recordings were made: "
+            + ", ".join(report["changed_sources"])
+            + "\n  This is a notice, not a failure. If the change alters what the demos"
+            " show, regenerate them (Demo assets workflow); if it does not, re-pin with"
+            " `demo_assets.py manifest` or leave it to the scheduled run.",
+            file=sys.stderr,
+        )
+    if report["expired"]:
+        print(
+            f"demo-assets: recordings are {report['age_days']} days old "
+            f"(limit {MAX_AGE_DAYS}); the scheduled regeneration will refresh them.",
+            file=sys.stderr,
+        )
+    return report
+
+
+def check_drift() -> None:
+    """The half that blocks: nobody has edited the published assets by hand.
+
+    Source drift used to fail here too, and that is what this function stopped doing —
+    see the note above `SOURCE_PATTERNS`. It is reported by `report_staleness` instead.
+    """
+    manifest = _read_manifest()
     toolchain = toolchain_config()
     expected_toolchain = {
         "vhs": {
@@ -387,16 +552,6 @@ def check_drift() -> None:
         recorded = recorded_toolchain.get(component) or {}
         if any(recorded.get(key) != value for key, value in expected.items()):
             raise DemoError(f"demo toolchain drift: {component}")
-    current = source_state()
-    recorded = manifest.get("source") or {}
-    if current["sha256"] != recorded.get("sha256"):
-        before = recorded.get("files") or {}
-        changed = sorted(
-            path
-            for path in set(before) | set(current["files"])
-            if before.get(path) != current["files"].get(path)
-        )
-        raise DemoError("demo source drift: " + ", ".join(changed))
     for relative, expected in (manifest.get("assets") or {}).items():
         path = ROOT / relative
         if not path.is_file():
@@ -417,7 +572,10 @@ def check_drift() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("render", "validate", "manifest", "check-drift", "all"))
+    parser.add_argument(
+        "command",
+        choices=("render", "validate", "manifest", "check-drift", "staleness", "all"),
+    )
     args = parser.parse_args(argv)
     try:
         if args.command in ("render", "all"):
@@ -427,6 +585,14 @@ def main(argv: list[str] | None = None) -> int:
             write_manifest(metadata)
         if args.command in ("check-drift", "all"):
             check_drift()
+            report_staleness()
+        if args.command == "staleness":
+            # The one command that exits non-zero without anything being wrong: it is a
+            # question ("is a regeneration due?"), asked by the scheduled workflow so it
+            # can skip the live provider calls when the answer is no.
+            report = report_staleness()
+            print(f"demo-assets: staleness stale={report['stale']}")
+            return 1 if report["stale"] else 0
     except (DemoError, FileNotFoundError, subprocess.CalledProcessError, ValueError) as exc:
         print(f"demo-assets: {exc}", file=sys.stderr)
         return 1

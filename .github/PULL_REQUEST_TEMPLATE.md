@@ -12,4 +12,6 @@ SPEC.md → schema (+ bundled copy) → interpreter → conformance case → exa
 - [ ] `uv run --all-extras mypy` (zero suppressions) and `ruff check` + `ruff format --check`
 - [ ] Language change: SPEC + schema + conformance case updated (or N/A)
 - [ ] `CHANGELOG.md` entry (and `ROADMAP.md` if a roadmap item shipped)
-- [ ] Touched a demo-pinned source file: `demo_assets.py manifest` re-pinned (or N/A)
+- [ ] Changed what the demos show on screen: said so here, so the next regeneration is
+      not a surprise (or N/A — a demo-pinned source moving no longer blocks this PR, and
+      re-pinning with `demo_assets.py manifest` is optional)
