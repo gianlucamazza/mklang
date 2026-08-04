@@ -1,6 +1,13 @@
 """mklang — reference interpreter for the mklang language (spec 0.3 / package 1.1.1)."""
 
-from .checkpoint import load_checkpoint, save_checkpoint
+from .checkpoint import (
+    CheckpointStore,
+    FileCheckpointStore,
+    decode_checkpoint,
+    encode_checkpoint,
+    load_checkpoint,
+    save_checkpoint,
+)
 from .engine import RunResult, run
 from .lint import lint_machine
 from .loader import load_dict, load_machine, semantic_check, validate_dict
@@ -9,10 +16,14 @@ from .scripttest import match_expectation, run_scenario
 
 __version__ = "1.1.1"
 __all__ = [
+    "CheckpointStore",
+    "FileCheckpointStore",
     "Gate",
     "Machine",
     "RunResult",
     "State",
+    "decode_checkpoint",
+    "encode_checkpoint",
     "lint_machine",
     "load_checkpoint",
     "load_dict",
