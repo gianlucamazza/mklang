@@ -1,6 +1,7 @@
 """Suspend/resume checkpoint semantics against a MockLLM (ADR 0007)."""
 
 import json
+import os
 
 import pytest
 
@@ -448,8 +449,9 @@ def test_no_store_behaves_exactly_as_before(tmp_path):
 
     assert returned == str(path)
     assert path.exists()
-    assert oct(path.stat().st_mode)[-3:] == "600", "0600 moved to the file store and stayed"
     assert load_checkpoint(path)["machine"] == "demo"
+    if os.name != "nt":  # POSIX permission bits are not meaningful on Windows
+        assert oct(path.stat().st_mode)[-3:] == "600", "0600 moved to the file store and stayed"
 
 
 def test_a_blob_that_is_not_a_checkpoint_is_refused_whatever_the_store(tmp_path):
