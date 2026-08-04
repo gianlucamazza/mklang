@@ -2,6 +2,18 @@ name: Demo assets
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: Render even when nothing is stale
+        type: boolean
+        default: false
+  # Monthly, because the recordings are dated artifacts rather than derived ones: what
+  # `check-drift` stopped asserting (that they match the current sources) is replaced by
+  # a weaker claim this schedule can actually keep — they are no older than
+  # MAX_AGE_DAYS, and a moved source gets picked up within the month. Runs cost live
+  # provider calls, so the job checks whether anything is stale before spending them.
+  schedule:
+    - cron: "0 4 1 * *"
 
 permissions:
   contents: write
@@ -24,7 +36,26 @@ jobs:
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v9.0.0
+      - name: Decide whether anything needs rendering
+        id: staleness
+        # Before the toolchain install and before any live call. `staleness` exits 1 when
+        # a source moved or the recordings are past MAX_AGE_DAYS, which is the only
+        # reason to spend DeepSeek and Tavily calls on a schedule. A manual dispatch can
+        # override it — that is what `force` is for.
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            echo "render=true" >> "$GITHUB_OUTPUT"
+            echo "Forced by dispatch input."
+            exit 0
+          fi
+          if uv run python scripts/demo_assets.py staleness; then
+            echo "render=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing stale: no sources moved and the recordings are within MAX_AGE_DAYS."
+          else
+            echo "render=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Install pinned VHS, font, and media tools
+        if: steps.staleness.outputs.render == 'true'
         run: |
           set -a
           source demos/toolchain.conf
@@ -54,14 +85,17 @@ jobs:
           fc-cache --force "$font_dir"
           test "$(fc-match --format='%{family}' "$FONT_FAMILY")" = "$FONT_FAMILY"
       - name: Render and validate live DeepSeek demos
+        if: steps.staleness.outputs.render == 'true'
         run: uv run --extra console python scripts/demo_assets.py all
       - uses: actions/upload-artifact@v7
+        if: steps.staleness.outputs.render == 'true'
         with:
           name: demo-assets-preview
           path: docs/assets/demos/
           if-no-files-found: error
       - name: Push the generated asset branch
         id: push
+        if: steps.staleness.outputs.render == 'true'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -76,7 +110,7 @@ jobs:
           git push --force-with-lease origin "HEAD:$BRANCH"
           echo "changed=true" >> "$GITHUB_OUTPUT"
       - name: Open or update the review PR
-        if: steps.push.outputs.changed == 'true'
+        if: steps.staleness.outputs.render == 'true' && steps.push.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

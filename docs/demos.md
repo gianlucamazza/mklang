@@ -56,7 +56,22 @@ script renders WebM recordings, derives compact GIF previews, validates
 dimensions, duration, size, transcripts, and secret leakage, then records exact
 source, toolchain, and asset hashes in `manifest.json`.
 
-Regeneration is intentionally manual through the **Demo assets** GitHub Actions
-workflow because it performs live provider calls. The workflow opens or updates
-a review PR; automated checks catch source drift, while a human reviewer confirms
-readability, pacing, accuracy, and the absence of sensitive information.
+Regeneration runs through the **Demo assets** GitHub Actions workflow, on the first
+of each month and on demand, because it performs live provider calls. It skips the
+render entirely when nothing is stale. The workflow opens or updates a review PR,
+where a human reviewer confirms readability, pacing, accuracy, and the absence of
+sensitive information.
+
+Two of those hashes are checked differently, and the difference is deliberate:
+
+- **Asset hashes block.** `demo_assets.py check-drift` fails if a published recording
+  does not match the manifest — the guarantee that nothing here was edited by hand.
+- **Source hashes do not.** A moved source means these recordings _might_ be out of
+  date; only a person or a re-render can say whether they are. `check-drift` reports it
+  and passes, `demo_assets.py staleness` answers the same question for the scheduled
+  workflow, and `demo_assets.py manifest` re-pins offline when the answer is "these are
+  still accurate".
+
+What replaces the blocking source check is a claim the schedule can keep: the recordings
+are never older than `MAX_AGE_DAYS`. The manifest's `generated_at` moves only when an
+asset actually changes, so re-pinning cannot quietly reset that clock.

@@ -10,6 +10,45 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `1.1.1`).
 
+## [Unreleased]
+
+### Changed
+
+- **The demo-asset gate stopped asking a question it could not answer.**
+  `demo_assets.py check-drift` failed on *source* drift — "a file the demos exercise has
+  changed" — and the only honest way to clear it was a live re-render, a workflow that
+  succeeded **2 times out of 7**. The result was predictable and visible in the history:
+  of the 42 manifest commits in the 90 days to 2026-08-04, **35 re-pinned the source
+  hashes with the recordings byte-identical**, because the changed file did not alter
+  anything on screen. That assertion was made by hand and checked by nobody, which is
+  precisely the work the gate existed to mechanise — and `.github/PULL_REQUEST_TEMPLATE.md`
+  had institutionalised it as a checkbox.
+
+  Asset hashes, the manifest asset set, orphan files on disk and the toolchain still
+  block: those answer "has anybody edited what we published", which is mechanical. Source
+  drift and age are now reported by `check-drift` and returned by the new
+  `demo_assets.py staleness` command, which exits non-zero when a regeneration is due —
+  the signal the **Demo assets** workflow now reads, monthly, to decide whether to spend
+  live provider calls at all.
+
+  What replaces the blocking check is a guarantee the schedule can keep: the recordings
+  are never older than `MAX_AGE_DAYS` (90). `generated_at` moves only when an asset hash
+  moves, so re-pinning can no longer reset that clock.
+
+- **`SOURCE_PATTERNS` narrowed where the file was not the unit.** `src/mklang/cli.py` is
+  out — 41 commits in the same window, of which the demos show a handful of output lines,
+  and no file-level hash can distinguish them. `config/runtime.example.yaml` is in as a
+  *section*: the digest now covers `providers.deepseek` only, so renaming a model under
+  another provider — or editing a comment — no longer invalidates two recordings it never
+  appears in.
+
+### Fixed
+
+- **A flaky tape no longer discards a good one.** `render()` retries each tape once
+  (`RENDER_ATTEMPTS`), per demo rather than per job: `DEMOS` renders in order, so a slow
+  `agent` used to throw away a `language` that had not been attempted yet. The failures
+  being retried are live-latency timeouts on `Wait+Screen`, not the change under test.
+
 ## [1.1.1] — 2026-07-29
 
 ### Fixed
