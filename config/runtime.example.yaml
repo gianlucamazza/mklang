@@ -51,7 +51,7 @@ providers:
         thinking: disabled # Haiku 4.5 does not support `effort` — omit it here
 
   # --- OpenAI --------------------------------------------------------------
-  # Live-validated 2026-08-03: each model below answered a real chat.completions
+  # Live-validated 2026-08-04: each model below answered a real chat.completions
   # call (with reasoning_effort) on this account. GPT-5.6 is GA since 2026-07-09 —
   # luna (fast; -80% price since 07-30), terra (balanced), sol (strongest).
   # Pro variants of earlier series are Responses-API only — the reference adapter
@@ -117,7 +117,7 @@ providers:
     tiers:
       fast: google/gemini-3-flash
       balanced: anthropic/claude-sonnet-5
-      reasoning: openai/gpt-5.6-sol # listed on OpenRouter's catalog 2026-08-03
+      reasoning: openai/gpt-5.6-sol # listed on OpenRouter's catalog 2026-08-04
     # judge: openai/gpt-5.6-luna # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
 
   # --- xAI (Grok) ----------------------------------------------------------
