@@ -1,45 +1,46 @@
 > PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines
  ⭘                                               mklang console
-  ● READY  ·  deepseek  ·  tokens 0+0  ·  session 20260727-194605-7f87
+  ● READY  ·  deepseek  ·  tokens 0+0  ·  session 20260804-124136-08f1
 │  Ready. Ask the agent what should happen, or type /help.                                                     │
 ║ Ask the agent or type / for commands                                                                         ║
  f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                                         ▏^p palette
 ║ /budget 100000                                                                                               ║
 │  default cost budget → 100000 tokens                                                                         │
 ║ RUN news_search now. Topic: this week's open-source AI models. Short brief with links.                       ║
-  ⏸ WAITING  do_run  ·  deepseek  ·  tokens 7807+1911  ·  session 20260727-194605-7f87
+  ⏸ WAITING  do_run  ·  deepseek  ·  tokens 2970+593  ·  session 20260804-124136-08f1
+│  default cost budget → 100000 tokens                                                                     ▂▂  │
 │  you: RUN news_search now. Topic: this week's open-source AI models. Short brief with links.                 │
-│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once  ▆▆  │
+│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once      │
+│  for the session?  → type y / yes / sì / always yes  (Enter = no)                                            │
 │ ▼ RUN news_search now. Topic: this week's open-source AI model                                               │
 │ └── ▼ console_agent                                                                                          │
-│     ├── ● decide ok → prepare_workspace_read                                                                 │
-│     ├── ● prepare_workspace_read ok → workspace_read                                                         │
-│     ├── ● workspace_read ok → decide                                                                         │
 │     ├── ● decide ok → prepare_run                                                                            │
 │     ├── ● prepare_run ok → do_run                                                                            │
 │     └── ◐ do_run  tool·balanced                                                                              │
 ║ answer here, then Enter…                                                                                     ║
-│  default cost budget → 100000 tokens                                                                     ▂▂  │
-│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once      │
-│  for the session?  → type y / yes / sì / always yes  (Enter = no)                                            │
 ║ always yes                                                                                                   ║
-  ● READY  ·  deepseek  ·  tokens 20895+4989  ·  session 20260727-194605-7f87
-│     washingtonpost.com (Jul 13)                                                                              │
-│  Note: The search result was truncated; only these 5 items were provided by the backend. No additional       │
-│  titles were available.                                                                                      │
+│  default cost budget → 100000 tokens                                                                     ▃▃  │
+│  for the session?  → type y / yes / sì / always yes  (Enter = no)                                        ▅▅  │
+│ Ask the agent or type / for commands                                                                         │
+  ● READY  ·  deepseek  ·  tokens 17174+6581  ·  session 20260804-124136-08f1
+│  you: RUN news_search now. Topic: this week's open-source AI models. Short brief with links.             ▇▇  │
+│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once  ▇▇  │
+│  you: always yes                                                                                             │
 │ └── ▼ ✓ console_agent  done                                                                                  │
 │     ├── ▶ ● do_run ok → decide                                                                               │
 │     ├── ● decide ok → reply                                                                                  │
 │     └── ● reply ok → END                                                                                     │
+│  Honesty note: the machine's output was itself truncated (result_truncated: true; cutoff at 2,167            │
+│  characters, right after "…the snippet refer…"). The missing tail was the start of an uncertainty flag       │
+│  about the Microsoft item's date (Jul 28 in the notes vs the snippet). I have not invented that omitted      │
+│  text. If you want the full untruncated tail, I can re-run news_search with a tighter output budget.         │
 ║ Now boil that down to a single headline takeaway.                                                            ║
-  ◐ RUNNING  ·  deepseek  ·  tokens 20895+4989  ·  session 20260727-194605-7f87
-│  Note: The search result was truncated; only these 5 items were provided by the backend. No additional   ▁▁  │
-│  titles were available.                                                                                  ▁▁  │
+  ● READY  ·  deepseek  ·  tokens 21506+7279  ·  session 20260804-124136-08f1
+│  text. If you want the full untruncated tail, I can re-run news_search with a tighter output budget.     ▄▄  │
+│  you: Now boil that down to a single headline takeaway.                                                  ▄▄  │
 │ ▼ Now boil that down to a single headline takeaway.                                                          │
-│ Ask the agent or type / for commands                                                                         │
-  ● READY  ·  deepseek  ·  tokens 24501+5293  ·  session 20260727-194605-7f87
-│  agent:                                                                                                      │
-│  Chinese open-source AI models have become serious competitors to US frontier models, prompting both         │
-│  geopolitical support pledges and regulatory reconsiderations — the week's clear headline is that the        │
-│  open-source AI race is now fully bilateral.                                                                 │
+│  This week's takeaway: open-source AI is a two-front story — China's open-weight models (GLM-5.2, Kimi       │
+│  K2.6) are now rivaling closed U.S. frontier systems on capability and price, while U.S. institutions        │
+│  (Stanford, Microsoft) are pushing back with calls for genuinely open source standards rather than just      │
+│  open weights. (Based on news_search's truncated notes; the cut-off tail was not verified.)                  │
 ║ /quit                                                                                                        ║

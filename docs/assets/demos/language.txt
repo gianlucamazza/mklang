@@ -1,16 +1,15 @@
 > PYTHONPATH=src python -m mklang.cli check /tmp/mklang-lang/react.mkl
 OK /tmp/mklang-lang/react.mkl
-╭─────────────────────────────────────────────── check ───────────────────────────────────────────────╮
-│ files=1                                                                                             │
+╭────────────────────────────────────────── check ───────────────────────────────────────────╮
+│ files=1                                                                                    │
 > PYTHONPATH=src python -m mklang.cli lint --strict /tmp/mklang-lang/react.mkl
-╭─────────────────────────────────────────────── lint ────────────────────────────────────────────────╮
-│ files=1 · findings=0                                                                                │
-> PYTHONPATH=src python -m mklang.cli run /tmp/mklang-lang/react.mkl --format text --provider deepseek
---set question.text=Calculate_7_times_24_minus_15
-# warning: machine 'react' shadows the bundled stdlib machine
-# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'deepseek-v4-flash', 'rea
-soning': 'deepseek-v4-flash'}
+╭─────────────────────────────────────────── lint ───────────────────────────────────────────╮
+│ files=1 · findings=0                                                                       │
+> PYTHONPATH=src python -m mklang.cli run /tmp/mklang-lang/react.mkl --format text --provider
+deepseek --set question.text=Calculate_7_times_24_minus_15
+# react · provider=deepseek · tiers={'fast': 'deepseek-v4-flash', 'balanced': 'deepseek-v4-fla
+sh', 'reasoning': 'deepseek-v4-flash'}
 DONE react · provider deepseek
-╭────────────────────────────────────────────── Result ───────────────────────────────────────────────╮
-│ 153                                                                                                 │
-tokens 2355+161 · steps 14
+╭────────────────────────────────────────── Result ──────────────────────────────────────────╮
+│ 153                                                                                        │
+tokens 4333+551 · steps 12
