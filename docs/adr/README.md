@@ -36,4 +36,4 @@ change checklist in CONTRIBUTING says when to add one.
 | [0029](0029-internal-layout-refactor.md)         | Internal layout refactor (cli split, console bridge, tests mirror src)    | Accepted                               |
 | [0030](0030-control-flow-taint.md)               | Control-flow taint: the taint follows the choice                          | Accepted                               |
 | [0031](0031-what-would-force-a-language-0-4.md)  | What would force a language 0.4 (falsifiers for the 0.3 freeze)           | Accepted                               |
-| [0032](0032-pluggable-checkpoint-store.md)       | A pluggable checkpoint store                                              | Proposed                               |
+| [0032](0032-pluggable-checkpoint-store.md)       | A pluggable checkpoint store                                              | Accepted                               |

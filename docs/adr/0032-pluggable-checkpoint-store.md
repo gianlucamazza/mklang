@@ -1,6 +1,6 @@
 # ADR 0032 — A pluggable checkpoint store
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 
