@@ -1,5 +1,6 @@
 """Cost accounting, cost budget, error taxonomy, and structured-judge parsing."""
 
+from mklang import engine
 from mklang.engine import run
 from mklang.errors import ProviderError, RefusalError
 from mklang.llm.base import Produced, parse_choice
@@ -330,3 +331,36 @@ def test_over_empty_list_ok():
     r = run(m, {"items": []}, {m.name: m}, MockLLM(), TIERS, "m")
     assert r.status == "done"
     assert r.trace[0]["branches"] == []
+
+
+def test_judge_support_probe_survives_an_adapter_without_judge():
+    """An adapter with no `judge` answers False instead of raising.
+
+    `_judge_supports_none` takes `object` — an adapter is whatever a host supplies —
+    and used to reach `llm.judge` directly under a `type: ignore[attr-defined]`. The
+    checker was right: `AttributeError` is not in the caught set, so an adapter without
+    the attribute escaped the probe rather than being answered by it.
+    """
+
+    class NoJudge:
+        pass
+
+    assert engine._judge_supports_none(NoJudge()) is False
+
+
+def test_judge_support_probe_reads_the_signature_it_finds():
+    class Legacy:
+        def judge(self, prompt, options):  # no allow_none
+            raise NotImplementedError
+
+    class Modern:
+        def judge(self, prompt, options, allow_none=False):
+            raise NotImplementedError
+
+    class Kwargs:
+        def judge(self, prompt, **kwargs):
+            raise NotImplementedError
+
+    assert engine._judge_supports_none(Legacy()) is False
+    assert engine._judge_supports_none(Modern()) is True
+    assert engine._judge_supports_none(Kwargs()) is True
