@@ -166,9 +166,17 @@ def _judge_supports_none(llm: object) -> bool:
     ``TypeError``: a TypeError raised *inside* a modern adapter (bug, bad
     argument) must not be misread as "legacy forced-choice adapter".
     ``**kwargs`` adapters count as supporting the option.
+
+    ``llm`` is typed ``object`` because an adapter is whatever a host supplies, so
+    ``judge`` is fetched rather than accessed: the attribute error it would otherwise
+    raise is not in the caught set, and an adapter without ``judge`` at all would have
+    escaped this function instead of answering it.
     """
+    judge = getattr(llm, "judge", None)
+    if judge is None:
+        return False
     try:
-        params = inspect.signature(llm.judge).parameters  # type: ignore[attr-defined]
+        params = inspect.signature(judge).parameters
     except (TypeError, ValueError):
         return False
     if "allow_none" in params:
