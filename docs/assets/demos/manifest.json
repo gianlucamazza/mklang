@@ -1,59 +1,59 @@
 {
   "assets": {
     "docs/assets/demos/agent.gif": {
-      "bytes": 1540588,
+      "bytes": 1635678,
       "codec": "gif",
-      "duration_seconds": 19.25,
+      "duration_seconds": 21.91,
       "height": 540,
-      "sha256": "ee3b79acca1bd7cedbc18914ebefd86f81962ab0a2cfd075bb773efa5aa11ade",
+      "sha256": "8419078259db95f14a96af1424b2d49d6fbb6abe1d48e5ef361cffc89902d20d",
       "width": 960
     },
     "docs/assets/demos/agent.txt": {
-      "bytes": 5179,
-      "sha256": "7cd760b38dc61c3261f6e42ebc4ca4f5b92514e698ffbddb4c2bcf12f96bb317"
+      "bytes": 5318,
+      "sha256": "cd122ee386a79d6b3422c78a82ac9da822ec8b2d60eee14127d0aa58a3315991"
     },
     "docs/assets/demos/agent.webm": {
-      "bytes": 371560,
+      "bytes": 480029,
       "codec": "vp9",
-      "duration_seconds": 19.24,
+      "duration_seconds": 21.92,
       "height": 675,
-      "sha256": "f962a660f1b96b88a63d3d976293dd6bc58f1e7fb9a183f40aa0cbbfbf881a0c",
+      "sha256": "0ef6d6bf63fba1114f96fd0d72c1c50021ff0cda2043ece40c900279a8c5a556",
       "width": 1200
     },
     "docs/assets/demos/language.gif": {
-      "bytes": 666247,
+      "bytes": 509656,
       "codec": "gif",
-      "duration_seconds": 26.91,
+      "duration_seconds": 11.83,
       "height": 540,
-      "sha256": "b99697c8646e671c37f8bebdf26d4513b0ce22e48593d21f05c8247e42ec2d8f",
+      "sha256": "9af525dacb3bc2f29f085a1d7f0f0bc7aa74ea899260301d288dbc673a5e4f3a",
       "width": 960
     },
     "docs/assets/demos/language.txt": {
-      "bytes": 1804,
-      "sha256": "a31ae6f2b5a980d236dfcdb31dc99bbb67b355f27bcb63a6a42fdb974cee4d79"
+      "bytes": 1634,
+      "sha256": "a06aa2f1e101cedc3a504943c4d52c0291c68867a370f42f6124d9d731a5b21b"
     },
     "docs/assets/demos/language.webm": {
-      "bytes": 376700,
+      "bytes": 182032,
       "codec": "vp9",
-      "duration_seconds": 26.92,
+      "duration_seconds": 11.84,
       "height": 675,
-      "sha256": "881e0c1e6e40c9eb97627f7b195f1932bce57bb07b6a40031b23bd71c173f0d8",
+      "sha256": "3096c0fa3b3d242a90b26c994064dfcacf8f381dd827abf1039c1188093d821c",
       "width": 1200
     }
   },
-  "generated_at": "2026-07-28T21:55:50.564003+00:00",
-  "generated_from": "764f370554e48ec0aa4b9e9201af0518c9eaa419",
+  "generated_at": "2026-08-04T12:44:39.192637+00:00",
+  "generated_from": "70052e4e4d7ada6b7f3e7d1922595b9152632703",
   "models": {
     "balanced": "deepseek-v4-flash",
     "fast": "deepseek-v4-flash",
     "reasoning": "deepseek-v4-flash"
   },
-  "package_version": "1.0.13",
+  "package_version": "1.1.1",
   "provider": "deepseek",
   "schema": 2,
   "source": {
     "files": {
-      "config/runtime.example.yaml": "9d986cfc64402971a799cde9488ec916d1df5debc202627b3562a2168c659788",
+      "config/runtime.example.yaml": "08e4cca7c7d903528db7b6d6a122aed4178889a3e96193743c27fa867389f066",
       "demos/tapes/agent.tape": "2b5620047d7808574e527207720ffeceddcd0ada4142e2896731ddd77df6310a",
       "demos/tapes/language.tape": "1979c2a38fcf3a2bc20635a4172728d2e48e1ee183ef2e3e085a3a34505aeeb5",
       "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
@@ -86,7 +86,7 @@
       "src/mklang/search.py": "2e0f08175e3e4902e8c933dd5f429f9e303e210ca9f93aee50bd669b7ebe36c5",
       "src/mklang/tools.py": "2ac751ef995dbcade7eef2bb2e3d34af472ca4d190f6aade453d94f3cdb03fb2"
     },
-    "sha256": "4a729d8b0562e1cbe46a5c27e619948b0921009d27e2de152fffa95946717083"
+    "sha256": "d29f601fbd85dd77d868ad821746f5d3dcfe2c80033cb43044bee888c871d853"
   },
   "toolchain": {
     "font": {
@@ -96,7 +96,7 @@
     },
     "vhs": {
       "archive_sha256": "99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009",
-      "reported_version": "v0.11.0",
+      "reported_version": "v0.11.0 (c6af91a)",
       "version": "0.11.0"
     }
   }
