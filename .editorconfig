@@ -18,5 +18,11 @@ trim_trailing_whitespace = false
 [Makefile]
 indent_style = tab
 
+# The shell scripts predate this file and are tab-indented (shfmt's own
+# default). Declaring it keeps shfmt/editors from reformatting them wholesale
+# on every unrelated edit.
+[*.sh]
+indent_style = tab
+
 [*.{diff,patch}]
 trim_trailing_whitespace = false
