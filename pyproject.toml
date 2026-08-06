@@ -29,7 +29,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/gianlucamazza/mklang"
-Documentation = "https://gianlucamazza.github.io/mklang/"
+Documentation = "https://mklang.dev/"
 Repository = "https://github.com/gianlucamazza/mklang"
 Issues = "https://github.com/gianlucamazza/mklang/issues"
 Source = "https://github.com/gianlucamazza/mklang"

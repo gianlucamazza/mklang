@@ -20,6 +20,10 @@ cp docs/experiments/*.md site-src/experiments/
 cp -r schema site-src/schema
 cp -r docs/assets site-src/assets
 
+# Custom domain: mkdocs copies extra files verbatim, so the published artifact
+# carries its own CNAME instead of depending only on the repo Pages setting.
+echo mklang.dev > site-src/CNAME
+
 # Rewrite repo-relative links for the flattened site: in-site pages point to
 # their new location; repo-only targets (examples, config, sources) go to GitHub.
 #
