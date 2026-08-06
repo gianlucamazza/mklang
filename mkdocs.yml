@@ -1,6 +1,6 @@
 site_name: mklang
 site_description: A declarative language for LLM-driven state machines.
-site_url: https://gianlucamazza.github.io/mklang/
+site_url: https://mklang.dev/
 repo_url: https://github.com/gianlucamazza/mklang
 repo_name: gianlucamazza/mklang
 docs_dir: site-src # generated — run scripts/build-docs.sh first
