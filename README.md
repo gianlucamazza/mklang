@@ -1,7 +1,7 @@
 # mklang
 
 [![CI](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml/badge.svg)](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-mklang.dev-blue)](https://mklang.dev/)
+[![Docs](https://img.shields.io/badge/docs-docs.mklang.dev-blue)](https://docs.mklang.dev/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green)](./LICENSE)
 
 **A declarative language for LLM-driven state machines, with an agent-first
@@ -390,6 +390,22 @@ by default.
   zones (ROADMAP).
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
+
+## Running one of these in production
+
+This repository is the language and its interpreter: the half that decides. The other
+half — what triggers a machine, what retries, where the credentials live, who may
+deploy, and what the customer receives when the process dies between an effect and the
+record of it — is deliberately not here.
+
+[**mklang platform**](https://mklang.dev/) is that half. A durable orchestrator owns the
+triggers, the retries, the connectors and the credentials, and calls a machine as a
+single step for judgement — parking the run for a person when a gate says it should. It
+is a separate commercial product and it is early: Phase 1, design partners rather than
+customers, and onboarding is a person rather than a signup.
+
+The language, its specification and its conformance suite are Apache-2.0 and stay that
+way; the platform's licence is its own decision, stated on that site.
 
 ## License
 
