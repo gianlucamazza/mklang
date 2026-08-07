@@ -399,7 +399,7 @@ Three sentences, and only these, describe the family
 1. **mklang** is an open language for LLM-driven state machines (judgement).
 2. **[mklang platform](https://mklang.dev/)** is the durable host: orchestrator,
    credentials, signed deploy, human queue.
-3. A **pilot** is one real workflow cut over from n8n — not self-serve.
+3. A **pilot** is delivery-led: one real workflow cut over into production here — not self-serve.
 
 This repository is (1). The language name stays usable by anyone under Apache-2.0; the
 commercial designation is **mklang platform**, not bare “mklang”. The other half —
