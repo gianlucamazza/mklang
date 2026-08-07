@@ -393,18 +393,20 @@ by default.
 
 ## Running one of these in production
 
-Three sentences, and only these, describe the family:
+Three sentences, and only these, describe the family
+([mklang-platform ADR 0019](https://github.com/gianlucamazza/mklang-platform/blob/main/docs/adr/0019-one-name-two-products.md)):
 
 1. **mklang** is an open language for LLM-driven state machines (judgement).
 2. **[mklang platform](https://mklang.dev/)** is the durable host: orchestrator,
    credentials, signed deploy, human queue.
 3. A **pilot** is one real workflow cut over from n8n — not self-serve.
 
-This repository is (1). The other half — triggers, retries, credentials, who may
-deploy, and what happens when the process dies between an effect and the record of it —
-is deliberately not here. The platform is a separate commercial product (Phase 1:
-design partners, onboarding is a person). Its licence is stated on that site; the
-language stays Apache-2.0.
+This repository is (1). The language name stays usable by anyone under Apache-2.0; the
+commercial designation is **mklang platform**, not bare “mklang”. The other half —
+triggers, retries, credentials, who may deploy, and what happens when the process dies
+between an effect and the record of it — is deliberately not here. The platform is a
+separate commercial product (Phase 1: design partners, onboarding is a person). Its
+licence is stated on that site; the language stays Apache-2.0.
 
 ## License
 
