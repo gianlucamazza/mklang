@@ -1,6 +1,10 @@
 site_name: mklang
 site_description: A declarative language for LLM-driven state machines.
-site_url: https://mklang.dev/
+# The apex is the platform that runs these machines; this site is the language's own
+# name. It matters beyond tidiness: mkdocs derives every page's canonical link and the
+# whole sitemap from this value, so an apex here tells a crawler that /SPEC/ lives at
+# mklang.dev/SPEC/ — which is a 404.
+site_url: https://docs.mklang.dev/
 repo_url: https://github.com/gianlucamazza/mklang
 repo_name: gianlucamazza/mklang
 docs_dir: site-src # generated — run scripts/build-docs.sh first
