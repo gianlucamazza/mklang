@@ -393,19 +393,18 @@ by default.
 
 ## Running one of these in production
 
-This repository is the language and its interpreter: the half that decides. The other
-half — what triggers a machine, what retries, where the credentials live, who may
-deploy, and what the customer receives when the process dies between an effect and the
-record of it — is deliberately not here.
+Three sentences, and only these, describe the family:
 
-[**mklang platform**](https://mklang.dev/) is that half. A durable orchestrator owns the
-triggers, the retries, the connectors and the credentials, and calls a machine as a
-single step for judgement — parking the run for a person when a gate says it should. It
-is a separate commercial product and it is early: Phase 1, design partners rather than
-customers, and onboarding is a person rather than a signup.
+1. **mklang** is an open language for LLM-driven state machines (judgement).
+2. **[mklang platform](https://mklang.dev/)** is the durable host: orchestrator,
+   credentials, signed deploy, human queue.
+3. A **pilot** is one real workflow cut over from n8n — not self-serve.
 
-The language, its specification and its conformance suite are Apache-2.0 and stay that
-way; the platform's licence is its own decision, stated on that site.
+This repository is (1). The other half — triggers, retries, credentials, who may
+deploy, and what happens when the process dies between an effect and the record of it —
+is deliberately not here. The platform is a separate commercial product (Phase 1:
+design partners, onboarding is a person). Its licence is stated on that site; the
+language stays Apache-2.0.
 
 ## License
 
