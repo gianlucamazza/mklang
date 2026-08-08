@@ -1,8 +1,9 @@
 # mklang — Language Specification
 
 > Version **0.4** (0.2/0.3 documents remain valid; 0.3 adds `parse: list` §4.10 and
-> raw whole-template `input:` resolution §4.8; 0.4 adds `max_visits` §7). Surface
-> syntax: **YAML**. Runtime:
+> raw whole-template `input:` resolution §4.8; 0.4 adds `max_visits` §7,
+> `parse: json` §4.10 and escalate `ask:`/`reply_to:` §5). Surface syntax:
+> **YAML**. Runtime:
 > **language-agnostic** (a conformant runtime is any host with access to an LLM).
 
 ---
@@ -138,7 +139,7 @@ states: # map of <state-id> -> state definition
     accumulate?: <bool> # append to a list under `output` instead of overwriting (§4.6)
     sample?: <int> # fan-out: run N times → output is a list (§4.7)
     over?: "{{list}}" # fan-out: run once per item → output is a list (§4.7)
-    parse?: list # 0.3: deposit a parsed JSON array instead of text (§4.10)
+    parse?: list|json # parsed JSON array (0.3) or any JSON value (0.4) instead of text (§4.10)
     output: <key> # context key under which this state's output is stored
     gates: <list of gates>
   # (b) call state — runs another machine as a subroutine (§4.8):
@@ -183,7 +184,7 @@ Generative  ::= {
   accumulate : bool?           # append to `output` list instead of set (§4.6)
   sample     : int?            # fan-out: run N times (>= 2); output is a list (§4.7)
   over       : string?         # fan-out: "{{list}}"; run once per item (§4.7)
-  parse      : "list"?         # 0.3: parse the output as a JSON array (§4.10)
+  parse      : "list"|"json"?  # parse the output: JSON array (0.3) / any JSON value (0.4) (§4.10)
   output     : string          # context key where this state's output is stored
   gates      : Gate[]          # >= 1, the last one should be a catch-all
 }                              # sample XOR over
@@ -216,6 +217,8 @@ Gate ::= {
   then    : "ok"   , to: StateId|"END"     # advance
   repair  : int    , to: StateId           # reprompt with feedback, budget int
   escalate: true   , to: StateId           # route to a handler state
+    , ask: string?                          # 0.4: what to put in front of the human (literal)
+    , reply_to: ContextPath?                # 0.4: where the reply lands (default human.reply)
   fail    : true                           # abort the run
 }
 ```
@@ -236,7 +239,8 @@ Reserved keys:
   `accumulate`, `output`, `gates`.
 - Tool state: `tool`, `input`, `max_visits`, `sample`, `over`, `accumulate`,
   `output`, `gates`.
-- Gate: `when`, `hook`, `then`, `repair`, `escalate`, `fail`, `to`.
+- Gate: `when`, `hook`, `then`, `repair`, `escalate`, `fail`, `to`, `ask` (0.4,
+  escalate only), `reply_to` (0.4, escalate only).
 - Tier values: `fast`, `balanced`, `reasoning`.
 - Fan-out vars: `{{index}}` (inside any `sample`/`over` state), `{{item}}` (inside
   `over` states only).
@@ -454,7 +458,7 @@ not a language face. Pure offline tools such as arithmetic need not use that env
 
 ---
 
-### 4.10 `parse` — structured list output (optional, 0.3)
+### 4.10 `parse` — structured output (optional; `list` 0.3, `json` 0.4)
 
 `parse: list` on a generative state makes the runtime parse the produced text as
 a **JSON array** (markdown code fences are tolerated) and deposit the resulting
@@ -462,8 +466,16 @@ a **JSON array** (markdown code fences are tolerated) and deposit the resulting
 planner state feed a downstream `over:` — Plan-and-Execute becomes a pure
 machine (§10). If the text is not a JSON array the state **halts** the run with
 `state-error: parse-list …` (it never deposits garbage); prompt for the array
-shape explicitly in `structure`. Documents using `parse:` should declare
+shape explicitly in `structure`. Documents using `parse: list` should declare
 `mklang: "0.3"` (a 0.2 document using it draws a warning from `check`).
+
+`parse: json` (0.4) generalizes this: the produced text must be **valid JSON**
+(fences tolerated) and the parsed value — object, array or scalar — is deposited
+as-is under `output`. The *shape* stays the author's contract, stated in
+`structure` and held by the gates; what the runtime guarantees is that a
+downstream reader (an `over:`, a host gate path, a workflow) never sees prose
+pretending to be a document. Unparseable output halts with
+`state-error: parse-json …`. Documents using it should declare `mklang: "0.4"`.
 
 ```yaml
 plan:
@@ -601,7 +613,7 @@ transition undefined rather than negative.
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `then: ok`  | Condition satisfied: transition to `to`.                                                                                   | `to: StateId\|END` |
 | `repair: N` | Stay (usually) on the same state and **re-run**, injecting the failed `when` as feedback into the prompt. Budget `N` (§7). | `to: StateId`      |
-| `escalate`  | Route to a handler state (e.g. human review, fallback).                                                                    | `to: StateId`      |
+| `escalate`  | Route to a handler state (e.g. human review, fallback). 0.4: may carry `ask:` (the question for the human, **literal — never interpolated**, so a host can display it where machine output is untrusted) and `reply_to:` (the context key path the reply lands at on resume; default `human.reply` — the default is the language's, not a name each host invents). Under HITL suspension both ride the suspended result and its frame. | `to: StateId`      |
 | `fail`      | Abort the run, propagating the error.                                                                                      | —                  |
 
 Example with a **code-hook** gate (exact check) before prose / otherwise:

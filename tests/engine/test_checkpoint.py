@@ -499,3 +499,63 @@ def test_a_frame_without_visits_still_resumes():
         del frame["visits"]
     again = run1(m, costly(), resume=frames, suspendable=True)
     assert again.status == "suspended" and again.error == "budget-exhausted"
+
+
+def test_escalate_suspension_carries_the_authored_ask():
+    """The gate's ask/reply_to ride the suspended result and its frame — authored
+    and literal, so a host may display the ask where machine output is untrusted,
+    and inject the reply where the machine said it reads it (0.4, §5)."""
+    m = M(
+        {
+            "machine": "esc",
+            "entry": "a",
+            "budget": 5,
+            "mklang": "0.4",
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [
+                        {
+                            "when": "otherwise",
+                            "escalate": True,
+                            "to": "handle",
+                            "ask": "Approve the refund?",
+                            "reply_to": "approval.answer",
+                        }
+                    ],
+                },
+                "handle": state("END"),
+            },
+        }
+    )
+    r = run1(m, costly(), suspendable=True, escalate_suspend=True)
+    assert r.status == "suspended" and r.error == "escalated"
+    assert r.ask == "Approve the refund?"
+    assert r.reply_to == "approval.answer"
+    f = r.frames[0]
+    assert f["ask"] == "Approve the refund?" and f["reply_to"] == "approval.answer"
+
+
+def test_escalate_without_ask_defaults_reply_to():
+    m = M(
+        {
+            "machine": "esc",
+            "entry": "a",
+            "budget": 5,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "escalate": True, "to": "handle"}],
+                },
+                "handle": state("END"),
+            },
+        }
+    )
+    r = run1(m, costly(), suspendable=True, escalate_suspend=True)
+    assert r.status == "suspended" and r.error == "escalated"
+    assert r.ask is None
+    assert r.reply_to == "human.reply"  # the default is the language's, not a host constant

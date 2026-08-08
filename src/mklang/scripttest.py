@@ -238,6 +238,10 @@ def match_expectation(result: RunResult, expect: dict) -> list[Mismatch]:
         ms.append(Mismatch("result", expect["result"], result.result))
     if "at" in expect and result.at != expect["at"]:
         ms.append(Mismatch("at", expect["at"], result.at))
+    if "ask" in expect and result.ask != expect["ask"]:
+        ms.append(Mismatch("ask", expect["ask"], result.ask))
+    if "reply_to" in expect and result.reply_to != expect["reply_to"]:
+        ms.append(Mismatch("reply_to", expect["reply_to"], result.reply_to))
     if "context" in expect:
         for k, v in expect["context"].items():
             got = result.context.get(k)

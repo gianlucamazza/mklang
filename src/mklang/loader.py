@@ -126,6 +126,16 @@ def _check_version(machine: Machine, strict: bool) -> tuple[list[str], list[str]
         s.max_visits is not None for s in machine.states.values()
     ):
         warnings.append('`max_visits:` is a 0.4 field — declare mklang: "0.4"')
+    if machine.version in ("0.2", "0.2.0", "0.3") and any(
+        s.parse == "json" for s in machine.states.values()
+    ):
+        warnings.append('`parse: json` is a 0.4 value — declare mklang: "0.4"')
+    if machine.version in ("0.2", "0.2.0", "0.3") and any(
+        g.ask is not None or g.reply_to is not None
+        for s in machine.states.values()
+        for g in s.gates
+    ):
+        warnings.append('`ask:`/`reply_to:` are 0.4 gate fields — declare mklang: "0.4"')
     return errors, warnings
 
 

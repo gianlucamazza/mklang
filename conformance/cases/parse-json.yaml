@@ -1,0 +1,27 @@
+case: parse-json
+description: >
+  0.4 `parse: json` — the produced text is parsed as a JSON value and deposited
+  as-is, so a gate path or a downstream host reads a document, not prose that
+  resembles one.
+machine:
+  mklang: "0.4"
+  machine: note
+  entry: draft
+  budget: 3
+  states:
+    draft:
+      structure: a JSON object with keys note (string) and category (string)
+      prompt: write the note
+      parse: json
+      output: note
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce:
+    "write the note": '{"note": "lunch with the vendor", "category": "meals"}'
+expect:
+  status: done
+  context:
+    note: { note: "lunch with the vendor", category: "meals" }
+  trace:
+    - { state: draft, policy: ok, to: END }

@@ -1,0 +1,38 @@
+case: escalate-ask
+description: >
+  0.4 `ask:`/`reply_to:` on an escalate gate — a HITL suspension carries the
+  authored, literal ask and the context path the reply lands at, so a host can
+  put a real question in front of a person without reading machine output.
+machine:
+  mklang: "0.4"
+  machine: refund
+  entry: draft
+  budget: 5
+  states:
+    draft:
+      structure: s
+      prompt: write the draft
+      output: draft
+      gates:
+        - when: otherwise
+          escalate: true
+          to: review
+          ask: "Approve the refund?"
+          reply_to: approval.answer
+    review:
+      structure: s
+      prompt: "apply: {{approval.answer}}"
+      output: final
+      gates:
+        - { when: otherwise, then: ok, to: END }
+run:
+  suspendable: true
+  escalate_suspend: true
+llm:
+  produce: ["a draft"]
+expect:
+  status: suspended
+  error: escalated
+  at: review
+  ask: "Approve the refund?"
+  reply_to: approval.answer

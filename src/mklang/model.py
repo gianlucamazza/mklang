@@ -12,6 +12,12 @@ class Gate:
     to: str | None = None
     repair: int | None = None
     hook: str | None = None  # host-evaluated predicate (§5); None → LLM / otherwise
+    # Escalate only (0.4, §5): what to put in front of the human, authored and
+    # literal — never interpolated, so a host may display it where machine
+    # output is untrusted. And where the reply lands in context (default the
+    # language's own "human.reply", not a name each host invents).
+    ask: str | None = None
+    reply_to: str | None = None
 
 
 @dataclass
@@ -64,7 +70,14 @@ def parse_gate(d: dict) -> Gate:
     if "repair" in d:
         return Gate(d["when"], "repair", d.get("to"), repair=d["repair"], hook=hook)
     if "escalate" in d:
-        return Gate(d["when"], "escalate", d.get("to"), hook=hook)
+        return Gate(
+            d["when"],
+            "escalate",
+            d.get("to"),
+            hook=hook,
+            ask=d.get("ask"),
+            reply_to=d.get("reply_to"),
+        )
     if "fail" in d:
         return Gate(d["when"], "fail", None, hook=hook)
     raise ValueError(f"gate has no policy (then/repair/escalate/fail): {d!r}")

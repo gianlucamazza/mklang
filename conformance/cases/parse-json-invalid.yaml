@@ -1,0 +1,23 @@
+case: parse-json-invalid
+description: >
+  0.4 `parse: json` — output that is not valid JSON halts the state cleanly
+  (state-error), it never deposits prose pretending to be a document.
+machine:
+  mklang: "0.4"
+  machine: bad_note
+  entry: draft
+  budget: 3
+  states:
+    draft:
+      structure: a JSON object
+      prompt: write the note
+      parse: json
+      output: note
+      gates:
+        - { when: otherwise, then: ok, to: END }
+llm:
+  produce: ["a note about lunch"]
+expect:
+  status: halt
+  error_prefix: "state-error: parse-json"
+  at: draft

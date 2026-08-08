@@ -170,9 +170,10 @@
         },
         "parse": {
           "enum": [
-            "list"
+            "list",
+            "json"
           ],
-          "description": "0.3: parse the produced text as a JSON array and deposit a real list (halts with state-error if unparseable)"
+          "description": "list (0.3): parse the produced text as a JSON array and deposit a real list. json (0.4): parse it as any JSON value and deposit it as-is. Either halts with state-error if unparseable (§4.10)."
         },
         "output": {
           "type": "string",
@@ -323,6 +324,14 @@
           "const": true,
           "description": "Route to a handler state; requires `to`."
         },
+        "ask": {
+          "type": "string",
+          "description": "Escalate only (0.4): what to put in front of the human. Authored and literal — never interpolated (§5)."
+        },
+        "reply_to": {
+          "type": "string",
+          "description": "Escalate only (0.4): context key path where the reply lands on resume; default human.reply (§5)."
+        },
         "fail": {
           "const": true,
           "description": "Abort the run; no `to`."
@@ -354,6 +363,16 @@
                 "required": [
                   "fail"
                 ]
+              },
+              {
+                "required": [
+                  "ask"
+                ]
+              },
+              {
+                "required": [
+                  "reply_to"
+                ]
               }
             ]
           }
@@ -378,6 +397,16 @@
               {
                 "required": [
                   "fail"
+                ]
+              },
+              {
+                "required": [
+                  "ask"
+                ]
+              },
+              {
+                "required": [
+                  "reply_to"
                 ]
               }
             ]
@@ -432,6 +461,16 @@
               {
                 "required": [
                   "to"
+                ]
+              },
+              {
+                "required": [
+                  "ask"
+                ]
+              },
+              {
+                "required": [
+                  "reply_to"
                 ]
               }
             ]

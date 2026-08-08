@@ -38,3 +38,5 @@ change checklist in CONTRIBUTING says when to add one.
 | [0031](0031-what-would-force-a-language-0-4.md)  | What would force a language 0.4 (falsifiers for the 0.3 freeze)           | Accepted                               |
 | [0032](0032-pluggable-checkpoint-store.md)       | A pluggable checkpoint store                                              | Accepted                               |
 | [0033](0033-a-state-may-bound-its-own-reentry.md) | A state may bound its own re-entry (`max_visits`, `loop-ceiling`, spec 0.4) | Accepted (2026-08-08) |
+| [0034](0034-parse-json-structured-output.md) | `parse: json`: a produced document is parsed, not trusted (spec 0.4) | Accepted (2026-08-08) |
+| [0035](0035-escalate-carries-its-own-ask.md) | An escalate gate carries its own ask (`ask:`, `reply_to:`, spec 0.4) | Accepted (2026-08-08) |

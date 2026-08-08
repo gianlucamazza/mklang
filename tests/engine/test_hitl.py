@@ -229,3 +229,60 @@ def test_cli_hitl_round_trip(tmp_path, monkeypatch, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["status"] == "done"
     assert "approve" in out["result"]
+
+
+def test_reply_to_custom_path_round_trip():
+    """0.4: the machine names where the reply lands; the host stops inventing it."""
+    m = M(
+        {
+            "machine": "h2",
+            "entry": "draft",
+            "budget": 10,
+            "result": "final",
+            "mklang": "0.4",
+            "states": {
+                "draft": {
+                    "structure": "s",
+                    "prompt": "write the draft",
+                    "output": "draft",
+                    "gates": [
+                        gate(
+                            "looks risky",
+                            escalate=True,
+                            to="review",
+                            ask="Approve this draft?",
+                            reply_to="approval.answer",
+                        ),
+                        gate("otherwise", then="ok", to="END"),
+                    ],
+                },
+                "review": {
+                    "structure": "s",
+                    "prompt": "apply the decision: {{approval.answer}}",
+                    "output": "final",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+    r = run1(m, echo_llm(), escalate_suspend=True)
+    assert r.status == "suspended"
+    assert r.ask == "Approve this draft?" and r.reply_to == "approval.answer"
+
+    frames = json.loads(json.dumps(r.frames))
+    frames[-1]["ctx"]["approval"] = {"answer": "approved"}
+    done = run1(m, echo_llm(), resume=frames, escalate_suspend=True)
+    assert done.status == "done"
+    assert "approved" in done.result
+
+
+def test_human_confirmed_respects_the_frames_reply_to():
+    from mklang.engine import _human_confirmed
+
+    custom = {"reply_to": "approval.answer", "resume_injected": ["approval.answer"]}
+    assert _human_confirmed(custom, {"approval": {"answer": "yes"}})
+    # a reply at the DEFAULT path does not confirm a gate that named another
+    assert not _human_confirmed(custom, {"human": {"reply": "yes"}})
+    # frames without the field keep the language default
+    default = {"resume_injected": ["human.reply"]}
+    assert _human_confirmed(default, {"human": {"reply": "ok"}})

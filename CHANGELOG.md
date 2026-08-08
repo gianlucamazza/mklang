@@ -31,6 +31,23 @@ All notable changes to mklang are documented here. The format follows
   (`most_visited_state`, `visits`) whenever some state was entered more than once —
   the wire shape allows extra keys, so no schema bump; the CLI renders it as one dim
   line. The question an author asks first, answered without reading the trace.
+- **`parse: json`** (spec **0.4**, ADR 0034, SPEC §4.10). `parse: list` generalized:
+  the produced text must be valid JSON and the parsed value — object, array or
+  scalar — is deposited as-is; unparseable output halts with `state-error:
+  parse-json`, truncation as `parse-json-truncated`. Evidence: five console states
+  whose whole job was prose→JSON, and a platform workload gating on fields of a
+  document the language never promised. Shape stays in `structure` + gates — no
+  type system (§9). Two conformance cases.
+- **An escalate gate carries its own ask** (`ask:`/`reply_to:`, spec **0.4**,
+  ADR 0035, SPEC §5). A HITL suspension used to say only *that* a run parked; the
+  host's queue showed "Needs a decision on step X" and injected the reply at a
+  constant it invented (`human.reply`). Now the gate may author the question —
+  **literal, never interpolated**, so a host can display it where machine output
+  is untrusted — and name the context path the reply lands at (default
+  `human.reply`, now the language's default rather than each host's constant).
+  Both ride the suspended result and its frame (additive; pre-0.4 frames resume
+  unchanged); the ADR 0030 resume-confirmation rule follows the frame's
+  `reply_to`. One conformance case; the scenario matcher learns `ask`/`reply_to`.
 
 ### Changed
 

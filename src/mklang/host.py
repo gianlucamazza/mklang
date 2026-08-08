@@ -276,6 +276,10 @@ def build_output(res: RunResult) -> dict:
         out["at"] = res.at
     if res.diagnosis is not None:
         out["diagnosis"] = res.diagnosis
+    if res.ask is not None:
+        out["ask"] = res.ask
+    if res.reply_to is not None:
+        out["reply_to"] = res.reply_to
     return out
 
 

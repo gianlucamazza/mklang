@@ -37,6 +37,11 @@ class RunResult:
     # On budget/cost exhaustion: which state ate the run. Additive on the wire
     # (run-result.schema.json allows extra keys), absent everywhere else.
     diagnosis: dict | None = None
+    # On an escalate suspension (0.4, §5): the gate's authored ask, literal —
+    # displayable where machine output is untrusted — and the context key path
+    # the reply lands at on resume. Both additive on the wire.
+    ask: str | None = None
+    reply_to: str | None = None
 
 
 class _Suspend(Exception):
@@ -188,26 +193,34 @@ def _judge_supports_none(llm: object) -> bool:
 
 
 def _human_confirmed(frame: dict, ctx: dict) -> bool:
-    """HITL confirmation at resume: a ``human.reply`` injected for THIS suspension.
+    """HITL confirmation at resume: a reply injected for THIS suspension.
 
-    Two things must hold, and each rules out a way the confirmation could be
-    forged by accident (ADR 0008 / ADR 0030):
+    The reply path is the suspending gate's ``reply_to`` recorded in the frame
+    (0.4, §5), defaulting to the language's own ``human.reply``. Two things must
+    hold, and each rules out a way the confirmation could be forged by accident
+    (ADR 0008 / ADR 0030):
 
-    - the frame records a `human*` path among the values this resume injected
-      (`resume_injected`, written by `checkpoint.taint_frame`). A reply left in
-      the blackboard by an earlier HITL cycle is not a confirmation of a decision
-      taken after it; a frame with no record at all — pre-0030 checkpoint, or a
-      resume that injected nothing — confirms nothing;
-    - the value is actually a reply. The bare presence of a `human` key (author
-      context schema, empty placeholder, unrelated payload) is not one.
+    - the frame records a path under the reply root among the values this resume
+      injected (`resume_injected`, written by `checkpoint.taint_frame`). A reply
+      left in the blackboard by an earlier HITL cycle is not a confirmation of a
+      decision taken after it; a frame with no record at all — pre-0030
+      checkpoint, or a resume that injected nothing — confirms nothing;
+    - the value is actually there. The bare presence of the root key (author
+      context schema, empty placeholder, unrelated payload) is not a reply.
     """
+    path = str(frame.get("reply_to") or "human.reply")
+    root = path.split(".")[0]
     injected = frame.get("resume_injected")
     if not isinstance(injected, list):
         return False
-    if not any(str(k).split(".")[0] == "human" for k in injected):
+    if not any(str(k).split(".")[0] == root for k in injected):
         return False
-    human = ctx.get("human")
-    return isinstance(human, dict) and "reply" in human
+    cur: object = ctx
+    for part in path.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return False
+        cur = cur[part]
+    return True
 
 
 def _call_judge(
@@ -459,11 +472,11 @@ def _exec_produce(
             meta["finish_reason"] = p.finish_reason
         if deps.on_truncate == "halt":
             raise ValueError("output-truncated")
-        if state.parse == "list":
-            # Partial JSON from a length stop is almost never a valid array —
-            # fail with a clearer label than a generic parse error (ADR 0018).
-            raise ValueError("parse-list-truncated")
-    out = _parse_list(p.text) if state.parse == "list" else p.text
+        if state.parse:
+            # Partial JSON from a length stop is almost never valid — fail with
+            # a clearer label than a generic parse error (ADR 0018).
+            raise ValueError(f"parse-{state.parse}-truncated")
+    out = _parse_structured(p.text, state.parse) if state.parse else p.text
     return out, None, p.reasoning, (p.input_tokens, p.output_tokens), meta
 
 
@@ -492,19 +505,23 @@ def _exec_one(
     return _exec_produce(state, ctx, feedback, deps, machine, tainted)
 
 
-def _parse_list(text: str) -> list:
-    """`parse: list` (SPEC §4.10, 0.3): the produced text must be a JSON array
-    (markdown fences tolerated); anything else halts the state (`state-error`)."""
-    import json
-
+def _strip_fences(text: str) -> str:
     body = text.strip()
     if body.startswith("```"):
         body = body.strip("`")
         first_nl = body.find("\n")
         body = body[first_nl + 1 :] if first_nl != -1 else body
         body = body.strip()
+    return body
+
+
+def _parse_list(text: str) -> list:
+    """`parse: list` (SPEC §4.10, 0.3): the produced text must be a JSON array
+    (markdown fences tolerated); anything else halts the state (`state-error`)."""
+    import json
+
     try:
-        value = json.loads(body)
+        value = json.loads(_strip_fences(text))
     except ValueError as e:
         raise ValueError(f"parse-list: output is not valid JSON ({e})") from e
     if not isinstance(value, list):
@@ -512,6 +529,25 @@ def _parse_list(text: str) -> list:
             f"parse-list: output is JSON but not an array (got {type(value).__name__})"
         )
     return value
+
+
+def _parse_json(text: str) -> object:
+    """`parse: json` (SPEC §4.10, 0.4): the produced text must be valid JSON
+    (markdown fences tolerated); the parsed value — object, array or scalar —
+    is deposited as-is. Shape stays the author's contract, stated in `structure`
+    and held by the gates; what the runtime guarantees is that downstream
+    readers (an `over:`, a gate path, a workflow) never see prose pretending
+    to be a document."""
+    import json
+
+    try:
+        return json.loads(_strip_fences(text))
+    except ValueError as e:
+        raise ValueError(f"parse-json: output is not valid JSON ({e})") from e
+
+
+def _parse_structured(text: str, mode: str) -> object:
+    return _parse_list(text) if mode == "list" else _parse_json(text)
 
 
 def _safe_exec(
@@ -947,10 +983,19 @@ class _Runner:
             self.visits,
         )
 
-    def _suspended(self, reason: str) -> RunResult:
-        """Checkpoint this level; nested levels unwind via _Suspend, depth 0 returns."""
+    def _suspended(self, reason: str, *, gate: Gate | None = None) -> RunResult:
+        """Checkpoint this level; nested levels unwind via _Suspend, depth 0 returns.
+
+        An escalate gate annotates the frame with its authored `ask` and the
+        resolved `reply_to` (§5) — frame keys are additive, so pre-0.4 readers
+        ignore them and pre-0.4 frames resume unchanged."""
+        frame = self._snapshot()
+        if gate is not None and gate.kind == "escalate":
+            frame["reply_to"] = gate.reply_to or "human.reply"
+            if gate.ask is not None:
+                frame["ask"] = gate.ask
         if self.depth:
-            raise _Suspend(reason, [self._snapshot()])
+            raise _Suspend(reason, [frame])
         return RunResult(
             "suspended",
             self.trace,
@@ -958,7 +1003,9 @@ class _Runner:
             error=reason,
             at=self.state_id,
             usage=self._usage(),
-            frames=[self._snapshot()],
+            frames=[frame],
+            ask=frame.get("ask"),
+            reply_to=frame.get("reply_to"),
         )
 
     def _diagnosis(self) -> dict | None:
@@ -1177,6 +1224,8 @@ class _Runner:
             at=s.frames[-1]["state"],
             usage=self._usage(),
             frames=s.frames,
+            ask=s.frames[-1].get("ask"),
+            reply_to=s.frames[-1].get("reply_to"),
         )
 
     def _annotate_single_step(
@@ -1329,7 +1378,7 @@ class _Runner:
             # HITL: pause before the handler runs; a resume can drop the human
             # reply into ctx so the handler state sees it (ADR 0008).
             self.state_id = to
-            return self._suspended("escalated")
+            return self._suspended("escalated", gate=gate)
         if to == "END":
             rv = self.ctx.get(self.machine.result) if self.machine.result else result
             return RunResult("done", self.trace, self.ctx, result=rv, usage=self._usage())

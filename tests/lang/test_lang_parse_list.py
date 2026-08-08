@@ -102,3 +102,49 @@ def test_version_03_is_supported_strict():
     )
     errors, warnings = semantic_check(m, {m.name: m}, strict=True)
     assert errors == [] and warnings == []
+
+
+def test_parse_json_deposits_the_value_as_is():
+    from mklang.engine import _parse_json
+
+    assert _parse_json('{"note": "n", "category": "meals"}') == {
+        "note": "n",
+        "category": "meals",
+    }
+    assert _parse_json('```json\n{"a": 1}\n```') == {"a": 1}
+    assert _parse_json("[1, 2]") == [1, 2]
+    assert _parse_json('"just a string"') == "just a string"
+
+
+def test_parse_json_invalid_names_its_own_label():
+    import pytest
+
+    from mklang.engine import _parse_json
+
+    with pytest.raises(ValueError, match="parse-json"):
+        _parse_json("a note about lunch")
+
+
+def test_parse_json_is_a_04_value():
+    from mklang.loader import semantic_check
+    from mklang.model import parse_machine
+
+    m = parse_machine(
+        {
+            "machine": "j",
+            "entry": "a",
+            "budget": 3,
+            "mklang": "0.3",
+            "states": {
+                "a": {
+                    "structure": "a JSON object",
+                    "prompt": "p",
+                    "parse": "json",
+                    "output": "o",
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    _, warnings = semantic_check(m, {"j": m})
+    assert any("parse: json" in w and "0.4" in w for w in warnings)

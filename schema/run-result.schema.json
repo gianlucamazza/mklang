@@ -41,6 +41,14 @@
       "type": "string",
       "description": "State id where a halt/suspend occurred, when known."
     },
+    "ask": {
+      "type": "string",
+      "description": "On an escalate suspension (0.4): the gate's authored ask, literal — safe to display where machine output is untrusted."
+    },
+    "reply_to": {
+      "type": "string",
+      "description": "On an escalate suspension (0.4): context key path the reply lands at on resume (default human.reply)."
+    },
     "diagnosis": {
       "type": "object",
       "description": "On budget-exhausted / cost-exhausted: which state ate the run. Present only when a state was entered more than once.",
