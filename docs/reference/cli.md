@@ -77,6 +77,8 @@ mklang run MACHINE [--set k.path=value]... [options]
 | `--checkpoint PATH`             | on budget exhaustion suspend and write a resumable checkpoint (plaintext context, written 0600 — SPEC §11; frames record the taint set, SPEC §6)                                                   |
 | `--hitl`                        | a fired escalate gate suspends for human review (checkpoint defaults to the XDG state root when omitted)                                                                                           |
 | `--strict`                      | refuse to run a document whose `mklang:` version is unsupported (default: warning)                                                                                                                 |
+| `--workspace DIR`               | workspace root for the fs data tools (default: `MKLANG_FS_ROOT` or the current directory — ADR 0024)                                                                                               |
+| `--allow-write`                 | grant `write_file` access to real disk under the workspace; off by default in headless runs (`MKLANG_FS_WRITE=1` is the env equivalent — ADR 0024)                                                 |
 | `--on-truncate report\|halt`    | produce truncation policy: annotate the trace (default) or halt with `output-truncated` (ADR 0018)                                                                                                 |
 | `--untrusted-flow report\|halt` | control-flow taint (SPEC §6 / ADR 0030): annotate the trace when a judge-made decision over external data reaches an effectful `tool:` state (default), or refuse it with `untrusted-control-flow` |
 
