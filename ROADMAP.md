@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **1.1.1**, language **0.3**) and where it can grow —
+Where mklang stands (package **1.2.0**, language **0.4**) and where it can grow —
 technical **and** organizational.
 
 **Tracking rule:** every **Now** / **Next** bullet has a GitHub issue. Work lives
@@ -8,7 +8,7 @@ in [issues](https://github.com/gianlucamazza/mklang/issues) +
 [project board](https://github.com/users/gianlucamazza/projects/2); this file is
 the strategic index. ADRs in [`docs/adr/`](./docs/adr) record decisions.
 Milestone **[1.1 — maturity & embed docs](https://github.com/gianlucamazza/mklang/milestone/1)**
-is the active package horizon (spec stays **0.3**).
+is the active package horizon (spec at **0.4** since 1.2.0).
 
 Horizon tags below: **[now]** / **[next]** / **[later]** / **[maybe]**.
 
@@ -76,7 +76,7 @@ CaMeL control planes (research).
 
 ---
 
-## Where we are (language 0.3 / package 1.1.1)
+## Where we are (language 0.4 / package 1.2.0)
 
 - Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
   fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
