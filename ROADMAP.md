@@ -40,9 +40,12 @@ Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianluc
   **not measured**: the default corpus never fails attempt 1, so no repair is
   ever exercised. Needs tasks that reliably fail first
   ([repair convergence](./docs/experiments/repair-convergence.md)).
-- **Control-flow-taint incidence** — still zero rows: how many effectful tool
-  states in real machines are reachable on a tainted decision (`mklang lint`
-  notes). ADR 0031 §1 puts the 0.4 trigger at more than one in four.
+- **Control-flow-taint incidence** — the harness now exists
+  (`scripts/taint_incidence.py`) with a first internal row (2026-08-09: 1/1 on
+  the bundled corpus — a floor, not a finding; n=1 by construction —
+  [taint incidence](./docs/experiments/taint-incidence.md)). The corpus ADR 0031
+  §1 is actually about — machines outside this repo — still has zero rows and
+  waits on distribution (#61).
 
 ## Later
 
