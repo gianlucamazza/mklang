@@ -1,7 +1,7 @@
 # mklang
 
 [![CI](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml/badge.svg)](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-gianlucamazza.github.io%2Fmklang-blue)](https://gianlucamazza.github.io/mklang/)
+[![Docs](https://img.shields.io/badge/docs-docs.mklang.dev-blue)](https://docs.mklang.dev/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green)](./LICENSE)
 
 **A declarative language for LLM-driven state machines, with an agent-first
@@ -390,6 +390,23 @@ by default.
   zones (ROADMAP).
 - Roadmap and full release notes: [`ROADMAP.md`](./ROADMAP.md),
   [`CHANGELOG.md`](./CHANGELOG.md).
+
+## Running one of these in production
+
+Three sentences, and only these, describe the family
+([mklang-platform ADR 0019](https://github.com/gianlucamazza/mklang-platform/blob/main/docs/adr/0019-one-name-two-products.md)):
+
+1. **mklang** is an open language for LLM-driven state machines (judgement).
+2. **[mklang platform](https://mklang.dev/)** is the durable host: orchestrator,
+   credentials, signed deploy, human queue.
+3. A **pilot** is delivery-led: one real workflow cut over into production here — not self-serve.
+
+This repository is (1). The language name stays usable by anyone under Apache-2.0; the
+commercial designation is **mklang platform**, not bare “mklang”. The other half —
+triggers, retries, credentials, who may deploy, and what happens when the process dies
+between an effect and the record of it — is deliberately not here. The platform is a
+separate commercial product (Phase 1: design partners, onboarding is a person). Its
+licence is stated on that site; the language stays Apache-2.0.
 
 ## License
 

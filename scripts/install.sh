@@ -127,5 +127,5 @@ mklang is installed. Next steps:
        mklang test $data_dir/machines/hello.mkl \\
          --script $data_dir/machines/hello.test.yaml
 
-Docs: https://gianlucamazza.github.io/mklang/getting-started/
+Docs: https://mklang.dev/getting-started/
 EOF
