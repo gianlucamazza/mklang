@@ -32,7 +32,7 @@ Script: [`scripts/repair_convergence.py`](../../scripts/repair_convergence.py).
    `std_refine`), with **criteria tight enough that the first draft plausibly
    misses** — a machine whose repair gate never fires measures nothing.
 2. Run each item `--repeats N` times against a provider.
-3. Read the trace: attempt *k* of a state is its *k*-th execution; the gate that
+3. Read the trace: attempt _k_ of a state is its _k_-th execution; the gate that
    fired says how it went — `repair` → `retry`, `ok` → `pass`, `escalate`/`fail`
    → `give-up` (usually the exhausted budget).
 4. Report the pass rate per attempt index, per machine and pooled.
@@ -44,12 +44,12 @@ uv run python scripts/repair_convergence.py --self-check   # offline harness che
 
 ## Metrics
 
-| Metric                 | Definition                                                       |
-| ---------------------- | ----------------------------------------------------------------- |
-| `by_attempt[k].reached` | Runs that executed attempt `k` of a repair state                  |
-| `by_attempt[k].pass_rate` | `passes at k / reached k`                                       |
-| `lift_attempt_2_over_1` | `p(2) − p(1)` — **the claim under test**                          |
-| `verdict`              | converging (`lift > 0.05`) / flat / no convergence / not measured  |
+| Metric                    | Definition                                                        |
+| ------------------------- | ----------------------------------------------------------------- |
+| `by_attempt[k].reached`   | Runs that executed attempt `k` of a repair state                  |
+| `by_attempt[k].pass_rate` | `passes at k / reached k`                                         |
+| `lift_attempt_2_over_1`   | `p(2) − p(1)` — **the claim under test**                          |
+| `verdict`                 | converging (`lift > 0.05`) / flat / no convergence / not measured |
 
 Reading the verdict:
 
@@ -57,13 +57,15 @@ Reading the verdict:
   not.
 - **flat** — `repair` is resampling. Not worthless, but the language should stop
   implying self-correction, and `sample: N` + a reducer is the honest comparison.
-- **no convergence** — later attempts pass *less* often. Consistent with the
+- **no convergence** — later attempts pass _less_ often. Consistent with the
   selection effect below; not by itself a refutation.
 
 ## Limitations
 
-- **No live rows yet.** The harness and its offline self-check are in; no dated
-  provider run has produced numbers. Nothing here is a finding yet.
+- **The default corpus never exercises a repair.** The one dated run
+  (2026-08-09) had all nine attempts pass first time, so `lift` was undefined —
+  the harness works, the tasks are too easy. Until it carries states that
+  reliably fail attempt 1, `repair`'s claim is unmeasurable, not supported.
 - **Selection effect.** Attempt `k` is conditioned on having failed `k−1` times,
   so the surviving population is systematically harder. This biases `lift`
   **downwards**: a positive lift is real evidence, a slightly negative one is
@@ -73,19 +75,23 @@ Reading the verdict:
   numbers are flat.
 - **The judge is the ruler.** Pass/fail is the same prose judge whose reliability
   the gate-divergence experiment is separately measuring. A rise in pass rate is
-  a rise in *judged* pass rate.
+  a rise in _judged_ pass rate.
 - **One machine shape.** `std_refine` is the canonical repair loop; the corpus
   should grow to a `repair`-in-the-middle machine (`std_research`, `triage`)
   before the pooled number is quoted as "repair in mklang".
 
 ## Results
 
-_No live run recorded yet._ Add a dated row (provider, repeats, per-attempt
-rates, verdict) and link the summary JSON from the PR that records it.
+| Date       | Provider | Runs | p(1)    | p(2) | lift | Verdict                                                 |
+| ---------- | -------- | ---- | ------- | ---- | ---- | ------------------------------------------------------- |
+| 2026-08-09 | deepseek | 9    | **1.0** | —    | —    | **not measured: too few runs reached a second attempt** |
 
-| Date | Provider | Runs | p(1) | p(2) | lift | Verdict |
-| ---- | -------- | ---- | ---- | ---- | ---- | ------- |
-| —    | —        | —    | —    | —    | —    | not measured |
+The 2026-08-09 run is a finding about the corpus, not about `repair`: all nine
+runs of `std_refine` passed at attempt 1, so no repair was ever exercised and
+`lift` is undefined. The claim stays unmeasurable until the harness has tasks
+that reliably fail the first attempt (tracked as a repo issue). Reporting the
+run anyway is the point of this table — a green that measured nothing must not
+read as evidence.
 
 ## Related
 

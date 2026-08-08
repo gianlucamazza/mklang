@@ -29,24 +29,20 @@ Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianluc
 - **[next]** After Anthropic key + credit: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
 - **[next]** Five-reader distribution test — [#61](https://github.com/gianlucamazza/mklang/issues/61)
 
-### Evidence backlog (harness in, numbers missing — no issue filed yet)
+### Evidence backlog (first rows landed 2026-08-09; two still open)
 
-Three measurements are implemented, covered offline, and have **zero live rows**.
-They need a maintainer with keys, not more code. Until they run, none of them may
-be cited as a finding — and two of them are named falsifiers in
-[ADR 0031](./docs/adr/0031-what-would-force-a-language-0-4.md), so the freeze's
-exit condition stays unmeasured while they sit here.
-
-- **Boundary corpus + decomposed metrics** — `gate_divergence.py --machines all
-  --paraphrase`: cross- vs intra-provider agreement, accuracy against gold
-  routes, `gate_blind_spot`, paraphrase invariance
-  ([gate divergence](./docs/experiments/gate-divergence.md)).
-- **Repair convergence** — `repair_convergence.py --repeats 5`: does the feedback
-  make attempt 2 better than attempt 1, or is the budget doing the work
-  ([repair convergence](./docs/experiments/repair-convergence.md))?
-- **Control-flow-taint incidence** — how many effectful tool states in real
-  machines are reachable on a tainted decision (`mklang lint` notes). ADR 0031
-  §1 puts the 0.4 trigger at more than one in four.
+- **Boundary corpus + decomposed metrics** — **first live row recorded**
+  (2026-08-09, DeepSeek+OpenAI: agreement, accuracy and paraphrase invariance
+  all 1.0 across seven machines; ADR 0031 §3's trigger did not fire —
+  [gate divergence](./docs/experiments/gate-divergence.md)). One day, two
+  providers: keep repeating; Anthropic stays unmeasured (#60).
+- **Repair convergence** — a dated run exists (2026-08-09) and its verdict is
+  **not measured**: the default corpus never fails attempt 1, so no repair is
+  ever exercised. Needs tasks that reliably fail first
+  ([repair convergence](./docs/experiments/repair-convergence.md)).
+- **Control-flow-taint incidence** — still zero rows: how many effectful tool
+  states in real machines are reachable on a tainted decision (`mklang lint`
+  notes). ADR 0031 §1 puts the 0.4 trigger at more than one in four.
 
 ## Later
 
@@ -160,7 +156,7 @@ CaMeL control planes (research).
   and deterministic given the verdict** — the fused judge may now answer "none of
   the above" instead of being forced to name a condition (SPEC §5 _Totality_),
   with lint requiring a catch-all; **control-flow taint** (ADR 0030) propagates
-  provenance onto the *choice* and binds it at the effect surface; the
+  provenance onto the _choice_ and binds it at the effect surface; the
   gate-divergence harness gained metrics that can fail (boundary corpus, gold
   routes, cross/intra split, paraphrase invariance); `repair` convergence has a
   harness; and the three things that were promising more than they pinned are now

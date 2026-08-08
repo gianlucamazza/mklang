@@ -8,7 +8,7 @@ ADR 0026 freezes the language at **0.3** and commits SemVer for the package.
 ADR 0028 keeps package 1.0 and marks the freeze **“provisional on evidence”** —
 then names conditions for a package **2.0** only. The spec line has one bullet
 ("spec debt: a conformance-gated 0.4+ release that cannot remain a pure superset")
-which says what a 0.4 would *cost*, not what would *cause* one.
+which says what a 0.4 would _cost_, not what would _cause_ one.
 
 So "provisional on evidence" currently has no falsifier. A freeze whose exit
 condition is unwritten is not provisional; it is permanent with a friendly label,
@@ -38,7 +38,7 @@ confirmation (`hitl:`), neither of which exists in 0.3. **Measurement:** across
 the machines in `examples/` + `src/mklang/data/` and any external machines
 recorded in `docs/experiments/`, if **more than one in four** effectful tool
 states is reachable on a tainted decision (`mklang lint` note count / total
-effectful tool states) *and* authors report the read-only/effectful registry
+effectful tool states) _and_ authors report the read-only/effectful registry
 split is too coarse, that is the trigger. Below that threshold, the host policy
 plus the lint note is enough.
 
@@ -52,7 +52,7 @@ or any `no-gate-matched` halt reported from a machine that passed
 `lint --strict` — then the schema should require it (a breaking schema change,
 hence 0.4).
 
-**Not a trigger:** the reference interpreter changing *how* it reaches the same
+**Not a trigger:** the reference interpreter changing _how_ it reaches the same
 transition (the 0.4-candidate fusion strategy, batching, caching). Those are
 host behaviour under a fixed rule.
 
@@ -112,5 +112,9 @@ proposal without a citation.
   made before the data. They are deliberately specific so that missing them is
   visible; revising one requires an ADR amendment citing the run that motivated
   it — never a quiet edit while looking at the result.
-- Negative: three of four conditions depend on experiments with **no live rows
-  yet**. Until those exist, the criteria are a commitment, not a verdict.
+- Negative: the experiments behind these conditions are only beginning to carry
+  live rows (first on 2026-08-09: §3's paraphrase invariance measured at 1.0 —
+  trigger not fired — and repair convergence attempted but **not measured**, the
+  corpus never reaching a second attempt; §1's taint incidence still has none).
+  A condition measured once and not fired stays armed; until each has a body of
+  rows, the criteria remain more commitment than verdict.

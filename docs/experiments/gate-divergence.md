@@ -41,8 +41,9 @@ Script: [`scripts/gate_divergence.py`](../../scripts/gate_divergence.py).
    - `priority_shadow` — **near-overlapping gates**: both conditions are true and
      the narrower one is second, so SPEC §5's first-true rule fixes the answer;
    - `none_holds` — the output satisfies **no** condition, so the catch-all is
-     correct and can only be reached through the judge's *none of the above*
+     correct and can only be reached through the judge's _none of the above_
      verdict (SPEC §5 _Totality_).
+
 2. For each selected machine and each provider in the runtime config with an
    API key, run it (`--repeats N` optional). With `--paraphrase`, also run each
    machine's **reworded variants** — same states, same targets, same prompts,
@@ -78,19 +79,19 @@ uv run python scripts/gate_divergence.py --judge-tier fast
 
 ## Metrics
 
-| Metric                          | Definition                                                                   |
-| ------------------------------- | ---------------------------------------------------------------------------- |
-| `signature`                     | Compact routing trace (gates + via + destinations)                           |
-| `route`                         | Path only (`state>to`) — comparable across wordings                          |
-| `same_signature`                | Pairwise equality of signatures                                              |
-| `signature_agreement_rate`      | Fraction of within-group pairs that agree — **pooled over both pair kinds**  |
-| `cross_provider_agreement_rate` | Agreement over pairs of **different** providers (the portability claim)      |
-| `intra_provider_agreement_rate` | Agreement over repeats of the **same** provider (self-consistency)           |
-| `accuracy`                      | Fraction of runs taking the **gold** route, where a machine declares one     |
-| `gate_blind_spot`               | `agreement − accuracy`: how much consensus overstates correctness            |
-| `paraphrase_invariance_rate`    | Same provider, same evidence, reworded conditions → same route?              |
-| `per_machine` / `paraphrase`    | The same metrics broken down per suite machine / per wording set             |
-| `distinct_signatures`           | Set of observed routing patterns                                             |
+| Metric                          | Definition                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `signature`                     | Compact routing trace (gates + via + destinations)                          |
+| `route`                         | Path only (`state>to`) — comparable across wordings                         |
+| `same_signature`                | Pairwise equality of signatures                                             |
+| `signature_agreement_rate`      | Fraction of within-group pairs that agree — **pooled over both pair kinds** |
+| `cross_provider_agreement_rate` | Agreement over pairs of **different** providers (the portability claim)     |
+| `intra_provider_agreement_rate` | Agreement over repeats of the **same** provider (self-consistency)          |
+| `accuracy`                      | Fraction of runs taking the **gold** route, where a machine declares one    |
+| `gate_blind_spot`               | `agreement − accuracy`: how much consensus overstates correctness           |
+| `paraphrase_invariance_rate`    | Same provider, same evidence, reworded conditions → same route?             |
+| `per_machine` / `paraphrase`    | The same metrics broken down per suite machine / per wording set            |
+| `distinct_signatures`           | Set of observed routing patterns                                            |
 
 ### Why the headline number was not enough
 
@@ -103,7 +104,7 @@ for three separable reasons — each now has its own metric:
    agreement had nowhere to go but 1.0. The boundary corpus (`threshold_edge`,
    `priority_shadow`, `none_holds`) puts the decision where competent judges can
    legitimately differ.
-2. **Agreement ≠ correctness.** Two providers can concur on the *wrong* route,
+2. **Agreement ≠ correctness.** Two providers can concur on the _wrong_ route,
    and the pooled rate scores that as perfect. `accuracy` against the gold route
    is the missing half; `gate_blind_spot` is the gap between them — the
    gate-judging analogue of the authoring-loop
@@ -127,13 +128,11 @@ temperature ablation.
 
 ## Limitations
 
-- **The boundary corpus has no live rows yet.** `threshold_edge`,
-  `priority_shadow`, `none_holds`, the cross/intra decomposition, accuracy and
-  paraphrase invariance are implemented and covered offline (scripted judges,
-  `tests/repo/test_gate_divergence_script.py`); no dated live run has produced
-  numbers for them. Until one appears in **Results**, treat them as
-  instrumentation, not findings — and do not cite the 1.0 history as if it
-  covered them.
+- **The boundary corpus has one live row** (2026-08-09: everything 1.0 on
+  DeepSeek+OpenAI, including 108/108 paraphrase pairs). One day, two providers —
+  a first data point, not a closed question: the 2026-07-24 `severity_escalate`
+  dip shows these numbers move across calendar days, so the trigger stays armed
+  and the run stays worth repeating. Anthropic remains unmeasured (#60).
 - Gold routes encode **author intent under SPEC §5**, not a universal truth.
   `priority_shadow`'s gold follows from the first-true rule; `threshold_edge`'s
   from "strictly greater"; `none_holds`' from the catch-all. A machine with no
@@ -147,12 +146,13 @@ temperature ablation.
 
 ## Results
 
-| Date       | Providers                  | Agreement rate      | Distinct signatures | Notes                                                                                                                                                                                                                                                                       |
-| ---------- | -------------------------- | ------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-16 | deepseek, openai (×3 each) | **1.0**             | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key).                                      |
-| 2026-07-23 | deepseek, openai (×3 each) | **1.0** per machine | 1 per machine       | First full **four-machine suite** run (`--machines all`). 24/24 runs `done`, agreement 1.0 within every machine (15/15 pairs each), zero gate errors. Free-text outputs diverge on the contestable machines while routing stays identical. Anthropic still billing-blocked. |
-| 2026-07-24 | deepseek, openai (×3 each) | **0.917** pooled; **1.0** on 3/4 machines | 1–2 per machine | **1.0.1 release day.** Full four-machine suite: 24/24 `done`, `gate_errors: []`. `gate_divergence` / `sentiment_borderline` / `grounding_repair` stay **1.0**; **`severity_escalate` drops to 0.667** (one DeepSeek run took `otherwise→auto` instead of page-human). Release-gate (single machine) still **1.0**. Anthropic **key absent** locally and in GitHub Actions secrets (not only billing). |
-| 2026-07-27 | deepseek, openai (×3 each) | **1.0** per machine (pooled **1.0**) | 1 per machine | Full four-machine suite, 24/24 `done`, `gate_errors: []`. Live smokes green. **`severity_escalate` back to 1.0** but the shared signature is `otherwise→auto` (not page-human) — agreement holds on the non-escalate path; still evidence that control-flow is model-sensitive across calendar days. Anthropic still **no key** in project/user `.env` (demo keys present: DeepSeek, OpenAI, Tavily only). |
+| Date       | Providers                  | Agreement rate                            | Distinct signatures | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | -------------------------- | ----------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-16 | deepseek, openai (×3 each) | **1.0**                                   | 1                   | Tier-following judges (post-0.5.2 default). Synthetic spam machine; all 6 runs `done`. Shared signature: `label\|spam→spam_path \|\| spam_path\|otherwise→END`. Anthropic skipped (account billing / credit limit, not a missing key).                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-07-23 | deepseek, openai (×3 each) | **1.0** per machine                       | 1 per machine       | First full **four-machine suite** run (`--machines all`). 24/24 runs `done`, agreement 1.0 within every machine (15/15 pairs each), zero gate errors. Free-text outputs diverge on the contestable machines while routing stays identical. Anthropic still billing-blocked.                                                                                                                                                                                                                                                                                                             |
+| 2026-07-24 | deepseek, openai (×3 each) | **0.917** pooled; **1.0** on 3/4 machines | 1–2 per machine     | **1.0.1 release day.** Full four-machine suite: 24/24 `done`, `gate_errors: []`. `gate_divergence` / `sentiment_borderline` / `grounding_repair` stay **1.0**; **`severity_escalate` drops to 0.667** (one DeepSeek run took `otherwise→auto` instead of page-human). Release-gate (single machine) still **1.0**. Anthropic **key absent** locally and in GitHub Actions secrets (not only billing).                                                                                                                                                                                   |
+| 2026-07-27 | deepseek, openai (×3 each) | **1.0** per machine (pooled **1.0**)      | 1 per machine       | Full four-machine suite, 24/24 `done`, `gate_errors: []`. Live smokes green. **`severity_escalate` back to 1.0** but the shared signature is `otherwise→auto` (not page-human) — agreement holds on the non-escalate path; still evidence that control-flow is model-sensitive across calendar days. Anthropic still **no key** in project/user `.env` (demo keys present: DeepSeek, OpenAI, Tavily only).                                                                                                                                                                              |
+| 2026-08-09 | deepseek, openai (×3 each) | **1.0** per machine (pooled **1.0**)      | 1 per machine       | **First boundary-corpus live run** (`--machines all --paraphrase`, seven machines): 72/72 `done`, `gate_errors: []`. `signature`/`cross-provider`/`intra-provider` agreement all **1.0**; accuracy **1.0** on every gold-carrying machine (66 scored runs); `gate_blind_spot` 0.0; `severity_escalate` 1.0 this day. **Paraphrase invariance 1.0** — 108/108 cross-variant pairs (`threshold_edge` 54, `gate_divergence`/`none_holds`/`priority_shadow` 18 each). ADR 0031 §3's structured-predicate trigger (`< 0.8`) **does not fire** on this corpus. Anthropic still keyless (#60). |
 
 ### 2026-07-16 detail
 
@@ -222,11 +222,11 @@ uv run python scripts/gate_divergence.py --machines all --providers deepseek,ope
 - **Pooled signature_agreement_rate:** **0.917**
 - **Per-machine:**
 
-  | Machine                | Agreement | Distinct signatures | Note |
-  | ---------------------- | --------- | ------------------- | ---- |
-  | `gate_divergence`      | **1.0**   | 1                   | Release-gate machine — stable |
-  | `sentiment_borderline` | **1.0**   | 1                   | Free-text still diverges (`same_outputs: false`) |
-  | `grounding_repair`     | **1.0**   | 1                   | Anchored |
+  | Machine                | Agreement | Distinct signatures | Note                                                             |
+  | ---------------------- | --------- | ------------------- | ---------------------------------------------------------------- |
+  | `gate_divergence`      | **1.0**   | 1                   | Release-gate machine — stable                                    |
+  | `sentiment_borderline` | **1.0**   | 1                   | Free-text still diverges (`same_outputs: false`)                 |
+  | `grounding_repair`     | **1.0**   | 1                   | Anchored                                                         |
   | `severity_escalate`    | **0.667** | 2                   | One DeepSeek repeat chose `otherwise→auto` instead of page-human |
 
 - **Interpretation:** the release gate (easy multi-way `ok` routing) remains at
@@ -254,11 +254,11 @@ uv run python scripts/gate_divergence.py --machines all \
 - **signature_agreement_rate:** **1.0** pooled and **1.0** per machine
 - **Per-machine:**
 
-  | Machine                | Agreement | Distinct signatures | Shared signature (abbreviated) |
-  | ---------------------- | --------- | ------------------- | ------------------------------ |
-  | `gate_divergence`      | **1.0**   | 1                   | `label\|spam→spam_path → END` |
-  | `sentiment_borderline` | **1.0**   | 1                   | `assess\|clearly negative→neg → END` |
-  | `grounding_repair`     | **1.0**   | 1                   | `answer\|grounded, states 30 days→END` |
+  | Machine                | Agreement | Distinct signatures | Shared signature (abbreviated)                  |
+  | ---------------------- | --------- | ------------------- | ----------------------------------------------- |
+  | `gate_divergence`      | **1.0**   | 1                   | `label\|spam→spam_path → END`                   |
+  | `sentiment_borderline` | **1.0**   | 1                   | `assess\|clearly negative→neg → END`            |
+  | `grounding_repair`     | **1.0**   | 1                   | `answer\|grounded, states 30 days→END`          |
   | `severity_escalate`    | **1.0**   | 1                   | `triage\|otherwise→auto → END` (not page-human) |
 
 - **Interpretation:** agreement recovered to 1.0 on the escalate machine, but
@@ -281,10 +281,10 @@ release gate. Implementation lives in
 
 ### Current floors (package 1.x)
 
-| Machine | Role | Floor (`signature_agreement_rate`) | Evidence |
-| ------- | ---- | ---------------------------------- | -------- |
-| `gate_divergence` | Easy multi-way `ok` routing — **release anchor** | **1.0** | Stable 1.0 on DeepSeek×OpenAI (2026-07-16 … 2026-07-24) |
-| `severity_escalate` | Control-flow `escalate` — **contestability probe** | **0.5** | Observed **0.667** on 2026-07-24; floor allows contestability without letting total chaos pass |
+| Machine             | Role                                               | Floor (`signature_agreement_rate`) | Evidence                                                                                       |
+| ------------------- | -------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `gate_divergence`   | Easy multi-way `ok` routing — **release anchor**   | **1.0**                            | Stable 1.0 on DeepSeek×OpenAI (2026-07-16 … 2026-07-24)                                        |
+| `severity_escalate` | Control-flow `escalate` — **contestability probe** | **0.5**                            | Observed **0.667** on 2026-07-24; floor allows contestability without letting total chaos pass |
 
 Default script floor for any machine without an override is the global
 `--min-agreement` (release uses **1.0**). Per-machine overrides use
@@ -331,20 +331,20 @@ record the reason in the next results row.
 
 ### Suite-only machines (not in release.yml)
 
-| Machine | Why suite-only today |
-| ------- | -------------------- |
-| `sentiment_borderline` | Contestable free-text; routing has been 1.0 but free-text diverges — useful measurement, redundant with anchor for release |
-| `grounding_repair` | Anchored repair loop; stable 1.0 — candidate for promotion if release cost allows and we want repair coverage |
-| `threshold_edge` | Boundary corpus, **no live evidence yet** — promotion needs ≥2 dated rows per the rules above |
-| `priority_shadow` | Boundary corpus, no live evidence yet. If it turns out judges routinely pick the narrower second gate, that is a finding about the priority rule, not a floor to lower |
-| `none_holds` | Boundary corpus, no live evidence yet. Measures the *none of the above* verdict (SPEC §5); before that existed the machine could not route correctly at all |
+| Machine                | Why suite-only today                                                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sentiment_borderline` | Contestable free-text; routing has been 1.0 but free-text diverges — useful measurement, redundant with anchor for release                                             |
+| `grounding_repair`     | Anchored repair loop; stable 1.0 — candidate for promotion if release cost allows and we want repair coverage                                                          |
+| `threshold_edge`       | Boundary corpus, **no live evidence yet** — promotion needs ≥2 dated rows per the rules above                                                                          |
+| `priority_shadow`      | Boundary corpus, no live evidence yet. If it turns out judges routinely pick the narrower second gate, that is a finding about the priority rule, not a floor to lower |
+| `none_holds`           | Boundary corpus, no live evidence yet. Measures the _none of the above_ verdict (SPEC §5); before that existed the machine could not route correctly at all            |
 
 Boundary machines must not enter the release gate on a floor invented before the
 first live row: an unmeasured floor is a guess with CI authority.
 
 ## Anthropic secret + credit runbook
 
-Closes the *ops* side of [#60](https://github.com/gianlucamazza/mklang/issues/60)
+Closes the _ops_ side of [#60](https://github.com/gianlucamazza/mklang/issues/60)
 and [#72](https://github.com/gianlucamazza/mklang/issues/72). The adapter and
 harness already support Anthropic; the gap is **account credit** and **keys in
 the places that run live jobs**.
@@ -379,12 +379,12 @@ from the PR that records it.
 
 ### GitHub Actions (release / optional maintainer workflows)
 
-| Secret name | Required for |
-| ----------- | ------------ |
-| `DEEPSEEK_API_KEY` | release live matrix (`--require-providers`) |
-| `OPENAI_API_KEY` | release live matrix |
-| `ANTHROPIC_API_KEY` | third-provider rows; skipped cleanly when absent |
-| `TAVILY_API_KEY` | optional search-backed demos/tests, not gate-divergence |
+| Secret name         | Required for                                            |
+| ------------------- | ------------------------------------------------------- |
+| `DEEPSEEK_API_KEY`  | release live matrix (`--require-providers`)             |
+| `OPENAI_API_KEY`    | release live matrix                                     |
+| `ANTHROPIC_API_KEY` | third-provider rows; skipped cleanly when absent        |
+| `TAVILY_API_KEY`    | optional search-backed demos/tests, not gate-divergence |
 
 Set repository (or environment) secrets in GitHub → Settings → Secrets and
 variables → Actions. The release workflow lists optional providers; without
