@@ -112,6 +112,11 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   `$XDG_STATE_HOME/mklang/checkpoints/`, or wherever `--checkpoint` points) and
   `mklang resume --set human.reply="…"` feeds the decision to the handler
   (ADR 0008).
+- **Ceiling the loop states, not just the run** (0.4). A loop-back cycle that stops
+  converging eats the whole budget and halts as `budget-exhausted` — which does not
+  name the cycle. `max_visits: N` on the revisited state halts the (N+1)-th entry
+  with `loop-ceiling` naming it, and the exhaustion result now carries a
+  `diagnosis` with the most-revisited state either way (SPEC §7).
 - **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
   the width of any fan-out (a `sample: N` costs N steps). Leave headroom; hitting the
   budget is a `halt`.

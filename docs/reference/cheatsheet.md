@@ -62,6 +62,8 @@ A state is exactly one of generative (`prompt`), call (`call`), or tool
 | `tool`             | run a host-registered callable (§4.9)                         |
 | `input`            | map parent context → sub-machine/tool input (§4.8–4.9)        |
 | `parse: list`      | deposit a parsed JSON array instead of text (§4.10)           |
+| `parse: json`      | deposit any parsed JSON value instead of text (0.4, §4.10)    |
+| `max_visits: N`    | per-state entry ceiling; entry N+1 halts `loop-ceiling` (0.4, §7) |
 | `output`           | context key where the state's result lands                    |
 
 ## Gates (SPEC §5)
@@ -86,6 +88,7 @@ gates:
 | `then: ok`  | transition to `to`                                                             |
 | `repair: N` | re-run with the failed `when` injected as feedback; at most N repairs (§5, §7) |
 | `escalate`  | route to a handler state — with `--hitl`, suspends for a human (ADR 0008)      |
+| `ask:` / `reply_to:` | 0.4, escalate only: the authored question for the human, and the context path the reply lands at (default `human.reply`) — both ride the suspended result (§5) |
 | `fail`      | abort the run                                                                  |
 
 ## Interpolation

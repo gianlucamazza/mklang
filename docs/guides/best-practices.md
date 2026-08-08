@@ -574,7 +574,7 @@ Candidates for a future **0.4** (need ADR + conformance) — **not** current pra
 
 | Candidate                             | Why it might become language                                               |
 | ------------------------------------- | -------------------------------------------------------------------------- |
-| `parse: json` / object                | Structured composition beyond lists                                        |
+| ~~`parse: json`~~                     | **Shipped in 0.4** (ADR 0034) — object-shaped composition is `structure` + gates |
 | Machine/state `on_truncate` policy    | Portable anti-cutoff in the document                                       |
 | Context zones / pin (ADR 0017 L2)     | Authorable trust zones — runtime provenance taint already ships (ADR 0025) |
 | Per-gate `hitl:`                      | Finer HITL than run-level                                                  |

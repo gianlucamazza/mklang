@@ -1,15 +1,15 @@
 # mklang conformance suite
 
 Implementation-neutral test cases for the **language semantics** (SPEC §5–§7).
-An interpreter conforms to mklang v0.3 (v0.2 documents remain valid) when it
-passes every case in `cases/` with its own runner. The reference runner is `tests/conformance/test_conformance.py`; a
+An interpreter conforms to mklang v0.4 (v0.2/v0.3 documents remain valid) when
+it passes every case in `cases/` with its own runner. The reference runner is `tests/conformance/test_conformance.py`; a
 second implementation (TypeScript, Rust, …) writes its own runner against the
 same YAML files.
 
 The reference runner is a thin consumer of **`src/mklang/scripttest.py`** — the
 single source of truth for the scripted LLM, the scripted `hooks:`/`tools:`
 bindings, and the expectation matcher (status / error / `error_prefix` / result /
-`at` / trace skeleton / context). The same module powers `mklang test`, which
+`at` / `ask` / `reply_to` / trace skeleton / context). The same module powers `mklang test`, which
 lets _authors_ run their own `.mkl` against a script of named scenarios in exactly
 this case format (see [README: "Test your machine without API keys"](../README.md)).
 The case format below and the `mklang test` scenario format are therefore one
@@ -38,11 +38,13 @@ run: # optional interpreter options (e.g. cost_budget)
   cost_budget: 20
   on_untrusted_flow: halt # control-flow-taint policy (SPEC §6): report (default) | halt
 expect:
-  status: done | halt # required
-  error: <halt reason> # optional — exact match on the kebab-case reason
+  status: done | halt | suspended # required
+  error: <halt/suspend reason> # optional — exact match on the kebab-case reason
   error_prefix: <prefix> # optional — startswith match (for reasons with an impl-specific tail)
   result: <value> # optional — exact match
-  at: <state> # optional — where the run halted
+  at: <state> # optional — where the run halted or parked
+  ask: <string> # optional — 0.4: the escalate gate's authored ask on a suspension
+  reply_to: <context path> # optional — 0.4: where the reply lands (default human.reply)
   trace: # optional — SKELETON match: same number of steps,
     - { state: a, policy: ok, to: b } # each listed key must equal the step's value
   context: # optional — exact match per listed key

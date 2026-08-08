@@ -82,7 +82,7 @@ exactly one policy (SPEC §5):
 | ---------------- | ------------------------------------------------ |
 | `then: ok`       | advance to `to:` (`END` finishes the run)        |
 | `repair: N`      | re-run this state with feedback, at most N times |
-| `escalate: true` | route to a handler state (suspends under HITL)   |
+| `escalate: true` | route to a handler state (suspends under HITL). 0.4: add `ask:` (the literal question a host shows the human) and `reply_to:` (where the reply lands; default `human.reply`) |
 | `fail: true`     | abort the run                                    |
 
 Rules of thumb:

@@ -51,7 +51,9 @@ Valuable, not in 1.1 (open issues only when ready to pull into a milestone):
 - **[later] Truncation `continue` stitching** (ADR 0018)
 - **[later] Editor tooling / LSP**
 - **[later] Language 0.4 candidates** (each needs ADR + conformance — see BP §16):
-  `parse: json` / object, portable `on_truncate`, per-gate `hitl:`, budget split
+  portable `on_truncate`, per-gate `hitl:`, budget split. Shipped from this list in
+  0.4: `max_visits` (ADR 0033), `parse: json` (ADR 0034), escalate `ask:`/`reply_to:`
+  (ADR 0035)
 - **[later] Host HTTP tool as documented plugin** (not core language)
 - **[later] Context Layer 2 zones/pin** (ADR 0017; provenance taint already ADR 0025)
 
