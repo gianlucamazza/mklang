@@ -1,0 +1,107 @@
+/* Vendored from mklang-platform/web/shared/tokens.css — do not edit here.
+ * The platform file is the one definition; this copy exists because the docs
+ * build (GitHub Pages) cannot see that repository. tests/repo/test_brand_assets.py
+ * compares everything below the first :root against a sibling ../mklang-platform
+ * checkout, so drift fails the local gate instead of surfacing on the site.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #07090d;
+  --bg-elevated: #0d1118;
+  --bg-panel: rgba(18, 22, 32, 0.82);
+  --bg-panel-solid: #121620;
+  --bg-panel-2: #181d2a;
+  --bg-input: rgba(8, 10, 16, 0.72);
+  --bg-hover: rgba(255, 255, 255, 0.045);
+  --bg-active: rgba(255, 255, 255, 0.07);
+
+  /* Borders — soft hairlines */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --border-focus: #6b9cff;
+  --border-w: 1px;
+
+  /* Text */
+  --text: #f2f4f8;
+  --text-secondary: #a7b0c0;
+  --text-muted: #7a8498;
+
+  /* Accent — electric indigo */
+  --accent: #6b9cff;
+  --accent-hover: #84adff;
+  --accent-pressed: #5488f0;
+  --accent-soft: rgba(107, 156, 255, 0.14);
+  --accent-glow: rgba(107, 156, 255, 0.35);
+  --accent-on: #061018;
+  --brand-deep: #3d5fd4;
+
+  /* Status */
+  --ok: #34c97a;
+  --ok-text: #7eefb0;
+  --ok-soft: rgba(52, 201, 122, 0.12);
+
+  --warn: #e5b84a;
+  --warn-text: #ffd978;
+  --warn-soft: rgba(229, 184, 74, 0.12);
+
+  --danger: #f06560;
+  --danger-text: #ffb3af;
+  --danger-soft: rgba(240, 101, 96, 0.12);
+
+  --info: #5b8fd4;
+  --info-text: #b8d4ff;
+  --info-soft: rgba(91, 143, 212, 0.14);
+
+  --cancelled-text: #a8b0c0;
+  --cancelled-soft: rgba(168, 176, 192, 0.1);
+
+  /* Shape */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  /* Density */
+  --pad-control-y: 0.5rem;
+  --pad-control-x: 0.8rem;
+  --pad-block: 0.9rem;
+  --pad-panel: 1.25rem;
+  --pad-nested: 1rem;
+  --control-h: 2.35rem;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-lg:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-focus: 0 0 0 3px var(--accent-soft);
+  --shadow-btn:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 4px 14px var(--accent-glow);
+
+  /* Type */
+  --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Breakpoints (documented; used in media queries below)
+     --bp-sm: 480px  phone
+     --bp-md: 768px  tablet / card↔table switch
+     --bp-lg: 960px  single column layout
+     --bp-xl: 1200px shell max
+  */
+  /* Absolute: root font-size is 15px here, so 2.75rem would be 41px. */
+  --touch-min: 44px;
+}

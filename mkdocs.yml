@@ -11,16 +11,26 @@ docs_dir: site-src # generated — run scripts/build-docs.sh first
 
 theme:
   name: material
+  # font: false keeps the build free of Google Fonts requests — the platform
+  # site ships no webfont and no third-party origin (ADR 0018), and the docs
+  # hold the same posture: system stacks come from the vendored tokens.
+  font: false
+  logo: assets/favicon.svg
+  favicon: assets/favicon.svg
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      toggle: { icon: material/weather-night, name: Dark mode }
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+    # Dark first and unconditioned: the brand scheme is the default for
+    # everyone (mklang.dev is dark-only); light stays one toggle away.
+    - scheme: slate
       toggle: { icon: material/weather-sunny, name: Light mode }
+    - scheme: default
+      toggle: { icon: material/weather-night, name: Dark mode }
   features:
     - navigation.sections
     - content.code.copy
+
+extra_css:
+  - assets/stylesheets/tokens.css # vendored from mklang-platform/web/shared/
+  - assets/stylesheets/extra.css
 
 markdown_extensions:
   - admonition
@@ -62,3 +72,7 @@ nav:
       - Roadmap: ROADMAP.md
       - Changelog: CHANGELOG.md
       - Contributing: CONTRIBUTING.md
+  # Mirrors the site's "The language" masthead link back at the product.
+  # The label is the full designation on purpose — ADR 0019 (platform repo):
+  # bare "mklang" names the Apache-2.0 language, never the paid host.
+  - mklang platform: https://mklang.dev/
