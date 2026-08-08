@@ -34,6 +34,9 @@ class RunResult:
     at: str | None = None
     usage: dict | None = None  # {"input_tokens": int, "output_tokens": int}
     frames: list[dict] | None = None  # checkpoint frames when status == "suspended"
+    # On budget/cost exhaustion: which state ate the run. Additive on the wire
+    # (run-result.schema.json allows extra keys), absent everywhere else.
+    diagnosis: dict | None = None
 
 
 class _Suspend(Exception):
@@ -828,6 +831,10 @@ class _Runner:
         self.total_out: int = 0
         self.feedback: str = ""
         self.repair_left: dict[tuple[str, int], int] = {}
+        # Entries per state, for `max_visits` (SPEC §7) and the exhaustion
+        # diagnosis. Counted at entry, before the state runs — an entry the
+        # flow guard or a provider error aborts still counts, like `steps`.
+        self.visits: dict[str, int] = {}
         self.deeper: list[dict] | None = None
         self._init_error: RunResult | None = None
         # Preflight matches the historical _run_impl order: depth / on_truncate
@@ -894,6 +901,10 @@ class _Runner:
         self.total_out = frame["total_out"]
         self.feedback = frame["feedback"]
         self.repair_left = decode_repair(frame["repair_left"])
+        # Pre-0.4 checkpoints carry no visit record; they resume with the count
+        # reset. Fail-open by design: a ceiling is a divergence guard, not a
+        # security boundary, and failing closed would strand old checkpoints.
+        self.visits = {str(k): int(v) for k, v in frame.get("visits", {}).items()}
         # Frames without a taint record (pre-ADR 0025 checkpoints, or values
         # injected by `resume --set`) default to all-tainted — fail-safe.
         self.tainted = set(frame.get("tainted", frame["ctx"].keys()))
@@ -933,6 +944,7 @@ class _Runner:
             self.tainted,
             self.external,
             self.flow_tainted,
+            self.visits,
         )
 
     def _suspended(self, reason: str) -> RunResult:
@@ -949,11 +961,27 @@ class _Runner:
             frames=[self._snapshot()],
         )
 
+    def _diagnosis(self) -> dict | None:
+        """Which state ate the run — meaningful only when something was revisited."""
+        if not self.visits:
+            return None
+        sid, n = max(self.visits.items(), key=lambda kv: kv[1])
+        if n < 2:
+            return None
+        return {"most_visited_state": sid, "visits": n}
+
     def _suspend_or_halt(self, reason: str) -> RunResult:
         """Loop-top budget exhaustion: checkpoint frames when suspendable, else halt."""
         if self.deps.suspendable:
             return self._suspended(reason)
-        return RunResult("halt", self.trace, self.ctx, error=reason, usage=self._usage())
+        return RunResult(
+            "halt",
+            self.trace,
+            self.ctx,
+            error=reason,
+            usage=self._usage(),
+            diagnosis=self._diagnosis(),
+        )
 
     def _record(self, step: dict) -> None:
         """Append to the trace and mirror it as a live event (ADR 0015)."""
@@ -1021,11 +1049,23 @@ class _Runner:
             return self._suspend_or_halt("budget-exhausted")
         if self.cost_budget is not None and self._spent() >= self.cost_budget:
             return self._suspend_or_halt("cost-exhausted")
+        # Per-state ceiling (SPEC §7): checked after the budgets so an exhausted
+        # budget keeps its own name, and via _halt rather than the suspend path —
+        # a resumed run would re-enter the same over-visited state and halt again,
+        # so a checkpoint here would be a promise the machine cannot keep.
+        S = self.machine.states.get(self.state_id)
+        if (
+            S is not None
+            and S.max_visits is not None
+            and self.visits.get(self.state_id, 0) >= S.max_visits
+        ):
+            return self._halt("loop-ceiling")
         return None
 
     def _step_once(self) -> RunResult | None:
         """Execute → deposit → judge → transition. None means continue the loop."""
         S = self.machine.states[self.state_id]
+        self.visits[self.state_id] = self.visits.get(self.state_id, 0) + 1
         sub_resume, self.deeper = self.deeper, None  # descend into suspended call once
         if sub_resume is not None and S.kind != "call":
             return self._halt(f"resume-mismatch: state {self.state_id!r} is not a call")

@@ -146,6 +146,11 @@
           "$ref": "#/$defs/tier",
           "description": "Per-state tier override (optional)."
         },
+        "max_visits": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max entries of this state per run; the next entry halts with `loop-ceiling` (§7)."
+        },
         "reason": {
           "type": "boolean",
           "description": "Elicit + trace a private chain-of-thought (§4.5)."
@@ -208,6 +213,11 @@
         "tier": {
           "$ref": "#/$defs/tier"
         },
+        "max_visits": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max entries of this state per run; the next entry halts with `loop-ceiling` (§7)."
+        },
         "sample": {
           "type": "integer",
           "minimum": 2,
@@ -269,6 +279,11 @@
         },
         "output": {
           "type": "string"
+        },
+        "max_visits": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max entries of this state per run; the next entry halts with `loop-ceiling` (§7)."
         },
         "gates": {
           "type": "array",

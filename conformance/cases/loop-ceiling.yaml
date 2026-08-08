@@ -1,0 +1,26 @@
+case: loop-ceiling
+description: >
+  max_visits bounds entries of one state; the entry after the ceiling halts with
+  loop-ceiling naming the state, while the global budget is still unspent (0.4, §7).
+machine:
+  machine: lc
+  entry: a
+  budget: 10
+  mklang: "0.4"
+  states:
+    a:
+      structure: s
+      prompt: again
+      output: o
+      max_visits: 2
+      gates:
+        - { when: otherwise, then: ok, to: a }
+llm:
+  produce: ["one", "two"]
+expect:
+  status: halt
+  error: loop-ceiling
+  at: a
+  trace:
+    - { state: a, policy: ok, to: a }
+    - { state: a, policy: ok, to: a }

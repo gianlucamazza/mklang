@@ -21,6 +21,9 @@ class State:
     gates: list[Gate]
     output: str
     tier: str | None = None
+    # Max entries of this state per run (SPEC §7); the next entry halts with
+    # `loop-ceiling`. Kind-agnostic, like `output` and `gates`. (0.4)
+    max_visits: int | None = None
     # generative
     structure: str | None = None
     prompt: str | None = None
@@ -75,6 +78,7 @@ def parse_state(sid: str, d: dict) -> State:
         gates=[parse_gate(g) for g in d["gates"]],
         output=d["output"],
         tier=d.get("tier"),
+        max_visits=d.get("max_visits"),
         structure=d.get("structure"),
         prompt=d.get("prompt"),
         execution=d.get("execution"),

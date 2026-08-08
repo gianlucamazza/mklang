@@ -1,7 +1,8 @@
 # mklang — Language Specification
 
-> Version **0.3** (0.2 documents remain valid; 0.3 adds `parse: list` §4.10 and
-> raw whole-template `input:` resolution §4.8). Surface syntax: **YAML**. Runtime:
+> Version **0.4** (0.2/0.3 documents remain valid; 0.3 adds `parse: list` §4.10 and
+> raw whole-template `input:` resolution §4.8; 0.4 adds `max_visits` §7). Surface
+> syntax: **YAML**. Runtime:
 > **language-agnostic** (a conformant runtime is any host with access to an LLM).
 
 ---
@@ -132,6 +133,7 @@ states: # map of <state-id> -> state definition
     prompt: <prose>
     execution?: <prose> # optional (§4.3)
     tier?: fast|balanced|reasoning # per-state tier override (§2.1)
+    max_visits?: <int> # max entries of this state per run (§7)
     reason?: <bool> # elicit a private chain-of-thought, traced (§4.5)
     accumulate?: <bool> # append to a list under `output` instead of overwriting (§4.6)
     sample?: <int> # fan-out: run N times → output is a list (§4.7)
@@ -144,6 +146,7 @@ states: # map of <state-id> -> state definition
     call: <machine-name>
     input?: <map> # parent context -> sub-machine's initial context
     tier?: fast|balanced|reasoning
+    max_visits?: <int> # max entries of this state per run (§7)
     sample?: <int> # optional fan-out over the call
     over?: "{{list}}" # optional fan-out over the call (one sub-run per item)
     accumulate?: <bool>
@@ -152,7 +155,8 @@ states: # map of <state-id> -> state definition
   # (c) tool state — runs a host-registered callable (§4.9):
   <state-id>:
     tool: <tool-name>
-    input?: <map> # context values -> the tool's input dict
+    input?: <map>
+    max_visits?: <int> # max entries of this state per run (§7) # context values -> the tool's input dict
     sample?: <int> # optional fan-out over the tool
     over?: "{{list}}" # optional fan-out over the tool (one call per item)
     accumulate?: <bool>
@@ -173,6 +177,7 @@ Generative  ::= {
   structure  : string          # prose: shape of {{output}} + input read
   prompt     : string          # prose: task, with {{context.key}}
   execution  : string?         # prose: operational policy (opt.)
+  max_visits : int?            # per-state entry ceiling, any face (§7)
   tier       : Tier?           # "fast" | "balanced" | "reasoning" (§2.1)
   reason     : bool?           # elicit + trace a private chain-of-thought (§4.5)
   accumulate : bool?           # append to `output` list instead of set (§4.6)
@@ -225,11 +230,12 @@ Reserved keys:
 
 - Top-level: `machine`, `entry`, `budget`, `default_tier`, `result`, `context`,
   `tools`, `hooks`, `states`, `mklang`.
-- Generative state: `structure`, `prompt`, `execution`, `tier`, `reason`,
-  `accumulate`, `sample`, `over`, `parse`, `output`, `gates`.
-- Call state: `call`, `input`, `tier`, `sample`, `over`, `accumulate`, `output`,
-  `gates`.
-- Tool state: `tool`, `input`, `sample`, `over`, `accumulate`, `output`, `gates`.
+- Generative state: `structure`, `prompt`, `execution`, `tier`, `max_visits`,
+  `reason`, `accumulate`, `sample`, `over`, `parse`, `output`, `gates`.
+- Call state: `call`, `input`, `tier`, `max_visits`, `sample`, `over`,
+  `accumulate`, `output`, `gates`.
+- Tool state: `tool`, `input`, `max_visits`, `sample`, `over`, `accumulate`,
+  `output`, `gates`.
 - Gate: `when`, `hook`, `then`, `repair`, `escalate`, `fail`, `to`.
 - Tier values: `fast`, `balanced`, `reasoning`.
 - Fan-out vars: `{{index}}` (inside any `sample`/`over` state), `{{item}}` (inside
@@ -660,11 +666,14 @@ recursive — a `call` state re-enters it for the sub-machine.
 run(machine, context, registry, depth=0):
   if depth > MAX_CALL_DEPTH: return halt(error="call-depth-exceeded")
   state_id = machine.entry
-  trace = []; steps = 0; repair_budget = {}; feedback = ""
+  trace = []; steps = 0; repair_budget = {}; visits = {}; feedback = ""
 
   while True:
     if steps >= machine.budget: return halt(trace, error="budget-exhausted")
     S = machine.states[state_id]
+    if S.max_visits and visits.get(state_id, 0) >= S.max_visits:
+        return halt(trace, error="loop-ceiling", at=state_id)
+    visits[state_id] = visits.get(state_id, 0) + 1
 
     # 1) EXECUTE the state → `result` (a value, or a list for fan-out)
     if fan_out(S):                              # S.sample or S.over
@@ -883,6 +892,14 @@ overhead`, or it halts before the reducer runs. Size `budget` against the expect
 
 - **Per-gate repair budget** (`repair: N`): how many times that gate may
   self-correct. Exhausted → the gate is skipped and evaluation proceeds.
+- **Per-state entry ceiling** (`max_visits: N`, any face, 0.4): the state may be
+  entered at most N times per run; the (N+1)-th entry halts with `loop-ceiling`
+  naming the state (`at`). Counted at entry — an entry the runtime aborts still
+  counts, like a step. Checked after the budgets, so an exhausted budget keeps
+  its own name; never suspended — a resumed run would re-enter the same
+  over-visited state and halt again. A repair gate re-enters its target, so a
+  ceiling at or under the state's own repair budget is guaranteed to fire
+  mid-repair; `check` warns statically.
 - **Call-depth cap** (`MAX_CALL_DEPTH`, runtime): bounds recursion so a machine that
   calls itself terminates.
 - **Empty `over`**: an `over` on an empty list produces an empty list and fires the
@@ -890,8 +907,9 @@ overhead`, or it halts before the reducer runs. Size `budget` against the expect
 
 **Termination.** A run ends as: `done` (a gate reaches `to: END`; the machine's
 `result` key, if set, is returned — else the last state's output); or `halt` with an
-error (`fail`, `no-gate-matched`, `budget-exhausted`, `call-depth-exceeded`,
-`call-failed`, `refusal`, `provider-error`, `cost-exhausted`, `judge-unparseable`).
+error (`fail`, `no-gate-matched`, `budget-exhausted`, `loop-ceiling`,
+`call-depth-exceeded`, `call-failed`, `refusal`, `provider-error`,
+`cost-exhausted`, `judge-unparseable`).
 A `call` whose sub-machine **halts** propagates as `call-failed: <child-error>`
 (the parent does not continue as `done` with an empty result). A host **cost
 budget** (token cap) is shared with nested `call` runs — children see the

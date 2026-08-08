@@ -114,12 +114,12 @@ def test_unsupported_version_warns_then_errors_under_strict():
         }
     )
     errors, warnings = semantic_check(m, {"v": m})
-    assert any("0.3" in w for w in warnings)
+    assert any("0.4" in w for w in warnings)
     assert not any("version-unsupported" in e for e in errors)
 
     errors_s, warnings_s = semantic_check(m, {"v": m}, strict=True)
     assert any("version-unsupported" in e for e in errors_s)
-    assert not any("0.3" in w for w in warnings_s)
+    assert not any("0.4" in w for w in warnings_s)
 
 
 def _linear_to_end(budget, n=3):
@@ -211,3 +211,56 @@ def test_check_tiers_flags_missing():
     assert used_tiers(m) == {"balanced", "reasoning"}
     assert check_tiers(m, {"fast": "m", "balanced": "m"})  # missing reasoning
     assert not check_tiers(m, {"fast": "m", "balanced": "m", "reasoning": "m"})
+
+
+def test_max_visits_is_a_04_field():
+    m = parse_machine(
+        {
+            "machine": "v",
+            "entry": "a",
+            "budget": 5,
+            "mklang": "0.3",
+            "states": {
+                "a": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "o",
+                    "max_visits": 2,
+                    "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+                },
+            },
+        }
+    )
+    _, warnings = semantic_check(m, {"v": m})
+    assert any("max_visits" in w and "0.4" in w for w in warnings)
+
+
+def test_max_visits_below_own_repair_budget_warns():
+    """repair re-enters the state, so a ceiling at or under the repair budget is
+    guaranteed to fire mid-repair — said at check time, not found in production."""
+    m = parse_machine(
+        {
+            "machine": "v",
+            "entry": "a",
+            "budget": 10,
+            "mklang": "0.4",
+            "states": {
+                "a": {
+                    "structure": "x",
+                    "prompt": "p",
+                    "output": "o",
+                    "max_visits": 2,
+                    "gates": [
+                        {"when": "done", "then": "ok", "to": "END"},
+                        {"when": "fix", "repair": 2, "to": "a"},
+                    ],
+                },
+            },
+        }
+    )
+    _, warnings = semantic_check(m, {"v": m})
+    assert any("ceiling fires before the repairs finish" in w for w in warnings)
+
+    m.states["a"].max_visits = 3
+    _, warnings = semantic_check(m, {"v": m})
+    assert not any("ceiling" in w for w in warnings)

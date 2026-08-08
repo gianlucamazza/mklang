@@ -108,6 +108,11 @@ def emit_run_text(out: dict, *, machine: str, provider: str, color: str = "auto"
     )
     if out.get("error"):
         console.print(f"[red]Error:[/red] {out['error']}")
+    if out.get("diagnosis"):
+        d = out["diagnosis"]
+        console.print(
+            f"[dim]most revisited: {d.get('most_visited_state')} x{d.get('visits')}[/dim]"
+        )
     if out.get("checkpoint"):
         console.print(f"[yellow]Checkpoint:[/yellow] {out['checkpoint']}")
 

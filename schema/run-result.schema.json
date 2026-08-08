@@ -41,6 +41,15 @@
       "type": "string",
       "description": "State id where a halt/suspend occurred, when known."
     },
+    "diagnosis": {
+      "type": "object",
+      "description": "On budget-exhausted / cost-exhausted: which state ate the run. Present only when a state was entered more than once.",
+      "properties": {
+        "most_visited_state": { "type": "string" },
+        "visits": { "type": "integer", "minimum": 2 }
+      },
+      "additionalProperties": false
+    },
     "checkpoint": {
       "type": "string",
       "description": "CLI: filesystem path written on suspend. MCP: opaque single-use session handle (and optionally checkpoint_file for the durable path)."

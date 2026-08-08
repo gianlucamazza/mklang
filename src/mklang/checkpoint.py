@@ -68,6 +68,7 @@ def make_frame(
     tainted: set[str] | None = None,
     external: set[str] | None = None,
     flow_tainted: bool = True,
+    visits: dict[str, int] | None = None,
 ) -> dict:
     """Snapshot one run() loop-top: everything needed to re-enter the loop."""
     return {
@@ -88,6 +89,11 @@ def make_frame(
         # data. Both default to the unsafe side on a frame that lacks them.
         "external": sorted(external if external is not None else (tainted or ())),
         "flow_tainted": bool(flow_tainted),
+        # Per-state entry counts for `max_visits` (SPEC §7). Sorted so identical
+        # run state yields identical bytes (the suspend path is idempotent).
+        # Frames without the field resume with the count reset — fail-open,
+        # stated in `_from_resume`.
+        "visits": {k: int((visits or {})[k]) for k in sorted(visits or {})},
     }
 
 

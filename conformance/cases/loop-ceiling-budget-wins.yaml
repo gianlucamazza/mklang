@@ -1,0 +1,25 @@
+case: loop-ceiling-budget-wins
+description: >
+  When the step budget and a state's max_visits exhaust at the same loop-top, the
+  budget is checked first and keeps its own name (§7 guard order).
+machine:
+  machine: lcb
+  entry: a
+  budget: 2
+  mklang: "0.4"
+  states:
+    a:
+      structure: s
+      prompt: again
+      output: o
+      max_visits: 2
+      gates:
+        - { when: otherwise, then: ok, to: a }
+llm:
+  produce: ["one", "two"]
+expect:
+  status: halt
+  error: budget-exhausted
+  trace:
+    - { state: a, policy: ok, to: a }
+    - { state: a, policy: ok, to: a }

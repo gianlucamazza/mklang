@@ -10,7 +10,7 @@ user-facing summary. The language contract itself is [SPEC](../../SPEC.md).
 mklang carries two independent version numbers:
 
 - **Spec version** — the _language_, declared per file via the `mklang:` field
-  (currently `"0.3"`; `"0.2"` documents remain valid). It changes only when the
+  (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid). It changes only when the
   language changes.
 - **Package version** — the reference interpreter and tooling, SemVer in
   `pyproject.toml` (1.x — strict SemVer since 1.0.0). It changes when the

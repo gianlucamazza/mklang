@@ -460,3 +460,42 @@ def test_a_blob_that_is_not_a_checkpoint_is_refused_whatever_the_store(tmp_path)
 
     with pytest.raises(ValueError, match="not an mklang checkpoint"):
         load_checkpoint(location, store=store)
+
+
+def test_visits_round_trip():
+    """The visit counts are run state: they suspend into the frame and resume out
+    of it, so a resumed run's `max_visits` ceiling continues where it stopped."""
+    m = M(
+        {
+            "machine": "v",
+            "entry": "a",
+            "budget": 4,
+            "states": {"a": state("b"), "b": state("a")},
+        }
+    )
+    r = run1(m, costly(), suspendable=True)
+    assert r.status == "suspended" and r.error == "budget-exhausted"
+    f = r.frames[0]
+    assert f["visits"] == {"a": 2, "b": 2}
+
+    again = run1(m, costly(), resume=json.loads(json.dumps(r.frames)), suspendable=True)
+    assert again.frames[0]["visits"] == {"a": 2, "b": 2}
+
+
+def test_a_frame_without_visits_still_resumes():
+    """Pre-0.4 checkpoints carry no visit record; resume resets the count
+    (fail-open, stated in _from_resume) rather than refusing the frame."""
+    m = M(
+        {
+            "machine": "v",
+            "entry": "a",
+            "budget": 4,
+            "states": {"a": state("b"), "b": state("a")},
+        }
+    )
+    r = run1(m, costly(), suspendable=True)
+    frames = json.loads(json.dumps(r.frames))
+    for frame in frames:
+        del frame["visits"]
+    again = run1(m, costly(), resume=frames, suspendable=True)
+    assert again.status == "suspended" and again.error == "budget-exhausted"

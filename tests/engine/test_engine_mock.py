@@ -726,3 +726,60 @@ def test_judge_none_charges_every_batch_it_consulted():
     assert r.trace[0]["cost"]["input_tokens"] == 6  # two judge calls charged
     assert r.trace[0]["judge_none"] == 1
     assert r.trace[0]["to"] == "b"
+
+
+def _self_loop(budget, max_visits=None):
+    state = {
+        "structure": "s",
+        "prompt": "p",
+        "output": "o",
+        "gates": [gate("otherwise", then="ok", to="a")],
+    }
+    if max_visits is not None:
+        state["max_visits"] = max_visits
+    return M({"machine": "loop", "entry": "a", "budget": budget, "states": {"a": state}})
+
+
+def test_loop_ceiling_halts_at_the_named_state():
+    """max_visits N: the state runs N times; the (N+1)-th entry halts with a cause
+    that names the state — not a budget-exhausted with the budget still unspent."""
+    m = _self_loop(budget=10, max_visits=2)
+    r = run1(m, MockLLM(judge_fn=lambda *a: 0))
+    assert r.status == "halt" and r.error == "loop-ceiling"
+    assert r.at == "a"
+    assert len(r.trace) == 2  # entered exactly max_visits times
+
+
+def test_budget_exhausted_names_the_state_that_ate_the_run():
+    m = _self_loop(budget=3)
+    r = run1(m, MockLLM(judge_fn=lambda *a: 0))
+    assert r.status == "halt" and r.error == "budget-exhausted"
+    assert r.diagnosis == {"most_visited_state": "a", "visits": 3}
+
+
+def test_budget_keeps_its_own_name_when_both_guards_are_exhausted():
+    # Both fire at the same loop-top; the budget is checked first, deliberately.
+    m = _self_loop(budget=2, max_visits=2)
+    r = run1(m, MockLLM(judge_fn=lambda *a: 0))
+    assert r.status == "halt" and r.error == "budget-exhausted"
+
+
+def test_done_run_carries_no_diagnosis():
+    m = M(
+        {
+            "machine": "lin",
+            "entry": "a",
+            "budget": 5,
+            "states": {
+                "a": {
+                    "structure": "s",
+                    "prompt": "p",
+                    "output": "o",
+                    "gates": [gate("otherwise", then="ok", to="END")],
+                },
+            },
+        }
+    )
+    r = run1(m, MockLLM(judge_fn=lambda *a: 0))
+    assert r.status == "done"
+    assert r.diagnosis is None

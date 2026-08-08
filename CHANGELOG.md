@@ -6,11 +6,31 @@ All notable changes to mklang are documented here. The format follows
 **Two version lines** are tracked separately:
 
 - **Spec version** — the language, declared per-file via the `mklang:` field
-  (currently `"0.3"`; `"0.2"` documents remain valid).
+  (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `1.1.1`).
 
 ## [Unreleased]
+
+### Added
+
+- **A state may bound its own re-entry** (`max_visits: N`, spec **0.4**, ADR 0033,
+  SPEC §7). A loop-back cycle that stopped converging used to eat the whole budget and
+  die as `budget-exhausted` — a cause that neither names the cycle nor distinguishes
+  "too ambitious" from "diverged". Now the (N+1)-th entry of a ceilinged state halts
+  with `loop-ceiling`, `at` naming the state; the ceiling is checked after the budgets
+  (an exhausted budget keeps its own name) and never suspends (a resume would re-enter
+  the same state and halt again). Visit counts are run state: they checkpoint into
+  frames (`visits`, sorted) and pre-0.4 checkpoints resume with the count reset —
+  fail-open, stated in the code. `check` warns when a 0.3 document uses the field and
+  when a ceiling sits at or under the state's own repair budget (guaranteed to fire
+  mid-repair). Two conformance cases pin the semantics (`loop-ceiling`,
+  `loop-ceiling-budget-wins`).
+- **Budget exhaustion names the state that ate the run.** On `budget-exhausted` /
+  `cost-exhausted` the result carries an additive `diagnosis`
+  (`most_visited_state`, `visits`) whenever some state was entered more than once —
+  the wire shape allows extra keys, so no schema bump; the CLI renders it as one dim
+  line. The question an author asks first, answered without reading the trace.
 
 ### Changed
 

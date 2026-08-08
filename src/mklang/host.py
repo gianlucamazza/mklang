@@ -274,6 +274,8 @@ def build_output(res: RunResult) -> dict:
     }
     if res.at is not None:
         out["at"] = res.at
+    if res.diagnosis is not None:
+        out["diagnosis"] = res.diagnosis
     return out
 
 

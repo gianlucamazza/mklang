@@ -114,14 +114,18 @@ def _check_version(machine: Machine, strict: bool) -> tuple[list[str], list[str]
     """mklang: field vs interpreter targets; parse: is a 0.3 face."""
     errors: list[str] = []
     warnings: list[str] = []
-    if machine.version and machine.version not in ("0.2", "0.2.0", "0.3"):
-        msg = f'mklang version field is {machine.version!r}; this interpreter targets "0.2"/"0.3"'
+    if machine.version and machine.version not in ("0.2", "0.2.0", "0.3", "0.4"):
+        msg = f'mklang version field is {machine.version!r}; this interpreter targets "0.2"-"0.4"'
         if strict:
             errors.append(f"version-unsupported: {msg}")
         else:
             warnings.append(msg)
     if machine.version in ("0.2", "0.2.0") and any(s.parse for s in machine.states.values()):
         warnings.append('`parse:` is a 0.3 face — declare mklang: "0.3"')
+    if machine.version in ("0.2", "0.2.0", "0.3") and any(
+        s.max_visits is not None for s in machine.states.values()
+    ):
+        warnings.append('`max_visits:` is a 0.4 field — declare mklang: "0.4"')
     return errors, warnings
 
 
@@ -169,6 +173,28 @@ def _check_budget(machine: Machine, ids: set[str]) -> tuple[list[str], list[str]
     return errors, warnings
 
 
+def _check_max_visits(machine: Machine) -> tuple[list[str], list[str]]:
+    """A ceiling the machine's own repair budget is guaranteed to hit.
+
+    A repair gate re-enters its target (SPEC §5), so a state whose repair gate
+    points at itself with `repair: N` needs `max_visits > N` to let the repairs
+    finish — otherwise the ceiling fires mid-repair and the author's fallback
+    (`otherwise` → escalate) never runs. Statically knowable, so said here rather
+    than discovered as a `loop-ceiling` in production."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    for sid, state in machine.states.items():
+        if state.max_visits is None:
+            continue
+        for gate in state.gates:
+            if gate.kind == "repair" and gate.to == sid and (gate.repair or 0) >= state.max_visits:
+                warnings.append(
+                    f"state '{sid}': max_visits {state.max_visits} ≤ its own repair budget "
+                    f"{gate.repair} — the ceiling fires before the repairs finish"
+                )
+    return errors, warnings
+
+
 def semantic_check(
     machine: Machine, registry: dict, strict: bool = False
 ) -> tuple[list[str], list[str]]:
@@ -190,6 +216,7 @@ def semantic_check(
         _check_version(machine, strict),
         _check_reachability(machine, ids),
         _check_budget(machine, ids),
+        _check_max_visits(machine),
     ):
         errors.extend(errs)
         warnings.extend(warns)
