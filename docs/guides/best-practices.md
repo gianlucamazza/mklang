@@ -30,7 +30,7 @@ This page answers: _what should I always do, never do, and where does each rule 
 
 Before shipping a `.mkl`:
 
-- [ ] Schema header + `mklang: "0.3"` when using 0.3 faces (`parse: list`, …).
+- [ ] Schema header + `mklang: "0.4"` when using post-0.2 faces (`parse: list`, `parse: json`, `max_visits`, …).
 - [ ] Every non-terminal state ends with **`when: otherwise`** (last).
 - [ ] At least one path reaches **`END`**; `budget` ≥ shortest path (+ headroom).
 - [ ] Every `{{path}}` root is `context:`, a state `output:`, HITL `human.*`, or fan-out `item`/`index`.

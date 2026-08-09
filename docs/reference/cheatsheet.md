@@ -6,7 +6,7 @@ references below); the how-to recipe is [Authoring](../guides/authoring.md).
 ## Minimal machine
 
 ```yaml
-mklang: "0.3" # spec version (optional; recommended)
+mklang: "0.4" # spec version (optional; recommended)
 machine: answer
 entry: draft
 budget: 6 # max steps per run (anti-loop guard)

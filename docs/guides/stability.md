@@ -21,14 +21,15 @@ unchanged. Both lines are recorded in [CHANGELOG](../../CHANGELOG.md).
 
 ## What 1.0 promises
 
-At 1.0.0 the **0.3 language surface is frozen** and the package adopts strict
-SemVer:
+At 1.0.0 the **language surface froze** (0.3 at the time) and the package
+adopted strict SemVer:
 
 - **MAJOR** — incompatible change to the stable surface.
-- **MINOR** — additive, backward-compatible (new opt-in features, tooling, docs).
+- **MINOR** — additive, backward-compatible (new opt-in features, tooling, docs;
+  additive spec revisions such as 0.4 ship this way).
 - **PATCH** — backward-compatible fixes.
 
-The stable surface is the 0.3 language (machines, states, the four core faces
+The stable surface is the current language, 0.4 (machines, states, the four core faces
 plus the optional faces, capability tiers, code-hook gates, the gate judge
 protocol, and the trace shape — [SPEC §1–§8](../../SPEC.md)) together with the
 documented host contracts (the `mklang.tools` / `mklang.hooks` /
@@ -59,13 +60,13 @@ from 1.0.0 onward.
 ## Spec vs reference interpreter
 
 [SPEC](../../SPEC.md) is the normative contract; `src/mklang/` is one conformant
-reference implementation. A behavior change that is a valid reading of the 0.3
-spec is a _package_ change (SemVer), not a spec change. A change that needs new
-spec text is a _spec_ change (0.4+) and carries the conformance work the change
-checklist requires. What would actually *force* a 0.4 — rather than another
-deferral — is written down as falsifiable conditions in
-[ADR 0031](../adr/0031-what-would-force-a-language-0-4.md); a 0.4 proposal cites
-the evidence row that met one.
+reference implementation. A behavior change that is a valid reading of the
+current spec is a _package_ change (SemVer), not a spec change. A change that
+needs new spec text is a _spec_ change (0.5+) and carries the conformance work
+the change checklist requires. The bar for a spec revision — falsifiable
+conditions, not taste — is the method
+[ADR 0031](../adr/0031-what-would-force-a-language-0-4.md) set for 0.4: a
+proposal cites the evidence row that met one.
 
 ## The `.mkl` extension
 

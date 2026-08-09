@@ -21,7 +21,7 @@ Start every file with the schema header — editors and agents get validation fo
 
 ```yaml
 # yaml-language-server: $schema=../schema/mklang.schema.json
-mklang: "0.3" # language version (0.2 documents remain valid)
+mklang: "0.4" # language version (0.2/0.3 documents remain valid)
 machine: my_machine # identifier (snake_case)
 entry: first_state # where the run starts
 budget: 6 # max steps per run — shortest path + headroom (see below)
@@ -66,7 +66,7 @@ Optional faces — reach for them when the pattern calls for it:
 - `sample: N` / `over: "{{list}}"` — fan-out; output becomes a list; mutually
   exclusive; `{{index}}` available inside both, `{{item}}` inside `over` (§4.7).
 - `parse: list` — deposit a parsed JSON array instead of text, ready for a
-  downstream `over:`; declare `mklang: "0.3"` (§4.10).
+  downstream `over:`; declare `mklang: "0.3"` or later (§4.10).
 - `call: <machine>` — run a machine in the active registry as a subroutine;
   project paths include root-level and `machines/` files; `input:` maps parent
   context in, `output:` receives its `result` (§4.8).
