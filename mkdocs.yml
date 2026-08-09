@@ -57,21 +57,19 @@ nav:
   - Reference:
       - CLI: cli.md
       - Machine stdlib: stdlib.md
-      - Interpreter architecture: architecture.md
-  # Individual ADRs stay published at /adr/NNNN-*/ but out of the nav:
-  # the index table is the entry point, so the sidebar doesn't grow with
-  # every new decision.
-  - Decisions (ADRs): adr/README.md
-  - Research:
-      - Gate divergence: experiments/gate-divergence.md
-      - Authoring blind spot: experiments/authoring-blind-spot.md
-      - Repair convergence: experiments/repair-convergence.md
-      - Validation report 2026-07-23: experiments/validation-report-2026-07-23.md
-      - Five-reader distribution: experiments/distribution-five-reader.md
   - Project:
       - Roadmap: ROADMAP.md
       - Changelog: CHANGELOG.md
+  # Contributor-facing pages live together, apart from the user guides.
+  # docs/experiments/ (internal research notes) is not published at all —
+  # build-docs.sh rewrites links to it into GitHub URLs.
+  - Development:
       - Contributing: CONTRIBUTING.md
+      - Interpreter architecture: architecture.md
+      # Individual ADRs stay published at /adr/NNNN-*/ but out of the nav:
+      # the index table is the entry point, so the sidebar doesn't grow with
+      # every new decision.
+      - Decisions (ADRs): adr/README.md
   # Mirrors the site's "The language" masthead link back at the product.
   # The label is the full designation on purpose — ADR 0019 (platform repo):
   # bare "mklang" names the Apache-2.0 language, never the paid host.

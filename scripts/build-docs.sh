@@ -5,18 +5,26 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 rm -rf site-src
-mkdir -p site-src/adr site-src/experiments
+mkdir -p site-src/adr
 
 cp README.md site-src/index.md
 cp SPEC.md ROADMAP.md CHANGELOG.md CONTRIBUTING.md site-src/
 # guides/ and reference/ are flattened to the site root so published URLs
 # (/best-practices/, /stdlib/, ...) stay stable across the repo reorg.
+# The flatten means a name shared by the two directories would overwrite
+# silently — refuse to build instead.
+dup=$(comm -12 <(ls docs/guides | sort) <(ls docs/reference | sort))
+if [ -n "$dup" ]; then
+	echo "error: guides/ and reference/ share file names, flatten would clobber: $dup" >&2
+	exit 1
+fi
 cp docs/guides/*.md site-src/
 cp docs/reference/*.md site-src/
 cp docs/demos.md site-src/
 cp conformance/README.md site-src/conformance.md
 cp docs/adr/*.md site-src/adr/
-cp docs/experiments/*.md site-src/experiments/
+# docs/experiments/ is internal research material and stays off the site;
+# links to it are rewritten to GitHub below.
 cp -r schema site-src/schema
 cp -r docs/assets site-src/assets
 
@@ -47,9 +55,9 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./reference/|(|g" \
 	-e "s|(\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\./docs/demos\.md|(demos.md|g" \
-	-e "s|(\./docs/experiments/|(experiments/|g" \
-	-e "s|(\.\./\.\./docs/experiments/|(experiments/|g" \
-	-e "s|(\.\./experiments/|(experiments/|g" \
+	-e "s|(\./docs/experiments/|($GH/blob/main/docs/experiments/|g" \
+	-e "s|(\.\./\.\./docs/experiments/|($GH/blob/main/docs/experiments/|g" \
+	-e "s|(\.\./experiments/|($GH/blob/main/docs/experiments/|g" \
 	-e "s|(\./docs/assets/|(assets/|g" \
 	-e "s|(\.\./assets/|(assets/|g" \
 	-e 's|src="assets/demos/|src="../assets/demos/|g' \
@@ -97,11 +105,20 @@ find site-src/adr -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./\.\./scripts/|($GH/blob/main/scripts/|g" \
 	-e "s|(\.\./\.\./src/mklang/|($GH/blob/main/src/mklang/|g"
 
-# Pass 3 — experiments pages: their only repo links point at scripts.
-find site-src/experiments -name '*.md' -print0 | xargs -0 sed -i \
-	-e "s|(\.\./\.\./scripts/|($GH/blob/main/scripts/|g"
-
 test -f site-src/adr/README.md
+
+# Every root page must be a deliberate nav entry — the wildcard copies above
+# must never publish a page nobody listed (out-of-nav pages still land in the
+# sitemap and search index, and --strict only logs them at INFO level).
+# Individual ADRs are the one sanctioned exception: adr/README.md is the nav
+# entry and the numbered decisions stay published but unlisted by design.
+for page in site-src/*.md; do
+	name=$(basename "$page")
+	if ! grep -q ": ${name}\$" mkdocs.yml; then
+		echo "error: ${name} is published but has no mkdocs.yml nav entry" >&2
+		exit 1
+	fi
+done
 
 # Raw HTML is opaque to MkDocs' link rewriting. These checks keep nested
 # pretty URLs such as /demos/ from silently resolving media below /demos/assets/.
