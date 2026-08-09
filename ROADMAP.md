@@ -26,26 +26,20 @@ Active focus (milestone 1.1, `horizon:now`):
 Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianlucamazza/mklang/pull/73)
 ([#64](https://github.com/gianlucamazza/mklang/issues/64), [#69](https://github.com/gianlucamazza/mklang/issues/69)–[#72](https://github.com/gianlucamazza/mklang/issues/72) closed). Remaining Now items need live ops or humans:
 
-- **[next]** After Anthropic key + credit: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
+- **[next]** Third-provider (Anthropic) gate-divergence pass: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
 - **[next]** Five-reader distribution test — [#61](https://github.com/gianlucamazza/mklang/issues/61)
 
-### Evidence backlog (first rows landed 2026-08-09; two still open)
+### Evidence backlog
 
-- **Boundary corpus + decomposed metrics** — **first live row recorded**
-  (2026-08-09, DeepSeek+OpenAI: agreement, accuracy and paraphrase invariance
-  all 1.0 across seven machines; ADR 0031 §3's trigger did not fire —
-  [gate divergence](./docs/experiments/gate-divergence.md)). One day, two
-  providers: keep repeating; Anthropic stays unmeasured (#60).
-- **Repair convergence** — a dated run exists (2026-08-09) and its verdict is
-  **not measured**: the default corpus never fails attempt 1, so no repair is
-  ever exercised. Needs tasks that reliably fail first
-  ([repair convergence](./docs/experiments/repair-convergence.md)).
-- **Control-flow-taint incidence** — the harness now exists
-  (`scripts/taint_incidence.py`) with a first internal row (2026-08-09: 1/1 on
-  the bundled corpus — a floor, not a finding; n=1 by construction —
-  [taint incidence](./docs/experiments/taint-incidence.md)). The corpus ADR 0031
-  §1 is actually about — machines outside this repo — still has zero rows and
-  waits on distribution (#61).
+The dated experiment logs live in the repo, not on the docs site:
+
+- **Gate divergence** ([protocol + results](./docs/experiments/gate-divergence.md)) —
+  first live rows landed 2026-08-09; a third provider is [#60](https://github.com/gianlucamazza/mklang/issues/60).
+- **Repair convergence** ([protocol](./docs/experiments/repair-convergence.md)) —
+  harness exists; needs a corpus whose tasks fail attempt 1 before repair lift is measurable.
+- **Control-flow-taint incidence** ([protocol](./docs/experiments/taint-incidence.md)) —
+  harness exists (`scripts/taint_incidence.py`); the external-machine corpus waits on
+  distribution ([#61](https://github.com/gianlucamazza/mklang/issues/61)).
 
 ## Later
 
@@ -72,105 +66,12 @@ Worth evaluating; not committed:
 
 ## Non-goals
 
-Permanent or deferred-out of the 0.3 stable surface — see
+Permanent or deferred-out of the stable language surface — see
 [SPEC §9](./SPEC.md) and [stability guide](./docs/guides/stability.md):
 formal types in `structure`, provider/model pinning in `.mkl`, dual-channel
 CaMeL control planes (research).
 
 ---
-
-## Where we are (language 0.4 / package 1.2.0)
-
-- Language core complete: states + gates + prose, tiers, `reason`, `accumulate`,
-  fan-out (`sample`/`over`), sub-machine `call`, `tool` states, **code-hook gates**.
-  Cookbook in [`SPEC.md §10`](./SPEC.md).
-- JSON Schema + semantic checks; multi-provider interpreter; nested trace; CLI.
-- **0.2.1 hardening:** call-halt, shared cost budget, judge reasoning, judge-unparseable,
-  Anthropic parity, tier validation, strict `over`, error taxonomy (MockLLM unit suite;
-  full offline coverage today is unit + conformance + `mklang test` — see pytest).
-- **0.2.2:** code-hook gates (ADR 0006); tool/hook **entry-point plugins**; default
-  `active: deepseek` with live smoke re-verified.
-- **0.3.0:** **resumable runs / checkpoints** (ADR 0007) — budget exhaustion suspends
-  into a JSON checkpoint (`--checkpoint`), `mklang resume` continues as if
-  uninterrupted; foundation for HITL.
-- **0.4.0:** **human-in-the-loop** (ADR 0008) — `--hitl` makes fired `escalate`
-  gates suspend; `mklang resume --set human.reply=…` injects the decision.
-- **0.5.0:** **language-grade rigor** — conformance suite (ADR 0009),
-  `mklang lint`, provider entry-point plugins, CI + docs site, public packaging.
-- **0.5.1:** showcase honesty (`triage.mkl` real tool states), silent judge-clamp
-  fix, normative judge protocol, threat model (§11), gate-divergence scaffold.
-- **0.5.2 (second remediation pass):** gate judging **follows the state tier** by
-  default (§2.1; `judge:` becomes an opt-in override) — an observable-behavior
-  change; strict judge-reply parsing (`bare`/`last-number`, traced `judge_parse`);
-  `{{index}}` in `sample` branches; `unresolved-interpolation` lint; `--strict`
-  rejects unsupported `mklang:` versions; `0600` checkpoints + §11 at-rest note;
-  conformance now covers hook precedence and `tool` states.
-- **0.5.3 (third remediation pass):** **`mklang test`** — deterministic scenario
-  testing with a scripted LLM, no API keys, sharing one matcher module
-  (`scripttest.py`) with the conformance runner; static budget-feasibility check
-  (`budget-infeasible`); dotted-segment lint on inline context maps (completes F7);
-  schema-copy identity test; ADR 0010 (LLM-assisted lint, later Accepted).
-- **0.5.4 (release readiness):** reproducible GitHub Release → PyPI Trusted
-  Publishing; clean-wheel smoke; DeepSeek + OpenAI blocking live matrix; optional
-  provider report; enforceable gate-divergence thresholds.
-- **0.6.0:** language **0.3** (`parse: list`, raw whole-template `input:`);
-  MCP surface + discovery; machine stdlib (`std_*`); authoring guide.
-- **0.7.0:** console M1–M3; MCP live events (ADR 0019); web `search` (ADR 0016);
-  output anti-cutoff (ADR 0018); context Layer 0–1 (ADR 0017); `lint --llm`
-  (ADR 0010 Accepted).
-- **0.8.0:** host tool stub architecture (ADR 0020); console observation honesty
-  for truncation; `context.today` host convention; search recency fields; best
-  practices guide; OpenAI-compat default `max_tokens=4096`.
-- **0.8.1:** host `context.now`; console chrome/content Markdown rendering;
-  sectioned produce system (`llm/prompts.py`) + BP §3; agent sticky policy in
-  `execution`.
-- **0.8.2:** best-practices filesystem/observability guidance, console activity
-  glyph cleanup, and optional-dependency CI guard.
-- **0.9.0:** XDG/config/discovery phases 1–2 (ADR 0021), responsive Rich CLI and
-  console experience (ADR 0022), and connection-error retries.
-- **0.9.1–0.9.2:** release-check stabilization followed by clean console
-  shutdown with pending provider or human-input work.
-- **0.9.3:** documentation alignment for package status, live evidence, and XDG
-  session paths.
-- **0.10.0:** first-run experience (ADR 0021 phase 3) — `mklang init` seeding
-  `hello.mkl`, provider key gate, shell completions, `scripts/install.sh` (pipx),
-  the Arch/AUR recipe, and a lean sdist.
-- **0.11.0:** global/local config separation (ADR 0023) — per-key `.env`
-  layering, `mklang-mcp` config auto-discovery, XDG fallbacks for workspace and
-  HITL checkpoints, `mklang doctor`, dead `run:` block and legacy `~/.mklang`
-  fallback removed.
-- **0.12.0:** class-3 fs data tools (ADR 0024) — `list_files`/`read_file`/
-  `write_file` builtins with a coding-tool workspace model — and the
-  `std_research` search → ground stdlib machine.
-- **0.13.0:** `runtime.yaml` `tools:` block (ADR 0016 completed), process
-  logging hygiene (`mklang.*` hierarchy, `--log-level`/`MKLANG_LOG_LEVEL`),
-  and the `std_compress` composable stdlib utility.
-- **0.14.0:** untrusted-context delimiting (ADR 0025) — provenance taint +
-  `<data-NONCE>` fences in produce/judge prompts, normative in SPEC §6 — and
-  the CI quality gates: mypy (zero suppressions), coverage `fail_under = 88`,
-  ubuntu 3.11–3.13 + macOS + Windows matrix in a reusable `quality.yml`.
-- **0.15.0:** console TUI in the core install (textual promoted from the
-  `[console]` extra; actionable hint when it is somehow missing), test
-  hermeticity against installed-host layers, ADR 0025 follow-up audit
-  closed, SECURITY.md + issue/PR templates + dependabot.
-- **0.16.0:** quality ratchet (coverage gate 88 → **90**, mypy strict
-  tier — add-only — for eleven leaf modules, targeted tests for the three
-  weakest modules lifting total coverage to **92%**) and the gate-divergence
-  harness widened from one synthetic machine to a **four-machine suite**.
-- **1.1.0 (architecture pass):** the gate transition function is **total
-  and deterministic given the verdict** — the fused judge may now answer "none of
-  the above" instead of being forced to name a condition (SPEC §5 _Totality_),
-  with lint requiring a catch-all; **control-flow taint** (ADR 0030) propagates
-  provenance onto the _choice_ and binds it at the effect surface; the
-  gate-divergence harness gained metrics that can fail (boundary corpus, gold
-  routes, cross/intra split, paraphrase invariance); `repair` convergence has a
-  harness; and the three things that were promising more than they pinned are now
-  written down — what a trace attests (SPEC §8), what conformance guarantees
-  (`conformance/README.md`), and what would force a language 0.4 (ADR 0031).
-- **Live (release 0.14.0 & 0.15.0 matrices):** DeepSeek + OpenAI live smoke
-  and cross-provider gate agreement **1.0** green through both release
-  pipelines (PyPI Trusted Publishing). Anthropic remains unit-tested; live
-  e2e still billing-blocked (credits, not a missing key).
 
 ## Language
 
@@ -231,7 +132,7 @@ CaMeL control planes (research).
   deepseek×openai, 3 repeats each, **agreement rate 1.0** on the single spam
   machine (tier-following judges). Dated row in
   [`docs/experiments/gate-divergence.md`](./docs/experiments/gate-divergence.md).
-  Re-run at suite scale when credits allow; Anthropic still billing-blocked.
+  A third-provider (Anthropic) pass is tracked as [#60](https://github.com/gianlucamazza/mklang/issues/60).
 - **Shipped:** LLM-assisted lint (`mklang lint --llm`,
   [ADR 0010](./docs/adr/0010-llm-assisted-lint.md), Accepted) — opt-in probe of
   ambiguous / overlapping prose `when` conditions with the real gate judge
@@ -239,36 +140,8 @@ CaMeL control planes (research).
   never a `--strict` error source, never in the offline CI path.
 - **Shipped (multi-provider live, 0.14.0 & 0.15.0 release matrices):** DeepSeek +
   **OpenAI** live smoke and gate agreement green through both release pipelines.
-  **Anthropic** adapter remains unit-tested; live e2e blocked by **account
-  billing/credits**, not by a missing key (key present; API returns a
-  purchase-credits error).
-
-## Organizational
-
-- **Shipped (0.5.0):** docs site (mkdocs-material on GitHub Pages, assembled
-  from the repo's canonical markdown) and `mklang lint` (static analysis
-  beyond `check`); conformance suite as the language contract (ADR 0009).
-- **Shipped:** [best practices](./docs/guides/best-practices.md) — layer discipline
-  (language / host / surface), tool contracts, web+time+cutoff checklist,
-  anti-patterns, and explicit non-goals for core (bash/FS, knowledge-cutoff magic).
-- **Shipped:** community & security hygiene — `SECURITY.md` (private GitHub
-  Security Advisories, scope aligned with SPEC §11 — persuasion of fenced
-  content and checkpoint-at-rest are documented limitations, not
-  vulnerabilities), issue forms (bug asks for a scripted `mklang test` repro;
-  feature asks for the layer), a default PR template with the quality-gate
-  checklist, and dependabot (grouped uv deps + GitHub Actions, weekly).
-- **0.5.4 release path:** a published GitHub Release builds and tests one artifact
-  set, requires DeepSeek + OpenAI live agreement, then publishes through PyPI
-  Trusted Publishing (OIDC, no long-lived package token). The one-time external
-  setup is the `mklang` pending publisher plus the protected GitHub `pypi`
-  environment and provider secrets.
-- **[later] Editor tooling** — LSP / syntax highlighting beyond the YAML
-  schema; `mklang lint` is the first brick.
-- **[shipped] Rename `.mk` → `.mkl`** — the `.mk` suffix collided with Makefile
-  includes / GitHub Linguist; renamed to `.mkl` (mklang) while adoption is still
-  ~nil (hard cut: discovery matches `*.mkl`). The suffix is a discovery
-  convention, not a language contract
-  ([ADR 0027](./docs/adr/0027-adopt-mkl-extension.md), SPEC §9).
+  **Anthropic** adapter remains unit-tested; the live third-provider pass is
+  [#60](https://github.com/gianlucamazza/mklang/issues/60).
 
 ## Integrations & extensions
 
@@ -339,19 +212,3 @@ CaMeL control planes (research).
 - **[maybe] FS multi-root and path rules** — `--add-dir`/`writable_roots`
   analog and per-path allow/deny rules (`Read(...)`/`Edit(...)` syntax shared
   by Claude Code and Grok); ADR 0024 defers both until a real use case appears.
-
-## Path to 1.0 (shipped summary)
-
-The 0.13–0.15 cycle shifted from feature growth to **maturity**; 1.0.0 froze the
-0.3 surface. Active Now/Next work is at the top of this file (milestone 1.1).
-
-- **[shipped] Path to 1.0 — prep** — SPEC §9 closed; [ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md),
-  [ADR 0027](./docs/adr/0027-adopt-mkl-extension.md); [stability guide](./docs/guides/stability.md).
-- **[shipped] Cut 1.0.0** — package 1.0.0, live release gate DeepSeek + OpenAI.
-- **[shipped] 1.0.1 validation follow-ups** — authoring-loop `blind_spot = 0.0167`,
-  ADR 0028 provisional 1.0 posture, CI format-check + tag↔CHANGELOG; five-reader
-  protocol (execution: [#61](https://github.com/gianlucamazza/mklang/issues/61)).
-- **[shipped] Showcase refresh** — demos focused on **`agent`** + **`language`**.
-- **[shipped] gate-divergence at scale** — four-machine suite DeepSeek + OpenAI;
-  dated table in [docs/experiments/gate-divergence.md](./docs/experiments/gate-divergence.md).
-  Anthropic third-provider pass: [#60](https://github.com/gianlucamazza/mklang/issues/60).
