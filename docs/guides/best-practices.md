@@ -3,6 +3,7 @@
 Canonical checklist for writing, running, and hosting mklang machines.
 **How to author a correct file:** [Authoring](authoring.md).  
 **How to tune reliability and cost:** [Patterns](patterns.md).  
+**Host tool contracts:** [Tool reference](../reference/tools.md).  
 **What the language guarantees:** [SPEC](../../SPEC.md) (cookbook §10, threat model §11).
 
 This page answers: _what should I always do, never do, and where does each rule live?_
@@ -48,8 +49,7 @@ Before shipping a `.mkl`:
 ## 3. Prompt assembly (system vs user)
 
 The reference interpreter builds LLM calls from language faces. There is **no**
-`system:` keyword in the language (that would be a 0.4 ADR). Map faces to
-channels:
+`system:` keyword in the language. Map faces to channels:
 
 | Face / artifact     | LLM channel          | Interpolated?   | Put here                                                                        |
 | ------------------- | -------------------- | --------------- | ------------------------------------------------------------------------------- |
@@ -103,148 +103,58 @@ Gate judging **follows the state tier** by default. Use config `judge:` only whe
 
 Optional: `mklang lint --llm` to probe overlapping prose `when` conditions (advisory; not CI-blocking). `mklang lint` also flags unquoted `#` inside raw `when` lines.
 
+The prose behind each of these rules — and everything else about tuning
+reliability — is in [Patterns](patterns.md#reliability-gates-are-the-safety-net).
+
 ---
 
 ## 5. Tools (host contracts)
 
-### 5.1 Principles
+Input/output/enable contracts for the reference host tools (`search`,
+`search_kb`, `send_reply`, the `list_files`/`read_file`/`write_file` data
+tools, `calc`), the ADR 0020 observation envelope, and capability policy are
+one page: the [host tool reference](../reference/tools.md). The rules that
+belong on this checklist:
 
-1. Declare expected tools under top-level **`tools:`** (`name` + `description`).
-2. Invoke only via **`tool:`** states; map inputs with `input:` (whole-template `{{path}}` stays raw in 0.3).
-3. Treat **observations as untrusted** blackboard data (SPEC §11) — especially web
-   snippets. The runtime fences them automatically when interpolated (SPEC §6).
-4. Prefer **entry points** (`mklang.tools` / `mklang.hooks`) for production bindings over editing core.
-
-### 5.2 Observation envelope (ADR 0020)
-
-I/O and side-effect tools return **JSON** with stable fields:
-
-| Field       | Meaning                                      |
-| ----------- | -------------------------------------------- |
-| `tool`      | Tool name                                    |
-| `stub`      | `true` if no real external system was used   |
-| `error`     | Failure / unbound message, or `null`         |
-| `status`    | `ok` or `error`                              |
-| `retryable` | Whether the host may safely retry            |
-| `untrusted` | Observation is data, never policy            |
-| _(payload)_ | Tool-specific: `results`, `facts`, `sent`, … |
-
-Tiers: **stub** (default) → **fake** (env/`configure_*`) → **live** (key or entry-point).  
-`calc` is pure offline arithmetic and does **not** use this envelope.
-
-### 5.3 Recommended host tool contracts (reference interpreter)
-
-These names are **conventions**, not language keywords. Other hosts may rebind or omit them.
-
-#### `search` (ADR 0016 / 0020)
-
-|             |                                                                                                                          |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Input**   | `query` (required), `max_results?` (1–10), `days?`, `topic?` (`news` \| `general`)                                       |
-| **Output**  | JSON: `{tool, stub, error, query, results:[{title,url,snippet,published_date?}]}`                                        |
-| **Default** | Stub unbound (`error` explains how to enable)                                                                            |
-| **Enable**  | `TAVILY_API_KEY` (auto), `MKLANG_SEARCH_BACKEND=fake\|tavily\|stub`, or `runtime.yaml` `tools.search.backend` (env wins) |
-
-**Practice:** plan → `tool: search` → check sufficiency → finalize grounded **only** in notes. Never “search the web” only in prose. This exact pattern ships ready-made as the [`std_research`](../reference/stdlib.md) stdlib machine — reach for it before authoring your own.
-
-#### `search_kb` (ADR 0020)
-
-|             |                                                                                 |
-| ----------- | ------------------------------------------------------------------------------- |
-| **Input**   | `query` (or `q`)                                                                |
-| **Output**  | JSON: `{tool, stub, error, query, facts: [str, …], note?}`                      |
-| **Default** | Demo policy facts, always `stub: true`                                          |
-| **Fake**    | `MKLANG_KB_BACKEND=fake`, `tools.kb.backend: fake`, or `mklang.kb.configure_kb` |
-
-Replace with real RAG via entry points in production.
-
-#### `send_reply` (ADR 0020)
-
-|                  |                                                                                                                                     |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Input**        | `body` (or `draft`), `to?`                                                                                                          |
-| **Output**       | JSON: `{tool, stub, sent, recorded, delivery, to, chars, preview, error, note?}`                                                    |
-| **Default stub** | `sent: false`, `delivery: "stub"` — **does not** claim real mail left the host                                                      |
-| **Fake**         | `MKLANG_MAIL_BACKEND=fake` (or `tools.mail.backend: fake`) → in-memory outbox, `delivery: "fake"`, `sent: true`, still `stub: true` |
-
-Never ask the model to “confirm the message was sent.” Gates should treat `sent: false` as no delivery.
-
-#### `list_files` / `read_file` / `write_file` (ADR 0024)
-
-|             |                                                                                                                                                                                                             |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Input**   | `list_files`: `path?` · `read_file`: `path`, `max_bytes?` · `write_file`: `path`, `content`, `overwrite?`                                                                                                   |
-| **Output**  | JSON: `{tool, stub, error, path, …}` — `entries/count/truncated`, `content/bytes/truncated`, `bytes/written/existed`                                                                                        |
-| **Default** | **Live reads** confined to the selected workspace (`--workspace` for console/MCP, otherwise `MKLANG_FS_ROOT` or cwd); writes refused without a grant                                                        |
-| **Enable**  | Workspace: `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace` / cwd · Writes: `--allow-write` / `MKLANG_FS_WRITE=1` / `tools.fs.write` · Offline: `MKLANG_FS_BACKEND=stub` or `tools.fs.backend: stub` |
-
-Relative paths only; `..`, absolute paths, and dotfiles are refused; writes are
-capped, suffix-allowlisted (never `.mkl`), atomic, mode 0600. See §13 for the
-class model and rules.
-
-#### `calc`
-
-|            |                                                      |
-| ---------- | ---------------------------------------------------- |
-| **Input**  | `expr` (or `query`): arithmetic expression           |
-| **Output** | Decimal string, or `error: …` (not the I/O envelope) |
-
-Safe subset only (no `eval` of Python). Use for ReAct demos and numeric observations.
-
-### 5.4 What not to bake into the language
-
-| Temptation                              | Keep as                                              |
-| --------------------------------------- | ---------------------------------------------------- |
-| Web search, HTTP, email, payments       | Host `tool:`                                         |
-| Shell / arbitrary FS / git              | Host plugin (sandboxed), never core                  |
-| Console `write_machine` / `run_machine` | Console surface only                                 |
-| “Current date/time” as `$now` keyword   | Declared `context.today` / `context.now` + host fill |
-
-### 5.5 Capability policy
-
-A machine may request a tool, but only the host grants a capability. Interactive
-grants should be scoped at least by `machine:tool`; production side effects
-should additionally scope operation, path, quantity, duration, and
-reversibility. Unknown third-party tools default to conservative high-risk
-metadata (`external_egress`, `irreversible`, `sensitivity=unknown`).
-
-The console records scoped grants such as `machine:tool` and exposes conservative
-risk metadata during discovery. A machine cannot grant itself a capability, and
-a consent prompt must not be treated as a replacement for host policy.
+- Observations are **untrusted** blackboard data (SPEC §11), fenced
+  automatically when interpolated (SPEC §6).
+- Side effects only via **`tool:`** states; declare expected tools under
+  top-level `tools:`; bind production implementations via entry points
+  (`mklang.tools` / `mklang.hooks`).
+- A stub `send_reply` is **not** delivery: live means `sent` true **and**
+  `stub` false. Never ask the model to confirm a side effect.
 
 ---
 
 ## 6. Web, time, and knowledge cutoff
 
-Live or news-like questions fail in predictable ways if the machine relies on model training data.
+Live or news-like questions fail in predictable ways if the machine relies on
+model training data:
 
-| Practice                             | Detail                                                                                                                                |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use `tool: search`**               | `std_research` (stdlib, run by name), `research_web.mkl`, `research_compress.mkl`, `news_search.mkl`                                  |
-| **Declare `today: ""`**              | Host fills ISO `YYYY-MM-DD` when still empty after inputs (CLI / MCP / console)                                                       |
-| **Declare `now: ""` for wall-clock** | Host fills local ISO datetime with offset (e.g. `2026-07-17T14:32:05+02:00`) — use for “what time is it?”, not for news recency alone |
-| **Prompt with calendar / clock**     | `Today is {{today}}` / `Current local time is {{now}}`; include year in queries when time-sensitive                                   |
-| **Recency inputs**                   | Prefer `days` + `topic: news` for news machines                                                                                       |
-| **Ground finalize**                  | Cite titles/URLs/`published_date` from notes only                                                                                     |
-| **Forbid fill-in**                   | Explicitly ban inventing facts or answering from pre-training when notes are empty/thin                                               |
-| **Honest failures**                  | If stub says search unbound, tell the operator how to enable it — do not fabricate hits                                               |
+- **Use `tool: search`** — ready-made as the [`std_research`](../reference/stdlib.md)
+  stdlib machine; never “search the web” only in prose.
+- **Declare `today: ""`** (and **`now: ""`** for wall-clock) and prompt with
+  `Today is {{today}}` / `Current local time is {{now}}` — the host fill
+  convention and key table are in [Patterns](patterns.md).
+- **Ground finalize in notes only** (titles/URLs/`published_date`); explicitly
+  forbid filling gaps from pre-training; when the stub says search is unbound,
+  say so — do not fabricate hits.
 
-**Language note:** there is no primitive that “disables knowledge cutoff.” Discipline is host clock + tools + prose + gates.
+**Language note:** there is no primitive that “disables knowledge cutoff.”
+Discipline is host clock + tools + prose + gates.
 
 ---
 
 ## 7. Output cutoff and context budgets (anti-cutoff)
 
-| Layer                        | What happens                                                                                                                                | Practice                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Produce length stop**      | Trace/events get `truncated: true` (ADR 0018)                                                                                               | Prefer adequate `max_tokens` in runtime `params`; use `--on-truncate halt` for strict runs |
-| **Default policy**           | `report` continues with partial text                                                                                                        | Do not treat partial finalize as complete without checking trace                           |
-| **`parse: list` + truncate** | Halts `parse-list-truncated`                                                                                                                | Keep planner outputs short and well-structured                                             |
-| **Produce `{{…}}` budget**   | Long values end with `…[truncated]` (ADR 0017)                                                                                              | Compress notes before the next loop (`research_compress.mkl`)                              |
-| **Judge CONTEXT**            | Head+tail + `…[context_truncated]…`                                                                                                         | Put critical facts in **state output**, not only deep context                              |
-| **Console observation**      | Compact JSON: `truncated`, `result_truncated`, `…[truncated]` on clipped result; accumulated search fields are bounded with the same marker | Brain/user must report cuts — never invent the missing tail; compress long research notes  |
-
-Continue-stitching after length stop is **deferred** (not default).
+- A produce that hits its length stop is marked `truncated: true` in trace and
+  events (ADR 0018). Default policy `report` continues with partial text — never
+  treat a partial finalize as complete; use `--on-truncate halt` for strict runs.
+- Interpolation budgets end long values with `…[truncated]` (ADR 0017);
+  compress notes before the next loop (`research_compress.mkl`), and put
+  critical facts in **state output**, not only deep context.
+- The full tuning detail (`parse: list` halts on truncation, judge CONTEXT
+  caps, console observation fields) is in [Patterns](patterns.md).
 
 ---
 
@@ -262,12 +172,11 @@ Continue-stitching after length stop is **deferred** (not default).
 
 ## 9. Budgets and cost
 
-- **Step `budget`:** worst-case path × loops + fan-out width; leave repair headroom.
-- **Fan-out:** charges `max(1, len(branches))` at runtime; static check counts fan-out as 1.
-- **Token cost:** `--max-tokens` / `cost_budget` is shared with `call` children,
-  includes produce and judge usage, and is partitioned across fan-out branches.
-- **Tiers:** default `balanced`; cascade `fast` → escalate → `reasoning` for mostly-easy work.
-- **Sample diversity:** temperature and/or `{{index}}` in the prompt; do not assume all reasoners sample.
+`budget` is steps, `--max-tokens` / `cost_budget` is spend (shared with `call`
+children, partitioned across fan-out). Size the step budget to the worst case —
+loops, repair headroom, fan-out width — and let `mklang check` reject the
+infeasible ones. The sizing rules and the fan-out arithmetic are in
+[Patterns](patterns.md); the normative semantics in SPEC §7.
 
 ---
 
@@ -284,91 +193,54 @@ Continue-stitching after length stop is **deferred** (not default).
 
 Keep `machine.test.yaml` beside the machine. Cover escalate, repair exhaustion, empty tool results, and search-unbound paths for web machines.
 
-Runs, the console, and `lint --llm` sit behind an upfront provider-key gate:
-they fail fast naming the exact `.env` variable to set (`local` is exempt), so
-keyless environments stick to `check` / `lint` / `test`.
-
-**Static checks are not behavioural correctness.** `check` (schema + semantics)
-and `lint` (static smells) prove a machine is _well-formed_ — not that it _does
-the right thing_. A document that passes both can still route a gate on the wrong
-distinction, size a `budget` too tight for its own shortest path, or wire a
-`tool:` state to the wrong input key. Only a **scenario run** exercises behaviour
-(`mklang test … --script …`, no keys). This gap matters most for a machine an
-**agent authored** — the console / MCP self-authoring loop (ADR 0015). There the
-loop's `check` verdict tells the agent the document is _valid_; it never tells it
-the document is _correct_. Freeze a hand-written `*.test.yaml` acceptance scenario
-for the behaviours the machine must exhibit and run it before trusting an authored
-machine — treat "check-clean" as a precondition for testing, not a substitute for
-it.
+**Static checks are not behavioural correctness.** `check` and `lint` prove a
+machine is _well-formed_, not that it _does the right thing_ — only a scenario
+run exercises behaviour. This gap matters most for agent-authored machines
+(console / MCP, ADR 0015): freeze a hand-written `*.test.yaml` acceptance
+scenario before trusting one. Treat “check-clean” as a precondition for
+testing, not a substitute.
 
 **Console vs MCP authoring.** The console can `write_machine` into a workspace
-(with human overwrite consent). MCP deliberately has **no persist tool** (ADR
-0011/0013) — headless hosts author and `run(source=…)` / `check(source=…)`
-inline, or pass an explicit `checkpoint_path`. Do not expect MCP to mirror the
-console's "save to disk → re-run by name" loop; that model needs the console (or
-a host that owns the filesystem).
+(with human overwrite consent); MCP has no persist tool (§11) — headless hosts
+author and run inline. The console's authoring turn shares one step budget
+across discover/run/author/repair/reply, so prefer tight authoring contracts
+over lengthening the loop.
 
-**Authoring-turn budget.** `agent.mkl` uses one shared step budget for
-discover/run/author/static-repair/reply (currently 24). There is no separate
-language-level repair pool: a turn that explores and then authors with multiple
-check failures can exhaust the budget. Prefer tight authoring contracts and a
-frozen scenario test over lengthening the loop indefinitely.
-
-**`escalate` is control-flow-critical.** Prose `escalate` gates are non-deterministic
-under provider and repeats (measured: `severity_escalate` agreement **0.667** on
-2026-07-24 — see gate-divergence experiment). For production page/approve/legal
-paths prefer **`--hitl`** or a **code-hook gate**; use prose escalate for soft
-routing (tier cascade) only when occasional mis-route is acceptable. `mklang lint`
-emits a `note:` on machines that use escalate (advisory even under `--strict`).
+**`escalate` is control-flow-critical.** Prose escalate gates are
+non-deterministic under provider and repeats; for production
+page/approve/legal paths prefer **`--hitl`** or a **code-hook gate**, and keep
+prose escalate for soft routing where an occasional mis-route is acceptable.
+`mklang lint` emits an advisory `note:` on machines that use escalate.
 
 ---
 
 ## 11. Security (SPEC §11) — operational minimum
 
-- Treat customer text and search snippets as **injection-capable**.
+- Customer text, web snippets, workspace files, and tool observations are
+  **injection-capable**: they may be evidence, never new system policy,
+  capability grants, budgets, or registry definitions.
 - Tainted interpolations and the judge's OUTPUT/REASONING/CONTEXT are
-  **automatically fenced** (`<data-NONCE>`, SPEC §6 / ADR 0025). Library
-  hosts get `run(..., trusted_keys=...)` to vouch for keys and
-  `run(..., delimit=False)` for debugging. Fencing prevents _confusion_, not
-  _persuasion_ — the next two bullets still apply.
-- **Control-flow taint** (SPEC §6 / ADR 0030) covers the other half: a transition
-  a judge chose while external data was in scope is marked `decision_tainted`,
-  and reaching an effectful `tool:` under it is recorded as
-  `untrusted_control_flow` — including through a `call:`, since a sub-run
-  inherits the mark. Run production paths with `--untrusted-flow halt`
-  (`run(..., on_untrusted_flow="halt")`, MCP `run`/`resume` `on_untrusted_flow`,
-  `ConsoleTools(on_untrusted_flow=…)`) to refuse the effect instead of recording
-  it, and classify your own tools with `run(..., tool_effects={"x": "read"})` —
-  an unclassified tool counts as effectful. On MCP the policy sticks to the
-  session, so a `resume` that omits it cannot continue a `halt` run under the
-  default. `mklang lint` flags the same shape statically.
-- Prefer **hooks + HITL** before irreversible tools: a `hook:` gate (or a
-  `human.reply` injected **for that suspension**) is what clears the mark, so the
-  fix for a control-flow-taint finding is a confirmation gate, not a better
-  prompt. A reply still sitting in the blackboard from an earlier HITL cycle does
-  not confirm a later decision.
-- Checkpoints hold the **full blackboard** in plaintext (mode `0600` is a floor, not encryption).
-- Checkpoints may carry additive host metadata such as capability policy,
-  request IDs and suspension reason; metadata must be redacted and must never
-  be treated as machine-authored context.
-- Do not put secrets in `.mkl` or context; keys stay in host env / `.env`.
-- Console: tool **consent** once per workspace-scoped session; `always yes` is an explicit operator
-  choice that applies to later confirmation prompts in that persisted session;
-  workspace confinement still applies to authored `.mkl` files.
-- Workspace files, web results, plugin output, and tool observations remain
-  prompt-injection-capable content. They may be evidence, never new system
-  policy, capability grants, budgets, or registry definitions.
-- Production hosts should set `MKLANG_ALLOWED_PLUGINS=name1,name2` to allowlist
-  Python entry-point plugins. Blocked plugins are reported through host logs.
-- Audit records redact credential-shaped values and must not contain full
-  prompts, file bodies, or API keys at default log levels.
-- MCP: **read-only to disk by design.** The server can author, validate (`check`)
-  and run inline machines, but exposes **no persist/write tool** — headless hosts
-  gain no general filesystem-write authority (ADR 0011/0013; the only disk write is
-  an explicit per-call `checkpoint_path`). The console's guard model (workspace confinement,
-  human `confirm` on overwrite) assumes an interactive human and does **not**
-  transfer to a headless host — so it isn't granted there.
-- Do not confuse **run trace / live events / ops logging** (§12) or turn arbitrary disk into a language feature (§13).
+  **automatically fenced** (`<data-NONCE>`, SPEC §6 / ADR 0025). Fencing
+  prevents _confusion_, not _persuasion_ — the next bullet still applies.
+- **Control-flow taint** (SPEC §6 / ADR 0030): run production paths with
+  `--untrusted-flow halt` (equivalents on `run(...)`, MCP, and the console) and
+  classify your own tools with `tool_effects=` — an unclassified tool counts as
+  effectful. The fix for a finding is a **`hook:` gate or a fresh HITL
+  confirmation for that suspension**, not a better prompt; a stale
+  `human.reply` in the blackboard does not confirm a later decision.
+- Checkpoints hold the **full blackboard in plaintext** (mode `0600` is a
+  floor, not encryption) — mind PII retention. No secrets in `.mkl` or
+  context; keys stay in host env / `.env`.
+- MCP is **read-only to disk by design** — no persist/write tool (ADR
+  0011/0013; the only disk write is an explicit per-call `checkpoint_path`).
+  The console's interactive guard model does not transfer to headless hosts.
+- Production hosts set `MKLANG_ALLOWED_PLUGINS=name1,name2` to allowlist
+  entry-point plugins; audit records redact credential-shaped values and never
+  contain full prompts or keys at default log levels.
+- Console tool **consent** is once per workspace-scoped session; `always yes`
+  is an explicit operator choice for low-risk prompts only — high-risk prompts
+  (egress, writes, irreversible, unknown tools) are always shown again
+  ([console](console.md#security-model)).
 
 ---
 
@@ -428,83 +300,41 @@ Generic bash/FS stay **out of core**. When you need disk, pick the class:
 | **3. Machine data I/O**     | Read CSV, write a report                                                                                                 | Builtins `mklang.fs` (ADR 0024)           | Workspace confinement, size/type limits, write grant, stub off-switch                                                                                                                                                                                                                      |
 | **4. Arbitrary FS / shell** | `rm`, bash, git                                                                                                          | **Never core**; explicit sandboxed plugin | Default off; high friction                                                                                                                                                                                                                                                                 |
 
-### Current host layout (documentation SSOT)
-
-This section is the documentation source of truth for current host-owned paths;
-ADR 0021 records the decision and rollout history, while surface guides should
-link here instead of maintaining a separate path policy.
-
-| Root   | Current location                                           | Contents                                 |
-| ------ | ---------------------------------------------------------- | ---------------------------------------- |
-| Config | `$XDG_CONFIG_HOME/mklang` (default `~/.config/mklang`)     | `runtime.yaml`, `.env`                   |
-| Data   | `$XDG_DATA_HOME/mklang` (default `~/.local/share/mklang`)  | user `machines/`                         |
-| State  | `$XDG_STATE_HOME/mklang` (default `~/.local/state/mklang`) | `console/sessions/<id>/` and checkpoints |
-| System | `/etc/mklang`, `/usr/share/mklang/machines`                | system config and machines               |
-
-Console sessions always live under
-`$XDG_STATE_HOME/mklang/console/sessions/<id>/`.
-`mklang init --user` creates these roots and seeds the user `machines/` with a
-commented `hello.mkl` sample plus its `hello.test.yaml` scenario (keyless first
-run via `mklang test`).
-Project machine resolution is shared by CLI, console, and path-based MCP runs:
-the registry layers stdlib → plugin → system → user → project root → project
-`machines/`, with the last matching machine winning. Root-level project `.mkl`
-files remain readable for compatibility; new console-authored files go under
-`machines/`. A path outside a recognizable project loads only its sibling
-machines plus the global registry.
-Local vs global (ADR 0023): `runtime.yaml` resolves first-hit-wins
-(project → user → `/etc` → bundled) for every entry point, `mklang-mcp`
-included; `.env` layers per key — real environment > project `.env` > user
-`.env`; `mklang doctor` shows which layer won.
-`MKLANG_CONFIG_DIR`, `MKLANG_DATA_DIR`, and `MKLANG_STATE_DIR` override the
-corresponding user roots; `MKLANG_CONFIG` selects one runtime config file
-directly. The implementation authority is `mklang.paths`; changes to it must
-update this table and the console guide in the same commit.
+The current host-owned paths (XDG roots, system layer, config and machine
+resolution) are documented once, in [Installation](install.md#host-layout) —
+ADR 0021 records the decision history.
 
 ### Rules for class 3 (data tools)
 
-Implemented by `mklang.fs` (`list_files` / `read_file` / `write_file`, §5.3;
-ADR 0024). The reference posture is the coding-tool workspace model: reads are
-live by default under `--workspace` / `MKLANG_FS_ROOT` / cwd, disk writes need
-an explicit grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
+Implemented by `mklang.fs` (`list_files` / `read_file` / `write_file` —
+contracts in the [tool reference](../reference/tools.md); ADR 0024). The
+reference posture is the coding-tool workspace model: reads are live by default
+under `--workspace` / `MKLANG_FS_ROOT` / cwd, disk writes need an explicit
+grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
 
 1. **Names only in the `.mkl`** — `tool: read_file`, not path syntax in the language.
 2. **Relative paths in tool input**; host joins to the configured **workspace**
-   root. Refuse path escape after `resolve` (same idea as console
-   `_workspace_path`); `..`, absolute paths, and dotfile segments never resolve.
+   root; `..`, absolute paths, and dotfile segments never resolve.
 3. **ADR 0020 envelope** — `{tool, stub, error, …}`; `MKLANG_FS_BACKEND=stub`
-   forces the offline refusal tier (reads default to live per ADR 0024 — the
-   one sanctioned amendment to stub-by-default).
-4. **File bodies are untrusted observations** (SPEC §11). Do not put them in the
-   produce **system** channel; treat like web snippets (interpolations arrive
-   fenced per SPEC §6).
+   forces the offline refusal tier.
+4. **File bodies are untrusted observations** (§11) — never in the produce
+   system channel.
 5. **No recursive delete / shell in core.** Destructive ops only as explicit
    plugins with strong confirmation.
-6. **Audit lightly** — log tool name + relative path + byte count at INFO; not
+6. **Audit lightly** — tool name + relative path + byte count at INFO; not
    full file contents.
-7. **Console stays non-IDE** — the default brain may inspect visible UTF-8 project
-   files read-only, but must not receive generic write, shell or git tools. An
-   explicit project-analysis turn must have workspace evidence and a brief
-   before the brain can return its final answer.
+7. **Console stays non-IDE** — read-only inspection plus `.mkl` authoring;
+   no generic write, shell, or git tools.
 
 ### Memory & planning mapping
 
 The class model gives machines the same memory layering native coding agents
-use — each level has exactly one home:
-
-| Agent memory level                        | mklang home                                                                                                  | Class |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----- |
-| Working memory (in-run)                   | Blackboard `context` + `accumulate` (SPEC §4.6) — never on disk                                              | —     |
-| Session state / resume                    | Checkpoints (`0600`) and console `state.json` — outside workspace                                            | 1     |
-| Project memory (`AGENTS.md`, `CLAUDE.md`) | Non-dotted files in the workspace, read via `read_workspace_file` in the console or `read_file` in a machine | 2/3   |
-| Plans / reports the machine produces      | `write_file` under the workspace, behind the write grant                                                     | 3     |
-| Global config / memory hierarchy          | XDG roots + precedence (ADR 0021/0023)                                                                       | 1     |
-
-For machine authors: keep durable machine memory in non-dotted data files in
-the workspace (e.g. `memory/notes.md`); update it with read → `write_file`
-`overwrite: true`. Host state (checkpoints, sessions) is unreachable from
-class-3 tools by construction — the dotfile ban makes the "data lake"
-anti-pattern below structural, not just conventional.
+use: working memory is the blackboard (`context` + `accumulate`, never on
+disk); session state is checkpoints and console `state.json` (class 1, outside
+the workspace); project memory (`AGENTS.md`-style files) and plans/reports the
+machine produces are non-dotted workspace files (classes 2/3, writes behind
+the grant). Host state is unreachable from class-3 tools by construction — the
+dotfile ban makes the “session dir as data lake” anti-pattern structural.
 
 ### Anti-patterns
 
@@ -518,59 +348,18 @@ anti-pattern below structural, not just conventional.
 
 ## 14. Surfaces quick reference
 
-| Surface             | Best practice                                                                                                                                                                                                                                                                                   |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CLI**             | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled                                                           |
-| **MCP**             | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL; **read-only to disk** — author/validate/run inline, no persist tool (§11, ADR 0011/0013)                                                                        |
-| **Library / embed** | Prefer [`host-embedding`](host-embedding.md): `prepare_*` → `run` → `build_output`; map `done`/`suspended`/`halt`; validate against [`run-result.schema.json`](../../schema/run-result.schema.json)                                                                                             |
-| **Console**         | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; Markdown chrome/content ([console rendering](console.md#conversation-rendering)); workspace inspection is read-only and `.mkl` authoring is the default write path — no generic FS/bash |
-
-### Console cancellation and shutdown (documentation SSOT)
-
-- `Ctrl+G` requests cooperative cancellation between states and keeps the
-  console open; an active provider response is allowed to finish.
-- `Ctrl+C` and `/quit` close the surface. During an active run, shutdown sets
-  the cancellation signal, releases pending human input, invokes the optional
-  provider `close()` hook to interrupt in-flight I/O, waits for the backing
-  worker thread, and then tears down Textual.
-- Provider plugins remain compatible without `close()`, but network-backed
-  adapters should implement it so console shutdown cannot wait for an SDK
-  timeout. Shutdown hooks must be idempotent and must suppress late UI/session
-  callbacks after teardown begins.
+| Surface             | Best practice                                                                                                                                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CLI**             | `init` once, `doctor` when in doubt, then `check` → `lint` → `test` → `run`; `--on-truncate halt` for strict research; `--hitl` for human gates (auto-checkpoints; `--checkpoint` to choose the path); ops log on stderr when enabled  |
+| **MCP**             | Commission by name/path/source; stream **run** events as `mklang.event` only; durable `checkpoint_path` for multi-process HITL; **read-only to disk** — author/validate/run inline, no persist tool (§11, ADR 0011/0013)               |
+| **Library / embed** | Prefer [`host-embedding`](host-embedding.md): `prepare_*` → `run` → `build_output`; map `done`/`suspended`/`halt`; validate against [`run-result.schema.json`](../../schema/run-result.schema.json)                                    |
+| **Console**         | Prefer RUN of workspace/search machines for live facts; honor truncation fields; enable Tavily for web; workspace inspection is read-only and `.mkl` authoring is the only write path — the full contract, including cancellation and shutdown, is the [Console guide](console.md) |
 
 ---
 
-## 15. Anti-patterns (quick list)
+## 15. Language vs host: what may become language later
 
-1. `execution: use the search tool` on a generative state.
-2. Asking the model to confirm a side effect it cannot perform.
-3. Prose-only money/policy thresholds.
-4. Answering “what happened this week?” without `tool: search` and `today`.
-5. Silent acceptance of truncated produce / clipped console result as complete.
-6. Unbounded `accumulate` without compress.
-7. `budget` sized for the happy path only.
-8. Naming `claude-…` / `gpt-…` inside the `.mkl`.
-9. Putting PII into checkpoints without a retention policy.
-10. Expecting stdlib pure machines to perform host I/O.
-11. Treating a stub `send_reply` as real delivery (`sent` must be true **and** `stub` false for live).
-12. Interpolating user/LLM text into Rich markup in a TUI (`[b]…[/b]`) — use
-    Markdown renderables for agent prose and plain/fenced text for everything
-    else ([Console](console.md#conversation-rendering)).
-13. Putting sticky role/policy only in `prompt` (user) instead of `execution`
-    (system), or putting `{{user_message}}` / history into `structure`.
-14. Mixing ops logging with run trace/events, or logging secrets/full prompts at
-    default levels (§12).
-15. Generic filesystem/bash in core, or treating console workspace as full disk
-    access (§13).
-16. Trusting a machine as _correct_ because `check` / `lint` passed — that proves
-    well-formedness, not behaviour. Run a scenario (`mklang test`), especially for
-    agent-authored machines (§10).
-
----
-
-## 16. Language vs host: what may become language later
-
-Candidates for a future **0.4** (need ADR + conformance) — **not** current practice requirements:
+Candidates for a future spec revision (need ADR + conformance) — **not** current practice requirements:
 
 | Candidate                             | Why it might become language                                               |
 | ------------------------------------- | -------------------------------------------------------------------------- |
@@ -581,23 +370,3 @@ Candidates for a future **0.4** (need ADR + conformance) — **not** current pra
 | Budget split (steps vs fan-out width) | Clearer volume caps                                                        |
 
 Until then: use **host policy + patterns + this checklist**. Do **not** invent ad-hoc syntax outside the schema.
-
----
-
-## Related
-
-| Doc                                                    | Role                                                     |
-| ------------------------------------------------------ | -------------------------------------------------------- |
-| [Getting started](getting-started.md)                  | First-run path: install → init → key → console           |
-| [Install](install.md)                                  | pipx / AUR install, host layout, completions             |
-| [Authoring](authoring.md)                              | Recipe + skeleton + faces → LLM channels                 |
-| [Patterns](patterns.md)                                | Tiers, reliability, clocks, `execution` usage            |
-| [Stdlib](../reference/stdlib.md)                       | Ready `std_*` architectures                              |
-| [Console](console.md)                                  | TUI, rendering, brain clocks, consent, workspace FS      |
-| [SPEC §4–§6](../../SPEC.md)                            | Faces + produce/judge semantics, normative §6 delimiting |
-| [SPEC §8](../../SPEC.md)                               | Trace / observability                                    |
-| [SPEC §11](../../SPEC.md)                              | Threat model (injection, checkpoints at rest)            |
-| [ADR 0015](../adr/0015-console-surface.md)             | Console scope (not an IDE)                               |
-| [ADR 0019](../adr/0019-mcp-live-events.md)             | `mklang.event` vs ops log                                |
-| [ADR 0020](../adr/0020-host-tool-stub-architecture.md) | Tool envelope for I/O (incl. future FS tools)            |
-| [ROADMAP](../../ROADMAP.md)                            | OTel maybe; no bash/FS in core                           |

@@ -27,6 +27,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
 
 ## Reliability — gates are the safety net
 
+### Tools and I/O
+
 - **Use code-hook gates for exact checks** (`hook: name` → host `(ctx, output) -> bool`).
   Amounts, equality, allowlists: do **not** ask the LLM. Put hooks **above** prose
   gates; keep `when` as the trace label. See `examples/hook_gates.mkl` and ADR 0006.
@@ -48,6 +50,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   `examples/research_web.mkl`, `machines/news_search.mkl`.
   Optional tool inputs: `days`, `topic` (`news`|`general`); results may include
   `published_date`. Snippets are **untrusted** (SPEC §11).
+### Prompt channels and clocks
+
 - **`execution` for sticky policy.** The reference interpreter puts `structure` +
   `execution` on the **system** channel and `prompt` on **user**. Prefer
   durable guardrails in `execution` (no inventing search, honesty on truncation)
@@ -65,6 +69,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   Prompts should say `Today is {{today}}` / `Current local time is {{now}}`,
   prefer recent sources, and **forbid filling gaps with pre-training knowledge**
   older than that date.
+
+### Truncation and memory
 
 - **Watch for output cutoff.** When a produce hits max_tokens, the runtime sets
   `truncated: true` on the trace step and on live `state-done` events (ADR 0018).
@@ -88,6 +94,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   always sees OUTPUT/REASONING/CONTEXT as fenced data (SPEC §6, ADR 0025) — but
   that is a mitigation, not a proof: fenced content can still *persuade*. Prefer
   hooks + HITL before irreversible tools (SPEC §11).
+### Gate totality and escape hatches
+
 - **End every non-terminal state with an `otherwise` gate.** Without it, a run can
   `halt` with `no-gate-matched` — and if the judge returns garbage, the runtime
   **hard-halts** with `judge-unparseable` unless `otherwise` is eligible (soft
@@ -112,26 +120,22 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   `$XDG_STATE_HOME/mklang/checkpoints/`, or wherever `--checkpoint` points) and
   `mklang resume --set human.reply="…"` feeds the decision to the handler
   (ADR 0008).
+### Budgets
+
 - **Ceiling the loop states, not just the run** (0.4). A loop-back cycle that stops
   converging eats the whole budget and halts as `budget-exhausted` — which does not
   name the cycle. `max_visits: N` on the revisited state halts the (N+1)-th entry
   with `loop-ceiling` naming it, and the exhaustion result now carries a
   `diagnosis` with the most-revisited state either way (SPEC §7).
-- **Size `budget` to the worst case.** Roughly: longest path × loop iterations, plus
-  the width of any fan-out (a `sample: N` costs N steps). Leave headroom; hitting the
-  budget is a `halt`.
-- **Let `mklang check`/`lint` catch impossible budgets.** If `budget` is below the
-  shortest path (in states) from `entry` to a gate `to: END`, validation reports
-  error `budget-infeasible` — a guaranteed `budget-exhausted` before the first
-  provider call. `budget < shortest + 2` is a warning (no headroom for a single
-  repair). Fan-out states count as **1** in this static check (branch width is
-  data-dependent), so a machine can still exhaust budget on a wide map even after
-  the check passes (SPEC §7).
-- **Map-reduce: size `budget` against data cardinality.** A fan-out charges
-  `max(1, len(branches))` steps (SPEC §7), so `budget` is also a volume cap — an
-  `over` on 30 items with `budget: 25` halts `budget-exhausted` before the reducer.
-  Set `budget ≥ expected branches + machine overhead`, or bound the list before the
-  fan-out. If the item count is unknown at authoring time, size for the worst case.
+- **Size `budget` to the worst case.** Roughly: longest path × loop iterations,
+  plus the width of any fan-out. A fan-out charges `max(1, len(branches))` steps
+  at runtime (SPEC §7), so `budget` is also a volume cap — an `over` on 30 items
+  with `budget: 25` halts before the reducer; set `budget ≥ expected branches +
+  machine overhead`, or bound the list first. Validation helps at the floor:
+  `budget` below the shortest `entry → END` path is the blocking error
+  `budget-infeasible`, and `budget < shortest + 2` warns (no headroom for a
+  single repair) — but fan-out counts as **1** in that static check, so a wide
+  map can still exhaust a budget the check accepted.
 - **Use `--max-tokens` (cost budget) on long `call` trees.** The remaining budget is
   shared with sub-machines so a runaway child cannot burn tokens unbounded.
 - **Fan-out concurrency** is a `ThreadPoolExecutor` with `max_workers=5` today —
@@ -201,16 +205,8 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   less likely to hit a length stop (ADR 0018); truncation is still traced when it
   happens.
 
-## Layer boundaries (quick)
+## Layer boundaries
 
-| Put in the `.mkl`                         | Keep on the host / surface                                          |
-| ---------------------------------------- | ------------------------------------------------------------------- |
-| Gates, tiers, `tool:` / `hook:` _names_  | Tool/hook _implementations_, API keys                               |
-| `parse: list`, compress _states_         | `on_truncate` default, search backend                               |
-| Declared `context.today: ""` / `now: ""` | Filling `today` (date) / `now` (local datetime)                     |
-| Scenario tests next to the machine       | Console consent, MCP sessions, bash/FS plugins                      |
-| Trace / live events / ops logs mixed     | Keep channels separate ([Best practices §12](best-practices.md))    |
-| Generic read/write disk in core          | Class-3 host tools with root + stub only ([§13](best-practices.md)) |
-
-See [Best practices §1 and §13](best-practices.md) for the full layer map and what
-may become language 0.4 later (not current syntax).
+What belongs in the `.mkl` versus on the host is one map, maintained in
+[Best practices §1](best-practices.md) (with §12 for observability channels and
+§13 for filesystem classes).

@@ -7,9 +7,11 @@ run state by state. The agent itself **is** a machine
 read it, `check` it, `lint --llm` it, scenario-test it, or swap it out entirely.
 
 ```bash
-pip install mklang  # the console ships by default since 0.15.0
-mklang console                 # DeepSeek by default; --provider anthropic|openai|…
+mklang console   # DeepSeek by default; --provider anthropic|openai|…
 ```
+
+The console ships in the core package since 0.15.0 — install and host setup:
+[Getting started](getting-started.md).
 
 ## Layout
 
@@ -133,11 +135,20 @@ brain must not AUTHOR a machine solely to read the clock.
 | `/session`                       | current session facts                             |
 | `/help` · `/quit`                | help · exit                                       |
 
-`Ctrl+C` performs a clean shutdown: an active run is cancelled, any pending
-human prompt is released, and the console waits for the provider worker to stop
-before returning to the shell. `Ctrl+G` only requests cancellation of the
-current run and keeps the console open. The lifecycle contract is maintained in
-[Best practices §14](best-practices.md#console-cancellation-and-shutdown-documentation-ssot).
+### Cancellation and shutdown
+
+This is the canonical lifecycle contract for the console surface:
+
+- `Ctrl+G` requests cooperative cancellation between states and keeps the
+  console open; an active provider response is allowed to finish.
+- `Ctrl+C` and `/quit` close the surface. During an active run, shutdown sets
+  the cancellation signal, releases pending human input, invokes the optional
+  provider `close()` hook to interrupt in-flight I/O, waits for the backing
+  worker thread, and then tears down Textual.
+- Provider plugins remain compatible without `close()`, but network-backed
+  adapters should implement it so console shutdown cannot wait for an SDK
+  timeout. Shutdown hooks must be idempotent and must suppress late UI/session
+  callbacks after teardown begins.
 
 Slash commands use shell-style quoting, so `/run demo task="hello world"` keeps
 the value together. Every `/run` argument must be `key=value`; malformed
@@ -158,9 +169,8 @@ and slash-result records into
 the conversation pane; a torn final transcript line is ignored. Unexpected
 worker errors are shown as actionable `ERROR` state and re-enable the prompt.
 `--session <id>` reopens a specific one only when it belongs to the selected
-workspace. The canonical host layout is
-maintained in
-[Best practices §13](best-practices.md#current-host-layout-documentation-ssot).
+workspace. The canonical host layout is maintained in
+[Installation](install.md#host-layout).
 
 **History for the brain is windowed** (ADR 0017): the full conversation remains
 in the session audit / transcript, but only a tail of recent turns (and a char

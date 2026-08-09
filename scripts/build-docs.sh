@@ -68,6 +68,7 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./docs/adr)|($GH/tree/main/docs/adr)|g" \
 	-e "s|(\./docs/|($GH/tree/main/docs/|g" \
 	-e "s|(\./docs)|($GH/tree/main/docs)|g" \
+	-e "s|(\./examples)|($GH/tree/main/examples)|g" \
 	-e "s|(\./examples/|($GH/blob/main/examples/|g" \
 	-e "s|(\.\./\.\./examples/|($GH/blob/main/examples/|g" \
 	-e "s|(\.\./examples/|($GH/blob/main/examples/|g" \

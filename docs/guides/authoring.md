@@ -47,43 +47,21 @@ Required top-level keys: `machine`, `entry`, `budget`, `states`. A state is
 
 ## The faces of a state
 
-Core (generative states — SPEC §4):
-
-| Face        | Answers        | LLM channel (ref. interpreter) | Notes                                                                                 |
-| ----------- | -------------- | ------------------------------ | ------------------------------------------------------------------------------------- |
-| `structure` | what shape?    | **system** (produce)           | output contract; **not** interpolated                                                 |
-| `execution` | how to act?    | **system** (produce)           | sticky policy — **never** side effects; not interpolated                              |
-| `prompt`    | what to think? | **user** (produce)             | task + data; `{{context.key}}` interpolation — tainted values arrive fenced (SPEC §6) |
-| `gates`     | when to exit?  | judge (separate call)          | transition table (below)                                                              |
-
-Durable role/constraints → `structure` / `execution`. Turn data (`{{today}}`,
-history, user text) → `prompt` only. Details: [Best practices §3](best-practices.md).
-
-Optional faces — reach for them when the pattern calls for it:
-
-- `reason: true` — private chain-of-thought, captured in the trace (§4.5).
-- `accumulate: true` — append to a list under `output` instead of overwriting (§4.6).
-- `sample: N` / `over: "{{list}}"` — fan-out; output becomes a list; mutually
-  exclusive; `{{index}}` available inside both, `{{item}}` inside `over` (§4.7).
-- `parse: list` — deposit a parsed JSON array instead of text, ready for a
-  downstream `over:`; declare `mklang: "0.3"` or later (§4.10).
-- `call: <machine>` — run a machine in the active registry as a subroutine;
-  project paths include root-level and `machines/` files; `input:` maps parent
-  context in, `output:` receives its `result` (§4.8).
-- `tool: <name>` — a host-registered callable; the **only** place for real side
-  effects (search, send, calc) (§4.9).
+The four core faces (`structure` / `prompt` / `execution` / `gates`) and the
+optional ones (`reason`, `accumulate`, `sample` / `over`, `parse`, `call`,
+`tool`, `max_visits`, …) are tabulated on one page in the
+[cheatsheet](../reference/cheatsheet.md), with semantics in
+[SPEC §4](../../SPEC.md). The channel mapping — which face lands on the system
+vs user prompt — is [Best practices §3](best-practices.md); the hard rules
+below are what authoring most often gets wrong.
 
 ## Gates are the transitions
 
-Each gate is a prose condition the LLM judges (or a deterministic `hook:`), plus
-exactly one policy (SPEC §5):
-
-| Policy           | Effect                                           |
-| ---------------- | ------------------------------------------------ |
-| `then: ok`       | advance to `to:` (`END` finishes the run)        |
-| `repair: N`      | re-run this state with feedback, at most N times |
-| `escalate: true` | route to a handler state (suspends under HITL). 0.4: add `ask:` (the literal question a host shows the human) and `reply_to:` (where the reply lands; default `human.reply`) |
-| `fail: true`     | abort the run                                    |
+Each gate is a prose condition the LLM judges (or a deterministic `hook:`),
+plus exactly one policy: `then: ok`, `repair: N`, `escalate: true` (0.4: with
+its own `ask:` question and `reply_to:` landing path), or `fail: true` — the
+full policy table is in the [cheatsheet](../reference/cheatsheet.md), semantics
+in [SPEC §5](../../SPEC.md).
 
 Rules of thumb:
 

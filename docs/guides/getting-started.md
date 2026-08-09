@@ -31,16 +31,11 @@ adds the MCP server for agent hosts.
 mklang init --user
 ```
 
-This scaffolds the XDG user host, never overwriting existing files:
-
-| What                                                | Where                             |
-| --------------------------------------------------- | --------------------------------- |
-| runtime config, its schema, + `.env`                | `~/.config/mklang/`               |
-| your machines, incl. a scaffolded `hello.mkl` sample | `~/.local/share/mklang/machines/` |
-| console sessions, checkpoints                       | `~/.local/state/mklang/`          |
-
-(Inside a project directory, plain `mklang init` scaffolds the same layout
-locally. Full layout and precedence rules: [Installation](./install.md).)
+This scaffolds the XDG user host, never overwriting existing files: config and
+`.env` under `~/.config/mklang/`, your machines (including a commented
+`hello.mkl` sample) under `~/.local/share/mklang/machines/`. Inside a project
+directory, plain `mklang init` scaffolds the same layout locally. The full
+layout and precedence rules: [Installation](./install.md).
 
 ## 3. Set a provider API key
 

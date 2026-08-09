@@ -102,7 +102,7 @@ Sessions persist under the host state root — blackboard, event transcript
 (JSONL), checkpoints — and `--continue` reopens the last session for the
 selected workspace. [ADR 0021](0021-filesystem-layout-local-install.md)
 later standardized the XDG location and legacy fallback;
-[Best practices §13](../guides/best-practices.md#current-host-layout-documentation-ssot)
+[Installation](../guides/install.md#host-layout)
 is the documentation SSOT for the current paths.
 Headless testing uses Textual's Pilot plus the scripted LLM, so the console
 has the same no-key CI story as everything else.

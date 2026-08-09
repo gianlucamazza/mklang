@@ -57,6 +57,7 @@ nav:
   - Reference:
       - CLI: cli.md
       - Machine stdlib: stdlib.md
+      - Host tools: tools.md
   - Project:
       - Roadmap: ROADMAP.md
       - Changelog: CHANGELOG.md
