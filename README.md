@@ -297,8 +297,7 @@ by default.
 
 ## Running one of these in production
 
-Three sentences, and only these, describe the family
-([mklang-platform ADR 0019](https://github.com/gianlucamazza/mklang-platform/blob/main/docs/adr/0019-one-name-two-products.md)):
+Three sentences, and only these, describe the family (one name, two products):
 
 1. **mklang** is an open language for LLM-driven state machines (judgement).
 2. **[mklang platform](https://mklang.dev/)** is the durable host: orchestrator,
@@ -310,7 +309,7 @@ commercial designation is **mklang platform**, not bare “mklang”. The other 
 triggers, retries, credentials, who may deploy, and what happens when the process dies
 between an effect and the record of it — is deliberately not here. The platform is a
 separate commercial product (Phase 1: design partners, onboarding is a person). Its
-licence is stated on that site; the language stays Apache-2.0.
+licence is stated on [mklang.dev](https://mklang.dev/); the language stays Apache-2.0.
 
 ## License
 
