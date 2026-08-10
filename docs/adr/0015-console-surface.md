@@ -1,6 +1,8 @@
 # ADR 0015 — `mklang console`: an agent-first operational TUI whose brain is a machine
 
-Status: Accepted (M1–M3 shipped in package 0.7.0; see `docs/guides/console.md`)
+Status: Accepted (M1–M3 shipped in package 0.7.0; the `mklang[console]` extra
+became a no-op in 0.15.0, when the console moved into the core package;
+see `docs/guides/console.md`)
 
 ## Context
 
@@ -28,7 +30,10 @@ loop would be the project not believing itself.
 
 Add an optional console surface: extra **`mklang[console]`** (Textual),
 subcommand **`mklang console`** (guarded import, like the MCP extra), module
-`src/mklang/console/`. Three commitments:
+`src/mklang/console/`. (0.15.0 made the surface unconditional: Textual moved
+into the core dependencies and the extra stayed behind, empty, so older install
+instructions keep working. To install today, see
+[Getting started](../guides/getting-started.md).) Three commitments:
 
 ### 1. The brain is a bundled `.mkl` machine
 
@@ -49,11 +54,11 @@ entry points):
 | `list_machines` / `describe_machine` | registry discovery (wraps `host.describe_machine`)                                                                                              |
 | `read_machine`                       | source of a machine (bundled or workspace)                                                                                                      |
 | `check_machine`                      | `host.check_machine` verbatim — the authoring loop's verifier                                                                                   |
-| `write_machine`                      | write a `.mkl` **inside the workspace only** (confirm on overwrite)                                                                              |
+| `write_machine`                      | write a `.mkl` **inside the workspace only** (confirm on overwrite)                                                                             |
 | `run_machine`                        | commission a machine (name/path/source + inputs JSON + budget); the run's events stream to the UI; suspensions are brokered to the user (below) |
 | `ask_user`                           | direct clarification — blocks the machine on a UI reply                                                                                         |
-| `list_workspace`                     | bounded read-only listing of visible workspace files/directories; excludes hidden, build, vendor and cache paths                               |
-| `read_workspace_file`                 | bounded read-only UTF-8 file read relative to the workspace; reports binary files and truncation                                                |
+| `list_workspace`                     | bounded read-only listing of visible workspace files/directories; excludes hidden, build, vendor and cache paths                                |
+| `read_workspace_file`                | bounded read-only UTF-8 file read relative to the workspace; reports binary files and truncation                                                |
 | `search_workspace`                   | bounded literal text search over visible UTF-8 workspace files; returns relative paths, line numbers and previews                               |
 
 Structured tool inputs ride as JSON strings (tool inputs are rendered strings
@@ -102,7 +107,7 @@ Sessions persist under the host state root — blackboard, event transcript
 (JSONL), checkpoints — and `--continue` reopens the last session for the
 selected workspace. [ADR 0021](0021-filesystem-layout-local-install.md)
 later standardized the XDG location and legacy fallback;
-[Best practices §13](../guides/best-practices.md#current-host-layout-documentation-ssot)
+[Installation](../guides/install.md#host-layout)
 is the documentation SSOT for the current paths.
 Headless testing uses Textual's Pilot plus the scripted LLM, so the console
 has the same no-key CI story as everything else.

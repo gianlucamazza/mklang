@@ -1,7 +1,9 @@
 # Local installation and host layout
 
-First time? Follow [Getting started](./getting-started.md) — this page is the
-host-layout and config-resolution reference.
+First time? Follow [Getting started](./getting-started.md) for the linear
+walk-through — this page is the canonical reference for installing, the host
+layout, and config resolution; every other page links here instead of
+repeating it.
 
 Install the desired surfaces, then initialize either a project or your user host:
 
@@ -19,19 +21,41 @@ while listing the user data it leaves behind).
 
 `init` never overwrites existing files. Project mode creates `config/runtime.yaml`,
 `config/runtime.schema.json`, `machines/` (with a commented `hello.mkl` sample and
-its `hello.test.yaml` scenario script), and `.env`. User mode uses XDG roots:
+its `hello.test.yaml` scenario script), and `.env`.
 
-| Data                                        | Default                           |
-| ------------------------------------------- | --------------------------------- |
-| runtime config, its schema, and `.env`      | `~/.config/mklang/`               |
-| user machines (incl. the `hello.mkl` sample) | `~/.local/share/mklang/machines/` |
-| console sessions/checkpoints                | `~/.local/state/mklang/`          |
+## Host layout
 
-`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and `XDG_STATE_HOME` are honored.
+This section is the documentation source of truth for host-owned paths — ADR
+0021 records the decision and rollout history; the implementation authority is
+`mklang.paths`, and changes to it must update this table in the same commit.
+
+| Root   | Location                                                   | Contents                                 |
+| ------ | ---------------------------------------------------------- | ---------------------------------------- |
+| Config | `$XDG_CONFIG_HOME/mklang` (default `~/.config/mklang`)     | `runtime.yaml`, its schema, `.env`       |
+| Data   | `$XDG_DATA_HOME/mklang` (default `~/.local/share/mklang`)  | user `machines/` (incl. the `hello.mkl` sample) |
+| State  | `$XDG_STATE_HOME/mklang` (default `~/.local/state/mklang`) | console sessions and checkpoints         |
+| System | `/etc/mklang`, `/usr/share/mklang/machines`                | system config and machines               |
+
+Console sessions always live under
+`$XDG_STATE_HOME/mklang/console/sessions/<id>/`. `mklang init --user` creates
+the user roots and seeds `machines/` with the `hello.mkl` sample plus its
+`hello.test.yaml` scenario (keyless first run via `mklang test`).
+
+## Config and machine resolution
+
 An explicit `--config` wins, followed by `MKLANG_CONFIG`, project config, user
 config, system config, and finally the read-only bundled example — the same
 chain for the CLI, the console, and `mklang-mcp`. `.env` layers per key:
 real environment > project `.env` > user `.env` (ADR 0023).
+
+Machine resolution is shared by CLI, console, and path-based MCP runs: the
+registry layers stdlib → plugins → system → user → project root → project
+`machines/`, with the last matching machine winning. Root-level project `.mkl`
+files remain readable for compatibility; new console-authored files go under
+`machines/`. A path outside a recognizable project loads only its sibling
+machines plus the global registry. Use `mklang machines` to see the winning
+source per name, and `mklang doctor` to see every resolved layer (config, env,
+keys, machine roots, state paths) at once.
 
 ### Environment variables
 
@@ -53,10 +77,6 @@ binding in `runtime.yaml` (ADR 0016): env var > `tools:` block > default.
 Provider API keys are named per provider by `api_key_env` in `runtime.yaml`
 (e.g. `DEEPSEEK_API_KEY`) and read from the environment or the layered `.env`
 files — never from the config file itself.
-
-Machine precedence is stdlib → plugins → system → user → project. Use
-`mklang machines` to see the winning source, and `mklang doctor` to see every
-resolved layer (config, env, keys, machine roots, state paths) at once.
 
 ## Arch Linux
 

@@ -24,15 +24,17 @@ outer process in [Host embedding](../guides/host-embedding.md) (JSON wire shape:
   getting-started map (exit 0) instead of a usage error.
 - `--format auto|text|json` — `auto` (default) renders a concise Rich view on a
   terminal and keeps stable JSON on piped stdout; `run`, `resume`, and
-  `machines` are safe to pipe.
+  `machines` are safe to pipe. Every subcommand except `console` (a TUI, never
+  piped) accepts it.
 - `--color auto|always|never` — color policy for text output; `NO_COLOR` is
-  honored.
+  honored. Same scope as `--format`: all subcommands except `console`.
 - `MKLANG_DEBUG=1` — re-raise unexpected errors with a full traceback instead
   of the one-line diagnostic.
 - `--log-level debug|info|warning|error` (or `MKLANG_LOG_LEVEL`; the flag wins) —
   process log level for the `mklang.*` logger hierarchy on stderr
   ([best practices §12](../guides/best-practices.md)). Default `warning`
-  keeps today's output; `info` reveals the fs data-tool audit lines.
+  keeps today's output; `info` reveals the fs data-tool audit lines. All
+  subcommands except `console` (use the env var there).
 - A missing provider API key fails fast with a diagnostic naming the exact
   variable to set in `.env` (the `local` provider is exempt); commands that
   never call a provider (`check`, `lint` without `--llm`, `test`, `machines`,
@@ -196,7 +198,9 @@ the active provider cannot run (ADR 0023).
 mklang console [--workspace DIR] [--agent FILE.mkl] [--continue | --session ID]
 ```
 
-The agent-first TUI (bundled by default since 0.15.0). `--workspace` confines
+The agent-first TUI (bundled by default since 0.15.0). `--config` and
+`--provider` work as in `run`; the presentation flags (`--format`, `--color`,
+`--log-level`) do not apply here. `--workspace` confines
 machine writes (default: the absolute directory from which the console was
 launched); the selected root is injected into the brain as `workspace_root`,
 and repeated by the snapshot and workspace-tool results (tool paths remain

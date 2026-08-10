@@ -123,15 +123,15 @@ def test_changelog_entries_from_distribution_cutoff_are_tagged():
 
 
 def test_console_docs_link_to_host_path_ssot():
-    best_practices = (ROOT / "docs/guides/best-practices.md").read_text(encoding="utf-8")
+    install = (ROOT / "docs/guides/install.md").read_text(encoding="utf-8")
     console = (ROOT / "docs/guides/console.md").read_text(encoding="utf-8")
-    anchor = "#current-host-layout-documentation-ssot"
+    anchor = "#host-layout"
     session_path = "$XDG_STATE_HOME/mklang/console/sessions/<id>/"
 
-    assert "### Current host layout (documentation SSOT)" in best_practices
-    assert session_path in best_practices
+    assert "## Host layout" in install
+    assert session_path in install
     assert session_path in console
-    assert f"best-practices.md{anchor}" in console
+    assert f"install.md{anchor}" in console
 
 
 def test_adr_0016_status_matches_shipped_tools_block():

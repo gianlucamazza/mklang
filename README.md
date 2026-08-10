@@ -34,17 +34,12 @@ the live web). See the
 
 ## The language
 
-Each **state** has four faces:
-
-| Face        | Answers        | Example                                       | Ref. interpreter        |
-| ----------- | -------------- | --------------------------------------------- | ----------------------- |
-| `structure` | what shape?    | "The output is an email reply, max 150 words" | → **system**            |
-| `execution` | how to act?    | "Do not invent policies not in the KB facts"  | → **system**            |
-| `prompt`    | what to think? | "Write a reply to {{ticket.body}}…"           | → **user** (+ `{{…}}`)  |
-| `gates`     | when to exit?  | see below                                     | separate **judge** call |
-
-Sticky policy goes in `execution`; turn data and `{{context}}` go in `prompt`.
-There is no `system:` keyword — see [Best practices §3](./docs/guides/best-practices.md).
+Each **state** has four faces: `structure` (what shape?), `prompt` (what to
+think? — the `{{…}}`-interpolated task), `execution` (how to act? — sticky
+policy, never side effects), and `gates` (when to exit?). Sticky policy goes in
+`execution`; turn data and `{{context}}` go in `prompt`. The one-page version
+of the whole language is the [cheatsheet](./docs/reference/cheatsheet.md); the
+face → LLM-channel mapping is [Best practices §3](./docs/guides/best-practices.md).
 
 Real side effects (search, send, calc) are **`tool:` states** — host callables,
 not prose in `execution`. See [`examples/react.mkl`](./examples/react.mkl) and
@@ -128,9 +123,12 @@ it still has no shell, git, or generic write access.
 
 ## Reasoning architectures
 
-Every modern reasoning/agentic pattern maps onto the core (states + gates + prose +
-tiers + the optional faces). Full skeletons in [`SPEC.md §10`](./SPEC.md); operating
-guidance in [`docs/guides/patterns.md`](./docs/guides/patterns.md).
+Every modern reasoning/agentic pattern — chain-of-thought, ReAct,
+self-consistency, Tree-of-Thought, plan-and-execute, debate, map-reduce,
+router-of-experts, speculative cascade — maps onto the core (states + gates +
+prose + tiers + the optional faces). The construct-by-construct map is the
+cookbook in [`SPEC.md §10`](./SPEC.md); operating guidance in
+[`docs/guides/patterns.md`](./docs/guides/patterns.md).
 
 Ten of these ship as **ready, general-purpose `std_*` machines** — parameterized
 by context, callable from your machines (`call: std_refine`), runnable by name
@@ -144,62 +142,28 @@ See the [stdlib catalog](./docs/reference/stdlib.md) (ADR 0012). The patterns th
 tools/hooks or static `call:` targets (ReAct, router, exact policy) stay as
 authored examples.
 
-| Architecture            | mklang constructs                                                |
-| ----------------------- | ---------------------------------------------------------------- |
-| Chain-of-Thought        | `reason: true`                                                   |
-| ReAct                   | think → `tool` state (host callable) → observation `accumulate`d |
-| Reflexion / self-refine | produce → self-judge gate → `repair`                             |
-| Self-consistency        | `sample: N` → reducer state (majority)                           |
-| Tree-of-Thought         | `sample: k` → score/select reducer → loop (depth via budget)     |
-| Plan-and-Execute        | planner `parse: list` (0.3) → `over: {{steps}}` → reducer        |
-| Debate / ensemble       | `over: {{personas}}` → synthesizer                               |
-| Map-Reduce              | `over: {{chunks}}` → reducer                                     |
-| Router-of-experts       | classify → `call` specialists                                    |
-| Speculative cascade     | `tier: fast` draft → `escalate` → `tier: reasoning`              |
-| Exact policy checks     | gate `hook:` host `(ctx, output) -> bool` (no LLM)               |
-
 ## Runtime configuration
 
 The `.mkl` picks a **tier**; a host-side config picks the **model**. This is the
 whole of "make it multi-provider":
 
 ```yaml
-active: deepseek # deepseek | anthropic | openai | google | openrouter | xai | mistral | local
+active: deepseek # anthropic | openai | google | openrouter | xai | mistral | local
 providers:
   deepseek:
-    base_url: https://api.deepseek.com
-    tiers:
-      {
-        fast: deepseek-v4-flash,
-        balanced: deepseek-v4-flash,
-        reasoning: deepseek-v4-flash,
-      }
-    params:
-      fast: { thinking: { type: disabled } }
-      balanced: { thinking: { type: disabled } }
-      reasoning: { thinking: { type: enabled }, reasoning_effort: high }
+    tiers: { fast: deepseek-v4-flash, balanced: deepseek-v4-flash, reasoning: deepseek-v4-flash }
   anthropic:
-    tiers:
-      {
-        fast: claude-haiku-4-5,
-        balanced: claude-sonnet-5,
-        reasoning: claude-opus-4-8,
-      }
+    tiers: { fast: claude-haiku-4-5, balanced: claude-sonnet-5, reasoning: claude-opus-4-8 }
   local:
     base_url: http://localhost:11434/v1
     tiers: { fast: qwen3:8b, balanced: qwen3:32b, reasoning: deepseek-r1:70b }
 ```
 
-The example config defaults to **DeepSeek V4 Flash** (the path we live-test against). Flip
-`active: anthropic` (or `openai` / `local` / …) and every example runs unchanged.
-Blocks ship for **Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI (Grok),
-Mistral, and local** (Ollama/vLLM) — every non-Anthropic one is OpenAI-compatible,
-so one shared transport adapter serves registered OpenAI-compatible providers;
-the host registry declares protocol-specific profiles explicitly. Custom
-OpenAI-compatible endpoints must set `protocol: openai_compat`. **OpenRouter** is a meta-provider: its
-`vendor/model` ids let each tier target a different vendor through one endpoint.
-Per-tier params (Anthropic adaptive-thinking + `effort`, OpenAI/xAI
-`reasoning_effort`, …) live under `params`. Full map:
+The example config defaults to **DeepSeek V4 Flash** (the path we live-test
+against); flip `active:` and every example runs unchanged. Blocks ship for
+Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI, Mistral, and local
+(Ollama/vLLM); per-tier params (adaptive thinking, `reasoning_effort`, …) live
+under `params`. Full map, per-provider notes included:
 [`config/runtime.example.yaml`](./config/runtime.example.yaml).
 
 ## Install
@@ -233,43 +197,17 @@ git clone https://github.com/gianlucamazza/mklang && cd mklang
 cp .env.example .env            # set DEEPSEEK_API_KEY=… (or another provider key)
 uv run mklang check examples/self_consistency.mkl
 uv run mklang lint examples/self_consistency.mkl   # + static analysis
+uv run mklang test examples/triage.mkl --script examples/triage.test.yaml  # no key needed
 uv run mklang run examples/self_consistency.mkl \
   --set question.text="What is the capital of Australia?"
-# default provider is deepseek; override with --provider anthropic|openai|…
-
-# pause on budget, resume later (exit code 3 = suspended):
-uv run mklang run examples/self_consistency.mkl --max-tokens 300 --checkpoint ck.json
-uv run mklang resume ck.json --max-tokens 5000
-
-# human-in-the-loop: escalate gates suspend; resume with the human decision:
-uv run mklang run examples/expense_approval.mkl --checkpoint ck.json --hitl
-uv run mklang resume ck.json --set human.reply="approved, cost center 42"
 ```
 
-Every command, flag, and exit code: [CLI reference](./docs/reference/cli.md).
-The `.mkl` picks tiers; `config/runtime.example.yaml` maps them to models
-(`active: deepseek` by default); the key comes from `.env`. Same machine, any
-provider.
-
-### Test your machine without API keys
-
-`mklang test` runs your machine against a script of named scenarios with a
-**scripted LLM** (produce texts, judge picks) and scripted tools/hooks — fully
-deterministic, no provider or key. It pins the paths you care about _before_ you
-spend a token on a live run.
-
-```bash
-uv run mklang test examples/triage.mkl --script examples/triage.test.yaml
-# PASS happy-path
-# PASS kb-empty-escalates
-```
-
-Each scenario declares a scripted `llm:`/`tools:`/`hooks:`, optional host
-`input:` context (untrusted by provenance, SPEC §6), and an `expect:`
-(status, error, result, `at`, `trace` skeleton, context keys) — the same case
-format the [conformance suite](./conformance/README.md) uses. A mismatch prints a
-minimal diff (the first differing key, expected vs actual) and exits 1. See
-[`examples/triage.test.yaml`](./examples/triage.test.yaml).
+`mklang test` pins the paths you care about against a scripted LLM —
+deterministic, no provider or key — _before_ you spend a token on a live run.
+Suspensions are first-class: budget exhaustion and `escalate` gates can
+checkpoint (`--checkpoint`, `--hitl`; exit code 3) and `mklang resume` picks the
+run back up, human reply included. Every command, flag, and exit code:
+[CLI reference](./docs/reference/cli.md).
 
 ### MCP server (agentic hosts)
 
@@ -284,51 +222,16 @@ claude mcp add mklang -- mklang-mcp
 ```
 
 The server auto-discovers config and keys through the same chain as the CLI
-(project → user host → `/etc/mklang` → bundled example, ADR 0023); pass
-`--config` only to pin a specific file. It exposes commissioning tools
-(`run` / `resume`), discovery (`list_machines` / `describe_machine`), and `check`
-(ADR 0011 + 0013). `run` accepts inline `.mkl` source or a path, with `inputs`
-merged into the context (host inputs are untrusted by provenance and reach
-prompts fenced — SPEC §6); `resume` takes an opaque handle or checkpoint file
-(e.g. `{"human.reply": "…"}` for HITL, injected values equally tainted). Live
-engine events stream as `mklang.event` logging notifications (ADR 0019).
-In-memory sessions hold suspensions unless you pass `checkpoint_path`. Provider
-keys resolve server-side from the environment, never over the wire.
+(ADR 0023) and exposes commissioning tools (`run` / `resume`, inline source or
+path), discovery (`list_machines` / `describe_machine`), and `check`
+(ADR 0011 + 0013). Live engine events stream as `mklang.event` logging
+notifications (ADR 0019); provider keys resolve server-side from the
+environment, never over the wire.
 
-## Files
-
-- [`SPEC.md`](./SPEC.md) — the full language specification.
-- [`schema/mklang.schema.json`](./schema/mklang.schema.json) — JSON Schema that
-  validates the structure of a `.mkl` file (add
-  `# yaml-language-server: $schema=../schema/mklang.schema.json` at the top of a
-  `.mkl` for editor validation).
-- [`config/runtime.example.yaml`](./config/runtime.example.yaml) — host-side
-  runtime config: the `tier → model` map for each provider
-  ([schema](./config/runtime.schema.json)).
-- [`src/mklang/`](./src/mklang) — the reference interpreter (Python, multi-provider).
-- [`docs/`](./docs) — `guides/` ([best practices](./docs/guides/best-practices.md),
-  [patterns](./docs/guides/patterns.md), [authoring](./docs/guides/authoring.md),
-  [console](./docs/guides/console.md), [install](./docs/guides/install.md)),
-  `reference/` ([CLI](./docs/reference/cli.md), [stdlib](./docs/reference/stdlib.md),
-  [cheatsheet](./docs/reference/cheatsheet.md),
-  [architecture](./docs/reference/architecture.md)),
-  [`demos.md`](./docs/demos.md), and the [ADR index](./docs/adr/README.md);
-  plus [`ROADMAP.md`](./ROADMAP.md).
-- `examples/` — runnable machines:
-  - [`triage.mkl`](./examples/triage.mkl) — branching FSM + real `search_kb` / `send_reply` tools.
-  - [`research.mkl`](./examples/research.mkl) — looping FSM (iterative Q&A, training knowledge).
-  - [`research_web.mkl`](./examples/research_web.mkl) — research loop with `tool: search` (host-bound).
-  - [`research_compress.mkl`](./examples/research_compress.mkl) — same + explicit notes compression.
-  - [`news_search.mkl`](./examples/news_search.mkl) — topic → `tool: search` → news brief (`today` + recency).
-  - [`expense_approval.mkl`](./examples/expense_approval.mkl) — divergent terminals + `fail`.
-  - [`self_consistency.mkl`](./examples/self_consistency.mkl) — fan-out `sample` + reducer.
-  - [`map_reduce.mkl`](./examples/map_reduce.mkl) + [`summarize_doc.mkl`](./examples/summarize_doc.mkl) — `over` + `call`.
-  - [`react.mkl`](./examples/react.mkl) — reason/act/observe loop with `accumulate`.
-  - [`hook_gates.mkl`](./examples/hook_gates.mkl) — deterministic code-hook gates (exact policy).
-- `machines/` — the canonical project workspace the
-  [console](./docs/guides/console.md) discovers in this repo; holds a
-  byte-identical demo copy of `examples/news_search.mkl` (the pair is pinned by
-  `tests/repo/test_examples.py`).
+The full documentation lives at [docs.mklang.dev](https://docs.mklang.dev/) —
+spec, guides, CLI and stdlib reference, ADRs. Runnable machines are in
+[`examples/`](./examples) (each pattern has one, with its scenario test; the
+[authoring guide](./docs/guides/authoring.md) says which to copy).
 
 ## Stack
 
@@ -381,8 +284,9 @@ by default.
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
   Arch: [AUR `mklang`](https://aur.archlinux.org/packages/mklang) tracks the
   PyPI sdist pin.
-- **1.0 posture:** SemVer from 1.0.0, spec **0.3** frozen
-  ([ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)); freeze is
+- **1.0 posture:** SemVer from 1.0.0; the language surface froze at 1.0
+  (then 0.3 — current spec **0.4**, shipped additively;
+  [ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)); the freeze is
   provisional on evidence ([ADR 0028](./docs/adr/0028-provisional-1.0-posture.md)).
   Authoring-loop `blind_spot = 0.0167` (no `test_machine` yet).
 - **Open / later:** Anthropic live when the account has credit; five-reader
