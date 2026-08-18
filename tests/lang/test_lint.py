@@ -352,3 +352,53 @@ def test_taint_carries_through_an_otherwise_but_not_from_the_entry():
         }
     )
     assert not any("effectful tool" in f for f in lint_machine(clean))
+
+
+def test_a_hook_that_names_output_reads_the_states_own_output():
+    """`mkp:eq:output:dovuto` compares the state's bare-string output; flagging its output
+    as "never read" told a correct machine to rename things. The false positive is the
+    expensive half: it trains the eye to skip the finding, which is how the real instance —
+    a gate reading `context.<output-name>`, a key nobody writes — survived in a shipped
+    machine until a lint run in another repository caught it (2026-08-18)."""
+    bare = M(
+        {
+            "a": state(
+                output="giudizio",
+                gates=[
+                    gate("dovuto", hook="mkp:eq:output:dovuto", then="ok", to="b"),
+                    gate("otherwise", then="ok", to="b"),
+                ],
+            ),
+            "b": state(output="final"),
+        }
+    )
+    assert not any("'giudizio'" in f for f in lint_machine(bare))
+
+    dotted = M(
+        {
+            "a": state(
+                output="piano",
+                gates=[
+                    gate("has fields", hook="mkp:has:output.azione,output.corpo", then="ok", to="b"),
+                    gate("otherwise", then="ok", to="b"),
+                ],
+            ),
+            "b": state(output="final"),
+        }
+    )
+    assert not any("'piano'" in f for f in lint_machine(dotted))
+
+    # …and a hook that reads only context does NOT exempt: that is the real bug's shape.
+    context_only = M(
+        {
+            "a": state(
+                output="giudizio",
+                gates=[
+                    gate("dovuto", hook="mkp:eq:context.giudizio:dovuto", then="ok", to="b"),
+                    gate("otherwise", then="ok", to="b"),
+                ],
+            ),
+            "b": state(output="final"),
+        }
+    )
+    assert any("'giudizio' is never read" in f for f in lint_machine(context_only))

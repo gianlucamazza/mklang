@@ -28,6 +28,12 @@ def _templates_of(s: State) -> list[str]:
     return [t for t in texts if isinstance(t, str)]
 
 
+# `output` as a hook argument: bare (`:output:`), dotted (`:output.a`), at the end
+# (`:output`), or inside a comma list (`,output.a`). Colons also delimit hook parameters,
+# so the boundary is any of `:`, `,`, `.` or end-of-string.
+_HOOK_OUTPUT = re.compile(r"[:,]output([.:,]|$)")
+
+
 def _referenced_roots(machine: Machine) -> set[str]:
     """Root names referenced by any {{path}} template in the machine."""
     roots: set[str] = set()
@@ -285,7 +291,22 @@ def lint_machine(
         # gates (the gate judge consumes the output — the sufficiency pattern).
         terminal = any(g.to == "END" for g in s.gates)
         judged = any(not g.hook and g.when.strip().lower() != "otherwise" for g in s.gates)
-        if s.output not in refs and s.output != machine.result and not terminal and not judged:
+        # A parametric hook that names `output` reads the state's own output, whatever the
+        # output is called: `mkp:eq:output:dovuto` compares a bare-string output, and
+        # `mkp:has:output.a` a field of a document one. Flagging those as "never read" told
+        # a correct machine to rename things — and worse, it trained the eye to skip the
+        # finding, which is how the *real* instance (a gate reading `context.<output-name>`,
+        # a key nobody writes) survived in a shipped machine until 2026-08-18.
+        hook_reads_output = any(
+            g.hook and _HOOK_OUTPUT.search(g.hook) for g in s.gates
+        )
+        if (
+            s.output not in refs
+            and s.output != machine.result
+            and not terminal
+            and not judged
+            and not hook_reads_output
+        ):
             findings.append(
                 f"{sid}: output '{s.output}' is never read "
                 "(no template references it, no prose gate judges it, "
