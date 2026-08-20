@@ -28,9 +28,19 @@ than another agreement number.
 
 Script: [`scripts/repair_convergence.py`](../../scripts/repair_convergence.py).
 
-1. A corpus of tasks aimed at bundled machines with a `repair` gate (today:
-   `std_refine`), with **criteria tight enough that the first draft plausibly
-   misses** — a machine whose repair gate never fires measures nothing.
+1. A corpus of tasks with **criteria tight enough that the first draft plausibly
+   misses** — a machine whose repair gate never fires measures nothing — and loose
+   enough that a second draft can pass, since a task nothing can satisfy measures
+   the ceiling instead of the repair. It aims at `std_refine` plus three machines
+   that exist only to make a repair fire: `exp_strict_format` (countable format
+   rules on the entry state), `exp_tighten_middle` (the repair is *not* on the
+   entry state) and `exp_compress_lossy` (the failure is dropping a fact, not
+   breaking a format rule). Those three live inline in the script, not in
+   `src/mklang/data/stdlib/`: they are measuring instruments, and the stdlib is
+   1.0 stable surface (ADR 0026). Each routes an exhausted repair through
+   `escalate`, never through an `ok` catch-all — the trace reader counts `ok` as
+   a pass, so a machine that gave up via `then: ok` would report its own failures
+   as successes.
 2. Run each item `--repeats N` times against a provider.
 3. Read the trace: attempt _k_ of a state is its _k_-th execution; the gate that
    fired says how it went — `repair` → `retry`, `ok` → `pass`, `escalate`/`fail`
@@ -76,9 +86,11 @@ Reading the verdict:
 - **The judge is the ruler.** Pass/fail is the same prose judge whose reliability
   the gate-divergence experiment is separately measuring. A rise in pass rate is
   a rise in _judged_ pass rate.
-- **One machine shape.** `std_refine` is the canonical repair loop; the corpus
-  should grow to a `repair`-in-the-middle machine (`std_research`, `triage`)
-  before the pooled number is quoted as "repair in mklang".
+- **Four machine shapes, one repair loop each.** `std_refine` is the canonical
+  shape and `exp_tighten_middle` puts the repair mid-machine, but all four are
+  small single-loop machines. A repair inside a longer flow (`std_research`,
+  `triage`) may behave differently, so the pooled number is "repair in these four
+  machines", not "repair in mklang".
 
 ## Results
 

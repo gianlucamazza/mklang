@@ -1,9 +1,12 @@
 """Offline tests for scripts/repair_convergence.py — no keys, no network."""
 
 import importlib.util
+import json
 
+import pytest
 from conftest import REPO_ROOT
 
+from mklang.loader import semantic_check
 from mklang.model import parse_machine
 
 ROOT = REPO_ROOT
@@ -22,14 +25,46 @@ rc = _module()
 
 
 def test_corpus_names_machines_that_exist_and_can_repair():
-    from mklang.registry import base_registry
-
-    registry = base_registry()
+    registry = rc._registry()
     for item in rc.CORPUS:
         machine = registry[item["machine"]]
         assert rc._repair_states(machine), f"{item['machine']} has no repair gate to measure"
         # Seeded keys must be real context keys, or the task never reaches the model.
         assert set(item["context"]) <= set(machine.context)
+
+
+@pytest.mark.parametrize("name", list(rc.MACHINES))
+def test_every_experiment_machine_is_valid_and_can_repair(name):
+    machine = parse_machine(rc.MACHINES[name])
+    errors, _ = semantic_check(machine, {machine.name: machine})
+    assert errors == []
+    assert machine.name == name
+    assert rc._repair_states(machine), f"{name} has no repair gate to measure"
+
+
+@pytest.mark.parametrize("name", list(rc.MACHINES))
+def test_an_exhausted_repair_gives_up_instead_of_passing(name):
+    # `attempts_from_trace` reads `ok` as a pass, so a machine whose catch-all
+    # says `then: ok` would report its own failures as successes. Every repair
+    # state must leave through an escalate/fail instead.
+    machine = parse_machine(rc.MACHINES[name])
+    for sid in rc._repair_states(machine):
+        assert machine.states[sid].gates[-1].kind in {"escalate", "fail"}
+
+
+def test_the_corpus_covers_more_than_one_machine():
+    # ADR 0031 §3 counts machines, not tasks: three items on one machine cannot
+    # evaluate its condition in either direction.
+    assert len({item["machine"] for item in rc.CORPUS}) >= 3
+
+
+def test_self_check_over_the_whole_corpus_reaches_a_second_attempt(capsys):
+    # The structural half of issue #93: before spending anything live, the corpus
+    # must be able to reach attempt 2 often enough for `_verdict` to say something
+    # other than "not measured" (its floor is five second attempts).
+    assert rc.main(["--self-check", "--repeats", "2"]) == 0
+    summary = json.loads(capsys.readouterr().out)
+    assert summary["by_attempt"]["2"]["reached"] >= 5
 
 
 def test_attempts_are_numbered_per_state_and_read_the_fired_gate():
