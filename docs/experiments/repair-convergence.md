@@ -72,10 +72,12 @@ Reading the verdict:
 
 ## Limitations
 
-- **The default corpus never exercises a repair.** The one dated run
-  (2026-08-09) had all nine attempts pass first time, so `lift` was undefined —
-  the harness works, the tasks are too easy. Until it carries states that
-  reliably fail attempt 1, `repair`'s claim is unmeasurable, not supported.
+- **Small n, and three of four machines carry it.** The corpus now reaches a
+  second attempt (13 of 30 runs on 2026-08-20, against a floor of 5), so `lift`
+  is defined — but 13 is few, and `exp_strict_format` still contributes none of
+  them. That machine's gate accepted 5 first drafts out of 5 against seven
+  stacked countable rules; the plausible reading is judge leniency rather than
+  model excellence, which is the next bullet, not a repair result.
 - **Selection effect.** Attempt `k` is conditioned on having failed `k−1` times,
   so the surviving population is systematically harder. This biases `lift`
   **downwards**: a positive lift is real evidence, a slightly negative one is
@@ -94,9 +96,10 @@ Reading the verdict:
 
 ## Results
 
-| Date       | Provider | Runs | p(1)    | p(2) | lift | Verdict                                                 |
-| ---------- | -------- | ---- | ------- | ---- | ---- | ------------------------------------------------------- |
-| 2026-08-09 | deepseek | 9    | **1.0** | —    | —    | **not measured: too few runs reached a second attempt** |
+| Date       | Provider | Runs | p(1)     | p(2)     | lift      | Verdict                                                 |
+| ---------- | -------- | ---- | -------- | -------- | --------- | ------------------------------------------------------- |
+| 2026-08-09 | deepseek | 9    | **1.0**  | —        | —         | **not measured: too few runs reached a second attempt** |
+| 2026-08-20 | deepseek | 30   | **0.57** | **0.15** | **−0.41** | **no convergence: later attempts pass LESS often**      |
 
 The 2026-08-09 run is a finding about the corpus, not about `repair`: all nine
 runs of `std_refine` passed at attempt 1, so no repair was ever exercised and
@@ -104,6 +107,32 @@ runs of `std_refine` passed at attempt 1, so no repair was ever exercised and
 that reliably fail the first attempt (tracked as a repo issue). Reporting the
 run anyway is the point of this table — a green that measured nothing must not
 read as evidence.
+
+**2026-08-20 — the first run that measured anything.** With the corpus of four
+machines, 13 of 30 runs reached a second attempt, over the floor of five, so
+`lift` is defined for the first time. It is negative, and it is not one machine
+dragging the pool:
+
+| Machine              | p(1)        | p(2)       | p(3)      | lift  |
+| -------------------- | ----------- | ---------- | --------- | ----- |
+| `std_refine`         | 0.67 (n=15) | 0.0 (n=5)  | 0.0 (n=5) | −0.67 |
+| `exp_tighten_middle` | 0.20 (n=5)  | 0.0 (n=4)  | 0.75 (n=4) | −0.20 |
+| `exp_compress_lossy` | 0.20 (n=5)  | 0.50 (n=4) | 0.0 (n=2) | +0.30 |
+| `exp_strict_format`  | 1.0 (n=5)   | —          | —         | —     |
+
+What this is **not**: a refutation. The selection effect below biases `lift`
+downwards by construction — attempt 2's population is exactly the 13 drafts the
+judge rejected, so the drop from 0.57 to 0.15 is partly the tasks getting
+harder, not the feedback failing. The counts are also small enough that
+`exp_tighten_middle` passing 3 of 4 at attempt _3_ after 0 of 4 at attempt 2 is
+as likely noise as signal.
+
+What it **is**: the claim is now falsifiable and the first number is not
+positive. ADR 0031 §3's trigger (`lift ≤ 0` on ≥3 machines over ≥50 runs on ≥2
+providers) is not met — this is 30 runs on one provider — but it is no longer
+unreachable. The next step is the second provider, and after that the design the
+selection-effect bullet asks for: repair-with-feedback against plain resample on
+identical inputs.
 
 ## Related
 
