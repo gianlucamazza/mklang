@@ -96,11 +96,18 @@ that want project inspection should declare and use the same workspace tools in
 addition to the existing contract (`list_machines`, `describe_machine`,
 `read_machine`, `check_machine`, `write_machine`, `run_machine`, `ask_user`,
 `update_task`).
+`decide` produces its decision as a JSON document (`parse: json`) with three
+keys — `say` (the line the console shows while the action runs), `action` (one
+of the words above) and `detail` (the payload that action consumes: the run
+request, the workspace request, the ledger update, the question to ask, or the
+substance of the reply). The tool states read `{{thought.detail}}` directly, so
+one action costs one brain call rather than two. A decision that is not valid
+JSON halts the turn with `state-error: parse-json`; a decision whose `action` is
+not one of the supported words enters a bounded repair state instead.
+
 The task ledger is updated explicitly through `update_task`; its validated
 fields are persisted in `state.json` and include the current goal, phase,
-plan, progress, blockers, artifacts and verification evidence. Invalid brain
-decisions enter a bounded repair state rather than being silently treated as a
-reply. Authoring validates the complete machine before an atomic replacement,
+plan, progress, blockers, artifacts and verification evidence. Authoring validates the complete machine before an atomic replacement,
 so a failed validation cannot partially overwrite an existing file.
 
 Tool consent is scoped to the commissioned machine and tool (`machine:tool`),

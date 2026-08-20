@@ -12,7 +12,25 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **The console brain decides and carries its payload in one state.** `agent.mkl`
+  used to spend a second, fast-tier LLM call per action turning `decide`'s prose into
+  the JSON its tool consumed — five such states (`prepare_task_update`,
+  `prepare_workspace_scan`, `prepare_workspace_search`, `prepare_workspace_read`,
+  `prepare_run`), which is the follow-up ADR 0034 named in its consequences. `decide`
+  now declares `parse: json` and emits `{say, action, detail}`: `say` is the line the
+  console shows, `detail` is the payload the tool state reads as
+  `{{thought.detail}}`. Five states and five paid calls per pattern are gone, and a
+  tool cycle is two steps where it was three (the 48-step turn budget is unchanged, so
+  turns that fit before fit with more headroom). The machine declares `mklang: "0.4"`.
+  The price, pinned by a scenario rather than discovered live: a decision that is not
+  valid JSON now halts the state (`state-error: parse-json`) instead of routing to
+  `decision_repair`, which is where a malformed *prose* decision used to go.
+  `run_machine` accepts an already-decoded request object, as its workspace siblings
+  already did. A console session parked at one of the removed states before this
+  change cannot be resumed after it: `/resume` reports `resume-mismatch` naming the
+  state, rather than failing obscurely.
 
 ## [1.2.0] — 2026-08-09
 

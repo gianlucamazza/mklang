@@ -1,6 +1,7 @@
 """The console TUI skeleton (ADR 0015 M1d): headless Pilot + scripted LLM, no keys."""
 
 import asyncio
+import json
 import threading
 
 import pytest
@@ -12,6 +13,12 @@ from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 
 CONFIG = "config/runtime.example.yaml"
+
+
+def decision(action, detail, say="doing the next thing"):
+    """One `decide` output: since ADR 0034's collapse, the decision IS a JSON
+    document (`parse: json`), payload included — there is no prose→JSON state."""
+    return json.dumps({"say": say, "action": action, "detail": detail})
 
 
 def scripted_llm(produce_map, judge_seq):
@@ -47,7 +54,7 @@ async def _wait_input_enabled(app, pilot, timeout=5.0):
 
 def test_direct_reply_turn(tmp_path):
     llm = scripted_llm(
-        {"single next action": "REPLY: it is 4.", "final reply": "4."},
+        {"single next action": decision("REPLY", "it is 4."), "final reply": "4."},
         [4],
     )
     app = build_app(
@@ -109,7 +116,7 @@ def test_brain_turn_fences_the_user_message(tmp_path):
     def produce_fn(model, system, user, reason):
         calls.append(user)
         if "single next action" in user:
-            return Produced(text="REPLY: it is 4.")
+            return Produced(text=decision("REPLY", "it is 4."))
         return Produced(text="4.")
 
     def judge_fn(model, conditions, output, context, reasoning=None):
@@ -145,7 +152,7 @@ def test_agent_reply_markdown_and_bracket_safety(tmp_path):
     """Agent prose is mirrored as Markdown source; brackets must not break the log."""
     reply = "Use **bold** and array[0]; ignore [b]injected[/b]."
     llm = scripted_llm(
-        {"single next action": f"REPLY: {reply}", "final reply": reply},
+        {"single next action": decision("REPLY", reply), "final reply": reply},
         [4],
     )
     app = build_app(
@@ -274,8 +281,7 @@ def test_activity_tree_and_inspector(tmp_path):
 
     llm = scripted_llm(
         {
-            "single next action": "RUN: std_cot task 2+2",
-            "run request JSON": '{"target": "std_cot", "inputs": {"task": "2+2"}}',
+            "single next action": decision("RUN", {"target": "std_cot", "inputs": {"task": "2+2"}}),
             "final reply": "4.",
         },
         [1, 4],
@@ -419,7 +425,7 @@ def test_console_brain_receives_default_cost_budget(tmp_path, monkeypatch):
 def test_clarify_turn_uses_answer_mode(tmp_path):
     llm = scripted_llm(
         {
-            "single next action": "CLARIFY: staging or prod?",
+            "single next action": decision("CLARIFY", "staging or prod?"),
             "final reply": "Done on staging.",
         },
         [2, 4],
@@ -499,7 +505,7 @@ def test_ctrl_c_closes_provider_and_waits_for_pending_worker(tmp_path):
 def test_ctrl_c_releases_pending_human_answer(tmp_path):
     llm = scripted_llm(
         {
-            "single next action": "CLARIFY: staging or prod?",
+            "single next action": decision("CLARIFY", "staging or prod?"),
             "final reply": "Done.",
         },
         [2, 4],

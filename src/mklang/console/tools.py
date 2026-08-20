@@ -351,10 +351,16 @@ class ConsoleTools:
         if input.get("request"):
             # One-blob form for machine authors: a single state output carries
             # {"target": …, "inputs": {…}, "cost_budget"?} as one JSON object.
-            try:
-                req = json.loads(input["request"])
-            except ValueError as e:
-                return _obs({"error": f"request is not valid JSON: {e}"})
+            # A `parse: json` state hands over the decoded object itself, so the
+            # blob arrives either already parsed or as the text to parse — the
+            # same two shapes `_decode_workspace_request` accepts.
+            raw = input["request"]
+            req: object = raw
+            if not isinstance(raw, dict):
+                try:
+                    req = json.loads(raw)
+                except (TypeError, ValueError) as e:
+                    return _obs({"error": f"request is not valid JSON: {e}"})
             if not isinstance(req, dict):
                 return _obs({"error": "request must be a JSON object"})
             target = str(req.get("target") or "").strip()
