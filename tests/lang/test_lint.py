@@ -379,7 +379,12 @@ def test_a_hook_that_names_output_reads_the_states_own_output():
             "a": state(
                 output="piano",
                 gates=[
-                    gate("has fields", hook="mkp:has:output.azione,output.corpo", then="ok", to="b"),
+                    gate(
+                        "has fields",
+                        hook="mkp:has:output.azione,output.corpo",
+                        then="ok",
+                        to="b",
+                    ),
                     gate("otherwise", then="ok", to="b"),
                 ],
             ),
