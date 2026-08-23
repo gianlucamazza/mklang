@@ -253,7 +253,19 @@ spec, guides, CLI and stdlib reference, ADRs. Runnable machines are in
 
 ## Status
 
-**Language v0.4 / package 1.2.0** — core complete: states + gates + prose, tiers,
+**Two version lines** — the language spec and the reference interpreter are versioned
+independently (see [SPEC §1](./SPEC.md) and
+[ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)):
+
+| Line | Version | Meaning |
+|---|---|---|
+| **Language spec** | **0.4** | Additive changes allowed; the language surface is frozen pending evidence (ADR 0028) |
+| **Reference package** | **1.2.0** | Stable interpreter, typed, zero mypy suppressions, 90%+ coverage, CI-gated |
+
+A `.mkl` file declares its spec version via `mklang: "0.4"`. The package version
+is what you `pip install`; the spec version is what you write in your machine.
+
+Core complete: states + gates + prose, tiers,
 `reason` / `accumulate` / fan-out / `call` / `tool` / `parse: list` / code-hook
 gates; multi-provider interpreter with entry-point plugins (tools, hooks,
 providers, machines); resumable checkpoints + HITL; `mklang check` / `lint`
@@ -284,10 +296,8 @@ by default.
   publication uses GitHub OIDC Trusted Publishing from the release workflow.
   Arch: [AUR `mklang`](https://aur.archlinux.org/packages/mklang) tracks the
   PyPI sdist pin.
-- **1.0 posture:** SemVer from 1.0.0; the language surface froze at 1.0
-  (then 0.3 — current spec **0.4**, shipped additively;
-  [ADR 0026](./docs/adr/0026-stability-and-deprecation-policy.md)); the freeze is
-  provisional on evidence ([ADR 0028](./docs/adr/0028-provisional-1.0-posture.md)).
+- **Spec posture:** additive-only changes since 0.3; the language surface is
+  frozen pending evidence ([ADR 0028](./docs/adr/0028-provisional-1.0-posture.md)).
   Authoring-loop `blind_spot = 0.0167` (no `test_machine` yet).
 - **Open / later:** Anthropic live when the account has credit; five-reader
   distribution test; `on_truncate=continue` stitching; language-level context

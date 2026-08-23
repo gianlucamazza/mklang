@@ -29,7 +29,8 @@ def test_emit_run_text_halt_shows_error(capsys):
         color="never",
     )
     out = capsys.readouterr().out
-    assert "HALT" in out and "gate-fail" in out
+    assert "HALT" in out and "fail" in out  # human-readable summary, not raw code
+    assert "intentional" in out  # hint is present
 
 
 def test_emit_run_text_suspended_shows_checkpoint(capsys):
