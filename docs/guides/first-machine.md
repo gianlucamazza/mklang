@@ -8,7 +8,7 @@ later.
 
 ```bash
 pipx install 'mklang[mcp]'   # or: pip install 'mklang[mcp]'
-mklang --version              # ≥ 1.3.0
+mklang --version              # ≥ 1.3.1
 ```
 
 ## 1. Scaffold

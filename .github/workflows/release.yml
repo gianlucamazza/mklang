@@ -40,7 +40,9 @@ jobs:
           uv run --extra docs mkdocs build --strict
       - name: Build and validate distributions
         env:
-          SOURCE_DATE_EPOCH: "0"
+          # ZIP timestamps cannot precede 1980; use the earliest valid epoch
+          # while keeping release artifacts reproducible.
+          SOURCE_DATE_EPOCH: "315532800"
         run: |
           uv build
           uvx twine check dist/*

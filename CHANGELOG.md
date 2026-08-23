@@ -8,11 +8,15 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.0`).
+  `pyproject.toml` (currently `1.3.1`).
 
-## [Unreleased]
+## [1.3.1] — 2026-08-23
 
 ### Changed
+
+- **Release and tooling hardening.** The 1.3.1 package is released from the
+  fully merged `main` branch, with locked documentation tooling, synchronized
+  Arch/package metadata, and the complete cross-platform CI gate.
 
 - **Human-readable error explanations on the CLI.** Runtime halt errors now
   display a plain-English summary and an actionable hint (e.g. "Increase
@@ -1368,7 +1372,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.2.0...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/gianlucamazza/mklang/compare/v1.3.0...v1.3.1
 [1.2.0]: https://github.com/gianlucamazza/mklang/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/gianlucamazza/mklang/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/gianlucamazza/mklang/compare/v1.0.13...v1.1.0
