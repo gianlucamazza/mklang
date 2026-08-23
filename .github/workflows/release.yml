@@ -37,7 +37,7 @@ jobs:
       - name: Build docs strictly
         run: |
           bash scripts/build-docs.sh
-          uvx --with mkdocs-material mkdocs build --strict
+          uv run --extra docs mkdocs build --strict
       - name: Build and validate distributions
         env:
           SOURCE_DATE_EPOCH: "0"

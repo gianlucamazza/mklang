@@ -260,7 +260,7 @@ independently (see [SPEC §1](./SPEC.md) and
 | Line | Version | Meaning |
 |---|---|---|
 | **Language spec** | **0.4** | Additive changes allowed; the language surface is frozen pending evidence (ADR 0028) |
-| **Reference package** | **1.2.0** | Stable interpreter, typed, zero mypy suppressions, 90%+ coverage, CI-gated |
+| **Reference package** | **1.3.0** | Stable interpreter, typed, zero mypy suppressions, 90%+ coverage, CI-gated |
 
 A `.mkl` file declares its spec version via `mklang: "0.4"`. The package version
 is what you `pip install`; the spec version is what you write in your machine.

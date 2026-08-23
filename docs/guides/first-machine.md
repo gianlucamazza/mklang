@@ -8,7 +8,7 @@ later.
 
 ```bash
 pipx install 'mklang[mcp]'   # or: pip install 'mklang[mcp]'
-mklang --version              # ≥ 1.2.0
+mklang --version              # ≥ 1.3.0
 ```
 
 ## 1. Scaffold
@@ -122,7 +122,7 @@ mklang run greeting.mkl --set name="Alice"
 | Understand every language construct | [SPEC](../../SPEC.md) |
 | Write correct machines | [Authoring guide](authoring.md) |
 | Tune reliability and cost | [Patterns](patterns.md) |
-| Use tools (search, file I/O) | [Best practices §5](best-practices.md#5-tools) |
+| Use tools (search, file I/O) | [Best practices §5](best-practices.md#5-tools-host-contracts) |
 | Compose machines (`call: std_refine`) | [Stdlib reference](../reference/stdlib.md) |
 | Interactive TUI | [Console guide](console.md) |
 

@@ -7,10 +7,10 @@ packaging entry points. No core changes, no monkey-patching.
 
 | Group | What it adds | Signature | Entry in `pyproject.toml` |
 |---|---|---|---|
-| `mklang.tools` | Host callables for `tool:` states | `(dict) → str` | [below](#tools) |
-| `mklang.hooks` | Code-hook gates (LLM-free predicates) | `(dict, Any) → bool` | [below](#hooks) |
-| `mklang.machines` | Reusable `.mkl` machines | `dict` or `() → dict` | [below](#machines) |
-| `mklang.providers` | LLM adapter for a new provider | subclass of `LLM` | [below](#providers) |
+| `mklang.tools` | Host callables for `tool:` states | `(dict) → str` | [below](#1-a-custom-tool) |
+| `mklang.hooks` | Code-hook gates (LLM-free predicates) | `(dict, Any) → bool` | [below](#2-a-custom-hook) |
+| `mklang.machines` | Reusable `.mkl` machines | `dict` or `() → dict` | [below](#3-a-custom-machine) |
+| `mklang.providers` | LLM adapter for a new provider | subclass of `LLM` | [below](#4-a-custom-provider) |
 
 ## 1. A custom tool
 

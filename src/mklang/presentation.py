@@ -10,7 +10,7 @@ from functools import cache
 
 from rich.console import Console
 from rich.panel import Panel
-
+from rich.table import Table
 
 # Human-readable explanations for runtime halt errors.
 # Keys are the exact error strings from engine.py; values are (summary, hint) pairs.
@@ -23,11 +23,13 @@ _ERROR_HINTS: dict[str, tuple[str, str]] = {
     ),
     "cost-exhausted": (
         "The shared token cost budget was reached.",
-        "Increase `--max-tokens` or reduce the machine's step budget (fewer steps = fewer LLM calls).",
+        "Increase `--max-tokens` or reduce the machine's step budget "
+        "(fewer steps = fewer LLM calls).",
     ),
     "loop-ceiling": (
         "A state was entered more times than allowed.",
-        "Check for unbounded repair loops. Add a `max_visits:` ceiling or a `when: otherwise` exit gate.",
+        "Check for unbounded repair loops. Add a `max_visits:` ceiling or a "
+        "`when: otherwise` exit gate.",
     ),
     "call-failed": (
         "A sub-machine halted; the parent cannot continue with an empty result.",
@@ -43,20 +45,24 @@ _ERROR_HINTS: dict[str, tuple[str, str]] = {
     ),
     "judge-unparseable": (
         "The gate judge returned text that could not be parsed as a choice number.",
-        "This usually means the judge model was too verbose. Use a non-reasoning model for judging, "
+        "This usually means the judge model was too verbose. Use a non-reasoning "
+        "model for judging, "
         "or add a `when: otherwise` fallback gate.",
     ),
     "refusal": (
         "The model declined to answer.",
-        "Check the prompt and execution policy. Some providers refuse content they classify as unsafe.",
+        "Check the prompt and execution policy. Some providers refuse content they "
+        "classify as unsafe.",
     ),
     "gate-fail": (
         "A gate explicitly chose `fail: true`.",
-        "This is intentional — the machine author designed this failure path. Check the trace for which gate fired.",
+        "This is intentional — the machine author designed this failure path. Check "
+        "the trace for which gate fired.",
     ),
     "untrusted-control-flow": (
         "A tainted decision reached an effectful tool state.",
-        "The host policy is 'report' by default. Use --untrusted-flow halt to refuse, or add a hook: gate to confirm the transition.",
+        "The host policy is 'report' by default. Use --untrusted-flow halt to refuse, "
+        "or add a hook: gate to confirm the transition.",
     ),
     "cancelled": (
         "The run was cancelled.",
@@ -80,10 +86,10 @@ def error_hint(error_code: str) -> tuple[str, str]:
         error_code,
         (
             f"Run halted: {error_code}",
-            "Check the trace for the failing state. Run `mklang lint --strict` to validate the machine.",
+            "Check the trace for the failing state. Run `mklang lint --strict` to "
+            "validate the machine.",
         ),
     )
-from rich.table import Table
 
 
 @dataclass
