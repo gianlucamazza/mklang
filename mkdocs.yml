@@ -46,9 +46,11 @@ nav:
       - Conformance: conformance.md
   - Guides:
       - Getting started: getting-started.md
+      - First machine: first-machine.md
       - Installation: install.md
       - Authoring guide: authoring.md
       - Best practices: best-practices.md
+      - Plugin quickstart: plugins.md
       - Host embedding: host-embedding.md
       - Stability policy: stability.md
       - Patterns: patterns.md

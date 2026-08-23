@@ -92,7 +92,11 @@ def test_history_for_brain_short_is_identity():
 def reply_llm():
     def produce_fn(model, system, user, reason):
         if "single next action" in user:
-            return Produced(text="REPLY: ok", input_tokens=7, output_tokens=3)
+            return Produced(
+                text=json.dumps({"say": "answering", "action": "REPLY", "detail": "ok"}),
+                input_tokens=7,
+                output_tokens=3,
+            )
         return Produced(text="done!", input_tokens=2, output_tokens=1)
 
     return MockLLM(produce_fn=produce_fn, judge_fn=lambda *a: 4)
@@ -102,7 +106,9 @@ def loop_llm():
     """decide always chooses DISCOVER → the turn burns its whole step budget."""
 
     def produce_fn(model, system, user, reason):
-        return Produced(text="DISCOVER: keep looking.")
+        return Produced(
+            text=json.dumps({"say": "keep looking", "action": "DISCOVER", "detail": {}})
+        )
 
     return MockLLM(produce_fn=produce_fn, judge_fn=lambda *a: 0)
 
@@ -154,7 +160,9 @@ def park_then_reply_llm():
     def produce_fn(model, system, user, reason):
         if "final reply" in user:
             return Produced(text="resumed and finished.")
-        return Produced(text="DISCOVER: still looking.")
+        return Produced(
+            text=json.dumps({"say": "still looking", "action": "DISCOVER", "detail": {}})
+        )
 
     def judge_fn(model, conditions, output, context, reasoning=None):
         return judges.pop(0) if len(judges) > 1 else judges[0]

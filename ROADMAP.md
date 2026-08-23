@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **1.2.0**, language **0.4**) and where it can grow —
+Where mklang stands (package **1.3.0**, language **0.4**) and where it can grow —
 technical **and** organizational.
 
 **Tracking rule:** every **Now** / **Next** bullet has a GitHub issue. Work lives
@@ -35,8 +35,9 @@ The dated experiment logs live in the repo, not on the docs site:
 
 - **Gate divergence** ([protocol + results](./docs/experiments/gate-divergence.md)) —
   first live rows landed 2026-08-09; a third provider is [#60](https://github.com/gianlucamazza/mklang/issues/60).
-- **Repair convergence** ([protocol](./docs/experiments/repair-convergence.md)) —
-  harness exists; needs a corpus whose tasks fail attempt 1 before repair lift is measurable.
+- **Repair convergence** ([protocol + results](./docs/experiments/repair-convergence.md)) —
+  first measured row landed 2026-08-20 (`lift` −0.41 on DeepSeek, 13 second attempts);
+  a second provider is what ADR 0031 §3 still needs.
 - **Control-flow-taint incidence** ([protocol](./docs/experiments/taint-incidence.md)) —
   harness exists (`scripts/taint_incidence.py`); the external-machine corpus waits on
   distribution ([#61](https://github.com/gianlucamazza/mklang/issues/61)).

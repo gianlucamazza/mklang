@@ -55,7 +55,7 @@ def test_current_version_docs_are_synchronized():
 
     assert f"`pyproject.toml` (currently `{version}`)" in changelog
     assert f"## [{version}]" in changelog
-    assert f"package {version}**" in readme
+    assert f"| **Reference package** | **{version}** |" in readme
     assert f"package **{version}**" in roadmap
 
 

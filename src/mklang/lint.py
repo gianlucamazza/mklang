@@ -297,9 +297,7 @@ def lint_machine(
         # a correct machine to rename things — and worse, it trained the eye to skip the
         # finding, which is how the *real* instance (a gate reading `context.<output-name>`,
         # a key nobody writes) survived in a shipped machine until 2026-08-18.
-        hook_reads_output = any(
-            g.hook and _HOOK_OUTPUT.search(g.hook) for g in s.gates
-        )
+        hook_reads_output = any(g.hook and _HOOK_OUTPUT.search(g.hook) for g in s.gates)
         if (
             s.output not in refs
             and s.output != machine.result

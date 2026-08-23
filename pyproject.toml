@@ -1,6 +1,6 @@
 [project]
 name = "mklang"
-version = "1.2.0"
+version = "1.3.0"
 description = "A declarative language for LLM-driven state machines, with an agent-first console to author and run them."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,7 +29,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/gianlucamazza/mklang"
-Documentation = "https://gianlucamazza.github.io/mklang/"
+Documentation = "https://docs.mklang.dev/"
 Repository = "https://github.com/gianlucamazza/mklang"
 Issues = "https://github.com/gianlucamazza/mklang/issues"
 Source = "https://github.com/gianlucamazza/mklang"
@@ -48,6 +48,10 @@ dev = [
   "mypy>=1.15",
   "types-PyYAML>=6",
   "types-jsonschema>=4",
+]
+docs = [
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.6,<10",
 ]
 mcp = ["mcp>=2"]
 completions = ["argcomplete>=3"]

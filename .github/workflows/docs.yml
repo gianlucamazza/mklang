@@ -27,7 +27,7 @@ jobs:
       - name: Assemble docs source
         run: bash scripts/build-docs.sh
       - name: Build site (strict)
-        run: uvx --with mkdocs-material mkdocs build --strict
+        run: uv run --extra docs mkdocs build --strict
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:

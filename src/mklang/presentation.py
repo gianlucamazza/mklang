@@ -6,10 +6,90 @@ import json
 import os
 import sys
 from dataclasses import asdict, dataclass, field
+from functools import cache
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+# Human-readable explanations for runtime halt errors.
+# Keys are the exact error strings from engine.py; values are (summary, hint) pairs.
+# The hint explains what the author should do — never a traceback.
+_ERROR_HINTS: dict[str, tuple[str, str]] = {
+    "budget-exhausted": (
+        "The run consumed all available steps.",
+        "Increase `budget:` in the machine, or reduce repair loops and fan-out width. "
+        "A fan-out `over: {{list}}` with N items charges N steps, not 1.",
+    ),
+    "cost-exhausted": (
+        "The shared token cost budget was reached.",
+        "Increase `--max-tokens` or reduce the machine's step budget "
+        "(fewer steps = fewer LLM calls).",
+    ),
+    "loop-ceiling": (
+        "A state was entered more times than allowed.",
+        "Check for unbounded repair loops. Add a `max_visits:` ceiling or a "
+        "`when: otherwise` exit gate.",
+    ),
+    "call-failed": (
+        "A sub-machine halted; the parent cannot continue with an empty result.",
+        "Inspect the sub-run trace. The child's error is included in the message.",
+    ),
+    "call-depth-exceeded": (
+        "Machine recursion exceeded the maximum depth.",
+        "Remove or reduce recursive `call:` chains.",
+    ),
+    "no-gate-matched": (
+        "No gate condition was true and there is no `when: otherwise` catch-all.",
+        "Add a `when: otherwise` gate as the last gate in the state, or review gate conditions.",
+    ),
+    "judge-unparseable": (
+        "The gate judge returned text that could not be parsed as a choice number.",
+        "This usually means the judge model was too verbose. Use a non-reasoning "
+        "model for judging, "
+        "or add a `when: otherwise` fallback gate.",
+    ),
+    "refusal": (
+        "The model declined to answer.",
+        "Check the prompt and execution policy. Some providers refuse content they "
+        "classify as unsafe.",
+    ),
+    "gate-fail": (
+        "A gate explicitly chose `fail: true`.",
+        "This is intentional — the machine author designed this failure path. Check "
+        "the trace for which gate fired.",
+    ),
+    "untrusted-control-flow": (
+        "A tainted decision reached an effectful tool state.",
+        "The host policy is 'report' by default. Use --untrusted-flow halt to refuse, "
+        "or add a hook: gate to confirm the transition.",
+    ),
+    "cancelled": (
+        "The run was cancelled.",
+        "",
+    ),
+    "resume-mismatch": (
+        "The machine changed since the checkpoint was created.",
+        "Resume with a compatible version of the machine, or create a new checkpoint.",
+    ),
+}
+
+
+@cache
+def error_hint(error_code: str) -> tuple[str, str]:
+    """Return (summary, hint) for a runtime error code.
+
+    Falls back to a neutral explanation when the code is not in the map.
+    Results are cached so the lookup is O(1) after the first call.
+    """
+    return _ERROR_HINTS.get(
+        error_code,
+        (
+            f"Run halted: {error_code}",
+            "Check the trace for the failing state. Run `mklang lint --strict` to "
+            "validate the machine.",
+        ),
+    )
 
 
 @dataclass
@@ -107,7 +187,11 @@ def emit_run_text(out: dict, *, machine: str, provider: str, color: str = "auto"
         f" · steps {len(out.get('trace') or [])}[/dim]"
     )
     if out.get("error"):
-        console.print(f"[red]Error:[/red] {out['error']}")
+        err = str(out["error"])
+        summary, hint = error_hint(err)
+        console.print(f"[red]Error:[/red] {summary}")
+        if hint:
+            console.print(f"  [dim]Hint:[/dim] {hint}")
     if out.get("diagnosis"):
         d = out["diagnosis"]
         console.print(

@@ -13,7 +13,9 @@ cp SPEC.md ROADMAP.md CHANGELOG.md CONTRIBUTING.md site-src/
 # (/best-practices/, /stdlib/, ...) stay stable across the repo reorg.
 # The flatten means a name shared by the two directories would overwrite
 # silently — refuse to build instead.
-dup=$(comm -12 <(ls docs/guides | sort) <(ls docs/reference | sort))
+dup=$(comm -12 \
+	<(find docs/guides -maxdepth 1 -type f -printf '%f\n' | sort) \
+	<(find docs/reference -maxdepth 1 -type f -printf '%f\n' | sort))
 if [ -n "$dup" ]; then
 	echo "error: guides/ and reference/ share file names, flatten would clobber: $dup" >&2
 	exit 1
