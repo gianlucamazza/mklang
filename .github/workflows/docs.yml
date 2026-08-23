@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v9.0.0
+      - uses: astral-sh/setup-uv@v10.0.1
       - name: Assemble docs source
         run: bash scripts/build-docs.sh
       - name: Build site (strict)
