@@ -8,12 +8,29 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.2.0`).
+  `pyproject.toml` (currently `1.3.0`).
 
 ## [Unreleased]
 
 ### Changed
 
+- **Human-readable error explanations on the CLI.** Runtime halt errors now
+  display a plain-English summary and an actionable hint (e.g. "Increase
+  `budget:` in the machine" instead of just "budget-exhausted"). Covers 12
+  error codes: `budget-exhausted`, `cost-exhausted`, `loop-ceiling`,
+  `call-failed`, `call-depth-exceeded`, `no-gate-matched`, `judge-unparseable`,
+  `refusal`, `gate-fail`, `untrusted-control-flow`, `resume-mismatch`,
+  `cancelled`. Falls back to a neutral explanation for unknown codes.
+- **First-machine guide.** New `docs/guides/first-machine.md`: a zero-to-running
+  walkthrough in three minutes, with scaffold → test → real run → own machine,
+  an ASCII flow diagram, and an error quick-reference table.
+- **Plugin quickstart guide.** New `docs/guides/plugins.md`: covers all four
+  entry-point groups (`mklang.tools`, `mklang.hooks`, `mklang.machines`,
+  `mklang.providers`) with copy-paste examples and a built-in plugin reference
+  table.
+- **Clarified versioning in README Status section.** Replaced the ambiguous
+  "Language v0.4 / package 1.2.0" header with a two-version-line table that
+  explains spec vs package versioning.
 - **The console brain decides and carries its payload in one state.** `agent.mkl`
   used to spend a second, fast-tier LLM call per action turning `decide`'s prose into
   the JSON its tool consumed — five such states (`prepare_task_update`,
@@ -31,6 +48,28 @@ All notable changes to mklang are documented here. The format follows
   already did. A console session parked at one of the removed states before this
   change cannot be resumed after it: `/resume` reports `resume-mismatch` naming the
   state, rather than failing obscurely.
+
+## [1.3.0] — 2026-08-23
+
+### Added
+
+- **Human-readable error explanations on the CLI.** Runtime halt errors now display
+  a plain-English summary and an actionable hint instead of just the error code.
+  Covers 12 codes: `budget-exhausted`, `cost-exhausted`, `loop-ceiling`,
+  `call-failed`, `call-depth-exceeded`, `no-gate-matched`, `judge-unparseable`,
+  `refusal`, `gate-fail`, `untrusted-control-flow`, `resume-mismatch`, `cancelled`.
+- **First-machine guide.** `docs/guides/first-machine.md`: a zero-to-running
+  walkthrough in three minutes, with scaffold → test → real run → own machine,
+  an ASCII flow diagram, and an error quick-reference table.
+- **Plugin quickstart guide.** `docs/guides/plugins.md`: covers all four entry-point
+  groups (`mklang.tools`, `mklang.hooks`, `mklang.machines`, `mklang.providers`)
+  with copy-paste examples and a built-in plugin reference table.
+
+### Changed
+
+- **Clarified versioning in README Status section.** Replaced the ambiguous
+  "Language v0.4 / package 1.2.0" header with a two-version-line table that
+  explains spec vs package versioning.
 
 ## [1.2.0] — 2026-08-09
 
