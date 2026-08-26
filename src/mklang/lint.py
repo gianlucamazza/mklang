@@ -275,7 +275,7 @@ def lint_machine(
                     f"{sid}: {len(s.gates) - 1 - i} gate(s) after 'otherwise' can never fire"
                 )
                 break
-            if g.kind == "escalate":
+            if g.kind == "escalate" and not g.hook:
                 escalate_states.append(sid)
         # Repair-only states are a guaranteed no-gate-matched halt once budgets exhaust.
         repair_only = bool(s.gates) and all(g.kind == "repair" for g in s.gates)

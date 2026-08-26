@@ -34,6 +34,7 @@ def my_calculator(inp: dict) -> str:
     Returns a plain string — the observation deposited in context.
     """
     import math
+
     expr = inp.get("expr", "").strip()
     try:
         result = eval(expr, {"__builtins__": {}}, {"sqrt": math.sqrt, "pow": pow})
@@ -75,6 +76,7 @@ is_business_hours = "my_plugins.hooks:is_business_hours"
 ```python
 # my_plugins/hooks.py
 from datetime import datetime, timezone
+
 
 def is_business_hours(ctx: dict, output: object) -> bool:
     """True when the current UTC hour is 9–17."""
@@ -164,6 +166,7 @@ my_provider = "my_plugins.providers:MyProvider"
 ```python
 # my_plugins/providers.py
 from mklang.llm.base import LLM
+
 
 class MyProvider(LLM):
     """Adapter for a custom OpenAI-compatible endpoint."""

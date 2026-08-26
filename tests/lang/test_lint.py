@@ -90,6 +90,16 @@ def test_escalate_emits_note_not_structural():
     assert notes, findings
 
 
+def test_hooked_escalate_has_no_prose_advisory():
+    m = M(
+        {
+            "a": state(gates=[gate("otherwise", hook="always_true", escalate=True, to="b")]),
+            "b": state(),
+        }
+    )
+    assert not any("prose escalate" in finding for finding in lint_machine(m))
+
+
 def test_unread_output_flagged_but_not_terminal_or_judged():
     m = M(
         {

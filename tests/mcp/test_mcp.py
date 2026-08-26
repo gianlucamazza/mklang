@@ -429,22 +429,24 @@ def _tool_body(res) -> dict:
     return body
 
 
-def test_live_events_stream_as_logging_notifications(monkeypatch):
-    """ADR 0016: a run's engine events arrive as `mklang.event` log notifications."""
+def test_live_events_stream_as_progress_notifications(monkeypatch):
+    """ADR 0016: a run's engine events arrive as MCP progress notifications."""
     from mcp.client import Client
 
     monkeypatch.setattr(srv, "_build_llm", lambda prov: echo_llm())
     server = srv.create_server()
     events = []
 
-    async def on_log(params):
-        if params.logger == "mklang.event":
-            events.append(json.loads(params.data))
+    async def on_progress(_progress, _total, message):
+        events.append(json.loads(message))
 
     async def drive():
-        # log_level opts the client into SEP-2577 logging delivery on 2026-era links.
-        async with Client(server, logging_callback=on_log, log_level="info") as client:
-            res = await client.call_tool("run", {"path": "std_cot", "inputs": {"task": "2+2?"}})
+        async with Client(server) as client:
+            res = await client.call_tool(
+                "run",
+                {"path": "std_cot", "inputs": {"task": "2+2?"}},
+                progress_callback=on_progress,
+            )
             body = _tool_body(res)
             assert body["status"] == "done"
 

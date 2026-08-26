@@ -64,7 +64,7 @@ def _error(slug: str, errors: list[str], warnings: list[str] | None = None) -> d
 
 
 def _event_forwarder(ctx):
-    """Bridge engine events to MCP logging notifications (ADR 0015 live seam).
+    """Bridge engine events to MCP progress notifications (ADR 0015 live seam).
 
     Must be built on the server's event-loop thread (an ``async def`` tool body
     under MCP SDK v2): ``def`` tools run on a worker thread and have no running
@@ -84,12 +84,15 @@ def _event_forwarder(ctx):
     except RuntimeError:
         return None
 
+    sequence = 0
+
     def forward(event: dict) -> None:
+        nonlocal sequence
         try:
-            coro = ctx.log(
-                "info",
-                _json.dumps(event, ensure_ascii=False, default=str),
-                logger_name="mklang.event",
+            sequence += 1
+            coro = ctx.report_progress(
+                sequence,
+                message=_json.dumps(event, ensure_ascii=False, default=str),
             )
             asyncio.run_coroutine_threadsafe(coro, loop)
         except Exception:
