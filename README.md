@@ -11,6 +11,12 @@ steps. The document is the program; the [`mklang console`](#the-console) is how
 you drive it. The host supplies the interpreter, optional tools, and optional
 code-hook gates.
 
+**Models generate. Machines decide what happens next.** mklang makes
+probabilistic LLM computation governable through declarative control flow:
+states produce, gates judge, and the machine routes to the next state, repair,
+escalation, tool, or failure. The topology is explicit and traceable; the
+judge's accuracy and cross-provider stability remain empirical questions.
+
 ```
 mklang : LangGraph  ::  a declarative spec : Python code
 ```
@@ -299,6 +305,12 @@ by default.
 - **Spec posture:** additive-only changes since 0.3; the language surface is
   frozen pending evidence ([ADR 0028](./docs/adr/0028-provisional-1.0-posture.md)).
   Authoring-loop `blind_spot = 0.0167` (no `test_machine` yet).
+- **Evidence status:** gate-divergence has a seven-machine DeepSeek/OpenAI
+  boundary-corpus run, but results vary by date and Anthropic remains unmeasured;
+  repair-convergence has one small DeepSeek run with negative observed lift.
+  These are research observations, not reliability guarantees. The next
+  milestone is the reproducible **Evidence Release**: provider matrix, raw
+  JSONL, metrics, limits, and the five-reader comprehension test.
 - **Open / later:** Anthropic live when the account has credit; five-reader
   distribution test; `on_truncate=continue` stitching; language-level context
   zones (ROADMAP).

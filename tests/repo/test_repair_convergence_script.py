@@ -154,6 +154,8 @@ def test_run_once_drives_a_repair_loop_offline():
         registry={"tiny_refine": machine},
     )
     assert row["status"] == "done"
+    assert row["experiment"] == "repair-convergence"
+    assert len(row["input_hash"]) == 64
     assert [(a["attempt"], a["outcome"]) for a in row["attempts"]] == [(1, "retry"), (2, "pass")]
 
 

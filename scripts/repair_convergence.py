@@ -30,6 +30,7 @@ See docs/experiments/repair-convergence.md.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from collections.abc import Callable
@@ -43,6 +44,14 @@ from mklang.model import Machine, parse_machine
 from mklang.registry import base_registry
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _input_hash(item: dict) -> str:
+    """Stable identity for the repair task and its supplied context."""
+    blob = json.dumps(item, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
 DEFAULT_CONFIG = str(ROOT / "config" / "runtime.example.yaml")
 
 # Machines that exist to make a repair FIRE, held inline rather than shipped in
@@ -345,10 +354,30 @@ def _run_once(
     reg = registry if registry is not None else _registry()
     machine = reg.get(item["machine"])
     if machine is None:
-        return {"item": item["id"], "skipped": True, "reason": f"unknown machine {item['machine']}"}
+        return {
+            "experiment": "repair-convergence",
+            "item": item["id"],
+            "machine": item["machine"],
+            "provider": provider_name,
+            "input_hash": _input_hash(item),
+            "repeat": 0,
+            "status": "skipped",
+            "skipped": True,
+            "reason": f"unknown machine {item['machine']}",
+        }
     prov = load_provider(config, provider_name)
     if build_llm is _build_llm and not prov.api_key and prov.name != "local":
-        return {"item": item["id"], "skipped": True, "reason": "no API key"}
+        return {
+            "experiment": "repair-convergence",
+            "item": item["id"],
+            "machine": machine.name,
+            "provider": provider_name,
+            "input_hash": _input_hash(item),
+            "repeat": 0,
+            "status": "skipped",
+            "skipped": True,
+            "reason": "no API key",
+        }
     result = run(
         machine,
         {**machine.context, **item["context"]},
@@ -361,9 +390,11 @@ def _run_once(
     )
     rows = attempts_from_trace(result.trace or [], _repair_states(machine))
     return {
+        "experiment": "repair-convergence",
         "item": item["id"],
         "machine": machine.name,
         "provider": provider_name,
+        "input_hash": _input_hash(item),
         "skipped": False,
         "status": result.status,
         "error": result.error,
@@ -485,8 +516,11 @@ def main(argv: list[str] | None = None) -> int:
                 row = _run_once(item, args.provider, args.config, build_llm=build)
             except Exception as e:
                 row = {
+                    "experiment": "repair-convergence",
                     "item": item["id"],
                     "machine": item["machine"],
+                    "provider": args.provider,
+                    "input_hash": _input_hash(item),
                     "skipped": False,
                     "status": "error",
                     "error": f"{type(e).__name__}: {e}",
