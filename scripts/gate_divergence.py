@@ -471,6 +471,17 @@ def _output_hash(trace: list[dict]) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()[:12]
 
 
+def _input_hash(doc: dict, variant: str) -> str:
+    """Stable identity for the machine and wording variant under test."""
+    blob = json.dumps(
+        {"machine": doc, "variant": variant},
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
 def _run_once(
     provider_name: str,
     config: str,
@@ -482,12 +493,22 @@ def _run_once(
     """Run one machine once for one provider. `build_llm` is injectable so the
     offline suite can drive the harness with a scripted LLM (no keys)."""
     prov = load_provider(config, provider_name)
+    doc = machine_doc if machine_doc is not None else MACHINE
+    m = parse_machine(doc)
     # The missing-key skip only applies to the real live path; an injected
     # build_llm means there is no live call to gate (offline tests).
     if build_llm is _build_llm and not prov.api_key and prov.name != "local":
-        return {"provider": provider_name, "skipped": True, "reason": "no API key"}
-    doc = machine_doc if machine_doc is not None else MACHINE
-    m = parse_machine(doc)
+        return {
+            "experiment": "gate-divergence",
+            "provider": provider_name,
+            "machine": m.name,
+            "variant": variant,
+            "input_hash": _input_hash(doc, variant),
+            "repeat": 0,
+            "status": "skipped",
+            "skipped": True,
+            "reason": "no API key",
+        }
     # Default: judging follows each state's tier (SPEC §2.1). `--judge-tier` forces a
     # single tier's model for all gates, so pre/post-F1 divergence runs are comparable.
     judge_override = prov.tiers[judge_tier] if judge_tier else prov.judge_override()
@@ -504,9 +525,11 @@ def _run_once(
     route = _route_signature(r.trace) if r.trace else ""
     gold = GOLD.get(m.name)
     return {
+        "experiment": "gate-divergence",
         "provider": provider_name,
         "machine": m.name,
         "variant": variant,
+        "input_hash": _input_hash(doc, variant),
         "skipped": False,
         "status": r.status,
         "error": r.error,
@@ -962,9 +985,11 @@ def main(argv: list[str] | None = None) -> int:
                         )
                     except Exception as e:  # provider/network/runtime failures become error rows
                         row = {
+                            "experiment": "gate-divergence",
                             "provider": name,
                             "machine": machine_name,
                             "variant": variant,
+                            "input_hash": _input_hash(doc, variant),
                             "skipped": False,
                             "status": "error",
                             "error": f"{type(e).__name__}: {e}",

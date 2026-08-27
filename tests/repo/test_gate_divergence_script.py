@@ -141,6 +141,8 @@ def test_run_once_drives_a_full_run_offline():
     )
     assert row["skipped"] is False
     assert row["status"] == "done"
+    assert row["experiment"] == "gate-divergence"
+    assert len(row["input_hash"]) == 64
     assert row["machine"] == "gate_divergence"
     # signature records the routing decision into spam_path, then to END
     assert "label|" in row["signature"] and "spam_path" in row["signature"]
@@ -164,6 +166,23 @@ def test_run_once_divergent_judges_yield_different_signatures():
     assert spam["signature"] != ham["signature"]
     summary = gd._summary([spam, ham], ["deepseek", "openai"])
     assert summary["per_machine"]["gate_divergence"]["signature_agreement_rate"] == 0.0
+
+
+def test_input_hash_changes_when_wording_variant_changes():
+    base = gd._run_once(
+        "deepseek",
+        gd.DEFAULT_CONFIG,
+        machine_doc=gd.MACHINES["gate_divergence"],
+        build_llm=_scripted_build_llm({"produce": {}, "judge": lambda c, o: 0}),
+    )
+    variant = gd._run_once(
+        "deepseek",
+        gd.DEFAULT_CONFIG,
+        machine_doc=gd.paraphrase_doc("gate_divergence", gd.PARAPHRASES["gate_divergence"][0]),
+        variant="p1",
+        build_llm=_scripted_build_llm({"produce": {}, "judge": lambda c, o: 0}),
+    )
+    assert base["input_hash"] != variant["input_hash"]
 
 
 # --- boundary corpus, gold routes, paraphrase variants ---------------------

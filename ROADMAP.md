@@ -16,10 +16,23 @@ Horizon tags below: **[now]** / **[next]** / **[later]** / **[maybe]**.
 
 ## Now
 
-Active focus (milestone 1.1, `horizon:now`):
+Active focus (milestone 1.1, `horizon:now`): **mklang Evidence Release**.
+The language surface is frozen while empirical evidence is collected.
 
 - **[now] Live-verify Anthropic** (three-provider gate-divergence) — [#60](https://github.com/gianlucamazza/mklang/issues/60)
 - **[now] Five-reader distribution test (D1)** — [#61](https://github.com/gianlucamazza/mklang/issues/61)
+
+Evidence Release definition of done:
+
+- provider/machine/repeat JSONL rows validate against
+  [`schema/experiment-result.schema.json`](./schema/experiment-result.schema.json);
+- gate-divergence includes at least three providers, a boundary corpus, and
+  cross/intra-provider, accuracy, trajectory, and paraphrase metrics;
+- repair-convergence compares feedback repair with plain resampling on the same
+  task set, using at least two providers;
+- the five-reader protocol has five public recruitment results recorded verbatim;
+- the report publishes raw data, scripts, environment metadata, costs, and
+  negative results with no language/spec claim inferred from a green run.
 
 ## Next
 
@@ -31,7 +44,10 @@ Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianluc
 
 ### Evidence backlog
 
-The dated experiment logs live in the repo, not on the docs site:
+The dated experiment logs live in the repo, not on the docs site. Raw run rows
+use the stable metadata contract in `schema/experiment-result.schema.json`:
+`experiment`, provider, machine/item, repeat, status, canonical `input_hash`,
+and experiment-specific metrics. Secrets and raw model output are excluded.
 
 - **Gate divergence** ([protocol + results](./docs/experiments/gate-divergence.md)) —
   first live rows landed 2026-08-09; a third provider is [#60](https://github.com/gianlucamazza/mklang/issues/60).

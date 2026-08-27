@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mklang.dev/schema/experiment-result.schema.json",
+  "title": "mklang experiment JSONL row",
+  "description": "Stable metadata envelope for reproducible live and offline experiment rows. Provider credentials and raw model output are never part of this contract.",
+  "type": "object",
+  "required": ["experiment", "provider", "repeat", "status", "input_hash"],
+  "additionalProperties": true,
+  "properties": {
+    "experiment": {
+      "type": "string",
+      "enum": ["gate-divergence", "repair-convergence"]
+    },
+    "provider": { "type": "string", "minLength": 1 },
+    "machine": { "type": "string", "minLength": 1 },
+    "item": { "type": "string", "minLength": 1 },
+    "variant": { "type": "string", "minLength": 1 },
+    "repeat": { "type": "integer", "minimum": 0 },
+    "status": { "type": "string", "minLength": 1 },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "output_hash": { "type": "string", "pattern": "^[0-9a-f]{12}$" },
+    "route": { "type": "string" },
+    "signature": { "type": "string" },
+    "usage": {
+      "type": ["object", "null"],
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "experiment": { "const": "gate-divergence" } } },
+      "then": { "required": ["machine", "variant", "route", "signature", "output_hash"] }
+    },
+    {
+      "if": { "properties": { "experiment": { "const": "repair-convergence" } } },
+      "then": { "required": ["machine", "item", "attempts"] }
+    }
+  ]
+}
