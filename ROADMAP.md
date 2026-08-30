@@ -1,6 +1,6 @@
 # mklang — Roadmap & improvement areas
 
-Where mklang stands (package **1.3.2**, language **0.4**) and where it can grow —
+Where mklang stands (package **1.3.3**, language **0.4**) and where it can grow —
 technical **and** organizational.
 
 **Tracking rule:** every **Now** / **Next** bullet has a GitHub issue. Work lives

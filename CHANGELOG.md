@@ -8,7 +8,23 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.2`).
+  `pyproject.toml` (currently `1.3.3`).
+
+## [1.3.3] — 2026-08-31
+
+### Added
+
+- **Large workspace indexing.** Console project analysis now maintains a
+  versioned, metadata-only workspace index, ranks live search candidates, and
+  exposes indexed/skipped/truncated coverage without persisting file contents.
+- **Analysis coverage in the TUI.** The inspector reports workspace inventory
+  coverage so partial scans cannot be mistaken for complete analysis.
+
+### Changed
+
+- **Large-codebase best practices.** Console documentation and ADR 0036 now
+  define progressive evidence gathering, metadata privacy, invalidation and
+  the boundary between an inventory and files actually understood.
 
 ## [1.3.2] — 2026-08-31
 
@@ -1391,7 +1407,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.3.2...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/gianlucamazza/mklang/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/gianlucamazza/mklang/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/gianlucamazza/mklang/compare/v1.3.0...v1.3.1
 [1.2.0]: https://github.com/gianlucamazza/mklang/compare/v1.1.1...v1.2.0
