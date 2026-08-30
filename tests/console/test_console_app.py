@@ -44,7 +44,7 @@ def test_load_brain_is_the_bundled_agent():
 
 def test_stream_cancel_mode_is_safe_by_default(monkeypatch):
     monkeypatch.delenv("MKLANG_STREAM_CANCEL", raising=False)
-    assert stream_cancel_mode() == "cooperative"
+    assert stream_cancel_mode() == "immediate"
 
 
 def test_stream_cancel_mode_rejects_invalid_policy(monkeypatch):

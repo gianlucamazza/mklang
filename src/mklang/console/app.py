@@ -54,7 +54,7 @@ def load_brain(agent_path: str | None = None) -> Machine:
 
 def stream_cancel_mode() -> str:
     """Resolve the console's provider-stream cancellation policy."""
-    mode = os.environ.get("MKLANG_STREAM_CANCEL", "cooperative").strip().lower()
+    mode = os.environ.get("MKLANG_STREAM_CANCEL", "immediate").strip().lower()
     if mode not in ("cooperative", "immediate"):
         raise ValueError(
             "MKLANG_STREAM_CANCEL must be 'cooperative' or 'immediate', " f"got {mode!r}"
@@ -237,9 +237,12 @@ def build_app(
                     self.log_chrome(
                         f"[red]Provider transport interruption failed: {type(exc).__name__}[/red]"
                     )
-            self.log_chrome(
-                "[yellow]Stop requested — waiting for the current state to finish…[/yellow]"
+            message = (
+                "Stop requested — interrupting the provider transport…"
+                if self.stream_cancel == "immediate"
+                else "Stop requested — waiting for the current state to finish…"
             )
+            self.log_chrome(f"[yellow]{message}[/yellow]")
             self.update_status("stopping")
 
         async def action_quit(self) -> None:
@@ -511,11 +514,16 @@ def build_app(
         def refresh_live_activity(self) -> None:
             if not self._live_request:
                 return
+            live_widgets = list(self.query("#activity-live"))
+            if not live_widgets:
+                # Textual timers can tick during screen teardown; late progress
+                # must not turn a clean shutdown into a NoMatches exception.
+                return
             req = self._live_request
             elapsed = req.get("elapsed_ms")
             if elapsed is None:
                 elapsed = round((time.monotonic() - req["started"]) * 1000)
-            self.query_one("#activity-live", Static).update(
+            live_widgets[0].update(
                 log_render.activity_live(
                     req.get("operation", "llm"),
                     req.get("phase", "working"),

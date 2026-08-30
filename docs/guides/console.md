@@ -40,8 +40,8 @@ current phase; `READY`, `RUNNING`, `WAITING`, `STOPPING`, and `ERROR` are
 distinct operator states.
 Normal state output stays in the inspector; only exceptional/truncated previews
 expand the tree. `F2` toggles the inspector (docked at 100+ columns, full workspace
-below that), `ctrl+t` toggles activity, `ctrl+g` requests a cooperative stop after
-the current state, and `ctrl+l` clears the conversation.
+below that), `ctrl+t` toggles activity, `ctrl+g` interrupts the active provider
+request, and `ctrl+l` clears the conversation.
 
 The shell uses semantic operator states rather than color alone: `● READY`,
 `◐ RUNNING`, `⏸ WAITING`, `■ STOPPING`, and `! ERROR`. The input border changes
@@ -146,8 +146,9 @@ brain must not AUTHOR a machine solely to read the clock.
 
 This is the canonical lifecycle contract for the console surface:
 
-- `Ctrl+G` requests cooperative cancellation between states and keeps the
-  console open; an active provider response is allowed to finish.
+- `Ctrl+G` interrupts the active provider transport and keeps the console open.
+  Set `MKLANG_STREAM_CANCEL=cooperative` to wait for the current provider state
+  instead.
 - `Ctrl+C` and `/quit` close the surface. During an active run, shutdown sets
   the cancellation signal, releases pending human input, invokes the optional
   provider `close()` hook to interrupt in-flight I/O, waits for the backing
@@ -225,10 +226,10 @@ and a bounded content preview. Reasoning deltas only label the phase as
 an explicit empty state and **Ctrl+T** hides it together with the event tree.
 
 Built-in OpenAI-compatible and Anthropic adapters support the live stream.
-Cooperative cancellation remains the default: **Ctrl+G** stops between states
-and waits for the active provider request. Hosts that explicitly accept an
-interrupted request can set `MKLANG_STREAM_CANCEL=immediate`; invalid values
-fail at startup instead of silently changing policy.
+Immediate cancellation is the default: **Ctrl+G** interrupts the active provider
+transport. Set `MKLANG_STREAM_CANCEL=cooperative` to stop between states and
+wait for the active request; invalid values fail at startup instead of silently
+changing policy.
 
 ## Observations from `run_machine` (anti-cutoff honesty)
 
