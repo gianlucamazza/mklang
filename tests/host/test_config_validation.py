@@ -40,7 +40,11 @@ def test_bundled_hetzner_provider_configuration():
     assert provider.base_url == "https://inference.hetzner.com/api/v1"
     assert provider.api_key_env == "HETZNER_INFERENCE_API_KEY"
     assert set(provider.tiers) == {"fast", "balanced", "reasoning"}
-    assert set(provider.tiers.values()) == {"Qwen/Qwen3.6-35B-A3B-FP8"}
+    assert provider.tiers == {
+        "fast": "Qwen/Qwen3.6-35B-A3B-FP8",
+        "balanced": "Qwen3.8-27B",
+        "reasoning": "Qwen3.8-27B",
+    }
 
 
 def test_provider_reads_key_from_user_owned_file(tmp_path):
