@@ -77,6 +77,8 @@ def test_direct_reply_turn(tmp_path):
     )
 
     async def drive():
+        from textual.widgets import Static
+
         async with app.run_test() as pilot:
             await pilot.click("#prompt")
             await pilot.press(*"2+2?")
@@ -85,6 +87,10 @@ def test_direct_reply_turn(tmp_path):
             assert "agent: 4." in app.history
             assert "user: 2+2?" in app.history
             assert app.spent_in == 0  # MockLLM spends nothing
+            assert (
+                app.query_one("#activity-live", Static).render().plain
+                == "No active provider request"
+            )
 
     asyncio.run(drive())
 

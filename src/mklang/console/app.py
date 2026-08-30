@@ -509,7 +509,15 @@ def build_app(
                 self.update_status()
             if e["type"] == "run-finished":
                 self.current_phase = ""
+                self.clear_live_activity()
             self.query_one(ActivityTree).feed(e)
+
+        def clear_live_activity(self) -> None:
+            """Remove transient provider output once the durable result is rendered."""
+            self._live_request = {}
+            live_widgets = list(self.query("#activity-live"))
+            if live_widgets:
+                live_widgets[0].update(log_render.activity_live_idle())
 
         def refresh_live_activity(self) -> None:
             if not self._live_request:

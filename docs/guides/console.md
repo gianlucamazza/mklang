@@ -221,7 +221,9 @@ tools). Enter alone means **no**.
 
 While the agent is running, the activity area shows the provider operation,
 model, tier, phase, elapsed time, time to the first content delta, retry count,
-and a bounded content preview. Reasoning deltas only label the phase as
+and a bounded content preview while the request is active. Once the run ends,
+the preview is cleared and the final answer remains only in the conversation
+log. Reasoning deltas only label the phase as
 `THINKING`; private reasoning is never displayed in the preview. The area has
 an explicit empty state and **Ctrl+T** hides it together with the event tree.
 
