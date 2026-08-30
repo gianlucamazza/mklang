@@ -79,6 +79,11 @@ Provider API keys are named per provider by `api_key_env` in `runtime.yaml`
 (e.g. `DEEPSEEK_API_KEY`) and read from the environment or the layered `.env`
 files — never from the config file itself.
 
+OpenAI's current example mapping is `gpt-5.6-luna` (fast), `gpt-5.6-terra`
+(balanced), and `gpt-5.6-sol` (reasoning). These are configuration references,
+not proof that a specific account has access; verify `/v1/models` before live
+use.
+
 ## Arch Linux
 
 An AUR-style recipe lives in

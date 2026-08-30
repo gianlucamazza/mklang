@@ -184,13 +184,16 @@ providers:
     tiers: { fast: deepseek-v4-flash, balanced: deepseek-v4-flash, reasoning: deepseek-v4-flash }
   anthropic:
     tiers: { fast: claude-haiku-4-5, balanced: claude-sonnet-5, reasoning: claude-opus-4-8 }
+  openai:
+    tiers: { fast: gpt-5.6-luna, balanced: gpt-5.6-terra, reasoning: gpt-5.6-sol }
   local:
     base_url: http://localhost:11434/v1
     tiers: { fast: qwen3:8b, balanced: qwen3:32b, reasoning: deepseek-r1:70b }
 ```
 
-The example config defaults to **DeepSeek V4 Flash** (the path we live-test
-against); flip `active:` and every example runs unchanged. Blocks ship for
+The example config defaults to **DeepSeek V4 Flash**; flip `active:` and every
+example runs unchanged. The OpenAI mapping follows the current official model
+catalog and uses the shared Chat Completions adapter. Blocks ship for
 Anthropic, OpenAI, Google, DeepSeek, Hetzner Inference, OpenRouter, xAI, Mistral, and local
 (Ollama/vLLM); per-tier params (adaptive thinking, `reasoning_effort`, …) live
 under `params`. Full map, per-provider notes included:
@@ -315,12 +318,10 @@ marked, and reaching an effectful `tool:` under it is recorded or refused
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Live:** DeepSeek (default) and **OpenAI** green through the 1.0.x release
-  matrices, including the blocking cross-provider gate-agreement check at
-  **1.0** — the release gate runs the single `gate_divergence` machine; the
-  [four-machine suite](./docs/experiments/gate-divergence.md) measured **1.0
-  agreement per machine** (DeepSeek + OpenAI ×3). Anthropic unit-tested; live
-  e2e still blocked (key/credits).
+- **Historical live evidence:** DeepSeek and **OpenAI** were green in the 1.0.x
+  release matrices, including the blocking cross-provider gate-agreement check
+  at **1.0**. See the dated [gate-divergence report](./docs/experiments/gate-divergence.md);
+  these results do not certify today's model catalog or account availability.
 - **Release policy:** DeepSeek + OpenAI smoke and three-run gate agreement are
   blocking; other configured providers are reported without blocking. PyPI
   publication uses GitHub OIDC Trusted Publishing from the release workflow.

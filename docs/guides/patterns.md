@@ -201,9 +201,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   Anthropic, `reasoning_effort` on OpenAI/xAI, etc. They're best-effort — a param a
   provider doesn't support is dropped and the call retried, so mixing providers never
   breaks. Put them under `providers.<name>.params.<tier>` in the runtime config.
-  Prefer setting a healthy `max_tokens` on balanced/reasoning tiers so produce is
-  less likely to hit a length stop (ADR 0018); truncation is still traced when it
-  happens.
+  Prefer setting a healthy provider-specific output-token budget on
+  balanced/reasoning tiers (`max_completion_tokens` for OpenAI, `max_tokens` for
+  most OpenAI-compatible providers) so produce is less likely to hit a length
+  stop (ADR 0018); truncation is still traced when it happens.
 
 ## Layer boundaries
 

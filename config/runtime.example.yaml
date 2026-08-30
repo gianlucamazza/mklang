@@ -51,11 +51,9 @@ providers:
         thinking: disabled # Haiku 4.5 does not support `effort` — omit it here
 
   # --- OpenAI --------------------------------------------------------------
-  # Live-validated 2026-08-04: each model below answered a real chat.completions
-  # call (with reasoning_effort) on this account. GPT-5.6 is GA since 2026-07-09 —
-  # luna (fast; -80% price since 07-30), terra (balanced), sol (strongest).
-  # Pro variants of earlier series are Responses-API only — the reference adapter
-  # uses chat.completions, so they are not mapped here.
+  # Current model IDs from OpenAI's official catalog (checked 2026-08-30).
+  # This reference adapter uses Chat Completions; do not infer account access
+  # from this example — verify the live /v1/models catalog before production.
   openai:
     protocol: openai_compat
     api_key_env: OPENAI_API_KEY
