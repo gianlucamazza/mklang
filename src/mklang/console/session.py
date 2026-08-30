@@ -27,6 +27,8 @@ def default_base() -> Path:
     return host_paths().sessions
 
 
+# Kept as a compatibility symbol; runtime callers use ``default_base()`` so
+# XDG/MKLANG overrides made after import are still honored.
 DEFAULT_BASE = default_base()
 
 # Prompt-side budget for the brain's {{history}} (not the on-disk audit).
@@ -55,8 +57,9 @@ class Session:
 
     @classmethod
     def create(
-        cls, base: Path | str = DEFAULT_BASE, workspace: str = "", brain: str = ""
+        cls, base: Path | str | None = None, workspace: str = "", brain: str = ""
     ) -> Session:
+        base = default_base() if base is None else Path(base)
         sid = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:4]
         d = Path(base) / sid
         (d / "checkpoints").mkdir(parents=True, exist_ok=True)
@@ -68,26 +71,51 @@ class Session:
     def load(cls, d: Path | str) -> Session:
         d = Path(d)
         st = json.loads((d / "state.json").read_text(encoding="utf-8"))
+        if not isinstance(st, dict):
+            raise ValueError("session state must be a JSON object")
+        history = st.get("history", "")
+        spent_in = st.get("spent_in", 0)
+        spent_out = st.get("spent_out", 0)
+        consented = st.get("consented", [])
+        workspace = st.get("workspace", "")
+        brain = st.get("brain", "")
+        task = st.get("task", {})
+        if (
+            not isinstance(history, str)
+            or not isinstance(spent_in, int)
+            or not isinstance(spent_out, int)
+        ):
+            raise ValueError("invalid session counters or history")
+        if spent_in < 0 or spent_out < 0 or not isinstance(consented, list) or not all(
+            isinstance(item, str) for item in consented
+        ):
+            raise ValueError("invalid session consent or counters")
+        if (
+            not isinstance(workspace, str)
+            or not isinstance(brain, str)
+            or not isinstance(task, dict)
+        ):
+            raise ValueError("invalid session metadata")
         return cls(
             dir=d,
             created_at=str(
                 st.get("created_at") or datetime.fromtimestamp(d.stat().st_mtime).isoformat()
             ),
-            history=st.get("history", ""),
-            spent_in=st.get("spent_in", 0),
-            spent_out=st.get("spent_out", 0),
-            consented=list(st.get("consented", [])),
+            history=history,
+            spent_in=spent_in,
+            spent_out=spent_out,
+            consented=list(consented),
             always_yes=bool(st.get("always_yes", False)),
-            workspace=st.get("workspace", ""),
-            brain=st.get("brain", ""),
-            task=dict(st.get("task", {})),
+            workspace=workspace,
+            brain=brain,
+            task=dict(task),
         )
 
     @classmethod
     def latest(
-        cls, base: Path | str = DEFAULT_BASE, *, workspace: str | Path | None = None
+        cls, base: Path | str | None = None, *, workspace: str | Path | None = None
     ) -> Session | None:
-        base = Path(base)
+        base = default_base() if base is None else Path(base)
         if not base.is_dir():
             return None
         expected = str(Path(workspace).expanduser().resolve()) if workspace is not None else None

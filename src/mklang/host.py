@@ -144,10 +144,37 @@ def check_prepared(
     registry: dict[str, Machine],
     *,
     strict: bool = False,
+    tools_registry: dict | None = None,
+    hooks_registry: dict | None = None,
 ) -> tuple[dict, dict, list[str]]:
-    """Run host preflight for a provider and already-loaded registry."""
+    """Run host preflight for a provider and already-loaded registry.
+
+    Embedders can provide their surface-specific tool/hook maps; CLI/MCP keep
+    the default registry discovery used by ``_check``.
+    """
     warnings: list[str] = []
-    tools, hooks = _check(prov, machine, registry, strict, warnings)
+    errors, more = semantic_check(machine, registry, strict=strict)
+    errors.extend(check_tiers(machine, prov.tiers))
+    warnings.extend(more)
+    from .hooks import load_hook_registry, resolve_hook
+    from .tools import load_tool_registry
+
+    tools = tools_registry if tools_registry is not None else load_tool_registry()
+    hooks = hooks_registry if hooks_registry is not None else load_hook_registry()
+    for sid, state in machine.states.items():
+        if state.kind == "tool" and state.tool not in tools:
+            warnings.append(
+                f"state '{sid}' uses tool '{state.tool}' not in the registry "
+                f"{sorted(tools)} — the run halts if it is reached"
+            )
+        for gate in state.gates:
+            if gate.hook and resolve_hook(gate.hook, hooks) is None:
+                warnings.append(
+                    f"state '{sid}' uses hook '{gate.hook}' not in the registry "
+                    f"{sorted(hooks)} — the run halts if it is reached"
+                )
+    if errors:
+        raise PrepareError(errors, warnings)
     return tools, hooks, warnings
 
 

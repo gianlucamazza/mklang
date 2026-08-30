@@ -148,6 +148,20 @@ class ConsoleTools:
     def restore_consented(self, grants: list[str] | set[str]) -> None:
         self._consented.update(grants)
 
+    def machine_registry(self, machine=None) -> dict:
+        registry = self._registry()
+        if machine is not None:
+            registry[machine.name] = machine
+        return registry
+
+    def preflight(self, machine, tools_registry: dict | None = None):
+        return host.check_prepared(
+            self.prov,
+            machine,
+            self.machine_registry(machine),
+            tools_registry=tools_registry,
+        )
+
     # -- read-only project inspection -------------------------------------
 
     def workspace_context(self, _input: dict | None = None) -> dict:

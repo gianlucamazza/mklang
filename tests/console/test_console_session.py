@@ -66,6 +66,21 @@ def test_latest_is_scoped_to_workspace(tmp_path):
     assert Session.latest(tmp_path, workspace=tmp_path / "b").id == b.id
 
 
+def test_session_default_base_is_resolved_at_call_time(tmp_path, monkeypatch):
+    state_home = tmp_path / "state"
+    monkeypatch.setenv("MKLANG_STATE_DIR", str(state_home))
+    session = Session.create()
+    assert session.dir.parent == state_home / "console" / "sessions"
+
+
+def test_latest_skips_invalid_state_types(tmp_path):
+    valid = Session.create(tmp_path)
+    invalid = tmp_path / "invalid"
+    invalid.mkdir()
+    (invalid / "state.json").write_text("[]", encoding="utf-8")
+    assert Session.latest(tmp_path).id == valid.id
+
+
 def test_history_for_brain_keeps_last_turns_with_marker():
     turns = [f"user: q{i}\nagent: a{i}" for i in range(20)]
     full = "\n".join(turns)

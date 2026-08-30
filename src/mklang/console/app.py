@@ -555,6 +555,17 @@ def build_app(
                     f"[dim]session {self.session.id} · {self.session.dir} · "
                     f"tokens {self.spent_in}+{self.spent_out}[/dim]"
                 )
+            elif cmd == "/provider":
+                tiers = ", ".join(
+                    f"{name}={model}" for name, model in sorted(self.tools.prov.tiers.items())
+                ) or "—"
+                self.log_chrome(
+                    f"[dim]provider {self.tools.prov.name} · judge "
+                    f"{self.tools.prov.judge_override() or 'per-tier'} · tiers {tiers}[/dim]"
+                )
+            elif cmd == "/clear":
+                self.action_clear_log()
+                self.query_one(ActivityTree).new_turn("cleared")
             elif cmd == "/resume":
                 cks = sorted(self.session.checkpoints_dir.glob("*.json"))
                 if not args:
@@ -565,7 +576,7 @@ def build_app(
                     return
                 try:
                     ck_doc = load_checkpoint(cks[int(args[0])])
-                except (IndexError, ValueError, OSError) as e:
+                except (IndexError, KeyError, TypeError, ValueError, OSError) as e:
                     self.log_plain(
                         str(e),
                         label_markup="[red]cannot resume:[/red] ",
@@ -628,15 +639,20 @@ def build_app(
         # -- the agent turn (worker thread) ----------------------------------
 
         def _run_brain(self, machine, ctx, resume=None):
+            brain_tools = self.tools.as_tool_registry()
+            # Keep lightweight engine seams usable by embedders/tests that pass
+            # a prepared machine-like object instead of a parsed Machine.
+            if isinstance(machine, Machine):
+                self.tools.preflight(machine, tools_registry=brain_tools)
             return run_engine(
                 machine,
                 ctx,
-                {machine.name: machine},
+                self.tools.machine_registry(machine),
                 self.tools.llm,
                 self.tools.prov.tiers,
                 self.tools.prov.judge_override(),
                 tier_params=self.tools.prov.params,
-                tools=self.tools.as_tool_registry(),
+                tools=brain_tools,
                 hooks=load_hook_registry(),
                 cost_budget=self.tools.default_cost_budget,
                 suspendable=True,

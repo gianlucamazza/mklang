@@ -22,6 +22,8 @@ COMMANDS = (
     SlashCommand("budget", "/budget <positive tokens>", "Set the default run budget"),
     SlashCommand("resume", "/resume [index]", "List or resume a parked turn"),
     SlashCommand("session", "/session", "Show current session details"),
+    SlashCommand("provider", "/provider", "Show the active provider and configured tiers"),
+    SlashCommand("clear", "/clear", "Clear conversation log and activity tree"),
     SlashCommand("quit", "/quit", "Exit the console"),
 )
 BY_NAME = {f"/{command.name}": command for command in COMMANDS}
