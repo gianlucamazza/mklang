@@ -144,6 +144,36 @@ def tree_branch(index: object) -> Text:
     return Text(f"· branch {index}", style="dim")
 
 
+def activity_live(
+    operation: str,
+    phase: str,
+    model: str,
+    tier: str,
+    elapsed_ms: int,
+    first_delta_ms: int | None = None,
+    retries: int = 0,
+    output: str = "",
+) -> Text:
+    """Render bounded live provider progress without Rich-markup interpolation."""
+    line = Text()
+    line.append(f"{phase.upper()} ", style="bold cyan")
+    line.append(f"{operation} · {model} · {tier}", style="bold")
+    line.append(f" · {elapsed_ms / 1000:.1f}s")
+    if first_delta_ms is not None:
+        line.append(f" · first {first_delta_ms / 1000:.1f}s")
+    if retries:
+        line.append(f" · retries {retries}", style="yellow")
+    if output:
+        preview = output[-2000:]
+        line.append("\n" + preview, style="dim")
+    return line
+
+
+def activity_live_idle() -> Text:
+    """Render the stable empty state for the live activity surface."""
+    return Text("No active provider request", style="dim")
+
+
 def status_line(
     state: str, provider: str, phase: str, spent_in: int, spent_out: int, session: str
 ) -> Text:

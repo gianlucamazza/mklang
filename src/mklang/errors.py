@@ -11,6 +11,10 @@ class ProviderError(MklangError):
     """A provider/API call failed (after retries)."""
 
 
+class CancellationError(MklangError):
+    """The host requested cancellation while a provider was streaming."""
+
+
 class ProviderConfigError(MklangError):
     """The configured provider cannot be resolved to a valid adapter."""
 

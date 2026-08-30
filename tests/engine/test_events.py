@@ -1,5 +1,7 @@
 """The on_event observability seam (ADR 0015): events mirror the trace, never affect the run."""
 
+import pytest
+
 from mklang.engine import run
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
@@ -197,6 +199,33 @@ def test_cooperative_cancellation_and_terminal_event():
     assert [step["state"] for step in res.trace] == ["a"]
     assert events[-1]["type"] == "run-finished"
     assert events[-1]["error"] == "cancelled"
+
+
+def test_immediate_stream_cancellation_halts_during_produce():
+    m = linear()
+    events = []
+    checks = iter([False, True])
+    res = run(
+        m,
+        dict(m.context),
+        {m.name: m},
+        MockLLM(),
+        TIERS,
+        "m",
+        on_event=events.append,
+        stream=True,
+        stream_cancel="immediate",
+        cancel_requested=lambda: next(checks, True),
+    )
+    assert res.status == "halt" and res.error == "cancelled"
+    assert not res.trace
+    assert [event["type"] for event in events][-2:] == ["llm-error", "run-finished"]
+
+
+def test_stream_cancel_policy_rejects_unknown_values():
+    m = linear()
+    with pytest.raises(ValueError, match="stream_cancel"):
+        run(m, dict(m.context), {m.name: m}, echo(), TIERS, "m", stream_cancel="later")
 
 
 def test_state_done_event_carries_truncated_flag():

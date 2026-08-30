@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextlib
 import os
 import threading
+import time
 import traceback
 from collections.abc import Callable
 from dataclasses import replace as dc_replace
@@ -51,6 +52,16 @@ def load_brain(agent_path: str | None = None) -> Machine:
     return parse_machine(doc)
 
 
+def stream_cancel_mode() -> str:
+    """Resolve the console's provider-stream cancellation policy."""
+    mode = os.environ.get("MKLANG_STREAM_CANCEL", "cooperative").strip().lower()
+    if mode not in ("cooperative", "immediate"):
+        raise ValueError(
+            "MKLANG_STREAM_CANCEL must be 'cooperative' or 'immediate', " f"got {mode!r}"
+        )
+    return mode
+
+
 def build_app(
     config: str,
     provider: str | None,
@@ -87,10 +98,14 @@ def build_app(
             border: solid $panel; background: $surface;
         }
         #activity {
-            height: 12; min-height: 5; border: solid $panel;
+            height: 8; min-height: 4; border: solid $panel;
             padding: 0 1; background: $background;
         }
-        #activity.hidden { display: none; }
+        #activity-live {
+            height: 4; min-height: 2; padding: 0 1;
+            border: solid $panel; background: $surface; overflow-y: auto;
+        }
+        #activity.hidden, #activity-live.hidden { display: none; }
         #status {
             height: 2; padding: 0 2; color: $text-muted;
             background: $boost; content-align: left middle;
@@ -125,6 +140,7 @@ def build_app(
             super().__init__()
             self.bridge = TextualBridge(self)
             self.cancel_event = threading.Event()
+            self.stream_cancel = stream_cancel_mode()
             self.tools = ConsoleTools(
                 config=config,
                 provider=provider,
@@ -175,6 +191,7 @@ def build_app(
             self.inspector_visible = False
             self.current_phase = ""
             self.log_history: list[str] = []  # plain mirror of the log, for tests
+            self._live_request: dict = {}
 
         def compose(self) -> ComposeResult:
             yield Header(show_clock=False)
@@ -185,6 +202,7 @@ def build_app(
                     # Chrome uses Text.from_markup / Markdown renderables instead.
                     yield RichLog(id="log", wrap=True, markup=False)
                     yield ActivityTree()
+                    yield Static(log_render.activity_live_idle(), id="activity-live")
                     from .commands import COMMANDS
 
                     yield Input(
@@ -204,6 +222,9 @@ def build_app(
         def action_toggle_activity(self) -> None:
             self.activity_visible = not self.activity_visible
             self.query_one(ActivityTree).set_class(not self.activity_visible, "hidden")
+            self.query_one("#activity-live", Static).set_class(
+                not self.activity_visible, "hidden"
+            )
 
         def action_cancel_run(self) -> None:
             if not self.running or self.answer_mode:
@@ -285,6 +306,7 @@ def build_app(
             self.query_one(Inspector).show_empty()
             self.apply_responsive_layout()
             self.query_one("#prompt", Input).focus()
+            self.set_interval(0.25, self.refresh_live_activity)
 
         def replay_session(self) -> None:
             """Restore the visible conversation from the append-only transcript."""
@@ -429,7 +451,44 @@ def build_app(
             )
 
         def render_event(self, e: dict) -> None:
-            self.session.append({"t": "event", **e})
+            # Delta events are rendered in-place; lifecycle events are the
+            # compact durable checkpoints. Never persist generated chunks.
+            if e["type"] != "llm-delta":
+                self.session.append({"t": "event", **e})
+            if e["type"] == "llm-start":
+                self._live_request = {
+                    "operation": e.get("operation", "llm"),
+                    "model": e.get("model", ""),
+                    "tier": e.get("tier", ""),
+                    "phase": "thinking" if e.get("operation") == "produce" else "judging",
+                    "started": time.monotonic(),
+                    "first_delta": None,
+                    "retries": 0,
+                    "output": "",
+                }
+                self.refresh_live_activity()
+            elif e["type"] == "llm-delta":
+                if self._live_request:
+                    if self._live_request["first_delta"] is None:
+                        self._live_request["first_delta"] = round(
+                            (time.monotonic() - self._live_request["started"]) * 1000
+                        )
+                    if e.get("delta_kind") == "content":
+                        self._live_request["phase"] = "generating"
+                        self._live_request["output"] = (
+                            self._live_request["output"] + str(e.get("delta", ""))
+                        )[-4000:]
+                    else:
+                        self._live_request["phase"] = "thinking"
+                    self.refresh_live_activity()
+            elif e["type"] == "llm-retry" and self._live_request:
+                self._live_request["phase"] = "retrying"
+                self._live_request["retries"] += 1
+                self.refresh_live_activity()
+            elif e["type"] in ("llm-done", "llm-error") and self._live_request:
+                self._live_request["phase"] = "done" if e["type"] == "llm-done" else "error"
+                self._live_request.update(e)
+                self.refresh_live_activity()
             if e["type"] == "state-start":
                 self.current_phase = str(e.get("state") or "working")
                 self.update_status("waiting" if e.get("kind") == "tool" else "running")
@@ -441,6 +500,26 @@ def build_app(
             if e["type"] == "run-finished":
                 self.current_phase = ""
             self.query_one(ActivityTree).feed(e)
+
+        def refresh_live_activity(self) -> None:
+            if not self._live_request:
+                return
+            req = self._live_request
+            elapsed = req.get("elapsed_ms")
+            if elapsed is None:
+                elapsed = round((time.monotonic() - req["started"]) * 1000)
+            self.query_one("#activity-live", Static).update(
+                log_render.activity_live(
+                    req.get("operation", "llm"),
+                    req.get("phase", "working"),
+                    req.get("model", ""),
+                    req.get("tier", ""),
+                    int(elapsed),
+                    req.get("first_delta"),
+                    int(req.get("retries", 0)),
+                    req.get("output", ""),
+                )
+            )
 
         # -- human input ----------------------------------------------------
 
@@ -658,6 +737,8 @@ def build_app(
                 suspendable=True,
                 resume=resume,
                 on_event=self.bridge.emit,
+                stream=True,
+                stream_cancel=self.stream_cancel,
                 cancel_requested=self.cancel_event.is_set,
                 # The brain runs under the same host policies as the machines it
                 # commissions; both default to "report", so this changes nothing

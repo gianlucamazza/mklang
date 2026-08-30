@@ -216,6 +216,20 @@ persisted when the session is reopened with `--continue` or `--session`.
 Afterwards tool consent is remembered in the session (inspector: consented
 tools). Enter alone means **no**.
 
+## Live provider activity
+
+While the agent is running, the activity area shows the provider operation,
+model, tier, phase, elapsed time, time to the first content delta, retry count,
+and a bounded content preview. Reasoning deltas only label the phase as
+`THINKING`; private reasoning is never displayed in the preview. The area has
+an explicit empty state and **Ctrl+T** hides it together with the event tree.
+
+Built-in OpenAI-compatible and Anthropic adapters support the live stream.
+Cooperative cancellation remains the default: **Ctrl+G** stops between states
+and waits for the active provider request. Hosts that explicitly accept an
+interrupted request can set `MKLANG_STREAM_CANCEL=immediate`; invalid values
+fail at startup instead of silently changing policy.
+
 ## Observations from `run_machine` (anti-cutoff honesty)
 
 The brain sees a **compact** JSON observation of each commissioned run, not the

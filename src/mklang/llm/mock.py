@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from ..errors import JudgeUnparseable
-from .base import Produced
+from .base import LLMDelta, LLMEvent, Produced
 
 
 class MockLLM:
@@ -33,11 +33,18 @@ class MockLLM:
         reason: bool = False,
         temperature: float = 0.4,
         params: dict | None = None,
+        on_event: LLMEvent | None = None,
+        on_delta: LLMDelta | None = None,
     ) -> Produced:
         self.calls.append({"model": model, "reason": reason, "params": params or {}})
         if self._produce:
             return self._produce(model, system, user, reason)
-        return Produced(text="ok", reasoning=("thought" if reason else None))
+        produced = Produced(text="ok", reasoning=("thought" if reason else None))
+        if on_delta is not None:
+            if produced.reasoning:
+                on_delta(produced.reasoning, "reasoning")
+            on_delta(produced.text, "content")
+        return produced
 
     def judge(
         self,
@@ -47,6 +54,7 @@ class MockLLM:
         context: dict,
         reasoning: str | None = None,
         allow_none: bool = False,
+        on_event: LLMEvent | None = None,
     ) -> int:
         self.judge_calls.append(
             {"model": model, "conditions": list(conditions), "allow_none": allow_none}

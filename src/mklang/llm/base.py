@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
@@ -20,6 +21,10 @@ class Produced:
     finish_reason: str | None = None
 
 
+LLMEvent = Callable[[dict], None]
+LLMDelta = Callable[[str, str], None]
+
+
 @runtime_checkable
 class LLM(Protocol):
     def produce(
@@ -30,6 +35,8 @@ class LLM(Protocol):
         reason: bool = False,
         temperature: float = 0.4,
         params: dict | None = None,
+        on_event: LLMEvent | None = None,
+        on_delta: LLMDelta | None = None,
     ) -> Produced:
         """Generate a state's output; capture reasoning when `reason` is set.
 
@@ -45,6 +52,7 @@ class LLM(Protocol):
         context: dict,
         reasoning: str | None = None,
         allow_none: bool = False,
+        on_event: LLMEvent | None = None,
     ) -> int | tuple[int, str | None]:
         """Return the 0-based index of the FIRST condition that holds (fused judge).
 

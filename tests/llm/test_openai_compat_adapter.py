@@ -41,6 +41,21 @@ class _Resp:
         self.usage = _Usage() if usage else None
 
 
+class _Delta:
+    def __init__(self, content=None, reasoning_content=None):
+        self.content = content
+        self.reasoning_content = reasoning_content
+
+
+class _Chunk:
+    def __init__(self, content=None, reasoning=None, finish=None, usage=None):
+        self.choices = [] if usage else [type("Choice", (), {
+            "delta": _Delta(content, reasoning),
+            "finish_reason": finish,
+        })()]
+        self.usage = usage
+
+
 class _Completions:
     def __init__(self, side_effect):
         self.calls = []
@@ -84,6 +99,26 @@ def test_produce_reasoning_only_when_requested():
     llm, _ = _adapter(lambda n, k: _Resp(reasoning="thought"))
     assert llm.produce("m", "s", "u", reason=True).reasoning == "thought"
     assert llm.produce("m", "s", "u", reason=False).reasoning is None
+
+
+def test_produce_streams_content_and_keeps_reasoning_private():
+    llm, completions = _adapter(
+        lambda n, k: iter(
+            [
+                _Chunk(reasoning="think"),
+                _Chunk(content="answer"),
+                _Chunk(finish="stop", usage=_Usage()),
+            ]
+        )
+    )
+    deltas = []
+    produced = llm.produce(
+        "m", "s", "u", reason=True, on_delta=lambda text, kind: deltas.append((text, kind))
+    )
+    assert produced.text == "answer" and produced.reasoning == "think"
+    assert produced.input_tokens == 3 and produced.output_tokens == 7
+    assert deltas == [("think", "reasoning"), ("answer", "content")]
+    assert completions.calls[0]["stream"] is True
 
 
 def test_produce_accepts_openai_reasoning_field():

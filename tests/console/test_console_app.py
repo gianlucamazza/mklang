@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("textual")
 
-from mklang.console.app import build_app, load_brain
+from mklang.console.app import build_app, load_brain, stream_cancel_mode
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 
@@ -40,6 +40,17 @@ def test_load_brain_is_the_bundled_agent():
     brain = load_brain()
     assert brain.name == "console_agent"
     assert brain.result == "reply"
+
+
+def test_stream_cancel_mode_is_safe_by_default(monkeypatch):
+    monkeypatch.delenv("MKLANG_STREAM_CANCEL", raising=False)
+    assert stream_cancel_mode() == "cooperative"
+
+
+def test_stream_cancel_mode_rejects_invalid_policy(monkeypatch):
+    monkeypatch.setenv("MKLANG_STREAM_CANCEL", "interrupt-but-maybe")
+    with pytest.raises(ValueError, match="MKLANG_STREAM_CANCEL"):
+        stream_cancel_mode()
 
 
 async def _wait_input_enabled(app, pilot, timeout=5.0):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import inspect
 import re
+import time
 import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -12,7 +13,7 @@ from dataclasses import dataclass, field, replace
 
 from .checkpoint import decode_repair, make_frame
 from .controlflow import FLOW_POLICIES, is_effectful, machine_touches_tools
-from .errors import CallFailed, JudgeUnparseable, ProviderError, RefusalError
+from .errors import CallFailed, CancellationError, JudgeUnparseable, ProviderError, RefusalError
 from .interpolate import fmt, lookup, render, render_delimited, resolve
 from .llm.base import LLM
 from .model import Gate, Machine, State
@@ -102,6 +103,12 @@ class _Ctx:
     # terminal outcomes stay on RunResult. Must be thread-safe (fan-out branches
     # emit from worker threads) and is isolated: its exceptions never reach the run.
     on_event: Callable[[dict], None] | None = None
+    # Console-only provider streaming. Disabled by default so embedders retain
+    # the response-complete adapter contract and event vocabulary.
+    stream: bool = False
+    # "cooperative" checks between states; "immediate" also interrupts provider
+    # streaming when the host cancellation callback becomes true.
+    stream_cancel: str = "cooperative"
     # Output anti-cutoff policy (ADR 0018): "report" annotates the trace;
     # "halt" aborts with state-error: output-truncated. Default report preserves
     # existing machine behavior while making cutoff observable.
@@ -142,6 +149,30 @@ def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) ->
                 **fields,
             }
         )
+
+
+def _llm_event(
+    deps: _Ctx, event: str, *, operation: str, model: str, **fields: object
+) -> None:
+    """Project adapter progress into the existing host event stream."""
+    if not deps.stream:
+        return
+    names = {
+        "start": "llm-start",
+        "delta": "llm-delta",
+        "retry": "llm-retry",
+        "done": "llm-done",
+        "error": "llm-error",
+    }
+    _emit(
+        deps,
+        names.get(event, "llm-progress"),
+        "",
+        0,
+        operation=operation,
+        model=model,
+        **fields,
+    )
 
 
 def _preview(value: object, limit: int = 200) -> str:
@@ -249,26 +280,67 @@ def _call_judge(
     provider plugins) keep working as a forced choice; ``total`` is False for them so
     the step can be traced as judged under the older, non-total protocol.
     """
-    if _judge_supports_none(deps.llm):
-        return (
-            deps.llm.judge(
+    started = time.monotonic()
+    if deps.stream:
+        _llm_event(deps, "start", operation="judge", model=judge_model)
+
+    def on_event(event: dict) -> None:
+        if event.get("event") == "retry":
+            _llm_event(
+                deps,
+                "retry",
+                operation="judge",
+                model=judge_model,
+                attempt=event.get("attempt"),
+                status=event.get("status"),
+            )
+
+    try:
+        judge_kwargs = {"reasoning": judge_reasoning}
+        if _judge_supports_none(deps.llm):
+            judge_kwargs["allow_none"] = True
+            if deps.stream:
+                judge_kwargs["on_event"] = on_event
+            verdict = deps.llm.judge(
                 judge_model,
                 conditions,
                 fmt(result),
                 ctx,
-                reasoning=judge_reasoning,
-                allow_none=True,
-            ),
-            True,
+                **judge_kwargs,
+            )
+            total = True
+        else:
+            if deps.stream:
+                judge_kwargs["on_event"] = on_event
+            verdict = deps.llm.judge(
+                judge_model,
+                conditions,
+                fmt(result),
+                ctx,
+                **judge_kwargs,
+            )
+            total = False
+        usage = getattr(deps.llm, "last_judge_usage", (0, 0))
+        _llm_event(
+            deps,
+            "done",
+            operation="judge",
+            model=judge_model,
+            elapsed_ms=round((time.monotonic() - started) * 1000),
+            input_tokens=int(usage[0] or 0),
+            output_tokens=int(usage[1] or 0),
         )
-    verdict = deps.llm.judge(
-        judge_model,
-        conditions,
-        fmt(result),
-        ctx,
-        reasoning=judge_reasoning,
-    )
-    return verdict, False
+        return verdict, total
+    except Exception as exc:
+        _llm_event(
+            deps,
+            "error",
+            operation="judge",
+            model=judge_model,
+            elapsed_ms=round((time.monotonic() - started) * 1000),
+            error_type=type(exc).__name__,
+        )
+        raise
 
 
 def _judge_prose_batch(
@@ -421,6 +493,8 @@ def _exec_call(
         escalate_suspend=deps.escalate_suspend,
         resume=resume,
         on_event=deps.on_event,
+        stream=deps.stream,
+        stream_cancel=deps.stream_cancel,
         on_truncate=deps.on_truncate,
         prompt_value_chars=deps.prompt_value_chars,
         cancel_requested=deps.cancel_requested,
@@ -470,13 +544,85 @@ def _exec_produce(
         prompt, nonce = render(state.prompt, ctx, value_chars=deps.prompt_value_chars), None
     user = prompt + (f"\n\n[Repair feedback] {feedback}" if feedback else "")
     temperature = 0.8 if state.sample else 0.4
-    p = deps.llm.produce(
-        model,
-        _system(state, nonce),
-        user,
-        reason=state.reason,
-        temperature=temperature,
-        params=params,
+    started = time.monotonic()
+    if deps.stream:
+        _llm_event(deps, "start", operation="produce", model=model, tier=tier)
+
+    def on_event(event: dict) -> None:
+        if event.get("event") == "retry":
+            _llm_event(
+                deps,
+                "retry",
+                operation="produce",
+                model=model,
+                tier=tier,
+                attempt=event.get("attempt"),
+                status=event.get("status"),
+            )
+
+    def on_delta(text: str, kind: str) -> None:
+        if deps.stream_cancel == "immediate" and deps.cancel_requested is not None:
+            try:
+                if bool(deps.cancel_requested()):
+                    raise CancellationError("stream cancellation requested")
+            except CancellationError:
+                raise
+            except Exception:
+                pass
+        _llm_event(
+            deps,
+            "delta",
+            operation="produce",
+            model=model,
+            tier=tier,
+            delta=text if kind == "content" else "",
+            delta_kind=kind,
+        )
+
+    try:
+        if deps.stream:
+            p = deps.llm.produce(
+                model,
+                _system(state, nonce),
+                user,
+                reason=state.reason,
+                temperature=temperature,
+                params=params,
+                on_event=on_event,
+                on_delta=on_delta,
+            )
+        else:
+            p = deps.llm.produce(
+                model,
+                _system(state, nonce),
+                user,
+                reason=state.reason,
+                temperature=temperature,
+                params=params,
+            )
+    except Exception as exc:
+        _llm_event(
+            deps,
+            "error",
+            operation="produce",
+            model=model,
+            tier=tier,
+            elapsed_ms=round((time.monotonic() - started) * 1000),
+            error_type=type(exc).__name__,
+        )
+        raise
+    _llm_event(
+        deps,
+        "done",
+        operation="produce",
+        model=model,
+        tier=tier,
+        elapsed_ms=round((time.monotonic() - started) * 1000),
+        input_tokens=p.input_tokens,
+        output_tokens=p.output_tokens,
+        finish_reason=p.finish_reason,
+        chars=len(p.text or ""),
+        reasoning_chars=len(p.reasoning or ""),
     )
     meta: dict = {}
     if getattr(p, "truncated", False):
@@ -847,6 +993,8 @@ class _Runner:
         escalate_suspend: bool = False,
         resume: list[dict] | None = None,
         on_event: Callable[[dict], None] | None = None,
+        stream: bool = False,
+        stream_cancel: str = "cooperative",
         on_truncate: str = "report",
         prompt_value_chars: int | None = None,
         cancel_requested: Callable[[], object] | None = None,
@@ -904,6 +1052,10 @@ class _Runner:
             raise ValueError(
                 f"on_untrusted_flow must be one of {FLOW_POLICIES}, got {on_untrusted_flow!r}"
             )
+        if stream_cancel not in ("cooperative", "immediate"):
+            raise ValueError(
+                "stream_cancel must be 'cooperative' or 'immediate', " f"got {stream_cancel!r}"
+            )
         self.deps = _Ctx(
             llm,
             tiers,
@@ -917,6 +1069,8 @@ class _Runner:
             suspendable=suspendable,
             escalate_suspend=escalate_suspend,
             on_event=on_event,
+            stream=stream,
+            stream_cancel=stream_cancel,
             on_truncate=on_truncate,
             prompt_value_chars=prompt_value_chars,
             cancel_requested=cancel_requested,
@@ -1288,6 +1442,8 @@ class _Runner:
             )
         except _Suspend as s:
             return self._handle_suspend(s)
+        except CancellationError:
+            return self._halt("cancelled")
         except CallFailed as e:
             return self._halt_call_failed(step, e)
         except RefusalError:
@@ -1424,6 +1580,8 @@ def run(
     escalate_suspend: bool = False,
     resume: list[dict] | None = None,
     on_event: Callable[[dict], None] | None = None,
+    stream: bool = False,
+    stream_cancel: str = "cooperative",
     on_truncate: str = "report",
     prompt_value_chars: int | None = None,
     cancel_requested: Callable[[], object] | None = None,
@@ -1438,8 +1596,12 @@ def run(
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
-    ``cancel_requested`` is cooperative and observed between states. Existing
-    callers that omit it retain identical semantics.
+    ``cancel_requested`` is cooperative and observed between states. With
+    ``stream_cancel="immediate"``, streamed provider calls are interrupted too.
+    Existing callers that omit both options retain identical semantics.
+
+    ``stream`` enables provider progress events for console observers. It is
+    opt-in so existing embedders keep response-complete behaviour.
 
     ``on_untrusted_flow`` is the control-flow-taint policy (SPEC §6 / ADR 0030):
     ``"report"`` annotates the trace when a judge-made decision over external data
@@ -1471,6 +1633,8 @@ def run(
         escalate_suspend=escalate_suspend,
         resume=resume,
         on_event=on_event,
+        stream=stream,
+        stream_cancel=stream_cancel,
         on_truncate=on_truncate,
         prompt_value_chars=prompt_value_chars,
         cancel_requested=cancel_requested,

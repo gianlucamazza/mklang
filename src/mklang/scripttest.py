@@ -37,7 +37,7 @@ from dataclasses import dataclass
 
 from .engine import RunResult, run
 from .errors import JudgeUnparseable
-from .llm.base import Produced
+from .llm.base import LLMDelta, LLMEvent, Produced
 from .model import Machine, parse_machine
 
 # All tiers collapse to one model: scripted judges/producers ignore the model
@@ -65,6 +65,8 @@ class ScriptedLLM:
         reason: bool = False,
         temperature: float = 0.4,
         params: dict | None = None,
+        on_event: LLMEvent | None = None,
+        on_delta: LLMDelta | None = None,
     ) -> Produced:
         with self._lock:
             if self._map is not None:
@@ -73,12 +75,17 @@ class ScriptedLLM:
                     raise AssertionError(f"no scripted produce matches prompt {user[:80]!r}")
             else:
                 text = self._seq.pop(0) if self._seq else "ok"
-        return Produced(
+        produced = Produced(
             text=text,
             reasoning=("thought" if reason else None),
             input_tokens=self._tin,
             output_tokens=self._tout,
         )
+        if on_delta is not None:
+            if produced.reasoning:
+                on_delta(produced.reasoning, "reasoning")
+            on_delta(produced.text, "content")
+        return produced
 
     def judge(
         self,
@@ -88,6 +95,7 @@ class ScriptedLLM:
         context: dict,
         reasoning: str | None = None,
         allow_none: bool = False,
+        on_event: LLMEvent | None = None,
     ) -> int:
         if self._judge == "unparseable":
             raise JudgeUnparseable("scripted")

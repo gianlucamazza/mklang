@@ -70,6 +70,7 @@ One reference for every `MKLANG_*` variable the runtime reads:
 | `MKLANG_KB_BACKEND=stub\|fake`                               | bind the `search_kb` tool                                        |
 | `MKLANG_MAIL_BACKEND=fake`                                   | bind the `send_reply` tool                                       |
 | `MKLANG_LIVE=1`                                              | opt into the live provider test suite (development only)         |
+| `MKLANG_STREAM_CANCEL=cooperative\|immediate`                | console provider-stream cancellation policy (default: cooperative) |
 
 Each `MKLANG_*_BACKEND` variable overrides the corresponding `tools.<name>`
 binding in `runtime.yaml` (ADR 0016): env var > `tools:` block > default.

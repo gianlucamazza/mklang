@@ -115,3 +115,18 @@ def test_status_line_keeps_runtime_data_plain_and_semantic():
     line = r.status_line("waiting", "deepseek", "do_run", 12, 8, "session-1")
     assert line.plain == "⏸ WAITING  do_run  ·  deepseek  ·  tokens 12+8  ·  session session-1"
     assert any(span.style == "bold yellow" for span in line.spans)
+
+
+def test_activity_live_has_bounded_preview_and_private_reasoning_surface():
+    line = r.activity_live(
+        "produce", "generating", "model", "fast", 1250, 250, 1, "x" * 3000
+    )
+    assert line.plain.startswith(
+        "GENERATING produce · model · fast · 1.2s · first 0.2s · retries 1"
+    )
+    assert len(line.plain.split("\n", 1)[1]) == 2000
+
+
+def test_activity_live_idle_is_explicit():
+    line = r.activity_live_idle()
+    assert line.plain == "No active provider request"

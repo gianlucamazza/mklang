@@ -58,6 +58,32 @@ class _Client:
         self.close_calls += 1
 
 
+class _Stream:
+    def __init__(self):
+        self.events = [
+            type("Event", (), {
+                "type": "content_block_delta",
+                "delta": type("Delta", (), {"type": "thinking_delta", "thinking": "think"})(),
+            })(),
+            type("Event", (), {
+                "type": "content_block_delta",
+                "delta": type("Delta", (), {"type": "text_delta", "text": "answer"})(),
+            })(),
+        ]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def __iter__(self):
+        return iter(self.events)
+
+    def get_final_message(self):
+        return _Msg()
+
+
 def _adapter(stop_reason="end_turn", side_effect=None, text="ok") -> AnthropicLLM:
     llm = AnthropicLLM.__new__(AnthropicLLM)  # skip __init__ / the anthropic import
     llm.client = _Client(stop_reason, side_effect=side_effect, text=text)
@@ -103,6 +129,21 @@ def test_temperature_applied_without_thinking():
     llm = _adapter()
     llm.produce("claude-x", "sys", "hi", reason=False, temperature=0.9)
     assert llm.client.messages.captured["temperature"] == 0.9
+
+
+def test_produce_streams_text_and_thinking():
+    llm = _adapter()
+    llm.client.messages.stream = lambda **kwargs: _Stream()
+    deltas = []
+    produced = llm.produce(
+        "claude-x",
+        "sys",
+        "hi",
+        reason=True,
+        on_delta=lambda text, kind: deltas.append((text, kind)),
+    )
+    assert produced.text == "answer" and produced.reasoning == "think"
+    assert deltas == [("think", "reasoning"), ("answer", "content")]
 
 
 def test_refusal_raises():

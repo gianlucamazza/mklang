@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import time
 
-from ..errors import JudgeUnparseable, ProviderError, RefusalError
+from ..errors import CancellationError, JudgeUnparseable, ProviderError, RefusalError
 from .base import (
     JUDGE_CONTEXT_CHARS,
     JUDGE_SYSTEM,
     TRANSIENT_STATUS,
+    LLMDelta,
+    LLMEvent,
     Produced,
     build_judge_user,
     is_connection_error,
@@ -38,7 +40,7 @@ class AnthropicLLM:
         """Close the SDK client, interrupting any in-flight console request."""
         self.client.close()
 
-    def _create(self, **kwargs):
+    def _create(self, *, on_event: LLMEvent | None = None, **kwargs):
         """messages.create with transient retry and param drop-on-reject."""
         attempt = 0
         while True:
@@ -54,10 +56,56 @@ class AnthropicLLM:
                 msg = str(e).lower()
                 transient = status in TRANSIENT_STATUS or is_connection_error(e)
                 if transient and attempt < self.max_retries:
+                    _notify(on_event, "retry", attempt=attempt + 1, status=status)
                     time.sleep(0.5 * 2**attempt)
                     attempt += 1
                     continue
                 if _drop_offending_param(kwargs, msg):
+                    continue
+                raise ProviderError(str(e)) from e
+
+    def _stream_create(
+        self, kwargs: dict, *, on_event: LLMEvent | None = None, on_delta: LLMDelta
+    ) -> Produced:
+        attempt = 0
+        while True:
+            try:
+                text: list[str] = []
+                reasoning: list[str] = []
+                with self.client.messages.stream(**kwargs) as stream:
+                    for event in stream:
+                        if getattr(event, "type", None) != "content_block_delta":
+                            continue
+                        delta = getattr(event, "delta", None)
+                        kind = getattr(delta, "type", None)
+                        value = getattr(delta, "text", None) or getattr(delta, "thinking", None)
+                        if not value:
+                            continue
+                        if kind == "thinking_delta":
+                            reasoning.append(value)
+                            on_delta(value, "reasoning")
+                        elif kind == "text_delta":
+                            text.append(value)
+                            on_delta(value, "content")
+                    message = stream.get_final_message()
+                usage = getattr(message, "usage", None)
+                return Produced(
+                    text="".join(text).strip(),
+                    reasoning="".join(reasoning) or None,
+                    input_tokens=getattr(usage, "input_tokens", 0) if usage else 0,
+                    output_tokens=getattr(usage, "output_tokens", 0) if usage else 0,
+                    truncated=is_length_stop(getattr(message, "stop_reason", None)),
+                    finish_reason=getattr(message, "stop_reason", None),
+                )
+            except Exception as e:
+                if isinstance(e, CancellationError):
+                    raise
+                status = getattr(e, "status_code", None)
+                transient = status in TRANSIENT_STATUS or is_connection_error(e)
+                if transient and attempt < self.max_retries:
+                    _notify(on_event, "retry", attempt=attempt + 1, status=status)
+                    time.sleep(0.5 * 2**attempt)
+                    attempt += 1
                     continue
                 raise ProviderError(str(e)) from e
 
@@ -69,6 +117,8 @@ class AnthropicLLM:
         reason: bool = False,
         temperature: float = 0.4,
         params: dict | None = None,
+        on_event: LLMEvent | None = None,
+        on_delta: LLMDelta | None = None,
     ) -> Produced:
         params = params or {}
         kwargs: dict = {
@@ -90,7 +140,9 @@ class AnthropicLLM:
             kwargs["temperature"] = temperature
         if "effort" in params:  # low | medium | high | xhigh | max
             kwargs["output_config"] = {"effort": params["effort"]}
-        msg = self._create(**kwargs)
+        if on_delta is not None:
+            return self._stream_create(kwargs, on_event=on_event, on_delta=on_delta)
+        msg = self._create(on_event=on_event, **kwargs)
         stop = getattr(msg, "stop_reason", None)
         if stop == "refusal":
             raise RefusalError("the model declined this request")
@@ -120,6 +172,7 @@ class AnthropicLLM:
         context: dict,
         reasoning: str | None = None,
         allow_none: bool = False,
+        on_event: LLMEvent | None = None,
     ) -> tuple[int, str | None]:
         user = build_judge_user(
             conditions,
@@ -129,6 +182,7 @@ class AnthropicLLM:
             allow_none=allow_none,
         )
         msg = self._create(
+            on_event=on_event,
             model=model,
             max_tokens=64,
             system=JUDGE_SYSTEM,
@@ -154,3 +208,8 @@ def _drop_offending_param(kwargs: dict, err_msg: str) -> bool:
             kwargs.pop(name, None)
             return True
     return False
+
+
+def _notify(callback: LLMEvent | None, event: str, **fields: object) -> None:
+    if callback is not None:
+        callback({"event": event, **fields})

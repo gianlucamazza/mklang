@@ -5,11 +5,13 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from ..errors import JudgeUnparseable, ProviderError
+from ..errors import CancellationError, JudgeUnparseable, ProviderError
 from .base import (
     JUDGE_CONTEXT_CHARS,
     JUDGE_SYSTEM,
     TRANSIENT_STATUS,
+    LLMDelta,
+    LLMEvent,
     Produced,
     build_judge_user,
     is_connection_error,
@@ -49,7 +51,7 @@ class OpenAICompatLLM:
         """Close the SDK client, interrupting any in-flight console request."""
         self.client.close()
 
-    def _create(self, **kwargs):
+    def _create(self, *, on_event: LLMEvent | None = None, **kwargs):
         """Robust create: retry transient errors with backoff; drop any single param a
         provider rejects (unsupported temperature / reasoning_effort / extra_body key)."""
         attempt = 0
@@ -61,6 +63,7 @@ class OpenAICompatLLM:
                 msg = str(e).lower()
                 transient = status in TRANSIENT_STATUS or is_connection_error(e)
                 if transient and attempt < self.max_retries:
+                    _notify(on_event, "retry", attempt=attempt + 1, status=status)
                     time.sleep(0.5 * 2**attempt)
                     attempt += 1
                     continue
@@ -75,6 +78,57 @@ class OpenAICompatLLM:
                     )
                 raise ProviderError(detail) from e
 
+    def _stream_create(
+        self, kwargs: dict, *, on_event: LLMEvent | None = None, on_delta: LLMDelta
+    ):
+        kwargs = dict(kwargs)
+        attempt = 0
+        while True:
+            try:
+                stream = self.client.chat.completions.create(
+                    **kwargs, stream=True, stream_options={"include_usage": True}
+                )
+                text: list[str] = []
+                reasoning: list[str] = []
+                usage = None
+                finish = None
+                for chunk in stream:
+                    usage = getattr(chunk, "usage", None) or usage
+                    choices = getattr(chunk, "choices", None) or []
+                    if not choices:
+                        continue
+                    choice = choices[0]
+                    finish = getattr(choice, "finish_reason", None) or finish
+                    delta = getattr(choice, "delta", None)
+                    if delta is None:
+                        continue
+                    content = getattr(delta, "content", None)
+                    if content:
+                        text.append(content)
+                        on_delta(content, "content")
+                    thought = getattr(delta, "reasoning_content", None) or getattr(
+                        delta, "reasoning", None
+                    )
+                    if thought:
+                        reasoning.append(thought)
+                        on_delta(thought, "reasoning")
+                return "".join(text), "".join(reasoning) or None, usage, finish
+            except Exception as e:
+                if isinstance(e, CancellationError):
+                    raise
+                status = getattr(e, "status_code", None)
+                msg = str(e).lower()
+                transient = status in TRANSIENT_STATUS or is_connection_error(e)
+                if transient and attempt < self.max_retries:
+                    _notify(on_event, "retry", attempt=attempt + 1, status=status)
+                    time.sleep(0.5 * 2**attempt)
+                    attempt += 1
+                    continue
+                if "stream_options" in msg:
+                    kwargs.pop("stream_options", None)
+                    continue
+                raise ProviderError(str(e)) from e
+
     def produce(
         self,
         model: str,
@@ -83,6 +137,8 @@ class OpenAICompatLLM:
         reason: bool = False,
         temperature: float = 0.4,
         params: dict | None = None,
+        on_event: LLMEvent | None = None,
+        on_delta: LLMDelta | None = None,
     ) -> Produced:
         kwargs = {
             "model": model,
@@ -95,7 +151,20 @@ class OpenAICompatLLM:
         # override; unsupported max_tokens is dropped and retried by _create.
         if "max_tokens" not in kwargs:
             kwargs["max_tokens"] = 4096
-        r = self._create(**kwargs)
+        if on_delta is not None:
+            text, stream_reasoning, usage, finish = self._stream_create(
+                kwargs, on_event=on_event, on_delta=on_delta
+            )
+            it, ot = _usage_from(usage)
+            return Produced(
+                text=text.strip(),
+                reasoning=stream_reasoning if reason else None,
+                input_tokens=it,
+                output_tokens=ot,
+                truncated=is_length_stop(finish),
+                finish_reason=finish,
+            )
+        r = self._create(on_event=on_event, **kwargs)
         choice = r.choices[0]
         msg = choice.message
         reasoning = _reasoning_text(msg) if reason else None
@@ -118,6 +187,7 @@ class OpenAICompatLLM:
         context: dict,
         reasoning: str | None = None,
         allow_none: bool = False,
+        on_event: LLMEvent | None = None,
     ) -> tuple[int, str | None]:
         user = build_judge_user(
             conditions,
@@ -136,7 +206,7 @@ class OpenAICompatLLM:
         }
         if self.profile.supports_response_format:
             kwargs["response_format"] = {"type": "json_object"}
-        r = self._create(**kwargs)
+        r = self._create(on_event=on_event, **kwargs)
         text = r.choices[0].message.content or ""
         idx, method = parse_choice(text, len(conditions) + (1 if allow_none else 0))
         if idx is None:
@@ -159,6 +229,20 @@ def _usage(response: object) -> tuple[int, int]:
     if not u:
         return 0, 0
     return getattr(u, "prompt_tokens", 0) or 0, getattr(u, "completion_tokens", 0) or 0
+
+
+def _usage_from(usage: object) -> tuple[int, int]:
+    if not usage:
+        return 0, 0
+    return (
+        getattr(usage, "prompt_tokens", 0) or 0,
+        getattr(usage, "completion_tokens", 0) or 0,
+    )
+
+
+def _notify(callback: LLMEvent | None, event: str, **fields: object) -> None:
+    if callback is not None:
+        callback({"event": event, **fields})
 
 
 def _apply_params(
