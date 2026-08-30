@@ -98,7 +98,7 @@ class OpenAICompatLLM:
         r = self._create(**kwargs)
         choice = r.choices[0]
         msg = choice.message
-        reasoning = getattr(msg, "reasoning_content", None) if reason else None
+        reasoning = _reasoning_text(msg) if reason else None
         it, ot = _usage(r)
         finish = getattr(choice, "finish_reason", None)
         return Produced(
@@ -147,6 +147,11 @@ class OpenAICompatLLM:
 
 # Back-compat alias for tests that imported the private helper.
 _parse_choice = parse_choice
+
+
+def _reasoning_text(message: object) -> str | None:
+    """Normalize the reasoning field variants used by OpenAI-compatible APIs."""
+    return getattr(message, "reasoning_content", None) or getattr(message, "reasoning", None)
 
 
 def _usage(response: object) -> tuple[int, int]:

@@ -15,9 +15,10 @@ from mklang.llm.openai_compat import (
 
 
 class _Msg:
-    def __init__(self, content="ok", reasoning_content=None):
+    def __init__(self, content="ok", reasoning_content=None, reasoning=None):
         self.content = content
         self.reasoning_content = reasoning_content
+        self.reasoning = reasoning
 
 
 class _Choice:
@@ -33,8 +34,10 @@ class _Usage:
 
 
 class _Resp:
-    def __init__(self, content="ok", finish="stop", reasoning=None, usage=True):
-        self.choices = [_Choice(_Msg(content, reasoning), finish)]
+    def __init__(
+        self, content="ok", finish="stop", reasoning=None, reasoning_field=None, usage=True
+    ):
+        self.choices = [_Choice(_Msg(content, reasoning, reasoning_field), finish)]
         self.usage = _Usage() if usage else None
 
 
@@ -81,6 +84,11 @@ def test_produce_reasoning_only_when_requested():
     llm, _ = _adapter(lambda n, k: _Resp(reasoning="thought"))
     assert llm.produce("m", "s", "u", reason=True).reasoning == "thought"
     assert llm.produce("m", "s", "u", reason=False).reasoning is None
+
+
+def test_produce_accepts_openai_reasoning_field():
+    llm, _ = _adapter(lambda n, k: _Resp(content="answer", reasoning_field="thought", usage=False))
+    assert llm.produce("m", "s", "u", reason=True).reasoning == "thought"
 
 
 def test_produce_splits_params_and_forwards_openai_thinking():
