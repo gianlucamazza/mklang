@@ -89,8 +89,16 @@ configured workspace and exclude hidden, build, vendor and cache directories;
 they never grant shell or write access. Each operation is bounded (400 listing
 entries, 120,000 bytes per read, 80 search matches, 2,000 files and 64 MiB per
 search), skips obvious credentials/keys/databases, and reports truncation or
-skipped content. Explicit project-analysis turns are host-guarded: the brain
-cannot finish until workspace evidence and an evidence brief exist. Swap the
+skipped content. The inspector also maintains a versioned, metadata-only index
+under the user state directory. It records visible paths, sizes, timestamps and
+language labels, never file bodies; it is refreshed at the start of a turn and
+reused by subsequent searches to rank the live reads. Every workspace result
+reports index coverage, including skipped or truncated inventory entries.
+Explicit project-analysis turns are host-guarded: the brain
+cannot finish until workspace evidence and an evidence brief exist, and the
+brief must identify indexed, read, skipped and uninspected areas. A truncated
+inventory or search is partial evidence, not proof of whole-project coverage.
+Swap the
 brain with `--agent your_brain.mkl` — custom brains
 that want project inspection should declare and use the same workspace tools in
 addition to the existing contract (`list_machines`, `describe_machine`,

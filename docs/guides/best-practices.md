@@ -326,6 +326,23 @@ grant (`--allow-write` / `MKLANG_FS_WRITE=1` / console consent).
 7. **Console stays non-IDE** — read-only inspection plus `.mkl` authoring;
    no generic write, shell, or git tools.
 
+### Large workspace analysis (ADR 0036)
+
+For large projects, use the console's metadata-only workspace index as the
+structural inventory and read file bodies only when they are relevant to the
+question. The index is persisted under the user state directory, is rebuilt
+incrementally from visible file metadata, and never stores file contents.
+
+- Treat the index as a candidate map, not proof that a file was understood.
+- Rank and read relevant files progressively; do not inject an entire tree into
+  one prompt.
+- Report indexed, read, skipped, and truncated counts in the evidence brief.
+- A truncated index or search makes the analysis partial; never call it complete.
+- Keep secrets, hidden paths, build/vendor/cache trees, binaries, and databases
+  outside both the index and the model context.
+- Rebuild or invalidate the index when the canonical workspace root changes or
+  the manifest version is incompatible.
+
 ### Memory & planning mapping
 
 The class model gives machines the same memory layering native coding agents

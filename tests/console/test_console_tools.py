@@ -7,6 +7,7 @@ import pytest
 
 from mklang.console.commands import parse_assignments
 from mklang.console.tools import ConsoleTools
+from mklang.console.workspace import WorkspaceInspector
 from mklang.llm.base import Produced
 from mklang.llm.mock import MockLLM
 
@@ -410,6 +411,39 @@ def test_workspace_context_exposes_markers_and_excludes_build_dirs(tools):
     assert "README.md" in snapshot["markers"]
     assert "AGENTS.md" in snapshot["instruction_files"]
     assert all(row["path"] != "node_modules" for row in snapshot["entries"])
+
+
+def test_workspace_index_is_metadata_only_and_incremental(tmp_path, monkeypatch):
+    monkeypatch.setenv("MKLANG_STATE_DIR", str(tmp_path / "state"))
+    root = tmp_path / "workspace"
+    root.mkdir()
+    (root / "README.md").write_text("alpha", encoding="utf-8")
+    (root / "src").mkdir()
+    (root / "src" / "main.py").write_text("print(1)", encoding="utf-8")
+    inspector = WorkspaceInspector(root)
+
+    first = inspector.index()
+    assert first["file_count"] == 2
+    assert {row["path"] for row in first["files"]} == {"README.md", "src/main.py"}
+    assert "alpha" not in inspector.index_path.read_text(encoding="utf-8")
+    assert first["files"][0]["language"] in {"markdown", "python"}
+
+    (root / "README.md").unlink()
+    (root / "src" / "new.ts").write_text("export {}", encoding="utf-8")
+    second = inspector.index(refresh=True)
+    assert second["file_count"] == 2
+    assert {row["path"] for row in second["files"]} == {"src/main.py", "src/new.ts"}
+    assert second["version"] == inspector.INDEX_VERSION
+
+
+def test_workspace_results_report_index_coverage(tools):
+    (tools.workspace / "README.md").write_text("needle", encoding="utf-8")
+    snapshot = tools.workspace_context()
+    coverage = snapshot["coverage"]
+    assert coverage["indexed_files"] == 1
+    assert coverage["content_persisted"] is False
+    found = json.loads(tools.search_workspace({"query": "needle"}))
+    assert found["coverage"]["index_version"] == coverage["index_version"]
 
 
 def test_workspace_listing_reading_and_search_are_confined(tools):

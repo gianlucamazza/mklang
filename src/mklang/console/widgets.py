@@ -204,6 +204,21 @@ class Inspector(Vertical):
     def show_result(self, res: RunResult) -> None:
         ctx_log = self.query_one("#inspector-context", RichLog)
         ctx_log.clear()
+        workspace_context = res.context.get("workspace_context", {})
+        coverage = (
+            workspace_context.get("coverage", {}) if isinstance(workspace_context, dict) else {}
+        )
+        if coverage:
+            ctx_log.write(
+                Text(
+                    "workspace coverage: "
+                    f"{coverage.get('indexed_files', 0)} indexed · "
+                    f"skipped {coverage.get('index_skipped', 0)} · "
+                    f"truncated {coverage.get('index_truncated', False)} · "
+                    "content persisted false\n",
+                    style="bold yellow" if coverage.get("index_truncated") else "dim",
+                )
+            )
         if res.limits:
             steps = res.limits.get("steps", {})
             tokens = res.limits.get("tokens", {})
