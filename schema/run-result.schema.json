@@ -32,6 +32,25 @@
       },
       "additionalProperties": true
     },
+    "limits": {
+      "type": ["object", "null"],
+      "description": "Applied step/token limits and cumulative usage for the run.",
+      "properties": {
+        "steps": { "$ref": "#/$defs/limit" },
+        "tokens": {
+          "allOf": [
+            { "$ref": "#/$defs/limit" },
+            {
+              "properties": {
+                "input": { "type": "integer", "minimum": 0 },
+                "output": { "type": "integer", "minimum": 0 }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "trace": {
       "type": "array",
       "description": "Ordered step records (state, gates, nested sub_trace for call:). Empty array when none.",
@@ -78,6 +97,18 @@
     "result_truncated": {
       "type": "boolean",
       "description": "Present on compact observations when the result string was clipped for the brain."
+    }
+  },
+  "$defs": {
+    "limit": {
+      "type": "object",
+      "required": ["used", "limit", "remaining"],
+      "properties": {
+        "used": { "type": "integer", "minimum": 0 },
+        "limit": { "type": ["integer", "null"], "minimum": 0 },
+        "remaining": { "type": ["integer", "null"], "minimum": 0 }
+      },
+      "additionalProperties": true
     }
   },
   "allOf": [

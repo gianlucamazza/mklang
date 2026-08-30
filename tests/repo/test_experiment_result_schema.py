@@ -16,7 +16,7 @@ def _validator():
 def _meta():
     return {
         "schema_version": "1.0",
-        "runtime_version": "1.3.1",
+        "runtime_version": "1.3.2",
         "spec_version": "0.4",
         "model": "fixture-model",
         "started_at": "2026-08-27T00:00:00Z",

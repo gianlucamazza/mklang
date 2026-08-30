@@ -310,6 +310,7 @@ def build_output(res: RunResult) -> dict:
         "error": res.error,
         "result": res.result,
         "usage": res.usage,
+        "limits": res.limits,
         "trace": res.trace,
     }
     if res.at is not None:

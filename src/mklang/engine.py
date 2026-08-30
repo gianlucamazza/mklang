@@ -10,6 +10,7 @@ import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
+from typing import Any
 
 from .checkpoint import decode_repair, make_frame
 from .controlflow import FLOW_POLICIES, is_effectful, machine_touches_tools
@@ -44,6 +45,8 @@ class RunResult:
     # the reply lands at on resume. Both additive on the wire.
     ask: str | None = None
     reply_to: str | None = None
+    # Applied limits and cumulative usage, additive for existing embedders.
+    limits: dict | None = None
 
 
 class _Suspend(Exception):
@@ -151,9 +154,7 @@ def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) ->
         )
 
 
-def _llm_event(
-    deps: _Ctx, event: str, *, operation: str, model: str, **fields: object
-) -> None:
+def _llm_event(deps: _Ctx, event: str, *, operation: str, model: str, **fields: object) -> None:
     """Project adapter progress into the existing host event stream."""
     if not deps.stream:
         return
@@ -296,7 +297,7 @@ def _call_judge(
             )
 
     try:
-        judge_kwargs = {"reasoning": judge_reasoning}
+        judge_kwargs: dict[str, Any] = {"reasoning": judge_reasoning}
         if _judge_supports_none(deps.llm):
             judge_kwargs["allow_none"] = True
             if deps.stream:
@@ -1064,7 +1065,7 @@ class _Runner:
             )
         if stream_cancel not in ("cooperative", "immediate"):
             raise ValueError(
-                "stream_cancel must be 'cooperative' or 'immediate', " f"got {stream_cancel!r}"
+                f"stream_cancel must be 'cooperative' or 'immediate', got {stream_cancel!r}"
             )
         self.deps = _Ctx(
             llm,
@@ -1150,6 +1151,23 @@ class _Runner:
         if self.cost_budget is None:
             return None
         return max(0, self.cost_budget - self._spent())
+
+    def _budget_info(self) -> dict:
+        """Return operator-facing limits without conflating steps and tokens."""
+        return {
+            "steps": {
+                "used": self.steps,
+                "limit": self.machine.budget,
+                "remaining": max(0, self.machine.budget - self.steps),
+            },
+            "tokens": {
+                "used": self._spent(),
+                "limit": self.cost_budget,
+                "remaining": self._remaining_budget(),
+                "input": self.total_in,
+                "output": self.total_out,
+            },
+        }
 
     def _snapshot(self, at_steps: int | None = None) -> dict:
         return make_frame(
@@ -1258,6 +1276,7 @@ class _Runner:
             self.depth,
             entry=self.state_id,
             resumed=bool(self._resume_arg),
+            limits=self._budget_info(),
         )
         while True:
             early = self._loop_guards()
@@ -1626,7 +1645,7 @@ def run(
     # and a misordering between two same-typed neighbours (e.g. on_truncate /
     # on_untrusted_flow) would be a silent behaviour swap no type checker catches.
     effective_run_id = run_id or uuid.uuid4().hex
-    result = _Runner(
+    runner = _Runner(
         machine,
         context,
         registry,
@@ -1656,7 +1675,9 @@ def run(
         repair_feedback=repair_feedback,
         run_id=effective_run_id,
         parent_run_id=parent_run_id,
-    ).go()
+    )
+    result = runner.go()
+    result.limits = runner._budget_info()
     if on_event is not None:
         with contextlib.suppress(Exception):
             on_event(
@@ -1670,6 +1691,7 @@ def run(
                     "error": result.error,
                     "at": result.at,
                     "tokens": result.usage or {"input_tokens": 0, "output_tokens": 0},
+                    "limits": result.limits,
                 }
             )
     return result

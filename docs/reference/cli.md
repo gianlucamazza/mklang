@@ -100,6 +100,7 @@ mklang resume CHECKPOINT [--set k.path=value]... [options]
 | `--set k.path=value`            | inject values (e.g. the human reply) into the suspended run's context — untrusted by provenance, fenced in prompts (SPEC §6); pre-taint checkpoints resume all-tainted |
 | `--config` / `--provider`       | as in `run`                                                                                                                                                            |
 | `--max-tokens N`                | new total budget, including tokens spent before the suspend                                                                                                            |
+| `--max-steps N`                 | new total step budget, including steps spent before the suspend                                                                                                         |
 | `--hitl`                        | keep suspending on escalate gates even if the checkpoint didn't record it                                                                                              |
 | `--machine PATH`                | machine path override (if the `.mkl` moved)                                                                                                                            |
 | `--checkpoint PATH`             | where to write the checkpoint on re-suspension (default: overwrite the input)                                                                                          |

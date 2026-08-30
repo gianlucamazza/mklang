@@ -49,10 +49,20 @@ class _Delta:
 
 class _Chunk:
     def __init__(self, content=None, reasoning=None, finish=None, usage=None):
-        self.choices = [] if usage else [type("Choice", (), {
-            "delta": _Delta(content, reasoning),
-            "finish_reason": finish,
-        })()]
+        self.choices = (
+            []
+            if usage
+            else [
+                type(
+                    "Choice",
+                    (),
+                    {
+                        "delta": _Delta(content, reasoning),
+                        "finish_reason": finish,
+                    },
+                )()
+            ]
+        )
         self.usage = usage
 
 

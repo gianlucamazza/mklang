@@ -175,7 +175,13 @@ def activity_live_idle() -> Text:
 
 
 def status_line(
-    state: str, provider: str, phase: str, spent_in: int, spent_out: int, session: str
+    state: str,
+    provider: str,
+    phase: str,
+    spent_in: int,
+    spent_out: int,
+    session: str,
+    limits: dict | None = None,
 ) -> Text:
     """Render the operator HUD without treating runtime data as markup."""
     normalized = state.lower()
@@ -191,8 +197,16 @@ def status_line(
     line.append(f"{glyph} {normalized.upper()}", style=f"bold {style}")
     if phase:
         line.append(f"  {phase}", style="bold")
-    line.append(
-        f"  ·  {provider}  ·  tokens {spent_in}+{spent_out}  ·  session {session}",
-        style="dim",
-    )
+    line.append(f"  ·  {provider}", style="dim")
+    if limits:
+        steps = limits.get("steps", {})
+        tokens = limits.get("tokens", {})
+        line.append(
+            f"  ·  steps {steps.get('used', 0)}/{steps.get('limit', '∞')}"
+            f"  ·  tokens {spent_in}+{spent_out}/{tokens.get('limit', '∞')}",
+            style="dim",
+        )
+    else:
+        line.append(f"  ·  tokens {spent_in}+{spent_out}", style="dim")
+    line.append(f"  ·  session {session}", style="dim")
     return line

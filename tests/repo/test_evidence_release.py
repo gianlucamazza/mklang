@@ -20,7 +20,7 @@ def _builder_main():
 def _row() -> dict:
     return {
         "schema_version": "1.0",
-        "runtime_version": "1.3.1",
+        "runtime_version": "1.3.2",
         "spec_version": "0.4",
         "experiment": "gate-divergence",
         "provider": "fixture",

@@ -40,7 +40,7 @@ from pathlib import Path
 from mklang.cli import _build_llm
 from mklang.config import ProviderConfig, load_provider
 from mklang.engine import run
-from mklang.llm.base import LLM
+from mklang.llm.base import LLM, LLMDelta, LLMEvent, Produced
 from mklang.model import Machine, parse_machine
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -502,12 +502,29 @@ class _ScriptedFailThenPass:
     def __init__(self) -> None:
         self.seen: dict[str, int] = {}
 
-    def produce(self, model, system, user, reason=False, temperature=0.4, params=None):
-        from mklang.llm.base import Produced
-
+    def produce(
+        self,
+        model: str,
+        system: str,
+        user: str,
+        reason: bool = False,
+        temperature: float = 0.4,
+        params: dict | None = None,
+        on_event: LLMEvent | None = None,
+        on_delta: LLMDelta | None = None,
+    ) -> Produced:
         return Produced(text="draft")
 
-    def judge(self, model, conditions, output, context, reasoning=None, allow_none=False):
+    def judge(
+        self,
+        model: str,
+        conditions: list[str],
+        output: str,
+        context: dict,
+        reasoning: str | None = None,
+        allow_none: bool = False,
+        on_event: LLMEvent | None = None,
+    ) -> int:
         key = "|".join(conditions)
         self.seen[key] = self.seen.get(key, 0) + 1
         # Condition 0 is "satisfies every criterion", condition 1 is the repair.
@@ -549,7 +566,13 @@ def main(argv: list[str] | None = None) -> int:
     if not corpus:
         p.error(f"--machines selected nothing (have: {sorted({i['machine'] for i in CORPUS})})")
 
-    build = (lambda _prov: _ScriptedFailThenPass()) if args.self_check else _build_llm
+    build: Callable[[ProviderConfig], LLM] = _build_llm
+    if args.self_check:
+
+        def build_self_check(_prov: ProviderConfig) -> LLM:
+            return _ScriptedFailThenPass()
+
+        build = build_self_check
     rows: list[dict] = []
     for item in corpus:
         for i in range(args.repeats):

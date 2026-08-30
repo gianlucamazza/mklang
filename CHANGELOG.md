@@ -8,7 +8,26 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.1`).
+  `pyproject.toml` (currently `1.3.2`).
+
+## [1.3.2] — 2026-08-31
+
+### Added
+
+- **Explicit run limits.** Runtime results, live events, checkpoints, and the
+  run-result schema now expose step and token limits separately, including
+  usage and remaining capacity.
+- **Precise resume controls.** `mklang resume` accepts `--max-steps` alongside
+  `--max-tokens`; the console accepts `/resume n steps=N tokens=N`.
+
+### Changed
+
+- **Budget-aware console UX.** The TUI handles both step and token exhaustion,
+  shows the active limits in its HUD and inspector, and asks for explicit total
+  limits before resuming. Declining parks a checkpoint without changing the
+  provider or model.
+- **Checkpoint metadata.** New checkpoints record the applied step budget in
+  addition to the cumulative token budget.
 
 ## [1.3.1] — 2026-08-23
 
@@ -1372,7 +1391,8 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.3.1...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/gianlucamazza/mklang/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/gianlucamazza/mklang/compare/v1.3.0...v1.3.1
 [1.2.0]: https://github.com/gianlucamazza/mklang/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/gianlucamazza/mklang/compare/v1.1.0...v1.1.1

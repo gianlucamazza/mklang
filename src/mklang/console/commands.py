@@ -20,7 +20,11 @@ COMMANDS = (
     SlashCommand("check", "/check <name>", "Validate a workspace machine"),
     SlashCommand("read", "/read <name>", "Show a workspace machine"),
     SlashCommand("budget", "/budget <positive tokens>", "Set the default run budget"),
-    SlashCommand("resume", "/resume [index]", "List or resume a parked turn"),
+    SlashCommand(
+        "resume",
+        "/resume [index] [steps=N tokens=N]",
+        "List or resume a parked turn with explicit total limits",
+    ),
     SlashCommand("session", "/session", "Show current session details"),
     SlashCommand("provider", "/provider", "Show the active provider and configured tiers"),
     SlashCommand("clear", "/clear", "Clear conversation log and activity tree"),

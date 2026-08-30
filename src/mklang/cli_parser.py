@@ -139,6 +139,12 @@ def build_parser(handlers: Mapping[str, Handler]) -> argparse.ArgumentParser:
         default=None,
         help="new cost budget (total, including tokens spent before the suspend)",
     )
+    s.add_argument(
+        "--max-steps",
+        type=int,
+        default=None,
+        help="new step budget (total, including steps spent before the suspend)",
+    )
     s.add_argument("--machine", default=None, help="machine path override (if the .mkl moved)")
     s.add_argument(
         "--checkpoint",

@@ -143,6 +143,7 @@ def test_build_output_shape():
         "error": None,
         "result": "r",
         "usage": {"input_tokens": 1},
+        "limits": None,
         "trace": [],
     }
     assert "at" not in out

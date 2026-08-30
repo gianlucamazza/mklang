@@ -61,14 +61,22 @@ class _Client:
 class _Stream:
     def __init__(self):
         self.events = [
-            type("Event", (), {
-                "type": "content_block_delta",
-                "delta": type("Delta", (), {"type": "thinking_delta", "thinking": "think"})(),
-            })(),
-            type("Event", (), {
-                "type": "content_block_delta",
-                "delta": type("Delta", (), {"type": "text_delta", "text": "answer"})(),
-            })(),
+            type(
+                "Event",
+                (),
+                {
+                    "type": "content_block_delta",
+                    "delta": type("Delta", (), {"type": "thinking_delta", "thinking": "think"})(),
+                },
+            )(),
+            type(
+                "Event",
+                (),
+                {
+                    "type": "content_block_delta",
+                    "delta": type("Delta", (), {"type": "text_delta", "text": "answer"})(),
+                },
+            )(),
         ]
 
     def __enter__(self):

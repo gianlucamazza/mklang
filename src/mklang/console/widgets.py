@@ -42,8 +42,8 @@ class ActivityTree(Tree):
 
     _turn_node: TreeNode | None
     _brain_open: TreeNode | None
-    _run_nodes: dict[tuple, TreeNode]
-    _state_nodes: dict[tuple, TreeNode]
+    _run_nodes: dict[object, TreeNode]
+    _state_nodes: dict[object, TreeNode]
     _state_kinds: dict[tuple, str]
 
     def _reset_maps(self) -> None:
@@ -204,6 +204,16 @@ class Inspector(Vertical):
     def show_result(self, res: RunResult) -> None:
         ctx_log = self.query_one("#inspector-context", RichLog)
         ctx_log.clear()
+        if res.limits:
+            steps = res.limits.get("steps", {})
+            tokens = res.limits.get("tokens", {})
+            ctx_log.write(
+                Text(
+                    f"{res.status}: steps {steps.get('used', 0)}/{steps.get('limit', '∞')} · "
+                    f"tokens {tokens.get('used', 0)}/{tokens.get('limit', '∞')}\n",
+                    style="bold cyan",
+                )
+            )
         payload = json.dumps(redact(res.context), ensure_ascii=False, indent=2, default=str)
         ctx_log.write(Syntax(payload, "json", word_wrap=True, background_color="default"))
         trace_log = self.query_one("#inspector-trace", RichLog)

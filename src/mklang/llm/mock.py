@@ -79,5 +79,6 @@ class UnparseableJudgeLLM(MockLLM):
         context: dict,
         reasoning: str | None = None,
         allow_none: bool = False,
+        on_event: LLMEvent | None = None,
     ) -> int:
         raise JudgeUnparseable("not a choice")

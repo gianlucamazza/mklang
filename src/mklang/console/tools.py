@@ -29,6 +29,7 @@ from ..checkpoint import taint_frame
 from ..config import load_provider
 from ..engine import run as run_machine_engine
 from ..llm.base import LLM
+from ..model import Machine
 from ..paths import project_machine_root
 from ..registry import base_registry, load_project_registry
 from .capabilities import capability_key, metadata_for, redact
@@ -170,13 +171,13 @@ class ConsoleTools:
     def restore_consented(self, grants: list[str] | set[str]) -> None:
         self._consented.update(grants)
 
-    def machine_registry(self, machine=None) -> dict:
+    def machine_registry(self, machine: Machine | None = None) -> dict:
         registry = self._registry()
         if machine is not None:
             registry[machine.name] = machine
         return registry
 
-    def preflight(self, machine, tools_registry: dict | None = None):
+    def preflight(self, machine: Machine, tools_registry: dict | None = None) -> object:
         return host.check_prepared(
             self.prov,
             machine,

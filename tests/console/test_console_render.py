@@ -118,9 +118,7 @@ def test_status_line_keeps_runtime_data_plain_and_semantic():
 
 
 def test_activity_live_has_bounded_preview_and_private_reasoning_surface():
-    line = r.activity_live(
-        "produce", "generating", "model", "fast", 1250, 250, 1, "x" * 3000
-    )
+    line = r.activity_live("produce", "generating", "model", "fast", 1250, 250, 1, "x" * 3000)
     assert line.plain.startswith(
         "GENERATING produce · model · fast · 1.2s · first 0.2s · retries 1"
     )

@@ -63,6 +63,8 @@ def collect(machine, llm=None, registry=None, **kw):
 def test_events_mirror_the_trace():
     res, events = collect(linear())
     assert res.status == "done"
+    assert events[0]["limits"]["steps"] == {"used": 0, "limit": 5, "remaining": 5}
+    assert events[-1]["limits"] == res.limits
     kinds = [e["type"] for e in events]
     assert kinds == [
         "run-start",

@@ -73,6 +73,16 @@ def test_root_suspend_on_cost():
     f = r.frames[0]
     assert f["machine"] == "lin" and f["state"] == "c" and f["steps"] == 2
     assert f["total_in"] == 20 and f["total_out"] == 10
+    assert r.limits == {
+        "steps": {"used": 2, "limit": 10, "remaining": 8},
+        "tokens": {
+            "used": 30,
+            "limit": 20,
+            "remaining": 0,
+            "input": 20,
+            "output": 10,
+        },
+    }
     assert [s["state"] for s in f["trace"]] == ["a", "b"]
     json.dumps(r.frames)  # the payload must be JSON-safe end-to-end
 
@@ -305,10 +315,16 @@ def test_envelope_save_load_and_hash(tmp_path):
         "cost-exhausted",
         frames,
         100,
+        step_budget=12,
         metadata={"capability": "demo:read_file", "request_id": "req-1"},
     )
     ck = load_checkpoint(ck_path)
-    assert ck["machine"] == "demo" and ck["frames"] == frames and ck["cost_budget"] == 100
+    assert (
+        ck["machine"] == "demo"
+        and ck["frames"] == frames
+        and ck["cost_budget"] == 100
+        and ck["step_budget"] == 12
+    )
     assert ck["metadata"]["capability"] == "demo:read_file"
     assert verify_hash(ck, mk)
     mk.write_text(MK + "# touched\n", encoding="utf-8")

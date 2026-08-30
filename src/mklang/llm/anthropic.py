@@ -7,6 +7,7 @@ budget_tokens on Opus 4.7+/Sonnet 5); the summarized thinking is captured as
 from __future__ import annotations
 
 import time
+from typing import Any
 
 from ..errors import CancellationError, JudgeUnparseable, ProviderError, RefusalError
 from .base import (
@@ -40,7 +41,7 @@ class AnthropicLLM:
         """Close the SDK client, interrupting any in-flight console request."""
         self.client.close()
 
-    def _create(self, *, on_event: LLMEvent | None = None, **kwargs):
+    def _create(self, *, on_event: LLMEvent | None = None, **kwargs: Any) -> Any:
         """messages.create with transient retry and param drop-on-reject."""
         attempt = 0
         while True:

@@ -13,6 +13,7 @@ import shutil
 import sys
 import tempfile
 import time
+from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
@@ -128,7 +129,14 @@ def _emit(
         # enable suspension when a checkpoint path is set.
         assert checkpoint_path is not None and res.error is not None and res.frames is not None
         save_checkpoint(
-            checkpoint_path, machine.name, machine_path, res.error, res.frames, cost_budget, hitl
+            checkpoint_path,
+            machine.name,
+            machine_path,
+            res.error,
+            res.frames,
+            cost_budget,
+            hitl,
+            step_budget=machine.budget,
         )
         out["checkpoint"] = str(checkpoint_path)
         if output_format(args.format, structured_default=True) != "json":
@@ -221,6 +229,8 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_resume(args: argparse.Namespace) -> int:
     if args.max_tokens is not None and args.max_tokens <= 0:
         return _input_error(args, "--max-tokens must be a positive integer")
+    if args.max_steps is not None and args.max_steps <= 0:
+        return _input_error(args, "--max-steps must be a positive integer")
     try:
         ck = load_checkpoint(args.checkpoint)
     except (OSError, ValueError) as e:
@@ -242,6 +252,16 @@ def cmd_resume(args: argparse.Namespace) -> int:
     if isinstance(prep, int):
         return prep
     prov, llm, registry, machine, tools, hooks = prep
+    if args.max_steps is not None:
+        machine = replace(machine, budget=args.max_steps)
+        previous_steps = max((int(f.get("steps", 0)) for f in ck["frames"]), default=0)
+        if args.max_steps <= previous_steps:
+            _log.warning(
+                "step budget %s is not above the %s steps already spent — the run "
+                "will suspend again immediately",
+                args.max_steps,
+                previous_steps,
+            )
     cost_budget = args.max_tokens if args.max_tokens is not None else ck.get("cost_budget")
     if ck.get("reason") == "cost-exhausted" and cost_budget is not None:
         old = ck.get("cost_budget")

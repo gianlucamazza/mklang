@@ -167,9 +167,25 @@ Canonical core fields from `host.build_output(res)`:
   "error": null,
   "result": "…",
   "usage": { "input_tokens": 0, "output_tokens": 0 },
+  "limits": {
+    "steps": { "used": 2, "limit": 8, "remaining": 6 },
+    "tokens": {
+      "used": 120,
+      "limit": 1000,
+      "remaining": 880,
+      "input": 80,
+      "output": 40
+    }
+  },
   "trace": [{ "step": 1, "state": "…", "…": "…" }]
 }
 ```
+
+`limits` is `null` when no runtime limit is configured. Otherwise it reports
+the applied step and token limits together with cumulative usage and remaining
+capacity; token `input` and `output` fields split the cumulative token usage.
+Hosts should surface these values while a run is active and persist them with
+the final result when presenting a suspended or halted run.
 
 Surface extensions:
 

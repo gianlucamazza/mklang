@@ -86,8 +86,11 @@ class Session:
             or not isinstance(spent_out, int)
         ):
             raise ValueError("invalid session counters or history")
-        if spent_in < 0 or spent_out < 0 or not isinstance(consented, list) or not all(
-            isinstance(item, str) for item in consented
+        if (
+            spent_in < 0
+            or spent_out < 0
+            or not isinstance(consented, list)
+            or not all(isinstance(item, str) for item in consented)
         ):
             raise ValueError("invalid session consent or counters")
         if (

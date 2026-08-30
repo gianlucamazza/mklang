@@ -171,6 +171,7 @@ def encode_checkpoint(
     frames: list[dict],
     cost_budget: int | None,
     hitl: bool = False,
+    step_budget: int | None = None,
     machine_source: str | None = None,
     metadata: dict | None = None,
 ) -> bytes:
@@ -186,6 +187,7 @@ def encode_checkpoint(
         "machine_sha256": file_sha256(machine_path),
         "reason": reason,
         "cost_budget": cost_budget,
+        "step_budget": step_budget,
         "hitl": hitl,
         "frames": frames,
     }
@@ -206,6 +208,7 @@ def save_checkpoint(
     frames: list[dict],
     cost_budget: int | None,
     hitl: bool = False,
+    step_budget: int | None = None,
     machine_source: str | None = None,
     metadata: dict | None = None,
     store: CheckpointStore | None = None,
@@ -222,6 +225,7 @@ def save_checkpoint(
         reason,
         frames,
         cost_budget,
+        step_budget=step_budget,
         hitl=hitl,
         machine_source=machine_source,
         metadata=metadata,

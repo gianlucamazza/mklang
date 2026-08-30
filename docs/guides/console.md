@@ -138,7 +138,7 @@ brain must not AUTHOR a machine solely to read the clock.
 | `/run <name> [k=v…]`             | commission directly (`--set`-style JSON coercion) |
 | `/check <name>` / `/read <name>` | validate / show a workspace machine               |
 | `/budget <n>`                    | default token budget for agent turns and commissioned runs |
-| `/resume [n]`                    | list / finish the session's parked turns          |
+| `/resume [n] [steps=N tokens=N]` | list / finish a parked turn with explicit limits |
 | `/session`                       | current session facts                             |
 | `/help` · `/quit`                | help · exit                                       |
 
@@ -185,6 +185,16 @@ in the session audit / transcript, but only a tail of recent turns (and a char
 cap) is injected as `{{history}}` into `agent.mkl`, with an explicit
 `…[history_truncated…]…` marker when anything is dropped. This keeps long sessions
 from exploding the brain prompt.
+
+### Budget exhaustion
+
+The machine `budget` is a step limit; the console `/budget` setting is a
+cumulative token limit covering generation and gate-judge calls. The HUD
+reports both dimensions separately. When either limit is exhausted, the turn
+is suspended and the console asks for new total limits, for example
+`steps=64 tokens=12000`. Press Enter (or type `n`) to park the checkpoint and
+resume it later with `/resume n steps=64 tokens=12000`. No provider or model is
+changed automatically.
 
 ## Web search from the console
 

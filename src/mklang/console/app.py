@@ -18,7 +18,7 @@ from collections.abc import Callable
 from dataclasses import replace as dc_replace
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 
@@ -32,6 +32,8 @@ from . import render as log_render
 from .bridge import TextualBridge
 from .tools import ConsoleTools
 from .workspace import requires_workspace_inspection
+
+_DEFAULT_COST_BUDGET = object()
 
 if TYPE_CHECKING:
     from textual.app import App
@@ -56,9 +58,7 @@ def stream_cancel_mode() -> str:
     """Resolve the console's provider-stream cancellation policy."""
     mode = os.environ.get("MKLANG_STREAM_CANCEL", "immediate").strip().lower()
     if mode not in ("cooperative", "immediate"):
-        raise ValueError(
-            "MKLANG_STREAM_CANCEL must be 'cooperative' or 'immediate', " f"got {mode!r}"
-        )
+        raise ValueError(f"MKLANG_STREAM_CANCEL must be 'cooperative' or 'immediate', got {mode!r}")
     return mode
 
 
@@ -190,6 +190,7 @@ def build_app(
             self.activity_visible = True
             self.inspector_visible = False
             self.current_phase = ""
+            self.current_limits: dict = {}
             self.log_history: list[str] = []  # plain mirror of the log, for tests
             self._live_request: dict = {}
 
@@ -222,9 +223,7 @@ def build_app(
         def action_toggle_activity(self) -> None:
             self.activity_visible = not self.activity_visible
             self.query_one(ActivityTree).set_class(not self.activity_visible, "hidden")
-            self.query_one("#activity-live", Static).set_class(
-                not self.activity_visible, "hidden"
-            )
+            self.query_one("#activity-live", Static).set_class(not self.activity_visible, "hidden")
 
         def action_cancel_run(self) -> None:
             if not self.running or self.answer_mode:
@@ -457,6 +456,7 @@ def build_app(
                     self.spent_in,
                     self.spent_out,
                     self.session.id,
+                    self.current_limits,
                 )
             )
 
@@ -502,6 +502,9 @@ def build_app(
             if e["type"] == "state-start":
                 self.current_phase = str(e.get("state") or "working")
                 self.update_status("waiting" if e.get("kind") == "tool" else "running")
+            if e["type"] == "run-start" and not e.get("run"):
+                self.current_limits = e.get("limits") or self.current_limits
+                self.update_status()
             if e["type"] == "state-done":
                 tokens = e.get("tokens") or {}
                 self.spent_in += tokens.get("input_tokens", 0)
@@ -509,6 +512,7 @@ def build_app(
                 self.update_status()
             if e["type"] == "run-finished":
                 self.current_phase = ""
+                self.current_limits = e.get("limits") or self.current_limits
                 self.clear_live_activity()
             self.query_one(ActivityTree).feed(e)
 
@@ -517,7 +521,7 @@ def build_app(
             self._live_request = {}
             live_widgets = list(self.query("#activity-live"))
             if live_widgets:
-                live_widgets[0].update(log_render.activity_live_idle())
+                cast(Static, live_widgets[0]).update(log_render.activity_live_idle())
 
         def refresh_live_activity(self) -> None:
             if not self._live_request:
@@ -531,7 +535,7 @@ def build_app(
             elapsed = req.get("elapsed_ms")
             if elapsed is None:
                 elapsed = round((time.monotonic() - req["started"]) * 1000)
-            live_widgets[0].update(
+            cast(Static, live_widgets[0]).update(
                 log_render.activity_live(
                     req.get("operation", "llm"),
                     req.get("phase", "working"),
@@ -580,6 +584,7 @@ def build_app(
             box.disabled = True
             self.running = True
             self.cancel_event.clear()
+            self.current_limits = {}
             self.update_status("running")
             self._run_thread_worker(lambda: self.turn(text))
 
@@ -634,6 +639,7 @@ def build_app(
                 self.query_one("#prompt", Input).disabled = True
                 self.running = True
                 self.cancel_event.clear()
+                self.current_limits = {}
                 self.update_status("running")
                 self._run_thread_worker(lambda: self.slash_run(target, inputs))
             elif cmd == "/check" and args:
@@ -658,9 +664,12 @@ def build_app(
                     f"tokens {self.spent_in}+{self.spent_out}[/dim]"
                 )
             elif cmd == "/provider":
-                tiers = ", ".join(
-                    f"{name}={model}" for name, model in sorted(self.tools.prov.tiers.items())
-                ) or "—"
+                tiers = (
+                    ", ".join(
+                        f"{name}={model}" for name, model in sorted(self.tools.prov.tiers.items())
+                    )
+                    or "—"
+                )
                 self.log_chrome(
                     f"[dim]provider {self.tools.prov.name} · judge "
                     f"{self.tools.prov.judge_override() or 'per-tier'} · tiers {tiers}[/dim]"
@@ -678,6 +687,7 @@ def build_app(
                     return
                 try:
                     ck_doc = load_checkpoint(cks[int(args[0])])
+                    overrides = parse_assignments(args[1:])
                 except (IndexError, KeyError, TypeError, ValueError, OSError) as e:
                     self.log_plain(
                         str(e),
@@ -691,7 +701,7 @@ def build_app(
                 )
                 self.query_one(ActivityTree).new_turn("/resume")
                 self.query_one("#prompt", Input).disabled = True
-                self._run_thread_worker(lambda: self.slash_resume(ck_doc))
+                self._run_thread_worker(lambda: self.slash_resume(ck_doc, overrides))
             elif cmd == "/quit":
                 _ = self.run_action("quit")
             elif cmd in ("/run", "/check", "/read", "/budget"):
@@ -710,11 +720,22 @@ def build_app(
             if not self.shutting_down:
                 self.call_from_thread(self.finish_slash, obs)
 
-        def slash_resume(self, ck: dict) -> None:
-            steps = ck["frames"][0].get("steps", 0)
-            machine = dc_replace(brain, budget=steps + 8)
+        def slash_resume(self, ck: dict, overrides: dict | None = None) -> None:
+            frame_steps = max((int(f.get("steps", 0)) for f in ck["frames"]), default=0)
+            step_limit = (
+                int(overrides.get("steps", frame_steps + 8)) if overrides else frame_steps + 8
+            )
+            token_limit = (
+                int(overrides["tokens"])
+                if overrides and "tokens" in overrides
+                else ck.get("cost_budget")
+            )
+            machine = dc_replace(brain, budget=step_limit)
             res = self._run_brain(
-                machine, self._inject_workspace_context(dict(machine.context)), resume=ck["frames"]
+                machine,
+                self._inject_workspace_context(dict(machine.context)),
+                resume=ck["frames"],
+                cost_budget=token_limit,
             )
             if not self.shutting_down:
                 self.call_from_thread(self.finish_turn, "(resumed turn)", res)
@@ -740,7 +761,7 @@ def build_app(
 
         # -- the agent turn (worker thread) ----------------------------------
 
-        def _run_brain(self, machine, ctx, resume=None):
+        def _run_brain(self, machine, ctx, resume=None, cost_budget=_DEFAULT_COST_BUDGET):
             brain_tools = self.tools.as_tool_registry()
             # Keep lightweight engine seams usable by embedders/tests that pass
             # a prepared machine-like object instead of a parsed Machine.
@@ -756,7 +777,11 @@ def build_app(
                 tier_params=self.tools.prov.params,
                 tools=brain_tools,
                 hooks=load_hook_registry(),
-                cost_budget=self.tools.default_cost_budget,
+                cost_budget=(
+                    self.tools.default_cost_budget
+                    if cost_budget is _DEFAULT_COST_BUDGET
+                    else cost_budget
+                ),
                 suspendable=True,
                 resume=resume,
                 on_event=self.bridge.emit,
@@ -800,22 +825,54 @@ def build_app(
             host_mod.inject_host_defaults(ctx)  # brain may declare context.today
             machine = brain
             res = self._run_brain(machine, ctx)
-            # Budget exhaustion is a UI moment: extend and resume, or park a
-            # checkpoint in the session for a later /resume (ADR 0015).
-            while res.status == "suspended" and res.error == "budget-exhausted":
-                if not self.bridge.confirm(
-                    f"turn budget exhausted ({machine.budget} steps) — continue with +8?"
-                ):
+            # Budget exhaustion is a UI moment: extend the exhausted dimension
+            # explicitly, or park a checkpoint for a later /resume.
+            while res.status == "suspended" and res.error in {
+                "budget-exhausted",
+                "cost-exhausted",
+            }:
+                limits = res.limits or {}
+                step_info = limits.get("steps", {})
+                token_info = limits.get("tokens", {})
+                answer = self.bridge.ask(
+                    f"{res.error}: steps {step_info.get('used', 0)}/{step_info.get('limit', '∞')}, "
+                    f"tokens {token_info.get('used', 0)}/{token_info.get('limit', '∞')}. "
+                    "Enter new total limits as steps=N tokens=N (Enter/n = park)."
+                )
+                if not answer.strip() or answer.strip().lower() in {"n", "no", "park"}:
                     ck = self.session.checkpoints_dir / f"turn-{datetime.now():%H%M%S-%f}.json"
                     save_checkpoint(
-                        ck, machine.name, "<console-brain>", res.error, res.frames, None
+                        ck,
+                        machine.name,
+                        "<console-brain>",
+                        res.error,
+                        res.frames,
+                        token_info.get("limit"),
+                        step_budget=machine.budget,
                     )
                     break
-                machine = dc_replace(machine, budget=machine.budget + 8)
+                try:
+                    requested = {
+                        item.split("=", 1)[0].strip().lower(): item.split("=", 1)[1].strip()
+                        for item in answer.replace(",", " ").split()
+                        if "=" in item
+                    }
+                    step_limit = int(requested.get("steps", step_info.get("limit")))
+                    raw_tokens = requested.get("tokens", token_info.get("limit"))
+                    token_limit = None if raw_tokens in (None, "", "none", "∞") else int(raw_tokens)
+                    if step_limit <= step_info.get("used", 0) or (
+                        token_limit is not None and token_limit <= token_info.get("used", 0)
+                    ):
+                        raise ValueError
+                except (TypeError, ValueError):
+                    self.log_chrome("[red]use positive total limits: steps=N tokens=N[/red]")
+                    continue
+                machine = dc_replace(machine, budget=step_limit)
                 res = self._run_brain(
                     machine,
                     self._inject_workspace_context(dict(machine.context)),
                     resume=res.frames,
+                    cost_budget=token_limit,
                 )
             if not self.shutting_down:
                 self.call_from_thread(self.finish_turn, user_message, res)

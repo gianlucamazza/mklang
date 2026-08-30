@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Any
 
 from ..errors import CancellationError, JudgeUnparseable, ProviderError
 from .base import (
@@ -53,7 +54,7 @@ class OpenAICompatLLM:
         """Close the SDK client, interrupting any in-flight console request."""
         self.client.close()
 
-    def _create(self, *, on_event: LLMEvent | None = None, **kwargs):
+    def _create(self, *, on_event: LLMEvent | None = None, **kwargs: Any) -> Any:
         """Robust create: retry transient errors with backoff; drop any single param a
         provider rejects (unsupported temperature / reasoning_effort / extra_body key)."""
         attempt = 0
@@ -82,7 +83,7 @@ class OpenAICompatLLM:
 
     def _stream_create(
         self, kwargs: dict, *, on_event: LLMEvent | None = None, on_delta: LLMDelta
-    ):
+    ) -> Any:
         kwargs = dict(kwargs)
         attempt = 0
         while True:

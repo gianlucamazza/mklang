@@ -35,6 +35,16 @@ def test_build_output_done_validates(schema: dict) -> None:
         context={},
         result="ok",
         usage={"input_tokens": 1, "output_tokens": 2},
+        limits={
+            "steps": {"used": 1, "limit": 5, "remaining": 4},
+            "tokens": {
+                "used": 3,
+                "limit": 100,
+                "remaining": 97,
+                "input": 1,
+                "output": 2,
+            },
+        },
     )
     _validate(schema, host.build_output(res))
 
