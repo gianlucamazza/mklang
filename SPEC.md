@@ -35,6 +35,12 @@ Principles:
   Document portability is syntactic; whether providers fire the same gates on the
   same inputs is measurable and not guaranteed by the language alone.
 
+The execution model has three distinct layers: **machine topology is deterministic**
+(the declared states and targets), **gate evaluation is potentially probabilistic**
+(a prose judge may vary), and **transition enforcement is deterministic** (the
+interpreter applies the selected gate, budgets, hooks, taint policy, and side-effect
+rules). This distinction is normative for technical descriptions of mklang.
+
 ### Comparison
 
 |             | mklang                            | LangGraph         | BAML            | DSPy                   |

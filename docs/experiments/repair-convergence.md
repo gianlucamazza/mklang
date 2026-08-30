@@ -50,6 +50,8 @@ Script: [`scripts/repair_convergence.py`](../../scripts/repair_convergence.py).
 ```bash
 uv run python scripts/repair_convergence.py --provider deepseek --repeats 5
 uv run python scripts/repair_convergence.py --self-check   # offline harness check
+uv run python scripts/repair_convergence.py --provider deepseek --repeats 5 \
+  --arms first_attempt,plain_resample,feedback_repair --jsonl repair-convergence.jsonl
 ```
 
 ## Metrics
@@ -60,6 +62,12 @@ uv run python scripts/repair_convergence.py --self-check   # offline harness che
 | `by_attempt[k].pass_rate` | `passes at k / reached k`                                         |
 | `lift_attempt_2_over_1`   | `p(2) − p(1)` — **the claim under test**                          |
 | `verdict`                 | converging (`lift > 0.05`) / flat / no convergence / not measured |
+
+The comparison command records three arms. `first_attempt` is the paired
+baseline observation from the initial attempt, `plain_resample` repeats the
+same state without appending repair feedback, and `feedback_repair` uses the
+shipped feedback path. Compare success rate, token usage, latency, and
+regressions before describing repair as a reliability primitive.
 
 Reading the verdict:
 

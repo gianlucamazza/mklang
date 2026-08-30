@@ -4,14 +4,22 @@
   "title": "mklang experiment JSONL row",
   "description": "Stable metadata envelope for reproducible live and offline experiment rows. Provider credentials and raw model output are never part of this contract.",
   "type": "object",
-  "required": ["experiment", "provider", "repeat", "status", "input_hash"],
-  "additionalProperties": true,
+  "required": ["schema_version", "runtime_version", "spec_version", "experiment", "provider", "model", "started_at", "judge_model", "judge_tier", "provider_params", "repeat", "status", "input_hash"],
+  "additionalProperties": false,
   "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "runtime_version": { "type": "string", "minLength": 1 },
+    "spec_version": { "type": "string", "minLength": 1 },
     "experiment": {
       "type": "string",
       "enum": ["gate-divergence", "repair-convergence"]
     },
     "provider": { "type": "string", "minLength": 1 },
+    "model": { "type": "string", "minLength": 1 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "judge_model": { "type": ["string", "null"] },
+    "judge_tier": { "type": ["string", "null"] },
+    "provider_params": { "type": "object", "additionalProperties": true },
     "machine": { "type": "string", "minLength": 1 },
     "item": { "type": "string", "minLength": 1 },
     "variant": { "type": "string", "minLength": 1 },
@@ -24,13 +32,23 @@
     "output_hash": { "type": "string", "pattern": "^[0-9a-f]{12}$" },
     "route": { "type": "string" },
     "signature": { "type": "string" },
+    "correct": { "type": ["boolean", "null"] },
+    "skipped": { "type": "boolean" },
+    "error": { "type": ["string", "null"] },
+    "reason": { "type": ["string", "null"] },
+    "judge_override": { "type": ["string", "null"] },
+    "arm": { "type": "string", "enum": ["first_attempt", "plain_resample", "feedback_repair"] },
+    "gates": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "attempts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "max_attempt": { "type": "integer", "minimum": 0 },
+    "metrics": { "type": "object", "additionalProperties": true },
     "usage": {
       "type": ["object", "null"],
       "properties": {
         "input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     }
   },
   "allOf": [

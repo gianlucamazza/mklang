@@ -842,6 +842,7 @@ class _Runner:
         on_untrusted_flow: str = "report",
         tool_effects: dict[str, str] | None = None,
         flow_tainted: bool = False,
+        repair_feedback: bool = True,
     ) -> None:
         self.machine = machine
         self.depth = depth
@@ -860,6 +861,7 @@ class _Runner:
         # one applies, overrides it in `_from_resume`.
         self.external: set[str] = set()
         self.flow_tainted: bool = flow_tainted
+        self.repair_feedback = repair_feedback
         self.state_id: str = machine.entry
         self.trace: list[dict] = []
         self.steps: int = 0
@@ -974,7 +976,7 @@ class _Runner:
             self.steps if at_steps is None else at_steps,
             self.total_in,
             self.total_out,
-            self.feedback,
+            self.feedback if self.repair_feedback else "",
             self.repair_left,
             self.trace,
             self.tainted,
@@ -1257,7 +1259,7 @@ class _Runner:
             out, sub, reasoning, (step_in, step_out), meta = _exec_one(
                 S,
                 self.ctx,
-                self.feedback,
+                self.feedback if self.repair_feedback else "",
                 self.deps,
                 self.machine,
                 self.depth,
@@ -1411,6 +1413,7 @@ def run(
     on_untrusted_flow: str = "report",
     tool_effects: dict[str, str] | None = None,
     flow_tainted: bool = False,
+    repair_feedback: bool = True,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
@@ -1454,6 +1457,7 @@ def run(
         on_untrusted_flow=on_untrusted_flow,
         tool_effects=tool_effects,
         flow_tainted=flow_tainted,
+        repair_feedback=repair_feedback,
     ).go()
     if on_event is not None:
         with contextlib.suppress(Exception):

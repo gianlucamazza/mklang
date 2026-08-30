@@ -17,6 +17,30 @@ states produce, gates judge, and the machine routes to the next state, repair,
 escalation, tool, or failure. The topology is explicit and traceable; the
 judge's accuracy and cross-provider stability remain empirical questions.
 
+### Why mklang?
+
+- **Explicit control flow** — states, gates, repairs, escalations, and effects are visible in one document.
+- **Provider-independent program document** — the `.mkl` artifact does not embed a vendor or model.
+- **Measurable behavioural stability** — routing can be compared across providers and tracked over time.
+
+```yaml
+machine: greet
+entry: answer
+states:
+  answer:
+    prompt: "Greet the user in one sentence."
+    output: reply
+    gates:
+      - when: the reply is a greeting
+        then: ok
+        to: END
+```
+
+**mklang vs Python/LangGraph.** Python/LangGraph is application code that constructs
+and runs a graph; mklang is a portable document/spec interpreted by an LLM runtime.
+The trade-off is declarative portability and inspectable control flow in exchange for
+less host-language expressiveness.
+
 ```
 mklang : LangGraph  ::  a declarative spec : Python code
 ```

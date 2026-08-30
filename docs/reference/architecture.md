@@ -28,6 +28,10 @@ a contributor's map, not language semantics — those live in the SPEC. The
   values) plus `"external"` / `"flow_tainted"` / `"resume_injected"` (what _this_
   resume supplied, so a stale human reply cannot confirm a later decision), all
   fail-safe when absent.
+- `engine.py` intentionally remains the shared orchestration boundary. Its mutable
+  runner state couples budget, checkpoint, fan-out, taint, judge and transition
+  semantics; extracting those concerns is a future semantic refactor, not a
+  cosmetic module split. Preserve conformance traces before attempting it.
 - `interpolate.py` — `{{key.path}}` interpolation and value formatting for
   prompts; `render_delimited` fences tainted substitutions with a per-call
   nonce (ADR 0025).

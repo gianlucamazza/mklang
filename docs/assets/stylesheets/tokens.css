@@ -17,16 +17,22 @@
   --bg-input: rgba(8, 10, 16, 0.72);
   --bg-hover: rgba(255, 255, 255, 0.045);
   --bg-active: rgba(255, 255, 255, 0.07);
+  --surface-ink: #0a0d13;
+  --surface-raised: #111722;
+  --surface-recessed: #070a10;
+  --surface-human: rgba(229, 184, 74, 0.08);
 
   /* Borders — soft hairlines */
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);
   --border-hover: rgba(255, 255, 255, 0.2);
   --border-focus: #6b9cff;
+  --focus-ring: 0 0 0 3px var(--accent-soft);
   --border-w: 1px;
 
   /* Text */
   --text: #f2f4f8;
+  --text-primary: var(--text);
   --text-secondary: #a7b0c0;
   --text-muted: #7a8498;
 
@@ -38,6 +44,8 @@
   --accent-glow: rgba(107, 156, 255, 0.35);
   --accent-on: #061018;
   --brand-deep: #3d5fd4;
+  --accent-human: #e5b84a;
+  --accent-human-text: #ffe29a;
 
   /* Status */
   --ok: #34c97a;
@@ -83,9 +91,12 @@
   --shadow-focus: 0 0 0 3px var(--accent-soft);
   --shadow-btn:
     0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 4px 14px var(--accent-glow);
+  --shadow-panel: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 50px rgba(0,0,0,.22);
+  --shadow-lift: 0 12px 30px rgba(0,0,0,.28);
 
   /* Type */
   --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-display: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
 
   --space-1: 0.25rem;
@@ -94,7 +105,11 @@
   --space-4: 1rem;
   --space-5: 1.25rem;
   --space-6: 1.5rem;
+  --space-7: 1.75rem;
   --space-8: 2rem;
+  --space-9: 2.5rem;
+  --space-10: 3rem;
+  --space-12: 4rem;
 
   /* Breakpoints (documented; used in media queries below)
      --bp-sm: 480px  phone

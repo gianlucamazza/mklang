@@ -33,6 +33,7 @@ import argparse
 import hashlib
 import json
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -41,9 +42,11 @@ from mklang.config import ProviderConfig, load_provider
 from mklang.engine import run
 from mklang.llm.base import LLM
 from mklang.model import Machine, parse_machine
-from mklang.registry import base_registry
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from mklang.registry import base_registry  # noqa: E402
+from scripts.evidence_contract import envelope  # noqa: E402
 
 
 def _input_hash(item: dict) -> str:
@@ -349,35 +352,47 @@ def _run_once(
     config: str,
     build_llm: Callable[[ProviderConfig], LLM] = _build_llm,
     registry: dict | None = None,
+    repair_feedback: bool = True,
+    arm: str = "feedback_repair",
 ) -> dict:
     """One machine run; returns a row with the per-attempt outcomes."""
     reg = registry if registry is not None else _registry()
     machine = reg.get(item["machine"])
     if machine is None:
-        return {
-            "experiment": "repair-convergence",
-            "item": item["id"],
-            "machine": item["machine"],
-            "provider": provider_name,
-            "input_hash": _input_hash(item),
-            "repeat": 0,
-            "status": "skipped",
-            "skipped": True,
-            "reason": f"unknown machine {item['machine']}",
-        }
+        prov = load_provider(config, provider_name)
+        return envelope(
+            experiment="repair-convergence",
+            provider=prov,
+            model=prov.tiers.get("fast", "unknown"),
+            judge_model=prov.judge_override(),
+            judge_tier=None,
+            params=prov.params,
+            item=item["id"],
+            machine=item["machine"],
+            input_hash=_input_hash(item),
+            repeat=0,
+            status="skipped",
+            skipped=True,
+            reason=f"unknown machine {item['machine']}",
+        )
     prov = load_provider(config, provider_name)
     if build_llm is _build_llm and not prov.api_key and prov.name != "local":
-        return {
-            "experiment": "repair-convergence",
-            "item": item["id"],
-            "machine": machine.name,
-            "provider": provider_name,
-            "input_hash": _input_hash(item),
-            "repeat": 0,
-            "status": "skipped",
-            "skipped": True,
-            "reason": "no API key",
-        }
+        return envelope(
+            experiment="repair-convergence",
+            provider=prov,
+            model=prov.tiers.get(machine.default_tier, "unknown"),
+            judge_model=prov.judge_override(),
+            judge_tier=None,
+            params=prov.params,
+            item=item["id"],
+            machine=machine.name,
+            input_hash=_input_hash(item),
+            repeat=0,
+            status="skipped",
+            skipped=True,
+            reason="no API key",
+        )
+    started = time.perf_counter()
     result = run(
         machine,
         {**machine.context, **item["context"]},
@@ -387,24 +402,36 @@ def _run_once(
         prov.judge_override(),
         tier_params=prov.params,
         cost_budget=40_000,
+        repair_feedback=repair_feedback,
     )
     rows = attempts_from_trace(result.trace or [], _repair_states(machine))
-    return {
-        "experiment": "repair-convergence",
-        "item": item["id"],
-        "machine": machine.name,
-        "provider": provider_name,
-        "input_hash": _input_hash(item),
-        "skipped": False,
-        "status": result.status,
-        "error": result.error,
-        "attempts": rows,
-        "max_attempt": max((r["attempt"] for r in rows), default=0),
-        "usage": result.usage,
-    }
+    if arm == "first_attempt":
+        # The first-arm observation is paired with the same run's initial
+        # attempt; retaining only it avoids treating later retries as outcomes
+        # of the baseline arm.
+        rows = rows[:1]
+    return envelope(
+        experiment="repair-convergence",
+        provider=prov,
+        model=prov.tiers.get(machine.default_tier, "unknown"),
+        judge_model=prov.judge_override(),
+        judge_tier=None,
+        params=prov.params,
+        item=item["id"],
+        machine=machine.name,
+        input_hash=_input_hash(item),
+        skipped=False,
+        status=result.status,
+        error=result.error,
+        arm=arm,
+        attempts=rows,
+        max_attempt=max((r["attempt"] for r in rows), default=0),
+        usage=result.usage,
+        metrics={"latency_ms": round((time.perf_counter() - started) * 1000, 2)},
+    )
 
 
-def summarize(rows: list[dict]) -> dict:
+def summarize(rows: list[dict], *, _include_arms: bool = True) -> dict:
     """Pass rate per attempt index, per machine and pooled."""
     done = [r for r in rows if not r.get("skipped")]
     per_machine: dict[str, dict] = {}
@@ -444,6 +471,12 @@ def summarize(rows: list[dict]) -> dict:
         "per_machine": {name: rates(counts) for name, counts in per_machine.items()},
         **rates(pooled),
     }
+    arms = sorted(str(r["arm"]) for r in done if r.get("arm"))
+    if arms and _include_arms:
+        summary["by_arm"] = {
+            arm: summarize([r for r in rows if r.get("arm") == arm], _include_arms=False)
+            for arm in arms
+        }
     summary["verdict"] = _verdict(summary["lift_attempt_2_over_1"], pooled.get(2))
     return summary
 
@@ -492,6 +525,11 @@ def main(argv: list[str] | None = None) -> int:
         help="comma-separated machine names to keep from the corpus (default: all)",
     )
     p.add_argument("--jsonl", type=Path, default=None, help="append raw rows here")
+    p.add_argument(
+        "--arms",
+        default="feedback_repair",
+        help="comma-separated arms: first_attempt,plain_resample,feedback_repair",
+    )
     p.add_argument("--summary-json", type=Path, default=None, help="write the summary JSON here")
     p.add_argument(
         "--self-check",
@@ -502,6 +540,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     if args.repeats < 1:
         p.error("--repeats must be at least 1")
+    arms = [x.strip() for x in args.arms.split(",") if x.strip()]
+    if not arms or set(arms) - {"first_attempt", "plain_resample", "feedback_repair"}:
+        p.error("--arms must contain first_attempt, plain_resample, feedback_repair")
 
     keep = {x.strip() for x in args.machines.split(",") if x.strip()}
     corpus = [i for i in CORPUS if not keep or i["machine"] in keep]
@@ -512,33 +553,59 @@ def main(argv: list[str] | None = None) -> int:
     rows: list[dict] = []
     for item in corpus:
         for i in range(args.repeats):
-            try:
-                row = _run_once(item, args.provider, args.config, build_llm=build)
-            except Exception as e:
-                row = {
-                    "experiment": "repair-convergence",
-                    "item": item["id"],
-                    "machine": item["machine"],
-                    "provider": args.provider,
-                    "input_hash": _input_hash(item),
-                    "skipped": False,
-                    "status": "error",
-                    "error": f"{type(e).__name__}: {e}",
-                    "attempts": [],
-                }
-            row["repeat"] = i
-            rows.append(row)
-            tag = f"{item['id']}[{i}]"
-            if row.get("skipped"):
-                print(f"# skip {tag}: {row.get('reason')}", file=sys.stderr)
-            else:
-                print(
-                    f"{tag}: status={row.get('status')} attempts={row.get('max_attempt')}",
-                    file=sys.stderr,
-                )
-            if args.jsonl:
-                with args.jsonl.open("a", encoding="utf-8") as f:
-                    f.write(json.dumps(row, ensure_ascii=False) + "\n")
+            for arm in arms:
+                try:
+                    row = _run_once(
+                        item,
+                        args.provider,
+                        args.config,
+                        build_llm=build,
+                        repair_feedback=arm == "feedback_repair",
+                        arm=arm,
+                    )
+                except Exception as e:
+                    try:
+                        failed_prov = load_provider(args.config, args.provider)
+                    except Exception:
+                        failed_prov = type(
+                            "Provider",
+                            (),
+                            {
+                                "name": args.provider,
+                                "tiers": {"fast": "unknown"},
+                                "params": {},
+                                "judge_override": lambda self: None,
+                            },
+                        )()
+                    row = envelope(
+                        experiment="repair-convergence",
+                        provider=failed_prov,
+                        model=failed_prov.tiers.get("fast", "unknown"),
+                        judge_model=None,
+                        judge_tier=None,
+                        params=failed_prov.params,
+                        item=item["id"],
+                        machine=item["machine"],
+                        input_hash=_input_hash(item),
+                        skipped=False,
+                        status="error",
+                        error=f"{type(e).__name__}: {e}",
+                        arm=arm,
+                        attempts=[],
+                    )
+                row["repeat"] = i
+                rows.append(row)
+                tag = f"{item['id']}/{arm}[{i}]"
+                if row.get("skipped"):
+                    print(f"# skip {tag}: {row.get('reason')}", file=sys.stderr)
+                else:
+                    print(
+                        f"{tag}: status={row.get('status')} attempts={row.get('max_attempt')}",
+                        file=sys.stderr,
+                    )
+                if args.jsonl:
+                    with args.jsonl.open("a", encoding="utf-8") as f:
+                        f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     summary = summarize(rows)
     if args.self_check:

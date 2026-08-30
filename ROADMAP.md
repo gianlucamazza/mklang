@@ -27,12 +27,14 @@ Evidence Release definition of done:
 - provider/machine/repeat JSONL rows validate against
   [`schema/experiment-result.schema.json`](./schema/experiment-result.schema.json);
 - gate-divergence includes at least three providers, a boundary corpus, and
-  cross/intra-provider, accuracy, trajectory, and paraphrase metrics;
+  cross/intra-provider, temporal, accuracy, trajectory, and paraphrase metrics;
 - repair-convergence compares feedback repair with plain resampling on the same
   task set, using at least two providers;
 - the five-reader protocol has five public recruitment results recorded verbatim;
 - the report publishes raw data, scripts, environment metadata, costs, and
-  negative results with no language/spec claim inferred from a green run.
+  negative results with no language/spec claim inferred from a green run;
+- raw rows live in a dated `evidence/<release>/` directory with a manifest and
+  checksums; Markdown reports are derived views, not the primary dataset.
 
 ## Next
 
@@ -53,6 +55,8 @@ and experiment-specific metrics. Secrets and raw model output are excluded.
   first live rows landed 2026-08-09; a third provider is [#60](https://github.com/gianlucamazza/mklang/issues/60).
 - **Repair convergence** ([protocol + results](./docs/experiments/repair-convergence.md)) —
   first measured row landed 2026-08-20 (`lift` −0.41 on DeepSeek, 13 second attempts);
+  `--arms first_attempt,plain_resample,feedback_repair` records the comparison arm
+  in every raw row;
   a second provider is what ADR 0031 §3 still needs.
 - **Control-flow-taint incidence** ([protocol](./docs/experiments/taint-incidence.md)) —
   harness exists (`scripts/taint_incidence.py`); the external-machine corpus waits on

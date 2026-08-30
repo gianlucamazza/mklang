@@ -92,6 +92,7 @@ uv run python scripts/gate_divergence.py --judge-tier fast
 | `paraphrase_invariance_rate`    | Same provider, same evidence, reworded conditions → same route?             |
 | `per_machine` / `paraphrase`    | The same metrics broken down per suite machine / per wording set            |
 | `distinct_signatures`           | Set of observed routing patterns                                            |
+| `temporal_control_flow_agreement` | Same input hash, one provider, distinct calendar runs → same route/signature? |
 
 ### Why the headline number was not enough
 
