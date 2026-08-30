@@ -65,7 +65,8 @@ providers:
       reasoning: gpt-5.6-sol
     # judge: gpt-5.6-luna # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
     params:
-      # max_tokens defaults to 4096 on OpenAI-compat when omitted (ADR 0018).
+      # output budget defaults to 4096; OpenAI uses max_completion_tokens,
+      # while other OpenAI-compatible providers use max_tokens (ADR 0018).
       reasoning:
         reasoning_effort: high # minimal | low | medium | high
         # max_tokens: 8192

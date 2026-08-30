@@ -43,6 +43,8 @@ OPENAI_COMPAT_PROFILES = {
     # Hetzner Experiments documents chat completions, but not JSON response
     # format; keep the judge prompt self-contained on this experimental endpoint.
     "hetzner": OpenAICompatProfile(supports_response_format=False),
+    # OpenAI's current GPT models reject max_tokens in favor of the newer name.
+    "openai": OpenAICompatProfile(max_output_tokens_param="max_completion_tokens"),
 }
 BUILTINS: dict[str, ProviderFactory] = {
     "anthropic": anthropic,

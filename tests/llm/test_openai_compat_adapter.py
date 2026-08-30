@@ -89,6 +89,24 @@ def test_produce_maps_response_and_defaults_max_tokens():
     assert sent["messages"][0]["role"] == "system"
 
 
+def test_openai_profile_uses_max_completion_tokens():
+    llm, completions = _adapter(lambda n, k: _Resp())
+    llm.profile = OpenAICompatProfile(max_output_tokens_param="max_completion_tokens")
+    llm.produce("gpt-5.5", "sys", "usr")
+    sent = completions.calls[0]
+    assert sent["max_completion_tokens"] == 4096
+    assert "max_tokens" not in sent
+
+
+def test_openai_profile_maps_tier_max_tokens_param():
+    llm, completions = _adapter(lambda n, k: _Resp())
+    llm.profile = OpenAICompatProfile(max_output_tokens_param="max_completion_tokens")
+    llm.produce("gpt-5.5", "sys", "usr", params={"max_tokens": 8192})
+    sent = completions.calls[0]
+    assert sent["max_completion_tokens"] == 8192
+    assert "max_tokens" not in sent
+
+
 def test_produce_marks_length_stop_as_truncated():
     llm, _ = _adapter(lambda n, k: _Resp(finish="length"))
     p = llm.produce("m", "sys", "usr")

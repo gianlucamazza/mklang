@@ -238,7 +238,7 @@ full engine trace. That observation is still honest about cutoff:
 
 | Field              | Meaning                                                         |
 | ------------------ | --------------------------------------------------------------- |
-| `truncated`        | A produce step hit max_tokens/length (ADR 0018)                 |
+| `truncated`        | A produce step hit the provider output limit (ADR 0018)         |
 | `finish_reason`    | Provider stop reason when known                                 |
 | `trace`            | `{steps, truncated, truncated_steps:[{state, finish_reason?}]}` |
 | `result_truncated` | Observation budget clipped a long `result` string               |

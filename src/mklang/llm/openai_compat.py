@@ -21,7 +21,7 @@ from .base import (
 from .context_view import format_judge_context
 
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
-_TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "top_p", "seed"}
+_TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "max_completion_tokens", "top_p", "seed"}
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,7 @@ class OpenAICompatProfile:
 
     omit_temperature_when_thinking: bool = False
     supports_response_format: bool = True
+    max_output_tokens_param: str = "max_tokens"
 
 
 class OpenAICompatLLM:
@@ -148,9 +149,11 @@ class OpenAICompatLLM:
         _apply_params(kwargs, params, self.profile)
         # Align with Anthropic's explicit budget: avoid provider-default short
         # completions that look like silent cutoff (ADR 0018). Tier params may
-        # override; unsupported max_tokens is dropped and retried by _create.
-        if "max_tokens" not in kwargs:
-            kwargs["max_tokens"] = 4096
+        # override; unsupported provider parameters are dropped and retried by
+        # _create. OpenAI's current GPT models require max_completion_tokens.
+        output_param = self.profile.max_output_tokens_param
+        if output_param not in kwargs:
+            kwargs[output_param] = 4096
         if on_delta is not None:
             text, stream_reasoning, usage, finish = self._stream_create(
                 kwargs, on_event=on_event, on_delta=on_delta
@@ -253,6 +256,9 @@ def _apply_params(
         return
     extra: dict = {}
     for key, value in params.items():
+        if key == "max_tokens" and profile and profile.max_output_tokens_param != "max_tokens":
+            kwargs[profile.max_output_tokens_param] = value
+            continue
         if key in _TOP_LEVEL_PARAMS:
             kwargs[key] = value
         else:
