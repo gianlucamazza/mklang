@@ -75,6 +75,7 @@ class ConsoleTools:
     task_persist: Callable[[], object] | None = None
     _consented: set = field(default_factory=set)
     _close_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
+    _provider_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
     _closed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self):
@@ -111,6 +112,27 @@ class ConsoleTools:
             fs.configure_fs(self._previous_fs_backend)
             fs.allow_writes(False)
             self._fs_bound = False
+
+    def interrupt_provider(self) -> None:
+        """Interrupt an in-flight provider call and prepare the next turn.
+
+        SDK calls are synchronous, so cancelling only the engine callback cannot
+        wake a socket that has produced no bytes yet. Closing the transport is the
+        provider-supported lifecycle boundary; a fresh client is created for the
+        next request so cancellation does not poison the console session.
+        """
+        with self._provider_lock:
+            current = self.llm
+            close = getattr(current, "close", None)
+            close_error: Exception | None = None
+            if callable(close):
+                try:
+                    close()
+                except Exception as exc:
+                    close_error = exc
+            self.llm = (self.build_llm or _default_build_llm)(self.prov)
+            if close_error is not None:
+                raise close_error
 
     def _audit(self, event: str, **fields: object) -> None:
         if self.audit is None:

@@ -157,6 +157,36 @@ def test_close_is_optional_and_idempotent(tmp_path):
     tools_without_close.close()
 
 
+def test_interrupt_provider_closes_inflight_client_and_rebuilds(tmp_path):
+    clients = []
+
+    class ClosableLLM(MockLLM):
+        def __init__(self):
+            super().__init__()
+            self.close_calls = 0
+
+        def close(self):
+            self.close_calls += 1
+
+    def build(_prov):
+        client = ClosableLLM()
+        clients.append(client)
+        return client
+
+    instance = ConsoleTools(
+        config=CONFIG,
+        provider=None,
+        bridge=FakeBridge(),
+        workspace=tmp_path / "interrupt",
+        build_llm=build,
+    )
+    original = instance.llm
+    instance.interrupt_provider()
+    assert original.close_calls == 1
+    assert instance.llm is clients[1]
+    assert instance.llm is not original
+
+
 def test_list_and_describe_include_workspace_machines(tools):
     (tools.machine_root / "approval.mkl").parent.mkdir(parents=True, exist_ok=True)
     (tools.machine_root / "approval.mkl").write_text(HITL_SRC, encoding="utf-8")

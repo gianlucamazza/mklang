@@ -331,7 +331,12 @@ def _call_judge(
             output_tokens=int(usage[1] or 0),
         )
         return verdict, total
-    except Exception as exc:
+    except Exception as caught:
+        exc: Exception = caught
+        if deps.stream_cancel == "immediate" and deps.cancel_requested is not None:
+            with contextlib.suppress(Exception):
+                if bool(deps.cancel_requested()):
+                    exc = CancellationError("stream cancellation requested")
         _llm_event(
             deps,
             "error",
@@ -340,7 +345,7 @@ def _call_judge(
             elapsed_ms=round((time.monotonic() - started) * 1000),
             error_type=type(exc).__name__,
         )
-        raise
+        raise exc from caught
 
 
 def _judge_prose_batch(
@@ -600,7 +605,12 @@ def _exec_produce(
                 temperature=temperature,
                 params=params,
             )
-    except Exception as exc:
+    except Exception as caught:
+        exc: Exception = caught
+        if deps.stream_cancel == "immediate" and deps.cancel_requested is not None:
+            with contextlib.suppress(Exception):
+                if bool(deps.cancel_requested()):
+                    exc = CancellationError("stream cancellation requested")
         _llm_event(
             deps,
             "error",
@@ -610,7 +620,7 @@ def _exec_produce(
             elapsed_ms=round((time.monotonic() - started) * 1000),
             error_type=type(exc).__name__,
         )
-        raise
+        raise exc from caught
     _llm_event(
         deps,
         "done",

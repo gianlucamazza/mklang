@@ -230,6 +230,13 @@ def build_app(
             if not self.running or self.answer_mode:
                 return
             self.cancel_event.set()
+            if self.stream_cancel == "immediate":
+                try:
+                    self.tools.interrupt_provider()
+                except Exception as exc:
+                    self.log_chrome(
+                        f"[red]Provider transport interruption failed: {type(exc).__name__}[/red]"
+                    )
             self.log_chrome(
                 "[yellow]Stop requested — waiting for the current state to finish…[/yellow]"
             )
