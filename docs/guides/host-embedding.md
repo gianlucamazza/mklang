@@ -131,7 +131,7 @@ business fields.
 
 | Concern                  | Rule                                                                                                 |
 | ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Provider API keys        | Host `.env` / environment (`api_key_env` in `runtime.yaml`); never in `.mkl`                         |
+| Provider API keys        | Host `.env` / environment (`api_key_env`) or user-owned `api_key_file` in `runtime.yaml`; never in `.mkl` |
 | Tool secrets (Tavily, …) | Same layering; `runtime.yaml` `tools:` is non-secret backend selection                               |
 | Config resolution        | Explicit `--config` / `MKLANG_CONFIG` > project > user > system > bundled ([install](install.md))    |
 | FS workspace             | `--workspace` / `MKLANG_FS_ROOT` / `tools.fs.workspace`; writes need `--allow-write` or config grant |

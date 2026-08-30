@@ -41,3 +41,15 @@ def test_bundled_hetzner_provider_configuration():
     assert provider.api_key_env == "HETZNER_INFERENCE_API_KEY"
     assert set(provider.tiers) == {"fast", "balanced", "reasoning"}
     assert set(provider.tiers.values()) == {"Qwen/Qwen3.6-35B-A3B-FP8"}
+
+
+def test_provider_reads_key_from_user_owned_file(tmp_path):
+    key_file = tmp_path / "inference.token"
+    key_file.write_text("test-key\n")
+    provider = {
+        "api_key_file": str(key_file),
+        "tiers": {"fast": "f", "balanced": "b", "reasoning": "r"},
+    }
+    loaded = load_provider(_write(tmp_path, provider))
+    assert loaded.api_key == "test-key"
+    assert loaded.api_key_file == str(key_file)

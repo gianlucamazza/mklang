@@ -114,6 +114,8 @@ providers:
     protocol: openai_compat
     base_url: https://inference.hetzner.com/api/v1
     api_key_env: HETZNER_INFERENCE_API_KEY
+    # Optional alternative to .env: one line, mode 0600, outside the repository.
+    # api_key_file: ~/.config/hetzner/inference.token
     tiers:
       fast: Qwen/Qwen3.6-35B-A3B-FP8
       balanced: Qwen/Qwen3.6-35B-A3B-FP8

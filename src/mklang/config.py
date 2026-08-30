@@ -16,6 +16,7 @@ class ProviderConfig:
     tiers: dict[str, str]  # fast/balanced/reasoning -> model id
     api_key: str = ""
     api_key_env: str = ""  # the env var the key is read from, for diagnostics
+    api_key_file: str = ""  # optional user-owned file containing the key
     base_url: str | None = None
     judge: str | None = None
     params: dict = field(default_factory=dict)
@@ -149,6 +150,15 @@ def load_provider(
     api_key = os.environ.get(api_key_name, "") or project_env_values.get(api_key_name, "")
     if not api_key:
         api_key = user_env_values.get(api_key_name, "")
+    api_key_file = str(p.get("api_key_file", "") or "")
+    if not api_key and api_key_file:
+        key_path = Path(api_key_file).expanduser()
+        try:
+            api_key = key_path.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            raise ValueError(
+                f"provider {name!r} api_key_file {str(key_path)!r} cannot be read: {exc}"
+            ) from exc
     # Publish the optional `tools:` block process-wide (ADR 0016): every
     # executing surface passes through here before any tool runs.
     from .toolconfig import configure_tools, parse_tools_block
@@ -160,6 +170,7 @@ def load_provider(
         protocol=protocol,
         api_key=api_key,
         api_key_env=p.get("api_key_env", ""),
+        api_key_file=api_key_file,
         base_url=p.get("base_url"),
         judge=p.get("judge"),
         params=params,

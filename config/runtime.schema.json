@@ -89,6 +89,10 @@
           "type": "string",
           "description": "Name of the env var holding this provider's API key."
         },
+        "api_key_file": {
+          "type": "string",
+          "description": "Optional user-owned file containing the provider API key; used after environment and dotenv values."
+        },
         "base_url": {
           "type": "string",
           "description": "Override endpoint (OpenAI-compatible local servers, proxies)."
