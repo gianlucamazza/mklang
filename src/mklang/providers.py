@@ -44,7 +44,9 @@ OPENAI_COMPAT_PROFILES = {
     # format; keep the judge prompt self-contained on this experimental endpoint.
     "hetzner": OpenAICompatProfile(supports_response_format=False),
     # OpenAI's current GPT models reject max_tokens in favor of the newer name.
-    "openai": OpenAICompatProfile(max_output_tokens_param="max_completion_tokens"),
+    "openai": OpenAICompatProfile(
+        max_output_tokens_param="max_completion_tokens", supports_temperature=False
+    ),
 }
 BUILTINS: dict[str, ProviderFactory] = {
     "anthropic": anthropic,

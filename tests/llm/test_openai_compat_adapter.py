@@ -107,6 +107,15 @@ def test_openai_profile_maps_tier_max_tokens_param():
     assert "max_tokens" not in sent
 
 
+def test_openai_profile_omits_temperature_for_produce_and_judge():
+    llm, completions = _adapter(lambda n, k: _Resp(content='{"choice": 1}'))
+    llm.profile = OpenAICompatProfile(supports_temperature=False)
+    llm.produce("gpt-5.5", "sys", "usr")
+    assert "temperature" not in completions.calls[0]
+    llm.judge("gpt-5.5", ["yes"], "out", {})
+    assert "temperature" not in completions.calls[1]
+
+
 def test_produce_marks_length_stop_as_truncated():
     llm, _ = _adapter(lambda n, k: _Resp(finish="length"))
     p = llm.produce("m", "sys", "usr")

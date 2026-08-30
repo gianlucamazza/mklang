@@ -31,6 +31,7 @@ class OpenAICompatProfile:
     omit_temperature_when_thinking: bool = False
     supports_response_format: bool = True
     max_output_tokens_param: str = "max_tokens"
+    supports_temperature: bool = True
 
 
 class OpenAICompatLLM:
@@ -147,6 +148,8 @@ class OpenAICompatLLM:
             "temperature": temperature,
         }
         _apply_params(kwargs, params, self.profile)
+        if not self.profile.supports_temperature:
+            kwargs.pop("temperature", None)
         # Align with Anthropic's explicit budget: avoid provider-default short
         # completions that look like silent cutoff (ADR 0018). Tier params may
         # override; unsupported provider parameters are dropped and retried by
@@ -209,6 +212,8 @@ class OpenAICompatLLM:
         }
         if self.profile.supports_response_format:
             kwargs["response_format"] = {"type": "json_object"}
+        if not self.profile.supports_temperature:
+            kwargs.pop("temperature", None)
         r = self._create(on_event=on_event, **kwargs)
         text = r.choices[0].message.content or ""
         idx, method = parse_choice(text, len(conditions) + (1 if allow_none else 0))
