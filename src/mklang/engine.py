@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import inspect
 import re
+import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
@@ -122,6 +123,8 @@ class _Ctx:
     # Host classification of tool names ("read" / "effect"), overriding
     # controlflow.TOOL_EFFECTS. Unlisted tools stay effectful by default.
     tool_effects: dict[str, str] = field(default_factory=dict)
+    run_id: str = ""
+    parent_run_id: str | None = None
 
 
 def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) -> None:
@@ -129,7 +132,16 @@ def _emit(deps: _Ctx, type_: str, machine: str, depth: int, **fields: object) ->
         return
     # An observer must never affect the run.
     with contextlib.suppress(Exception):
-        deps.on_event({"type": type_, "machine": machine, "depth": depth, **fields})
+        deps.on_event(
+            {
+                "type": type_,
+                "machine": machine,
+                "depth": depth,
+                "run_id": deps.run_id,
+                **({"parent_run_id": deps.parent_run_id} if deps.parent_run_id else {}),
+                **fields,
+            }
+        )
 
 
 def _preview(value: object, limit: int = 200) -> str:
@@ -421,6 +433,7 @@ def _exec_call(
         # performs (SPEC §6 / ADR 0030). The sub-run's own confirmation does not
         # travel back up — it clears the sub-machine's decision chain, not ours.
         flow_tainted=flow_tainted,
+        parent_run_id=deps.run_id,
     )
     u = sub.usage or {}
     tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
@@ -843,6 +856,8 @@ class _Runner:
         tool_effects: dict[str, str] | None = None,
         flow_tainted: bool = False,
         repair_feedback: bool = True,
+        run_id: str = "",
+        parent_run_id: str | None = None,
     ) -> None:
         self.machine = machine
         self.depth = depth
@@ -879,7 +894,9 @@ class _Runner:
         # before building deps or applying a resume frame.
         if depth > MAX_CALL_DEPTH:
             self._init_error = RunResult("halt", [], dict(context), error="call-depth-exceeded")
-            self.deps = _Ctx(llm, tiers, judge, registry, {}, {}, {})
+            self.deps = _Ctx(
+                llm, tiers, judge, registry, {}, {}, {}, run_id=run_id, parent_run_id=parent_run_id
+            )
             return
         if on_truncate not in ("report", "halt"):
             raise ValueError(f"on_truncate must be 'report' or 'halt', got {on_truncate!r}")
@@ -906,6 +923,8 @@ class _Runner:
             delimit=delimit,
             on_untrusted_flow=on_untrusted_flow,
             tool_effects=dict(tool_effects or {}),
+            run_id=run_id,
+            parent_run_id=parent_run_id,
         )
         # Provenance taint (SPEC §6 / ADR 0025): a top-level key is trusted iff its
         # value is still the author's `.mkl` literal; host-supplied or host-overridden
@@ -1414,6 +1433,8 @@ def run(
     tool_effects: dict[str, str] | None = None,
     flow_tainted: bool = False,
     repair_feedback: bool = True,
+    run_id: str | None = None,
+    parent_run_id: str | None = None,
 ) -> RunResult:
     """Run a machine and emit one additive terminal event for every outcome.
 
@@ -1432,6 +1453,7 @@ def run(
     # Keyword, not positional: this list is long and grows with every host policy,
     # and a misordering between two same-typed neighbours (e.g. on_truncate /
     # on_untrusted_flow) would be a silent behaviour swap no type checker catches.
+    effective_run_id = run_id or uuid.uuid4().hex
     result = _Runner(
         machine,
         context,
@@ -1458,6 +1480,8 @@ def run(
         tool_effects=tool_effects,
         flow_tainted=flow_tainted,
         repair_feedback=repair_feedback,
+        run_id=effective_run_id,
+        parent_run_id=parent_run_id,
     ).go()
     if on_event is not None:
         with contextlib.suppress(Exception):
@@ -1466,6 +1490,8 @@ def run(
                     "type": "run-finished",
                     "machine": machine.name,
                     "depth": depth,
+                    "run_id": effective_run_id,
+                    **({"parent_run_id": parent_run_id} if parent_run_id else {}),
                     "status": result.status,
                     "error": result.error,
                     "at": result.at,

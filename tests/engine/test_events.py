@@ -71,6 +71,8 @@ def test_events_mirror_the_trace():
         "run-finished",
     ]
     done = [e for e in events if e["type"] == "state-done"]
+    run_ids = {e["run_id"] for e in events}
+    assert len(run_ids) == 1 and next(iter(run_ids))
     for ev, step in zip(done, res.trace, strict=False):
         assert ev["state"] == step["state"]
         assert ev["gate"] == step["gate"]
@@ -121,6 +123,9 @@ def test_nested_call_events_carry_depth():
         "state-done",
         "run-finished",
     ]
+    assert child_events[0]["parent_run_id"]
+    assert child_events[0]["parent_run_id"] != child_events[0]["run_id"]
+    assert child_events[-1]["run_id"] == child_events[0]["run_id"]
     # the child completes before the parent's call state is recorded
     parent_done = events.index(
         next(e for e in events if e["type"] == "state-done" and e["machine"] == "parent")

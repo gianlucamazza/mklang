@@ -258,6 +258,11 @@ def allow_writes(enabled: bool | None) -> None:
     _writes_allowed = enabled
 
 
+def write_override() -> bool | None:
+    """Return the process-local write override, without resolving environment config."""
+    return _writes_allowed
+
+
 def writes_allowed_with_source(tc: ToolsConfig | None = None) -> tuple[bool, str]:
     """Write grant + source: runtime grant > set env > config > off.
 

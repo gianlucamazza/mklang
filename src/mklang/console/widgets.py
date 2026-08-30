@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from .session import Session as ConsoleSession
 
 from . import render as log_render
+from .capabilities import redact
 
 
 class ActivityTree(Tree):
@@ -47,9 +48,19 @@ class ActivityTree(Tree):
 
     def _reset_maps(self) -> None:
         self._brain_open = None  # the brain state currently in flight
-        self._run_nodes = {}  # (tag, depth) -> run node
-        self._state_nodes = {}  # (tag, depth, state) -> state node
+        self._run_nodes = {}  # run_id -> run node
+        self._state_nodes = {}  # (run_id, state, step) -> state node
         self._state_kinds = {}
+        self._inflight_states: dict[str, TreeNode] = {}
+
+    @staticmethod
+    def _run_key(e: dict) -> str:
+        """Use the stable engine identity, with legacy fallback for old events."""
+        return str(e.get("run_id") or f"legacy:{e.get('run')}:{e.get('depth', 0)}")
+
+    def _state_key(self, e: dict, *, in_flight: bool = False) -> tuple:
+        step = None if in_flight else e.get("step")
+        return (self._run_key(e), e.get("state"), step)
 
     def new_turn(self, title: str) -> None:
         """One turn on display at a time — history lives in the transcript."""
@@ -64,9 +75,15 @@ class ActivityTree(Tree):
             return self._turn_node
         if depth == 0:
             return self._brain_open or self._turn_node
-        return self._state_nodes.get((tag, depth - 1, None)) or self._run_nodes.get(
-            (tag, depth - 1)
-        )
+        parent_id = e.get("parent_run_id")
+        if parent_id:
+            parent_state = self._inflight_states.get(str(parent_id))
+            if parent_state is not None:
+                return parent_state
+            parent_run = self._run_nodes.get(str(parent_id))
+            if parent_run is not None:
+                return parent_run
+        return self._turn_node
 
     @staticmethod
     def _enable_expand(node: TreeNode | None) -> None:
@@ -92,9 +109,9 @@ class ActivityTree(Tree):
                 expand=True,
                 allow_expand=True,
             )
-            self._run_nodes[(tag, depth)] = node
+            self._run_nodes[self._run_key(e)] = node
         elif kind == "state-start":
-            parent = self._run_nodes.get((tag, depth)) or self._turn_node
+            parent = self._run_nodes.get(self._run_key(e)) or self._turn_node
             if parent is None:  # cannot happen: the top of feed sets the turn node
                 return
             # Leaves until something nests under them (commissioned run / preview).
@@ -105,13 +122,19 @@ class ActivityTree(Tree):
                 expand=False,
                 allow_expand=False,
             )
+            self._state_nodes[self._state_key(e)] = node
+            self._state_nodes[self._state_key(e, in_flight=True)] = node
+            # Keep the pre-correlation lookup shape for embedders/tests while
+            # rendering itself uses the collision-free run_id + step key.
             self._state_nodes[(tag, depth, e["state"])] = node
-            self._state_nodes[(tag, depth, None)] = node  # the in-flight state
-            self._state_kinds[(tag, depth, e["state"])] = e.get("kind", "")
+            self._inflight_states[self._run_key(e)] = node
+            self._state_kinds[self._state_key(e)] = e.get("kind", "")
             if tag is None:
                 self._brain_open = node
         elif kind == "state-done":
-            node = self._state_nodes.get((tag, depth, e["state"]))
+            node = self._state_nodes.get(self._state_key(e))
+            if node is None:
+                node = self._state_nodes.get(self._state_key(e, in_flight=True))
             if node is not None:
                 node.set_label(
                     log_render.tree_state_done(e.get("state", ""), e.get("policy"), e.get("to"))
@@ -138,12 +161,14 @@ class ActivityTree(Tree):
                 elif node.children:
                     self._enable_expand(node)
         elif kind == "branch-done":
-            node = self._state_nodes.get((tag, depth, e["state"]))
+            node = self._state_nodes.get(self._state_key(e))
+            if node is None:
+                node = self._state_nodes.get(self._state_key(e, in_flight=True))
             if node is not None:
                 self._enable_expand(node)
                 node.add_leaf(log_render.tree_branch(e.get("index")))
         elif kind == "run-finished":
-            node = self._run_nodes.get((tag, depth))
+            node = self._run_nodes.get(self._run_key(e))
             if node is not None:
                 node.set_label(
                     log_render.tree_run_finished(
@@ -179,7 +204,7 @@ class Inspector(Vertical):
     def show_result(self, res: RunResult) -> None:
         ctx_log = self.query_one("#inspector-context", RichLog)
         ctx_log.clear()
-        payload = json.dumps(res.context, ensure_ascii=False, indent=2, default=str)
+        payload = json.dumps(redact(res.context), ensure_ascii=False, indent=2, default=str)
         ctx_log.write(Syntax(payload, "json", word_wrap=True, background_color="default"))
         trace_log = self.query_one("#inspector-trace", RichLog)
         trace_log.clear()

@@ -138,6 +138,19 @@ def _check(
     return tools, hooks
 
 
+def check_prepared(
+    prov: ProviderConfig,
+    machine: Machine,
+    registry: dict[str, Machine],
+    *,
+    strict: bool = False,
+) -> tuple[dict, dict, list[str]]:
+    """Run host preflight for a provider and already-loaded registry."""
+    warnings: list[str] = []
+    tools, hooks = _check(prov, machine, registry, strict, warnings)
+    return tools, hooks, warnings
+
+
 def _parse_source(source: str, warnings: list[str]) -> Machine:
     """Inline `.mkl` source string → Machine: YAML → schema → parse."""
     try:

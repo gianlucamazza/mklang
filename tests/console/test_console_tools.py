@@ -329,7 +329,7 @@ def test_run_machine_consent_grants_fs_writes(tools, tmp_path):
     out = json.loads(tools.run_machine({"target": "writy", "inputs": "{}"}))
     assert out["status"] == "done"
     assert any("write_file" in c for c in tools.bridge.confirms)
-    assert fs.writes_allowed() is True
+    assert fs.writes_allowed() is False
     assert (tmp_path / "data" / "report.md").read_text(encoding="utf-8") == "done"
 
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -48,6 +49,7 @@ class Session:
     workspace: str = ""
     brain: str = ""
     task: dict = field(default_factory=dict)
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -104,7 +106,14 @@ class Session:
             candidates.append(path)
         if not candidates:
             return None
-        sessions = [cls.load(path) for path in candidates]
+        sessions = []
+        for path in candidates:
+            try:
+                sessions.append(cls.load(path))
+            except (OSError, TypeError, ValueError, UnicodeDecodeError):
+                continue
+        if not sessions:
+            return None
         return max(sessions, key=lambda session: (session.created_at, session.id))
 
     # -- persistence -------------------------------------------------------
@@ -118,23 +127,24 @@ class Session:
         return self.dir / "checkpoints"
 
     def save_state(self) -> None:
-        payload = {
-            "created_at": self.created_at,
-            "history": self.history,
-            "spent_in": self.spent_in,
-            "spent_out": self.spent_out,
-            "consented": sorted(self.consented),
-            "always_yes": self.always_yes,
-            "workspace": self.workspace,
-            "brain": self.brain,
-            "task": self.task,
-        }
-        tmp = self.dir / "state.json.tmp"
-        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-        os.replace(tmp, self.dir / "state.json")
+        with self._lock:
+            payload = {
+                "created_at": self.created_at,
+                "history": self.history,
+                "spent_in": self.spent_in,
+                "spent_out": self.spent_out,
+                "consented": sorted(self.consented),
+                "always_yes": self.always_yes,
+                "workspace": self.workspace,
+                "brain": self.brain,
+                "task": self.task,
+            }
+            tmp = self.dir / "state.json.tmp"
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            os.replace(tmp, self.dir / "state.json")
 
     def append(self, record: dict) -> None:
-        with (self.dir / "transcript.jsonl").open("a", encoding="utf-8") as f:
+        with self._lock, (self.dir / "transcript.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     def records(self) -> list[dict]:

@@ -164,7 +164,7 @@ def build_app(
             self.tools.task_persist = self.session.save_state
             self.spent_in = self.session.spent_in
             self.spent_out = self.session.spent_out
-            self.tools._consented.update(self.session.consented)
+            self.tools.restore_consented(self.session.consented)
             self.bridge.always_yes = self.session.always_yes
             self.answer_mode = False
             self.running = False
@@ -217,8 +217,14 @@ def build_app(
         async def action_quit(self) -> None:
             """Stop the active run cleanly before Textual tears down its event loop."""
             self._begin_shutdown()
-            await self._wait_for_worker()
-            self.exit()
+            if await self._wait_for_worker():
+                self.exit()
+            else:
+                self.log_chrome(
+                    "[b red]The worker did not stop within 30 seconds; "
+                    "keeping the console open.[/b red]"
+                )
+                self.update_status("error")
 
         async def on_unmount(self) -> None:
             """Cover SIGINT and other exits which bypass the ``quit`` action."""
@@ -236,12 +242,13 @@ def build_app(
             with contextlib.suppress(Exception):
                 self.tools.close()
 
-        async def _wait_for_worker(self) -> None:
+        async def _wait_for_worker(self) -> bool:
             import asyncio
 
             deadline = asyncio.get_running_loop().time() + 30
             while not self._worker_done.is_set() and asyncio.get_running_loop().time() < deadline:
                 await asyncio.sleep(0.01)
+            return self._worker_done.is_set()
 
         def _run_thread_worker(self, work: Callable[[], object]) -> None:
             """Start work and track the backing thread, not only Textual's task."""
@@ -273,7 +280,7 @@ def build_app(
                 self.replay_session()
             self.update_status("ready")
             self.query_one(Inspector).show_session(
-                self.session, self.spent_in, self.spent_out, self.tools._consented
+                self.session, self.spent_in, self.spent_out, self.tools.consented
             )
             self.query_one(Inspector).show_empty()
             self.apply_responsive_layout()
@@ -714,11 +721,11 @@ def build_app(
             )
             panel = self.query_one(Inspector)
             panel.show_result(res)
-            panel.show_session(self.session, self.spent_in, self.spent_out, self.tools._consented)
+            panel.show_session(self.session, self.spent_in, self.spent_out, self.tools.consented)
             self.session.history = self.history
             self.session.spent_in = self.spent_in
             self.session.spent_out = self.spent_out
-            self.session.consented = sorted(self.tools._consented)
+            self.session.consented = sorted(self.tools.consented)
             self.session.save_state()
             self.running = False
             self.update_status("ready")

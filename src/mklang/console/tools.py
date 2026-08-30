@@ -140,6 +140,14 @@ class ConsoleTools:
             "update_task": self.update_task,
         }
 
+    @property
+    def consented(self) -> set[str]:
+        """Granted capability keys, exposed without leaking storage internals."""
+        return self._consented
+
+    def restore_consented(self, grants: list[str] | set[str]) -> None:
+        self._consented.update(grants)
+
     # -- read-only project inspection -------------------------------------
 
     def workspace_context(self, _input: dict | None = None) -> dict:
@@ -378,6 +386,18 @@ class ConsoleTools:
         machine = reg.get(target)
         if machine is None:
             return _obs({"error": f"unknown machine '{target}'", "known": sorted(reg)})
+        try:
+            registered_tools, registered_hooks, _warnings = host.check_prepared(
+                self.prov, machine, reg
+            )
+        except host.PrepareError as exc:
+            return _obs(
+                {
+                    "error": "machine preflight failed",
+                    "errors": exc.errors,
+                    "warnings": exc.warnings,
+                }
+            )
         used_tools = sorted({s.tool for s in machine.states.values() if s.kind == "tool"})
         required_grants = {capability_key(target, tool) for tool in used_tools}
         self._audit(
@@ -408,12 +428,13 @@ class ConsoleTools:
                 tools=used_tools,
                 grants=sorted(required_grants),
             )
+        from .. import fs
+
+        previous_write_override = fs.write_override()
         if "write_file" in used_tools:
             # Interactive consent above is the coding-tool write grant (ADR 0024);
             # headless surfaces need --allow-write / MKLANG_FS_WRITE=1 instead.
-            from ..fs import allow_writes
-
-            allow_writes(True)
+            fs.allow_writes(True)
         ctx = dict(machine.context)
         for k, v in inputs.items():
             host.set_path(ctx, k, v)
@@ -428,27 +449,27 @@ class ConsoleTools:
                 return _obs({"error": "cost_budget must be positive"})
         else:
             cost_budget = self.default_cost_budget
-        from ..hooks import load_hook_registry
-        from ..tools import load_tool_registry
-
-        res = run_machine_engine(
-            machine,
-            ctx,
-            reg,
-            self.llm,
-            self.prov.tiers,
-            self.prov.judge_override(),
-            tier_params=self.prov.params,
-            cost_budget=cost_budget,
-            tools=load_tool_registry(),
-            hooks=load_hook_registry(),
-            suspendable=True,
-            escalate_suspend=True,
-            on_event=lambda e: self.bridge.emit({"run": target, **e}),
-            on_truncate=self.on_truncate,
-            on_untrusted_flow=self.on_untrusted_flow,
-            cancel_requested=self.cancel_requested,
-        )
+        try:
+            res = run_machine_engine(
+                machine,
+                ctx,
+                reg,
+                self.llm,
+                self.prov.tiers,
+                self.prov.judge_override(),
+                tier_params=self.prov.params,
+                cost_budget=cost_budget,
+                tools=registered_tools,
+                hooks=registered_hooks,
+                suspendable=True,
+                escalate_suspend=True,
+                on_event=lambda e: self.bridge.emit({"run": target, **e}),
+                on_truncate=self.on_truncate,
+                on_untrusted_flow=self.on_untrusted_flow,
+                cancel_requested=self.cancel_requested,
+            )
+        finally:
+            fs.allow_writes(previous_write_override)
         self._audit(
             "machine-finished", machine=target, status=res.status, error=res.error, usage=res.usage
         )
@@ -466,25 +487,31 @@ class ConsoleTools:
             # untrusted by provenance (ADR 0025), and the confirmation that clears
             # this suspension's control-flow taint (ADR 0030).
             taint_frame(res.frames[-1], ["human.reply"])
-            res = run_machine_engine(
-                machine,
-                dict(machine.context),
-                reg,
-                self.llm,
-                self.prov.tiers,
-                self.prov.judge_override(),
-                tier_params=self.prov.params,
-                cost_budget=cost_budget,
-                tools=load_tool_registry(),
-                hooks=load_hook_registry(),
-                suspendable=True,
-                escalate_suspend=True,
-                resume=res.frames,
-                on_event=lambda e: self.bridge.emit({"run": target, **e}),
-                on_truncate=self.on_truncate,
-                on_untrusted_flow=self.on_untrusted_flow,
-                cancel_requested=self.cancel_requested,
-            )
+            previous_write_override = fs.write_override()
+            if "write_file" in used_tools:
+                fs.allow_writes(True)
+            try:
+                res = run_machine_engine(
+                    machine,
+                    dict(machine.context),
+                    reg,
+                    self.llm,
+                    self.prov.tiers,
+                    self.prov.judge_override(),
+                    tier_params=self.prov.params,
+                    cost_budget=cost_budget,
+                    tools=registered_tools,
+                    hooks=registered_hooks,
+                    suspendable=True,
+                    escalate_suspend=True,
+                    resume=res.frames,
+                    on_event=lambda e: self.bridge.emit({"run": target, **e}),
+                    on_truncate=self.on_truncate,
+                    on_untrusted_flow=self.on_untrusted_flow,
+                    cancel_requested=self.cancel_requested,
+                )
+            finally:
+                fs.allow_writes(previous_write_override)
         # Compact + honest observation for the brain (ADR 0015/0017/0018):
         # propagate produce truncation; never silent-cut the result string.
         return _obs(host.compact_run_observation(res))
