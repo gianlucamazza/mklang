@@ -27,6 +27,7 @@ class OpenAICompatProfile:
     """Declared protocol policy for an OpenAI-compatible provider."""
 
     omit_temperature_when_thinking: bool = False
+    supports_response_format: bool = True
 
 
 class OpenAICompatLLM:
@@ -125,15 +126,17 @@ class OpenAICompatLLM:
             reasoning=reasoning,
             allow_none=allow_none,
         )
-        r = self._create(
-            model=model,
-            messages=[
+        kwargs = {
+            "model": model,
+            "messages": [
                 {"role": "system", "content": JUDGE_SYSTEM},
                 {"role": "user", "content": user},
             ],
-            response_format={"type": "json_object"},  # dropped-and-retried if unsupported
-            temperature=0,
-        )
+            "temperature": 0,
+        }
+        if self.profile.supports_response_format:
+            kwargs["response_format"] = {"type": "json_object"}
+        r = self._create(**kwargs)
         text = r.choices[0].message.content or ""
         idx, method = parse_choice(text, len(conditions) + (1 if allow_none else 0))
         if idx is None:

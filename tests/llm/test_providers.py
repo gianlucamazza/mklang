@@ -29,6 +29,12 @@ def test_registered_openai_compatible_provider_uses_shared_adapter():
     assert llm.profile.omit_temperature_when_thinking is True
 
 
+def test_hetzner_uses_compatible_profile_without_response_format():
+    llm = build_llm(_prov("hetzner"))
+    assert type(llm).__name__ == "OpenAICompatLLM"
+    assert llm.profile.supports_response_format is False
+
+
 def test_unknown_provider_requires_explicit_protocol():
     with pytest.raises(ProviderConfigError, match="not registered"):
         build_llm(_prov("typo"))

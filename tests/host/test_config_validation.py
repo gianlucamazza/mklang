@@ -32,3 +32,12 @@ def test_load_provider_preserves_explicit_protocol(tmp_path):
         "tiers": {"fast": "f", "balanced": "b", "reasoning": "r"},
     }
     assert load_provider(_write(tmp_path, provider)).protocol == "openai_compat"
+
+
+def test_bundled_hetzner_provider_configuration():
+    provider = load_provider("config/runtime.example.yaml", "hetzner")
+    assert provider.protocol == "openai_compat"
+    assert provider.base_url == "https://inference.hetzner.com/api/v1"
+    assert provider.api_key_env == "HETZNER_INFERENCE_API_KEY"
+    assert set(provider.tiers) == {"fast", "balanced", "reasoning"}
+    assert set(provider.tiers.values()) == {"Qwen/Qwen3.6-35B-A3B-FP8"}

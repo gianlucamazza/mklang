@@ -40,12 +40,24 @@ def openai_compat(prov: ProviderConfig) -> LLM:
 # ``protocol: openai_compat`` remains available for custom endpoints and plugins.
 OPENAI_COMPAT_PROFILES = {
     "deepseek": OpenAICompatProfile(omit_temperature_when_thinking=True),
+    # Hetzner Experiments documents chat completions, but not JSON response
+    # format; keep the judge prompt self-contained on this experimental endpoint.
+    "hetzner": OpenAICompatProfile(supports_response_format=False),
 }
 BUILTINS: dict[str, ProviderFactory] = {
     "anthropic": anthropic,
     **{
         name: openai_compat
-        for name in ("deepseek", "openai", "google", "openrouter", "xai", "mistral", "local")
+        for name in (
+            "deepseek",
+            "hetzner",
+            "openai",
+            "google",
+            "openrouter",
+            "xai",
+            "mistral",
+            "local",
+        )
     },
 }
 

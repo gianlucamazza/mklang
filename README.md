@@ -191,7 +191,7 @@ providers:
 
 The example config defaults to **DeepSeek V4 Flash** (the path we live-test
 against); flip `active:` and every example runs unchanged. Blocks ship for
-Anthropic, OpenAI, Google, DeepSeek, OpenRouter, xAI, Mistral, and local
+Anthropic, OpenAI, Google, DeepSeek, Hetzner Inference, OpenRouter, xAI, Mistral, and local
 (Ollama/vLLM); per-tier params (adaptive thinking, `reasoning_effort`, …) live
 under `params`. Full map, per-provider notes included:
 [`config/runtime.example.yaml`](./config/runtime.example.yaml).

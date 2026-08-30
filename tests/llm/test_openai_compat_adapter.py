@@ -179,6 +179,19 @@ def test_judge_fences_data_and_parses_choice():
     assert "1. a" in body and "2. b" in body
 
 
+def test_judge_can_omit_undocumented_response_format():
+    captured = {}
+
+    def side_effect(n, kwargs):
+        captured.update(kwargs)
+        return _Resp(content='{"choice": 1}')
+
+    llm, _ = _adapter(side_effect)
+    llm.profile = OpenAICompatProfile(supports_response_format=False)
+    assert llm.judge("m", ["a"], "out", {}) == (0, "json")
+    assert "response_format" not in captured
+
+
 def test_judge_unparseable_raises():
     llm, _ = _adapter(lambda n, k: _Resp(content="no numbers here"))
     with pytest.raises(JudgeUnparseable):

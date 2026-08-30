@@ -44,8 +44,8 @@ a contributor's map, not language semantics — those live in the SPEC. The
   by both adapters.
 - `openai_compat.py` — shared transport adapter for OpenAI-compatible providers.
   Provider aliases are registered explicitly; protocol policies such as DeepSeek
-  V4 thinking-temperature handling are passed as profiles rather than inferred
-  from arbitrary request payloads. Custom endpoints must declare
+  V4 thinking-temperature handling and Hetzner response-format support are passed
+  as profiles rather than inferred from arbitrary request payloads. Custom endpoints must declare
   `protocol: openai_compat`.
 - `anthropic.py` — native Anthropic adapter (`mklang[anthropic]` extra).
 - `mock.py` — deterministic scripted LLM for tests; no network.
