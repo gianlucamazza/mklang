@@ -129,7 +129,7 @@ providers:
     base_url: https://openrouter.ai/api/v1
     api_key_env: OPENROUTER_API_KEY
     tiers:
-      fast: google/gemini-3-flash
+      fast: google/gemini-3.8-flash # 3-flash left the catalog; verified 2026-09-06
       balanced: anthropic/claude-sonnet-5
       reasoning: openai/gpt-5.6-sol # listed on OpenRouter's catalog 2026-08-04
     # judge: openai/gpt-5.6-luna # opt-in: force ALL gate judging onto one model (default: follow each state's tier)

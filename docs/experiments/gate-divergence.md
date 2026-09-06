@@ -280,6 +280,20 @@ release gate. Implementation lives in
 [#64](https://github.com/gianlucamazza/mklang/issues/64),
 [#69](https://github.com/gianlucamazza/mklang/issues/69).
 
+### Required providers
+
+`--require-providers` names the vendors whose runs must **complete** for a release to
+publish. Two, on purpose: the pair is what makes the `openai_compat` path a tested path
+rather than one vendor's behaviour generalised.
+
+| From       | Required pair            | Why it changed                                                                                                                                                                                                                                     |
+| ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-16 | `deepseek`, `openai`     | The two vendors with funded keys                                                                                                                                                                                                                    |
+| 2026-09-06 | `deepseek`, `openrouter` | The OpenAI account ran out of credit and cannot be topped up. A required smoke nobody can pay for makes the gate fail for a reason it was not built to test — and `1.3.4` was blocked by exactly that. OpenRouter keeps the two-vendor property and adds one the old pair lacked: it is what this project ships on. **OpenAI stays in `--providers`** — still measured, still reported, no longer able to block a release by being unfunded |
+
+Removing a provider from the required pair without replacing it is a different change
+and is not this one: it would take the gate from two vendors to one.
+
 ### Current floors (package 1.x)
 
 | Machine             | Role                                               | Floor (`signature_agreement_rate`) | Evidence                                                                                       |
