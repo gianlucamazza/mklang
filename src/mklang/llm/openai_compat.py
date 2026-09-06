@@ -24,6 +24,18 @@ from .context_view import format_judge_context
 # Params the OpenAI SDK accepts as top-level kwargs; everything else goes in extra_body.
 _TOP_LEVEL_PARAMS = {"reasoning_effort", "max_tokens", "max_completion_tokens", "top_p", "seed"}
 
+# `extra_body` keys that say **where** a request may go, not how it is answered. These are
+# never dropped to make a call succeed.
+#
+# `_drop_offending_param` matches a key by substring against the lower-cased error text,
+# which is a fine heuristic for a model knob and a trap for this one: an OpenRouter routing
+# block is `extra_body["provider"]`, and "provider" appears in ordinary OpenRouter errors
+# ("Provider returned error"). Dropping it and retrying *succeeds* — against whatever the
+# router then picks, with no `only`, no `zdr`, no `data_collection: deny` and fallbacks back
+# on. The run reports success and the customer's text went to a vendor their configuration
+# excluded. A run that fails is recoverable; that one is not.
+_NON_NEGOTIABLE = frozenset({"provider"})
+
 
 @dataclass(frozen=True)
 class OpenAICompatProfile:
@@ -70,7 +82,7 @@ class OpenAICompatLLM:
                     time.sleep(0.5 * 2**attempt)
                     attempt += 1
                     continue
-                dropped = _drop_offending_param(kwargs, msg)
+                dropped = _drop_offending_param(kwargs, msg, on_event)
                 if dropped:
                     continue  # retry once without the rejected field
                 detail = str(e)
@@ -282,18 +294,33 @@ def _apply_params(
         kwargs["extra_body"] = extra
 
 
-def _drop_offending_param(kwargs: dict, err_msg: str) -> bool:
+def _drop_offending_param(kwargs: dict, err_msg: str, on_event: LLMEvent | None = None) -> bool:
     """Remove the first param the error names (top-level or extra_body). Return True if
-    something was dropped so the caller can retry."""
+    something was dropped so the caller can retry.
+
+    Dropping is a negotiation about *how* an answer is produced: a model that does not
+    support a knob still answers the question. It is never a negotiation about **where**
+    the request goes — see `_NON_NEGOTIABLE`.
+    """
     for name in ("temperature", "response_format", *_TOP_LEVEL_PARAMS):
         if name in kwargs and name in err_msg:
             kwargs.pop(name, None)
+            _notify(on_event, "param_dropped", name=name, where="top_level")
             return True
     extra = kwargs.get("extra_body") or {}
     for name in list(extra):
-        if name.lower() in err_msg:
-            extra.pop(name, None)
-            if not extra:
-                kwargs.pop("extra_body", None)
-            return True
+        if name.lower() not in err_msg:
+            continue
+        if name in _NON_NEGOTIABLE:
+            raise ProviderError(
+                f"the provider rejected {name!r}, which constrains where this request "
+                "goes rather than how it is answered; retrying without it would send "
+                "this text to a provider the configuration excludes. Fix the routing "
+                "block or the model — this call does not get to relax it."
+            )
+        extra.pop(name, None)
+        if not extra:
+            kwargs.pop("extra_body", None)
+        _notify(on_event, "param_dropped", name=name, where="extra_body")
+        return True
     return False

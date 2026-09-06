@@ -99,3 +99,58 @@ def test_is_connection_error_matches_by_name_and_subclass():
     assert is_connection_error(APIConnectionError("down"))
     assert is_connection_error(APITimeoutError("slow"))
     assert not is_connection_error(ValueError("unrelated"))
+
+
+def test_a_routing_constraint_is_never_dropped_to_make_a_call_succeed(monkeypatch):
+    """A provider-routing block is a promise about where the customer's text goes.
+
+    `_drop_offending_param` matches an `extra_body` key by substring against the
+    lower-cased error message, and the key here is called `provider` — a word that
+    appears in ordinary OpenRouter errors ("Provider returned error"). Dropping it and
+    retrying *succeeds*, against whatever provider the router then picks: no `only`, no
+    `zdr`, no `data_collection: deny`, fallbacks back on. The run reports success and
+    the text went somewhere the configuration excluded.
+
+    A run that fails is recoverable. A run that succeeded against the wrong vendor is
+    not — so this must refuse, and say why.
+    """
+
+    class BadRequest(Exception):
+        status_code = 400
+
+    seen: list[dict] = []
+
+    def rejects_once(call, kwargs):
+        seen.append(dict(kwargs.get("extra_body") or {}))
+        if call == 1:
+            raise BadRequest("Provider returned error")
+        return _Resp()
+
+    routing = {"provider": {"only": ["azure"], "zdr": True, "data_collection": "deny"}}
+    llm = _adapter(side_effect=rejects_once)
+    with pytest.raises(ProviderError, match="routing"):
+        llm.produce("m", "sys", "user", params=routing)
+    assert all("provider" in body for body in seen), (
+        "the routing constraint must never be retried away: " f"{seen}"
+    )
+
+
+def test_a_model_knob_is_still_negotiated_away_and_says_so():
+    """The other half of the guard: refusing everything would be the opposite mistake.
+
+    A provider that does not support a generation knob still answers the question, so
+    that param is dropped and the call retried — but no longer in silence: the drop is
+    an event, because «why did this run behave differently» has to be answerable.
+    """
+    events: list[dict] = []
+
+    def rejects_once(call, kwargs):
+        if call == 1:
+            raise RuntimeError("unknown field: thinking")
+        return _Resp()
+
+    llm = _adapter(side_effect=rejects_once)
+    llm.produce("m", "sys", "user", params={"thinking": {"type": "enabled"}},
+                on_event=events.append)
+    assert llm.client.chat.completions.calls == 2
+    assert {"event": "param_dropped", "name": "thinking", "where": "extra_body"} in events
