@@ -8,7 +8,30 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.3`).
+  `pyproject.toml` (currently `1.3.4`).
+
+## [1.3.4] — 2026-09-06
+
+### Fixed
+
+- **A routing constraint is never dropped to make a call succeed.**
+  `_drop_offending_param` matches an `extra_body` key by substring against the
+  lower-cased error text — a fine heuristic for a model knob, and a trap for the
+  one key that says *where* a request may go. An OpenRouter routing block is
+  `extra_body["provider"]`, and "provider" appears in ordinary OpenRouter errors
+  ("Provider returned error"): the key was dropped and the call retried, and the
+  retry **succeeds**, against whatever the router then picks, with no `only`, no
+  `zdr`, no `data_collection: deny` and fallbacks back on. The run reported
+  success and the text went to a vendor the configuration excluded. `provider` is
+  now non-negotiable: an error that names it refuses the call and says why.
+
+### Changed
+
+- **A dropped parameter is no longer silent.** The negotiable half is unchanged —
+  a provider knob a model does not support is still dropped and retried, because
+  the answer is still the answer — but every drop now emits a `param_dropped`
+  event through the existing callback, so "why did this run behave differently"
+  is answerable.
 
 ## [1.3.3] — 2026-08-31
 

@@ -14,7 +14,7 @@ from .loader import load_dict, load_machine, semantic_check, validate_dict
 from .model import Gate, Machine, State, parse_machine
 from .scripttest import match_expectation, run_scenario
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 __all__ = [
     "CheckpointStore",
     "FileCheckpointStore",

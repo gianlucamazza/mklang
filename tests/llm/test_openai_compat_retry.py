@@ -131,7 +131,7 @@ def test_a_routing_constraint_is_never_dropped_to_make_a_call_succeed(monkeypatc
     with pytest.raises(ProviderError, match="routing"):
         llm.produce("m", "sys", "user", params=routing)
     assert all("provider" in body for body in seen), (
-        "the routing constraint must never be retried away: " f"{seen}"
+        f"the routing constraint must never be retried away: {seen}"
     )
 
 
@@ -150,7 +150,8 @@ def test_a_model_knob_is_still_negotiated_away_and_says_so():
         return _Resp()
 
     llm = _adapter(side_effect=rejects_once)
-    llm.produce("m", "sys", "user", params={"thinking": {"type": "enabled"}},
-                on_event=events.append)
+    llm.produce(
+        "m", "sys", "user", params={"thinking": {"type": "enabled"}}, on_event=events.append
+    )
     assert llm.client.chat.completions.calls == 2
     assert {"event": "param_dropped", "name": "thinking", "where": "extra_body"} in events
