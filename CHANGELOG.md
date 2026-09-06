@@ -8,7 +8,32 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.4`).
+  `pyproject.toml` (currently `1.3.5`).
+
+## [1.3.5] — 2026-09-06
+
+**Supersedes 1.3.4, which was tagged and never published.** Its release was
+refused by its own live gate: the required OpenAI smoke returned
+`429 insufficient_quota` and the account could not be topped up, so `publish`
+never ran and PyPI never received it. The gate was right — a package whose live
+provider path was not exercised should not ship — and the fix was to stop
+requiring a vendor nobody can pay for, not to relax the gate. 1.3.5 carries the
+same code plus that change.
+
+### Changed
+
+- **The release gate requires DeepSeek and OpenRouter.** Still two vendors on the
+  `openai_compat` path, which is the property the pair exists for; OpenRouter is
+  additionally the provider this project ships on. OpenAI remains in
+  `--providers` — measured and reported, no longer able to block a release by
+  being unfunded. Reasoning and history: `docs/experiments/gate-divergence.md`,
+  Release-gate floor policy.
+
+### Fixed
+
+- **The example OpenRouter `fast` tier named a model that has left the
+  catalogue** (`google/gemini-3-flash`). The live smoke would have failed on the
+  model rather than on anything real.
 
 ## [1.3.4] — 2026-09-06
 
