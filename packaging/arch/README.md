@@ -42,6 +42,24 @@ makepkg --printsrcinfo > .SRCINFO
 git add PKGBUILD .SRCINFO && git commit -m "mklang $(source ./PKGBUILD && echo "$pkgver-$pkgrel")" && git push
 ```
 
+## The `prepare()` hatchling patch
+
+`prepare()` rewrites the `hatchling>=1.27,<1.28` build-system pin to
+`hatchling>=1.27,<2` in the extracted sdist. Every release up to and including
+1.3.5 carries that upper bound, and `build()` uses `--no-isolation`, so
+`python -m build` refuses to start against `extra/python-hatchling` (1.30+):
+
+```
+ERROR Unmet dependencies (checked against /usr/sbin/python):
+	hatchling<1.28,>=1.27
+		wanted: <1.28,>=1.27
+		found: 1.30.1
+```
+
+Upstream relaxed the pin after 1.3.5. **Drop `prepare()` once the recipe points
+at a release whose sdist carries the relaxed pin** — keeping it is harmless (the
+`sed` is a no-op) but it hides the fact that the patch is no longer needed.
+
 ## `check()` surface (sdist, not the git tree)
 
 `check()` runs the offline suite against the **extracted PyPI sdist**, not a
@@ -68,7 +86,11 @@ will pass.
 On every mklang release:
 
 1. Bump `pkgver`, reset `pkgrel=1` (sha256 may still point at the previous
-   sdist until step 3).
+   sdist until step 3). **The recipe is broken until step 3 completes** — it
+   cannot pass its own integrity check with a digest from another version, and
+   the repo tests do not catch it (`test_pkgbuild_version_is_synchronized`
+   excludes the digest on purpose). 1.3.5 shipped stuck in exactly this state;
+   do not stop between 1 and 3.
 2. Publish the GitHub Release (`v<version>`) so Trusted Publishing ships the
    sdist to PyPI.
 3. Update `source` + `sha256sums` from
