@@ -21,6 +21,9 @@
   --surface-raised: #111722;
   --surface-recessed: #070a10;
   --surface-human: rgba(229, 184, 74, 0.08);
+  --surface-overlay: rgba(7, 9, 13, 0.88);
+  --surface-control: rgba(8, 10, 16, 0.78);
+  --surface-control-hover: rgba(15, 20, 31, 0.94);
 
   /* Borders — soft hairlines */
   --border: rgba(255, 255, 255, 0.08);
@@ -28,6 +31,7 @@
   --border-hover: rgba(255, 255, 255, 0.2);
   --border-focus: #6b9cff;
   --focus-ring: 0 0 0 3px var(--accent-soft);
+  --focus-ring-strong: 0 0 0 2px var(--bg), 0 0 0 5px var(--border-focus);
   --border-w: 1px;
 
   /* Text */
@@ -98,6 +102,8 @@
   --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
   --font-display: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+  --text-measure: 68ch;
+  --text-measure-narrow: 44rem;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
