@@ -10,6 +10,26 @@ All notable changes to mklang are documented here. The format follows
 - **Package version** — the reference interpreter / tooling, SemVer in
   `pyproject.toml` (currently `1.3.5`).
 
+## [Unreleased]
+
+### Fixed
+
+- **The `hatchling` build-system pin no longer breaks distro packaging.**
+  `requires` was `hatchling>=1.27,<1.28` (tightened without rationale in the
+  1.3.1 release prep; it was a bare `hatchling` before). Any build with
+  `--no-isolation` against a newer backend — which is what the Arch `build()`
+  does, and what every distro does — died before compiling anything:
+  `ERROR Unmet dependencies: hatchling<1.28,>=1.27 found: 1.30.1`. Relaxed to
+  `hatchling>=1.27,<2`; the upper bound now only guards the next major.
+- **The Arch recipe's `source`/`sha256sums` were left on the 1.3.3 sdist** while
+  `pkgver` had already moved to 1.3.5, so the recipe could only ever fail its
+  own integrity check. Both now point at the published 1.3.5 sdist.
+  `test_pkgbuild_version_is_synchronized` cannot see this by design (it excludes
+  the digest, which legitimately lags until step 3 of the release checklist).
+- **`packaging/arch/PKGBUILD` gained a `prepare()`** that drops the old upper
+  bound from already-published sdists (every release up to and including 1.3.5
+  carries it). Remove it once a release ships the relaxed pin.
+
 ## [1.3.5] — 2026-09-06
 
 **Supersedes 1.3.4, which was tagged and never published.** Its release was
