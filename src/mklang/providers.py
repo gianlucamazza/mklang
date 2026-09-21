@@ -36,6 +36,21 @@ def openai_compat(prov: ProviderConfig) -> LLM:
     return OpenAICompatLLM(prov.api_key, prov.base_url, profile=profile)
 
 
+def azure(prov: ProviderConfig) -> LLM:
+    """Azure OpenAI through its v1 endpoint (``https://<resource>.openai.azure.com/openai/v1``).
+
+    There is no default host: every resource has its own, and falling back to the SDK
+    default would present an Azure key to ``api.openai.com``. A missing ``base_url`` is a
+    configuration error, not a default.
+    """
+    if not prov.base_url:
+        raise ProviderConfigError(
+            f"provider {prov.name!r} needs base_url: the resource's "
+            "https://<resource>.openai.azure.com/openai/v1 endpoint"
+        )
+    return OpenAICompatLLM(prov.api_key, prov.base_url, profile=OPENAI_COMPAT_PROFILES["azure"])
+
+
 # OpenAI-compatible aliases are explicit so a typo cannot silently select a protocol.
 # ``protocol: openai_compat`` remains available for custom endpoints and plugins.
 OPENAI_COMPAT_PROFILES = {
@@ -47,9 +62,14 @@ OPENAI_COMPAT_PROFILES = {
     "openai": OpenAICompatProfile(
         max_output_tokens_param="max_completion_tokens", supports_temperature=False
     ),
+    # Azure OpenAI serves the same GPT models, with the same parameter rules.
+    "azure": OpenAICompatProfile(
+        max_output_tokens_param="max_completion_tokens", supports_temperature=False
+    ),
 }
 BUILTINS: dict[str, ProviderFactory] = {
     "anthropic": anthropic,
+    "azure": azure,
     **{
         name: openai_compat
         for name in (

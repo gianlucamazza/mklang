@@ -35,6 +35,21 @@ def test_hetzner_uses_compatible_profile_without_response_format():
     assert llm.profile.supports_response_format is False
 
 
+def test_azure_uses_openai_parameter_rules():
+    llm = build_llm(_prov("azure"))
+    assert type(llm).__name__ == "OpenAICompatLLM"
+    assert llm.profile.max_output_tokens_param == "max_completion_tokens"
+    assert llm.profile.supports_temperature is False
+    assert str(llm.client.base_url).startswith("http://x")
+
+
+def test_azure_without_base_url_is_refused():
+    # The SDK default is api.openai.com: an Azure key must never be presented there.
+    prov = ProviderConfig(name="azure", tiers={"balanced": "m"}, api_key="k")
+    with pytest.raises(ProviderConfigError, match="needs base_url"):
+        build_llm(prov)
+
+
 def test_unknown_provider_requires_explicit_protocol():
     with pytest.raises(ProviderConfigError, match="not registered"):
         build_llm(_prov("typo"))
