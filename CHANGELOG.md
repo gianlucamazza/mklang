@@ -23,6 +23,11 @@ All notable changes to mklang are documented here. The format follows
   models reject. `base_url` is required — the SDK default is `api.openai.com`,
   and an Azure key must never be presented there.
 
+### Security
+
+- **`anyio` 4.14.1 → 4.15.1** in the lockfile (CVE-2026-63374, CVE-2026-64847,
+  CVE-2026-63349), which the dependency audit started refusing.
+
 ### Fixed
 
 - **The `hatchling` build-system pin no longer breaks distro packaging.**
