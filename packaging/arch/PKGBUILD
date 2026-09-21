@@ -16,17 +16,8 @@ checkdepends=(python-pytest python-mcp)
 optdepends=('python-mcp>=2: mklang-mcp MCP server'
             'python-argcomplete: shell completions')
 backup=(etc/mklang/runtime.yaml)
-source=("https://files.pythonhosted.org/packages/97/b2/dd21a9dd2dcbb4288d202d9447c097273f3c6de6149292b2ce92b189a17d/mklang-$pkgver.tar.gz")
-sha256sums=('d1bfb4faf045b71b8e70ae61d338380388a68e708635f65373a153cf1965d0cc')
-
-prepare() {
-  cd "mklang-$pkgver"
-  # Released sdists up to 1.3.5 pin `hatchling>=1.27,<1.28`; with --no-isolation
-  # that upper bound fails against extra/python-hatchling (1.30+). The pin is not
-  # load-bearing (upstream relaxed it to <2 after 1.3.5) — drop it here so the
-  # build uses the distro backend. Remove once a release ships the relaxed pin.
-  sed -i 's/hatchling>=1\.27,<1\.28/hatchling>=1.27,<2/' pyproject.toml
-}
+source=("https://files.pythonhosted.org/packages/d6/8c/88b00e287cb413c146b3bdfb7cc837504a9b194dbf1ec65027fdb3c86829/mklang-$pkgver.tar.gz")
+sha256sums=('c8c19ae3e9d8f0ac56747aa154a9dd70354587875bb0d07805e57c9e490a26fd')
 
 build() {
   cd "mklang-$pkgver"
