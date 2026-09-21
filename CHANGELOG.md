@@ -8,9 +8,25 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.5`).
+  `pyproject.toml` (currently `1.3.6`).
 
 ## [Unreleased]
+
+## [1.3.6] — 2026-09-21
+
+### Added
+
+- **`azure` provider** — Azure OpenAI through its v1 endpoint
+  (`https://<resource>.openai.azure.com/openai/v1`). It carries the `openai`
+  parameter rules (`max_completion_tokens`, no `temperature`): as a generic
+  `openai_compat` entry every call sent `max_tokens`, which the current GPT
+  models reject. `base_url` is required — the SDK default is `api.openai.com`,
+  and an Azure key must never be presented there.
+
+### Security
+
+- **`anyio` 4.14.1 → 4.15.1** in the lockfile (CVE-2026-63374, CVE-2026-64847,
+  CVE-2026-63349), which the dependency audit started refusing.
 
 ### Fixed
 

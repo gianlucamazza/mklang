@@ -47,7 +47,7 @@ DEEPSEEK_API_KEY=sk-...
 ```
 
 Any other provider works too — set its key and flip `active:` in
-`~/.config/mklang/runtime.yaml` (anthropic, openai, google, openrouter, xai,
+`~/.config/mklang/runtime.yaml` (anthropic, openai, azure, google, openrouter, xai,
 mistral, or a keyless `local` endpoint such as Ollama). If a key is missing,
 the CLI tells you upfront which variable to set instead of failing mid-run.
 
