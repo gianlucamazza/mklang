@@ -14,7 +14,14 @@ from typing import Any
 
 from .checkpoint import decode_repair, make_frame
 from .controlflow import FLOW_POLICIES, is_effectful, machine_touches_tools
-from .errors import CallFailed, CancellationError, JudgeUnparseable, ProviderError, RefusalError
+from .errors import (
+    CallFailed,
+    CancellationError,
+    JudgeUnparseable,
+    OutputRejected,
+    ProviderError,
+    RefusalError,
+)
 from .interpolate import fmt, lookup, render, render_delimited, resolve
 from .llm.base import LLM
 from .model import Gate, Machine, State
@@ -635,19 +642,27 @@ def _exec_produce(
         chars=len(p.text or ""),
         reasoning_chars=len(p.reasoning or ""),
     )
+    tokens = (p.input_tokens, p.output_tokens)
     meta: dict = {}
+    # From here on the call was billed: a refused answer halts via OutputRejected,
+    # which carries the tokens so the halt still charges them.
     if getattr(p, "truncated", False):
         meta["truncated"] = True
         if getattr(p, "finish_reason", None):
             meta["finish_reason"] = p.finish_reason
         if deps.on_truncate == "halt":
-            raise ValueError("output-truncated")
+            raise OutputRejected("output-truncated", *tokens)
         if state.parse:
             # Partial JSON from a length stop is almost never valid — fail with
             # a clearer label than a generic parse error (ADR 0018).
-            raise ValueError(f"parse-{state.parse}-truncated")
-    out = _parse_structured(p.text, state.parse) if state.parse else p.text
-    return out, None, p.reasoning, (p.input_tokens, p.output_tokens), meta
+            raise OutputRejected(f"parse-{state.parse}-truncated", *tokens)
+    if not state.parse:
+        return p.text, None, p.reasoning, tokens, meta
+    try:
+        out = _parse_structured(p.text, state.parse)
+    except ValueError as e:
+        raise OutputRejected(str(e), *tokens) from e
+    return out, None, p.reasoning, tokens, meta
 
 
 def _exec_one(
@@ -752,6 +767,9 @@ def _safe_exec(
             (e.input_tokens, e.output_tokens),
             {},
         )
+    except OutputRejected as e:
+        # The branch's answer was refused, but its call was billed.
+        out = (f"[branch-error: {e.error}]", None, None, (e.input_tokens, e.output_tokens), {})
     except Exception as e:  # isolate the branch
         out = (f"[branch-error: {e}]", None, None, (0, 0), {})
     _emit(
@@ -1475,6 +1493,8 @@ class _Runner:
             return self._halt("cancelled")
         except CallFailed as e:
             return self._halt_call_failed(step, e)
+        except OutputRejected as e:
+            return self._halt_output_rejected(step, e)
         except RefusalError:
             return self._halt("refusal")
         except ProviderError as e:
@@ -1497,6 +1517,13 @@ class _Runner:
         step.update(step=self.steps, gate=None, policy="call-failed", to=None)
         self._record(step)
         return self._halt(f"call-failed: {e.error}")
+
+    def _halt_output_rejected(self, step: dict, e: OutputRejected) -> RunResult:
+        # Same halt string as any state error; the refused call is still charged.
+        self._charge_step(step, e.input_tokens, e.output_tokens)
+        step.update(step=self.steps, gate=None, policy="state-error", to=None)
+        self._record(step)
+        return self._halt(f"state-error: {e.error}")
 
     def _charge_step(self, step: dict, step_in: int, step_out: int) -> None:
         self.feedback = ""

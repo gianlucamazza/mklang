@@ -145,3 +145,68 @@ def test_openai_compat_length_finish_reason():
     assert p.truncated is True
     assert p.finish_reason == "length"
     assert p.text == "partial"
+
+
+def _billed(text, *, truncated=False):
+    def produce(model, system, user, reason=False):
+        return Produced(
+            text=text,
+            truncated=truncated,
+            finish_reason="length" if truncated else "stop",
+            input_tokens=1200,
+            output_tokens=4096,
+        )
+
+    return MockLLM(produce_fn=produce)
+
+
+def _parse_machine(parse, *, sample=None):
+    state = {
+        "structure": "JSON",
+        "prompt": "emit it",
+        "parse": parse,
+        "output": "o",
+        "gates": [{"when": "otherwise", "then": "ok", "to": "END"}],
+    }
+    if sample:
+        state["sample"] = sample
+    return parse_machine(
+        {"machine": "t", "entry": "a", "budget": 5, "mklang": "0.4", "states": {"a": state}}
+    )
+
+
+def test_halt_on_truncation_still_charges_the_call():
+    """A truncated answer the policy refuses was produced and paid for: the halt
+    keeps its reason but the tokens reach usage and the step's cost."""
+    m = _m()
+    r = run(m, {}, {m.name: m}, _billed("cut", truncated=True), TIERS, on_truncate="halt")
+    assert (r.status, r.error) == ("halt", "state-error: output-truncated")
+    assert r.usage == {"input_tokens": 1200, "output_tokens": 4096}
+    assert r.trace[-1]["state"] == "a"
+    assert r.trace[-1]["cost"] == {"input_tokens": 1200, "output_tokens": 4096}
+
+
+def test_parse_truncated_halt_still_charges_the_call():
+    m = _parse_machine("list")
+    r = run(m, {}, {m.name: m}, _billed('["one", "tw', truncated=True), TIERS)
+    assert (r.status, r.error) == ("halt", "state-error: parse-list-truncated")
+    assert r.usage == {"input_tokens": 1200, "output_tokens": 4096}
+
+
+def test_unparseable_output_halt_still_charges_the_call():
+    m = _parse_machine("json")
+    r = run(m, {}, {m.name: m}, _billed("not json at all"), TIERS)
+    assert r.status == "halt"
+    assert (r.error or "").startswith("state-error: parse-json: output is not valid JSON (")
+    assert r.usage == {"input_tokens": 1200, "output_tokens": 4096}
+    assert r.trace[-1]["cost"] == {"input_tokens": 1200, "output_tokens": 4096}
+
+
+def test_refused_branch_keeps_its_tokens():
+    """A fan-out branch whose answer is refused becomes a marker, like a failed
+    call, and its tokens still count toward the step."""
+    m = _parse_machine("json", sample=2)
+    r = run(m, {}, {m.name: m}, _billed("not json"), TIERS)
+    assert r.status == "done"
+    assert all(str(b).startswith("[branch-error: parse-json: ") for b in r.result)
+    assert r.usage == {"input_tokens": 2400, "output_tokens": 8192}

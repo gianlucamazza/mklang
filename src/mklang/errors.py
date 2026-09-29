@@ -40,5 +40,20 @@ class CallFailed(MklangError):
         self.output_tokens = output_tokens
 
 
+class OutputRejected(MklangError):
+    """A produce call answered (and was billed) but its answer was refused.
+
+    Raised for a truncated answer under ``on_truncate: halt`` and for a ``parse:``
+    failure. Carries the call's tokens so the halt still charges them; ``error``
+    is the halt detail (``output-truncated``, ``parse-json: …``).
+    """
+
+    def __init__(self, error: str, input_tokens: int = 0, output_tokens: int = 0):
+        super().__init__(error)
+        self.error = error
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+
+
 class JudgeUnparseable(MklangError):
     """The gate judge returned text that could not be parsed as a choice."""

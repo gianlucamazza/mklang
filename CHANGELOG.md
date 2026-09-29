@@ -8,9 +8,24 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.6`).
+  `pyproject.toml` (currently `1.3.7`).
 
 ## [Unreleased]
+
+## [1.3.7] — 2026-09-29
+
+### Fixed
+
+- **A produced answer the run refuses is still charged.** A truncated answer
+  under `on_truncate: halt`, and a `parse:` failure (`parse-json-truncated`,
+  `parse-list-truncated`, `parse-json: output is not valid JSON …`), halted
+  through the generic state-error path, which dropped the tokens of the call
+  that had already been made and billed: `RunResult.usage` and the step cost
+  read 0 for it (seen on a ~4096-token answer). The halt reason is unchanged
+  (`state-error: output-truncated`, `state-error: parse-json: …`); the call's
+  tokens now reach `usage` and the halted step is recorded with its `cost`,
+  as `call-failed` already did for a sub-machine. A fan-out branch refused the
+  same way keeps its tokens in the step, as a failed `call` branch does.
 
 ## [1.3.6] — 2026-09-21
 
