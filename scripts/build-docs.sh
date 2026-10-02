@@ -29,6 +29,10 @@ cp docs/adr/*.md site-src/adr/
 # links to it are rewritten to GitHub below.
 cp -r schema site-src/schema
 cp -r docs/assets site-src/assets
+# README cover lives at repo-root-relative docs/cover.jpg so GitHub
+# renders it. Copy it next to the other site assets; the rewrite below
+# retargets the assembled index.md.
+cp docs/cover.jpg site-src/assets/cover.jpg
 
 # Rewrite repo-relative links for the flattened site: in-site pages point to
 # their new location; repo-only targets (examples, config, sources) go to GitHub.
@@ -62,6 +66,8 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./experiments/|($GH/blob/main/docs/experiments/|g" \
 	-e "s|(\./docs/assets/|(assets/|g" \
 	-e "s|(\.\./assets/|(assets/|g" \
+	-e "s|(\./docs/cover\.jpg)|(assets/cover.jpg)|g" \
+	-e "s|(docs/cover\.jpg)|(assets/cover.jpg)|g" \
 	-e 's|src="assets/demos/|src="../assets/demos/|g' \
 	-e "s|(\.\./\.\./SPEC\.md|(SPEC.md|g" \
 	-e "s|(\.\./SPEC\.md|(SPEC.md|g" \
@@ -130,5 +136,7 @@ done
 for demo in agent language; do
 	grep -q "src=\"../assets/demos/${demo}.webm\"" site-src/demos.md
 done
+test -f site-src/assets/cover.jpg
+grep -q '(assets/cover.jpg)' site-src/index.md
 
 echo "site-src assembled: $(find site-src -name '*.md' | wc -l) pages"

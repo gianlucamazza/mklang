@@ -12,6 +12,12 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Docs site assemble includes the README cover.** `scripts/build-docs.sh`
+  copies `docs/cover.jpg` into the generated tree and rewrites the README
+  image target so `mkdocs build --strict` can resolve it.
+
 ### Security
 
 - **`pyjwt` 2.13.0 → 2.15.1** and **`urllib3` 2.7.0 → 2.8.0** in the lockfile
