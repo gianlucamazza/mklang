@@ -12,6 +12,12 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- **`pyjwt` 2.13.0 → 2.15.1** and **`urllib3` 2.7.0 → 2.8.0** in the lockfile
+  (PYSEC-2026-4140…4152, PYSEC-2026-4175…4177), which the dependency audit
+  started refusing.
+
 ## [1.3.7] — 2026-09-29
 
 ### Fixed

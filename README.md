@@ -1,4 +1,5 @@
 # mklang
+![mklang](docs/cover.jpg)
 
 [![CI](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml/badge.svg)](https://github.com/gianlucamazza/mklang/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-docs.mklang.dev-blue)](https://docs.mklang.dev/)
