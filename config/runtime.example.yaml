@@ -27,6 +27,11 @@ active: deepseek # deepseek | hetzner | anthropic | openai | google | openrouter
 # optimization that trades judging quality on your hardest gates). It is left
 # commented out so the default is tier-following; uncomment only if you accept that
 # trade-off.
+#
+# Jev Noul-only host judge (ADR 0037, Proposed): `judge: jev-latest` is a
+# separate opt-in. It is not the default, not a produce tier, and never a
+# Choice mapping. Needs TYPESAFE_API_KEY in .env. Host walks first Noul ≥ 0.5.
+# See docs/guides/jev-noul-judge.md.
 
 providers:
   # --- Anthropic -----------------------------------------------------------
@@ -104,6 +109,7 @@ providers:
         thinking: {type: enabled}
         reasoning_effort: high
     # judge: deepseek-v4-flash # opt-in: force ALL gate judging onto one model (default: follow each state's tier)
+    # judge: jev-latest # opt-in Noul-only Jev judge (ADR 0037); needs TYPESAFE_API_KEY
 
   # --- Hetzner Experiments Inference --------------------------------------
   # Experimental OpenAI-compatible API. Verify the live model catalog before

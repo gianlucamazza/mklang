@@ -14,9 +14,18 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Opt-in Noul-only Jev host judge** (ADR 0037, Proposed). Setting `judge:`
+  to `jev-latest` (or a pinned `jev-*` id) routes prose-gate judging through
+  one System One call of ordered Nouls; the host fires the first probability
+  ≥ 0.5. Produce stays on the configured provider. Not the default judge, not
+  a produce tier, never Choice, never `hook:`. See
+  `docs/guides/jev-noul-judge.md`. Live Path B eval:
+  `scripts/jev_noul_eval.py` (skips without `TYPESAFE_API_KEY`; invents no
+  numbers).
 - **Public honesty page.** [What mklang is / is not](./docs/what-mklang-is.md)
-  states the language and host-contract boundary, including that ADR 0037 is
-  Proposed only and ships no adapter.
+  states the language and host-contract boundary. ADR 0037 remains Proposed:
+  opt-in `judge: jev-*` only, not the default, not production-ready until
+  Path B, Choice as `judge:` mapping STOP.
 
 ### Fixed
 

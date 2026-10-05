@@ -148,3 +148,11 @@ go-ahead.
   injection accuracy ≥ 0.95 after the fence. (3) This ADR accepted as
   the host mapping. (4) Path C recommended before production-ready.
   Phase 1 records the decision only.
+
+## Implementation (Phase 2 spike)
+
+The opt-in adapter is `mklang.llm.jev.JevNoulJudge`, selected only when
+`judge:` is a reserved `jev-*` id (see `docs/guides/jev-noul-judge.md`).
+Status stays **Proposed**: shipping the adapter is not a production cutover
+and does not reopen Choice as `judge:` mapping. Live Path B numbers are
+Lab measurements, not TypeSafe claims.

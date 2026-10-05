@@ -99,7 +99,7 @@ inventing a `system:` field; using `execution: call the search tool`.
 `neq:key:value` (string equality on a top-level context key). Put hooks **above**
 prose batches so control-flow does not depend on a judge fallback.
 
-Gate judging **follows the state tier** by default. Use config `judge:` only when all gates are deliberately cheap classifications (SPEC §2.1).
+Gate judging **follows the state tier** by default. Use config `judge:` only when all gates are deliberately cheap classifications (SPEC §2.1). `judge: jev-latest` is an opt-in Noul-only host adapter ([ADR 0037](../adr/0037-jev-noul-host-judge.md), [guide](jev-noul-judge.md)) — not the default, not a produce tier, never Choice.
 
 Optional: `mklang lint --llm` to probe overlapping prose `when` conditions (advisory; not CI-blocking). `mklang lint` also flags unquoted `#` inside raw `when` lines.
 

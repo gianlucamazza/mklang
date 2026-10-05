@@ -65,7 +65,9 @@ class LLM(Protocol):
 
         The reference adapters return ``(index, method)`` where ``method`` is how the
         reply was parsed (``"json"`` / ``"bare"`` / ``"last-number"``, see
-        ``parse_choice``); the engine traces a non-``json`` method as ``judge_parse``.
+        ``parse_choice``) or how the host walked Noul probabilities
+        (``"noul_first_ge"``, ADR 0037). The engine traces a method outside
+        ``JUDGE_CLEAN_METHODS`` as ``judge_parse``.
         Returning a bare ``int`` is also accepted (the engine treats the method as
         unknown) — mock/scripted judges use that simpler form. Reference adapters
         expose judge usage through the optional ``last_judge_usage`` attribute so
@@ -97,6 +99,10 @@ JUDGE_SYSTEM = (
 # The synthetic last option that makes the fused judge total (SPEC §5). Without
 # it the judge must pick one of the author's conditions even when none holds.
 JUDGE_NONE_CONDITION = "none of the above conditions is true"
+
+# Reply methods that are first-class verdicts, not anomaly-adjacent parses.
+# ``noul_first_ge`` is the host first-true walk over Noul probabilities (ADR 0037).
+JUDGE_CLEAN_METHODS = frozenset({"json", "noul_first_ge"})
 
 
 def build_judge_user(

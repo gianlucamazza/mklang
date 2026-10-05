@@ -41,7 +41,10 @@ a contributor's map, not language semantics — those live in the SPEC. The
 - `base.py` — the interface the engine talks to. Two operations: **produce**
   and **judge** — plus the fixed `JUDGE_SYSTEM` role and the shared
   `build_judge_user` (OUTPUT/REASONING/CONTEXT always fenced, ADR 0025) used
-  by both adapters.
+  by the chat-completions adapters. `JUDGE_CLEAN_METHODS` includes
+  `noul_first_ge` for the opt-in Jev walk.
+- `jev.py` — opt-in Noul-only Jev host judge (ADR 0037). Not a produce tier.
+  Selected only via `judge: jev-*`. [Guide](../guides/jev-noul-judge.md).
 - `openai_compat.py` — shared transport adapter for OpenAI-compatible providers.
   Provider aliases are registered explicitly; protocol policies such as DeepSeek
   V4 thinking-temperature handling and Hetzner response-format support are passed

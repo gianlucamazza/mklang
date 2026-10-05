@@ -100,7 +100,7 @@
         "tiers": { "$ref": "#/$defs/tier_map" },
         "judge": {
           "type": "string",
-          "description": "Optional GLOBAL judge-model override: forces one model for ALL gate judging. When omitted (the default), each state's gates are judged by that state's own capability tier (SPEC §2.1) — set this only as a cost/latency optimization that trades judging quality on high-tier gates."
+          "description": "Optional GLOBAL judge-model override: forces one model for ALL gate judging. When omitted (the default), each state's gates are judged by that state's own capability tier (SPEC §2.1). Set `jev-latest` (or a pinned `jev-*` id) to opt into the Noul-only Jev host judge (ADR 0037); that is not the default and is not a produce tier. Requires TYPESAFE_API_KEY."
         },
         "params": {
           "type": "object",

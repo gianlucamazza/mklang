@@ -58,6 +58,7 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./docs/guides/|(|g" \
 	-e "s|(\./docs/reference/|(|g" \
 	-e "s|(\.\./guides/|(|g" \
+	-e "s|(\./guides/|(|g" \
 	-e "s|(\.\./reference/|(|g" \
 	-e "s|(\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\./docs/demos\.md|(demos.md|g" \

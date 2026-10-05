@@ -10,11 +10,11 @@ Untrusted context is delimited with provenance and data fences ([ADR 0025](./adr
 
 - Not a chat application, and not a substitute for writing application code when you need arbitrary host logic.
 - Not a guarantee that every prose gate will be judged correctly; accuracy must be measured on your corpus.
-- Not “System One,” and not the same product as TypeSafe Jev. mklang is a **language and host contract** for control flow; Jev (when used at all) would be an optional **decision model** behind the existing `judge:` configuration — a different layer.
-- Not a claim that any third-party System One model ships as the default mklang judge today.
+- Not “System One,” and not the same product as TypeSafe Jev. mklang is a **language and host contract** for control flow; Jev (when used at all) is an optional **decision model** behind the existing `judge:` configuration — a different layer.
+- Not a claim that any third-party System One model is the default mklang judge.
 
-## Optional future host judge (ADR 0037 — Proposed only)
+## Optional host judge (ADR 0037 — Proposed)
 
-A **Proposed** architecture decision ([ADR 0037](./adr/0037-jev-noul-host-judge.md), merge `ac8ea61d`) records intent for a **Noul-only** host-side mapping under `judge:`: the host walks gate conditions in order and fires the first answer at or above a threshold. That ADR does **not** ship an adapter, does **not** change the language SPEC, and does **not** authorize Choice as a `judge:` mapping (that path is rejected). Implementation remains blocked until an explicit EXPLORE sì and Path B acceptance bars.
+[ADR 0037](./adr/0037-jev-noul-host-judge.md) remains **Proposed**. An opt-in Noul-only host adapter can sit behind the existing `judge:` key when set to `jev-*` (`jev-latest` or a pinned id): the host walks gate conditions in order and fires the first Noul at or above a threshold (default 0.5). That is not the default judge (omit `judge:` and judging still follows each state's tier), not a produce tier, and **not production-ready until Path B** bars are measured on a labeled receipt. Choice as `judge:` mapping stays **STOP**. The language SPEC and `.mkl` surface are unchanged; exact rules stay on `hook:`.
 
-Any measured accuracy or latency numbers comparing judges belong in a labeled experiment receipt — not in ADR 0037 alone, and not as TypeSafe marketing restated as ours.
+Any measured accuracy or latency numbers comparing judges belong in a labeled experiment receipt — not in ADR 0037 alone, and not as TypeSafe marketing restated as ours. See [Jev Noul judge](./guides/jev-noul-judge.md).
