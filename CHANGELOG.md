@@ -22,6 +22,13 @@ All notable changes to mklang are documented here. The format follows
   `docs/guides/jev-noul-judge.md`. Live Path B eval:
   `scripts/jev_noul_eval.py` (skips without `TYPESAFE_API_KEY`; invents no
   numbers).
+- **First-true vs prompt-spaghetti eval harness** ([#120](https://github.com/gianlucamazza/mklang/issues/120))
+  — `scripts/first_true_eval.py` plus a content-hashed produce/gold pin
+  (`scripts/fixtures/first_true_eval.json`) on the gate-divergence corpus.
+  Arm A is the host first-true walk; arm B is a single unordered / best-match
+  pick with no first-true walk. Default is an offline mock (CI dry-run);
+  `--live` is optional and logs latency/tokens only when a key is present.
+  Protocol: `docs/experiments/first-true-fidelity.md`.
 - **Public honesty page.** [What mklang is / is not](./docs/what-mklang-is.md)
   states the language and host-contract boundary. ADR 0037 remains Proposed:
   opt-in `judge: jev-*` only, not the default, not production-ready until

@@ -418,7 +418,10 @@ does not block a DeepSeek+OpenAI release, but it also does **not** close #60.
 - SPEC §5 (judge protocol), §11 (threat model)
 - ADR 0004 (gates as reliability mechanism — empirical claim)
 - ADR 0009 (conformance suite pins interpreter rules, not judge accuracy)
+- [First-true fidelity vs prompt-spaghetti](./first-true-fidelity.md) — same
+  pinned corpus, host first-true walk against an unordered best-match baseline
 - Issues [#60](https://github.com/gianlucamazza/mklang/issues/60),
   [#64](https://github.com/gianlucamazza/mklang/issues/64),
   [#69](https://github.com/gianlucamazza/mklang/issues/69),
-  [#72](https://github.com/gianlucamazza/mklang/issues/72)
+  [#72](https://github.com/gianlucamazza/mklang/issues/72),
+  [#120](https://github.com/gianlucamazza/mklang/issues/120)
