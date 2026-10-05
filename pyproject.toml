@@ -164,6 +164,7 @@ module = [
   "mklang.config",
   "mklang.toolconfig",
   "mklang.llm.base",
+  "mklang.llm.jev",
   "mklang.llm.prompts",
   "mklang.llm.context_view",
   "mklang.console.commands",

@@ -16,6 +16,7 @@ from importlib.metadata import entry_points
 from .config import ProviderConfig
 from .errors import ProviderConfigError
 from .llm.base import LLM
+from .llm.jev import wrap_jev_judge
 from .llm.openai_compat import OpenAICompatLLM, OpenAICompatProfile
 
 ENTRY_POINT_GROUP = "mklang.providers"
@@ -126,14 +127,21 @@ def load_provider_registry(
 
 
 def build_llm(prov: ProviderConfig) -> LLM:
-    """Resolve a registered provider or an explicitly declared protocol."""
+    """Resolve a registered provider or an explicitly declared protocol.
+
+    ``judge: jev-*`` (ADR 0037) is an opt-in host wrap: produce stays on the
+    resolved provider, judging is routed to the Noul-only Jev adapter. Jev is
+    never selected as a produce tier and is not the default judge.
+    """
     if prov.protocol == "openai_compat":
-        return openai_compat(prov)
-    registry = load_provider_registry()
-    factory = registry.get(prov.name)
-    if factory is not None:
-        return factory(prov)
-    raise ProviderConfigError(
-        f"provider {prov.name!r} is not registered; configure an entry-point provider "
-        "or set protocol: openai_compat"
-    )
+        llm = openai_compat(prov)
+    else:
+        registry = load_provider_registry()
+        factory = registry.get(prov.name)
+        if factory is None:
+            raise ProviderConfigError(
+                f"provider {prov.name!r} is not registered; configure an entry-point "
+                "provider or set protocol: openai_compat"
+            )
+        llm = factory(prov)
+    return wrap_jev_judge(prov, llm)

@@ -23,7 +23,7 @@ from .errors import (
     RefusalError,
 )
 from .interpolate import fmt, lookup, render, render_delimited, resolve
-from .llm.base import LLM
+from .llm.base import JUDGE_CLEAN_METHODS, LLM
 from .model import Gate, Machine, State
 
 MAX_CALL_DEPTH = 8
@@ -218,6 +218,20 @@ def _collect_prose_batch(eligible: Eligible, start: int) -> list[tuple[int, Gate
     return batch
 
 
+def _apply_judge_obs(ann: dict, llm: object) -> None:
+    """Copy host-only Jev Noul observability onto the step (ADR 0037)."""
+    obs = getattr(llm, "last_judge_obs", None)
+    if not isinstance(obs, dict) or obs.get("mapping") != "noul_first_ge":
+        return
+    ann["judge_mapping"] = "noul_first_ge"
+    if "noul_probs" in obs:
+        ann["noul_probs"] = obs["noul_probs"]
+    if "threshold" in obs:
+        ann["jev_threshold"] = obs["threshold"]
+    if "fence_applied" in obs:
+        ann["fence_applied"] = obs["fence_applied"]
+
+
 def _judge_supports_none(llm: object) -> bool:
     """True when ``llm.judge`` accepts the ``allow_none`` keyword (SPEC §5).
 
@@ -329,6 +343,20 @@ def _call_judge(
             )
             total = False
         usage = getattr(deps.llm, "last_judge_usage", (0, 0))
+        obs = getattr(deps.llm, "last_judge_obs", None)
+        extra: dict[str, Any] = {}
+        if isinstance(obs, dict):
+            for key in (
+                "mapping",
+                "threshold",
+                "noul_probs",
+                "chosen_index",
+                "none",
+                "latency_ms",
+                "fence_applied",
+            ):
+                if key in obs:
+                    extra[key] = obs[key]
         _llm_event(
             deps,
             "done",
@@ -337,6 +365,7 @@ def _call_judge(
             elapsed_ms=round((time.monotonic() - started) * 1000),
             input_tokens=int(usage[0] or 0),
             output_tokens=int(usage[1] or 0),
+            **extra,
         )
         return verdict, total
     except Exception as caught:
@@ -393,10 +422,11 @@ def _judge_prose_batch(
             raise JudgeUnparseable(f"out-of-range choice {local!r} for n={top + 1}")
         usage = getattr(deps.llm, "last_judge_usage", (0, 0))
         cost = (int(usage[0] or 0), int(usage[1] or 0))
+        _apply_judge_obs(ann, deps.llm)
         if local == len(batch):  # no condition in this batch holds — keep scanning
             ann["judge_model"] = judge_model
             ann["judge_none"] = int(ann.get("judge_none", 0)) + 1
-            if parse_method and parse_method != "json":
+            if parse_method and parse_method not in JUDGE_CLEAN_METHODS:
                 ann["judge_parse"] = parse_method
             return None, None, ann, cost
         gi, gate = batch[local]
@@ -406,7 +436,7 @@ def _judge_prose_batch(
             # Forced choice: this verdict cannot express "none of these hold".
             ann["judge_forced_choice"] = True
         # A non-JSON parse is anomaly-adjacent: trace it, but it is not a fallback.
-        if parse_method and parse_method != "json":
+        if parse_method and parse_method not in JUDGE_CLEAN_METHODS:
             ann["judge_parse"] = parse_method
         return gi, gate, ann, cost
     except JudgeUnparseable as e:

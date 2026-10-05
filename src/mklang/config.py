@@ -28,7 +28,8 @@ class ProviderConfig:
         ``None`` means gate judging follows each state's own capability tier
         (SPEC §2.1) — a `reasoning` state's gates are judged by the reasoning
         model, not silently downgraded. Set `judge:` only to force one cheaper
-        model for *all* gates as a cost optimization."""
+        model for *all* gates as a cost optimization, or ``jev-latest`` to opt
+        into the Noul-only Jev host judge (ADR 0037)."""
         return self.judge
 
 

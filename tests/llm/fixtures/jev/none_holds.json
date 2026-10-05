@@ -1,0 +1,9 @@
+{
+  "model": "jev-latest",
+  "answers": {
+    "g0": {"type": "noul", "noul": 0.12},
+    "g1": {"type": "noul", "noul": 0.08},
+    "none": {"type": "noul", "noul": 0.91}
+  },
+  "usage": {"input_tokens": 96, "output_tokens": 14}
+}

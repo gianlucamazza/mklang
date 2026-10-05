@@ -20,7 +20,10 @@ maps _architectures_ to constructs; this page is about configuring them _well_.
   judged by the reasoning model, not silently downgraded. The `judge:` config key is
   an **opt-in global override** that forces one model for _all_ gate judging — a
   cost/latency optimization that also downgrades your most critical gates, so reach
-  for it only when your gates really are uniform, cheap classifications.
+  for it only when your gates really are uniform, cheap classifications. Setting
+  it to `jev-latest` selects the Noul-only Jev host judge
+  ([ADR 0037](../adr/0037-jev-noul-host-judge.md)); that is still opt-in and is
+  not a produce tier.
 - **Speculative cascade** beats a flat `reasoning` machine on cost: draft at `fast`,
   and let an `escalate` gate promote only the low-confidence cases to a `reasoning`
   state. Same answers, a fraction of the tokens.
