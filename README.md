@@ -145,7 +145,9 @@ it still has no shell, git, or generic write access.
   capability **tier** (`fast` / `balanced` / `reasoning`); the runtime maps each
   tier to a concrete model. Portability of the document is syntactic; whether
   different providers fire the same gates on the same run is measurable (see
-  `scripts/gate_divergence.py`).
+  `scripts/gate_divergence.py`). First-true routing versus a prompt-spaghetti
+  baseline on that pinned corpus is `scripts/first_true_eval.py` (offline mock
+  by default; [`docs/experiments/first-true-fidelity.md`](./docs/experiments/first-true-fidelity.md)).
 - **Spec + conformance** — an implementation-neutral [conformance suite](./conformance/README.md)
   pins interpreter semantics so a second runtime can match the language's
   **mechanical** contract: same machine, same oracle verdicts, same trace. Cases

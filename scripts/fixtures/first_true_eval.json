@@ -1,0 +1,57 @@
+{
+  "id": "gate-divergence-entry-gates",
+  "source": "scripts/gate_divergence.py",
+  "description": "Pinned entry-state produce texts, gold to:, and oracle holds for the first-true vs prompt-spaghetti eval. Produce is never generated at mock time; live produce is not part of this corpus.",
+  "cases": [
+    {
+      "name": "gate_divergence",
+      "variant": "base",
+      "entry": "label",
+      "produce": "spam",
+      "context": {},
+      "gold_to": "spam_path",
+      "holds": [true, false],
+      "notes": "Release-gate machine: prize-spam message classified as the word spam."
+    },
+    {
+      "name": "priority_shadow",
+      "variant": "base",
+      "entry": "draft",
+      "produce": "REFUND 2000 EUR APPROVED FOR ORDER 71",
+      "context": {},
+      "gold_to": "broad",
+      "holds": [true, true],
+      "notes": "Both refund and refund-above-1000 hold; SPEC §5 first-true gold is the earlier broad gate."
+    },
+    {
+      "name": "none_holds",
+      "variant": "base",
+      "entry": "classify",
+      "produce": "MAINTENANCE WINDOW SCHEDULED FOR SUNDAY",
+      "context": {},
+      "gold_to": "other",
+      "holds": [false, false],
+      "notes": "Neither listed condition holds; the catch-all is gold."
+    },
+    {
+      "name": "threshold_edge",
+      "variant": "base",
+      "entry": "assess",
+      "produce": "AMOUNT 500.00 EUR / LIMIT 500.00 EUR",
+      "context": {},
+      "gold_to": "within",
+      "holds": [false],
+      "notes": "Amount equals the limit; strictly-greater is false."
+    },
+    {
+      "name": "severity_escalate",
+      "variant": "base",
+      "entry": "triage",
+      "produce": "NON_SEVERE",
+      "context": {},
+      "gold_to": "auto",
+      "holds": [false],
+      "notes": "Pinned NON_SEVERE fixture; the SEVERE escalate condition does not hold."
+    }
+  ]
+}

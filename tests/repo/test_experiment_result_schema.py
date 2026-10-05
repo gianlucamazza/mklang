@@ -43,6 +43,29 @@ def test_gate_row_matches_experiment_schema():
     assert list(_validator().iter_errors(row)) == []
 
 
+def test_first_true_row_matches_experiment_schema():
+    row = {
+        **_meta(),
+        "experiment": "first-true-fidelity",
+        "provider": "mock",
+        "machine": "priority_shadow",
+        "variant": "base",
+        "repeat": 0,
+        "status": "done",
+        "input_hash": "a" * 64,
+        "arm": "first_true",
+        "pred_to": "broad",
+        "gold_to": "broad",
+        "correct": True,
+        "fail_mode": None,
+        "produce_hash": "c" * 64,
+        "fixture_hash": "d" * 64,
+        "condition_count": 3,
+        "mode": "mock",
+    }
+    assert list(_validator().iter_errors(row)) == []
+
+
 def test_repair_row_requires_attempts():
     row = {
         **_meta(),

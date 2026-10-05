@@ -61,6 +61,10 @@ and experiment-specific metrics. Secrets and raw model output are excluded.
 - **Control-flow-taint incidence** ([protocol](./docs/experiments/taint-incidence.md)) —
   harness exists (`scripts/taint_incidence.py`); the external-machine corpus waits on
   distribution ([#61](https://github.com/gianlucamazza/mklang/issues/61)).
+- **First-true fidelity** ([protocol](./docs/experiments/first-true-fidelity.md)) —
+  harness + pinned produce texts (`scripts/first_true_eval.py`); offline mock is
+  the CI path. A live `--live` row (keys + explicit run) is what a workshop
+  table would quote.
 
 ## Later
 
