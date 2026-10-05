@@ -18,6 +18,8 @@ states produce, gates judge, and the machine routes to the next state, repair,
 escalation, tool, or failure. The topology is explicit and traceable; the
 judge's accuracy and cross-provider stability remain empirical questions.
 
+[What mklang is / is not](./docs/what-mklang-is.md).
+
 ### Why mklang?
 
 - **Explicit control flow** — states, gates, repairs, escalations, and effects are visible in one document.

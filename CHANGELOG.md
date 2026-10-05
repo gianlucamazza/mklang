@@ -12,6 +12,12 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Public honesty page.** [What mklang is / is not](./docs/what-mklang-is.md)
+  states the language and host-contract boundary, including that ADR 0037 is
+  Proposed only and ships no adapter.
+
 ### Fixed
 
 - **Docs site assemble includes the README cover.** `scripts/build-docs.sh`

@@ -41,6 +41,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Language:
+      - What mklang is: what-mklang-is.md
       - Specification: SPEC.md
       - Cheatsheet: cheatsheet.md
       - Conformance: conformance.md
