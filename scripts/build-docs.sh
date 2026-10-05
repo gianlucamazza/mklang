@@ -22,7 +22,7 @@ if [ -n "$dup" ]; then
 fi
 cp docs/guides/*.md site-src/
 cp docs/reference/*.md site-src/
-cp docs/demos.md site-src/
+cp docs/demos.md docs/what-mklang-is.md site-src/
 cp conformance/README.md site-src/conformance.md
 cp docs/adr/*.md site-src/adr/
 # docs/experiments/ is internal research material and stays off the site;
@@ -48,9 +48,9 @@ cp docs/cover.jpg site-src/assets/cover.jpg
 GH="https://github.com/gianlucamazza/mklang"
 
 # Pass 1 — pages flattened to the site root. Sources sit at repo depth 0
-# (README, SPEC, ...), depth 1 (conformance/README.md, docs/demos.md), and
-# depth 2 (docs/guides/*, docs/reference/*); all their root-doc prefixes
-# (./ , ../ , ../../) denote the repo root.
+# (README, SPEC, ...), depth 1 (conformance/README.md, docs/demos.md,
+# docs/what-mklang-is.md), and depth 2 (docs/guides/*, docs/reference/*);
+# all their root-doc prefixes (./ , ../ , ../../) denote the repo root.
 find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./conformance/README\.md|(conformance.md|g" \
 	-e "s|(\.\./\.\./conformance/README\.md|(conformance.md|g" \
@@ -61,6 +61,7 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\.\./reference/|(|g" \
 	-e "s|(\./docs/patterns\.md)|(patterns.md)|g" \
 	-e "s|(\./docs/demos\.md|(demos.md|g" \
+	-e "s|(\./docs/what-mklang-is\.md|(what-mklang-is.md|g" \
 	-e "s|(\./docs/experiments/|($GH/blob/main/docs/experiments/|g" \
 	-e "s|(\.\./\.\./docs/experiments/|($GH/blob/main/docs/experiments/|g" \
 	-e "s|(\.\./experiments/|($GH/blob/main/docs/experiments/|g" \
