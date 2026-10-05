@@ -3,26 +3,35 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 
 import pytest
 
 from mklang.config import ProviderConfig
 from mklang.errors import JudgeUnparseable, ProviderConfigError, ProviderError
 from mklang.interpolate import wrap_data
+from mklang.llm.base import Produced
 from mklang.llm.jev import (
     DEFAULT_THRESHOLD,
     MAPPING,
     JevNoulJudge,
     JudgeRoutedLLM,
+    _is_transient,
+    _post_systemone,
+    _usage_tokens,
     build_noul_questions,
     fence_systemone_state,
     first_noul_ge,
     is_jev_judge_model,
     noul_question,
     parse_noul_prob,
+    resolve_jev_threshold,
+    systemone_url,
     wrap_jev_judge,
 )
+from mklang.llm.mock import MockLLM
 from mklang.providers import build_llm
 
 FIXTURES = Path(__file__).parent / "fixtures" / "jev"
@@ -170,10 +179,13 @@ def test_wrap_jev_judge_is_opt_in(monkeypatch):
     )
     assert isinstance(wrapped, JudgeRoutedLLM)
     assert wrapped._produce is produce
-    assert wrap_jev_judge(
-        ProviderConfig(name="deepseek", tiers={"balanced": "m"}, judge=None),
-        produce,
-    ) is produce
+    assert (
+        wrap_jev_judge(
+            ProviderConfig(name="deepseek", tiers={"balanced": "m"}, judge=None),
+            produce,
+        )
+        is produce
+    )
 
 
 def test_build_llm_does_not_default_to_jev():
@@ -215,9 +227,134 @@ def test_build_llm_jev_judge_without_key_fails(monkeypatch):
 def test_threshold_env_is_tunable(monkeypatch):
     monkeypatch.setenv("MKLANG_JEV_NOUL_THRESHOLD", "0.8")
     llm = _judge(_load("priority_shadow.json"))
-    idx, _ = llm.judge(
-        "jev-latest", PRIORITY_SHADOW, "REFUND 2000 EUR", {}, allow_none=True
-    )
+    idx, _ = llm.judge("jev-latest", PRIORITY_SHADOW, "REFUND 2000 EUR", {}, allow_none=True)
     # 0.71 < 0.8, 0.99 >= 0.8 → later gate. Evidence-gated; default stays 0.5.
     assert idx == 1
     assert llm.last_judge_obs["threshold"] == 0.8
+
+
+def test_threshold_rejects_out_of_range():
+    with pytest.raises(ProviderConfigError, match="probability"):
+        resolve_jev_threshold(1.5)
+
+
+def test_systemone_url_joins_roots():
+    assert systemone_url("https://api.typesafe.ai") == "https://api.typesafe.ai/v1/systemone"
+    assert systemone_url("https://api.typesafe.ai/v1") == "https://api.typesafe.ai/v1/systemone"
+    assert (
+        systemone_url("https://api.typesafe.ai/v1/systemone")
+        == "https://api.typesafe.ai/v1/systemone"
+    )
+
+
+def test_parse_noul_prob_error_paths():
+    with pytest.raises(JudgeUnparseable, match="not an object"):
+        parse_noul_prob("nope", "g0")
+    with pytest.raises(JudgeUnparseable, match="Choice field"):
+        parse_noul_prob({"type": "noul", "noul": 0.4, "choice": "x"}, "g0")
+    with pytest.raises(JudgeUnparseable, match="non-numeric"):
+        parse_noul_prob({"type": "noul", "noul": "high"}, "g0")
+    with pytest.raises(JudgeUnparseable, match="not in"):
+        parse_noul_prob({"type": "noul", "noul": 1.4}, "g0")
+
+
+def test_usage_tokens_missing_usage():
+    assert _usage_tokens({}) == (0, 0)
+
+
+def test_empty_conditions_and_missing_answers():
+    llm = _judge({"model": "jev-latest"})
+    with pytest.raises(JudgeUnparseable, match="empty condition"):
+        llm.judge("jev-latest", [], "out", {})
+    llm = _judge({"model": "jev-latest"})
+    with pytest.raises(JudgeUnparseable, match="answers object"):
+        llm.judge("jev-latest", ["a"], "out", {})
+
+
+def test_post_systemone_http_and_url_errors(monkeypatch):
+    def http_err(*_a, **_k):
+        raise HTTPError("http://x", 503, "busy", hdrs=None, fp=BytesIO(b"busy"))
+
+    monkeypatch.setattr("mklang.llm.jev.urlopen", http_err)
+    with pytest.raises(ProviderError, match="HTTP 503"):
+        _post_systemone("http://x/v1/systemone", "k", {}, 1)
+
+    def url_err(*_a, **_k):
+        raise URLError("refused")
+
+    monkeypatch.setattr("mklang.llm.jev.urlopen", url_err)
+    with pytest.raises(ProviderError, match="request failed"):
+        _post_systemone("http://x/v1/systemone", "k", {}, 1)
+
+
+def test_post_systemone_success_and_bad_json(monkeypatch):
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+        def read(self):
+            return self.payload
+
+    good = _Resp()
+    good.payload = b'{"ok": true}'
+    monkeypatch.setattr("mklang.llm.jev.urlopen", lambda *_a, **_k: good)
+    assert _post_systemone("http://x", "k", {}, 1) == {"ok": True}
+
+    bad = _Resp()
+    bad.payload = b"not-json"
+    monkeypatch.setattr("mklang.llm.jev.urlopen", lambda *_a, **_k: bad)
+    with pytest.raises(JudgeUnparseable, match="non-JSON"):
+        _post_systemone("http://x", "k", {}, 1)
+
+    arr = _Resp()
+    arr.payload = b"[1]"
+    monkeypatch.setattr("mklang.llm.jev.urlopen", lambda *_a, **_k: arr)
+    with pytest.raises(JudgeUnparseable, match="non-object"):
+        _post_systemone("http://x", "k", {}, 1)
+
+
+def test_systemone_retries_transient_then_succeeds(monkeypatch):
+    n = {"i": 0}
+
+    def fake(_url, _key, _payload, _timeout):
+        n["i"] += 1
+        if n["i"] == 1:
+            raise ProviderError("System One HTTP 503: busy")
+        return {
+            "answers": {"g0": {"type": "noul", "noul": 0.9}},
+            "usage": {"input_tokens": 4, "output_tokens": 1},
+        }
+
+    monkeypatch.setattr("mklang.llm.jev._post_systemone", fake)
+    monkeypatch.setattr("mklang.llm.jev.time.sleep", lambda _s: None)
+    events: list[dict] = []
+    llm = JevNoulJudge("k")
+    idx, method = llm.judge("jev-latest", ["a"], "out", {}, on_event=events.append)
+    assert (idx, method) == (0, MAPPING)
+    assert n["i"] == 2
+    assert events[0]["event"] == "retry"
+
+
+def test_is_transient_classifies_connection_and_http():
+    assert _is_transient(ProviderError("System One request failed: reset"))
+    assert _is_transient(ProviderError("System One HTTP 429: slow"))
+    assert not _is_transient(ProviderError("System One HTTP 401: nope"))
+
+
+def test_routed_close_and_produce(monkeypatch):
+    closed = {"n": 0}
+
+    class _P(MockLLM):
+        def close(self):
+            closed["n"] += 1
+
+    produce = _P(produce_fn=lambda *a: Produced("ok"))
+    judge = JevNoulJudge("k", post=lambda url, payload: _load("none_holds.json"))
+    routed = JudgeRoutedLLM(produce, judge)
+    assert routed.produce("m", "s", "u").text == "ok"
+    routed.close()
+    assert closed["n"] == 1
+    judge.close()

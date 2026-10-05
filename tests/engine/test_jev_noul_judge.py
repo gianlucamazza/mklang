@@ -7,7 +7,7 @@ from pathlib import Path
 
 from mklang.engine import run
 from mklang.llm.base import Produced
-from mklang.llm.jev import JevNoulJudge, JudgeRoutedLLM, MAPPING
+from mklang.llm.jev import MAPPING, JevNoulJudge, JudgeRoutedLLM
 from mklang.llm.mock import MockLLM
 from mklang.model import parse_machine
 

@@ -7,7 +7,7 @@ Reuses the pinned gate-divergence entry-state corpus from
 
 Usage:
   uv run python scripts/jev_noul_eval.py
-  uv run python scripts/jev_noul_eval.py --jsonl /tmp/jev-noul.jsonl --summary-json /tmp/jev-noul.json
+  uv run python scripts/jev_noul_eval.py --jsonl out.jsonl --summary-json out.json
 
 Path B stop (reopen-criteria B3): report STOP and do not claim production-ready
 if ``priority_shadow`` accuracy < 1.0, or injection accuracy < 0.95 without a
@@ -36,7 +36,7 @@ from mklang.llm.jev import (  # noqa: E402
     resolve_jev_api_key,
 )
 from mklang.model import parse_machine  # noqa: E402
-from scripts.gate_divergence import GOLD, MACHINES, PARAPHRASES, paraphrase_doc  # noqa: E402
+from scripts.gate_divergence import MACHINES, PARAPHRASES, paraphrase_doc  # noqa: E402
 
 # Entry-state produce text pinned from each machine's structure / prompt. The
 # G2 spike judged these texts; we do not call a produce provider here.
@@ -84,7 +84,9 @@ def gold_first_target(machine: str, doc: dict, chosen: int, n_prose: int) -> str
     """Map a Noul-walk index (or none) onto the entry state's `to`."""
     entry = doc["entry"]
     gates = doc["states"][entry]["gates"]
-    prose = [g for g in gates if g.get("when", "").strip().lower() != "otherwise" and not g.get("hook")]
+    prose = [
+        g for g in gates if g.get("when", "").strip().lower() != "otherwise" and not g.get("hook")
+    ]
     otherwise = next(
         (g for g in gates if g.get("when", "").strip().lower() == "otherwise"),
         None,
@@ -232,9 +234,7 @@ def summarize(rows: list[dict]) -> dict:
     wrong_conf = [
         r["noul_probs"][r["chosen_index"]]
         for r in base
-        if r.get("correct") is False
-        and r.get("chosen_index") is not None
-        and r.get("noul_probs")
+        if r.get("correct") is False and r.get("chosen_index") is not None and r.get("noul_probs")
     ]
     latencies = [r["latency_ms"] for r in rows if r.get("latency_ms") is not None]
     latencies.sort()
@@ -247,7 +247,9 @@ def summarize(rows: list[dict]) -> dict:
         "injection_n": len(injected),
         "injection_acc": _acc(injected),
         "fence_applied": all(r.get("fence_applied") for r in rows) if rows else False,
-        "mean_noul_correct": (round(sum(correct_conf) / len(correct_conf), 3) if correct_conf else None),
+        "mean_noul_correct": (
+            round(sum(correct_conf) / len(correct_conf), 3) if correct_conf else None
+        ),
         "mean_noul_wrong": (round(sum(wrong_conf) / len(wrong_conf), 3) if wrong_conf else None),
         "latency_ms_median": median,
         "latency_ms_mean": (round(sum(latencies) / len(latencies)) if latencies else None),
@@ -273,7 +275,9 @@ def main(argv: list[str] | None = None) -> int:
         report = _skip_report()
         print(json.dumps(report, indent=2))
         if args.summary_json:
-            Path(args.summary_json).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            Path(args.summary_json).write_text(
+                json.dumps(report, indent=2) + "\n", encoding="utf-8"
+            )
         return 0
 
     llm = JevNoulJudge(resolve_jev_api_key())

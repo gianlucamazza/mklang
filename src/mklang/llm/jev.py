@@ -23,10 +23,10 @@ from .base import (
     JUDGE_CONTEXT_CHARS,
     JUDGE_NONE_CONDITION,
     LLM,
+    TRANSIENT_STATUS,
     LLMDelta,
     LLMEvent,
     Produced,
-    TRANSIENT_STATUS,
 )
 from .context_view import format_judge_context
 
@@ -77,16 +77,12 @@ def resolve_jev_threshold(explicit: float | None = None) -> float:
         raw = os.environ.get(THRESHOLD_ENV, "").strip()
         value = float(raw) if raw else DEFAULT_THRESHOLD
     if not 0.0 <= value <= 1.0:
-        raise ProviderConfigError(
-            f"{THRESHOLD_ENV} must be a probability in [0, 1], got {value!r}"
-        )
+        raise ProviderConfigError(f"{THRESHOLD_ENV} must be a probability in [0, 1], got {value!r}")
     return value
 
 
 def resolve_jev_base_url(explicit: str | None = None) -> str:
-    return (explicit or os.environ.get(BASE_URL_ENV, "").strip() or DEFAULT_BASE_URL).rstrip(
-        "/"
-    )
+    return (explicit or os.environ.get(BASE_URL_ENV, "").strip() or DEFAULT_BASE_URL).rstrip("/")
 
 
 def systemone_url(base_url: str) -> str:
@@ -181,7 +177,9 @@ def _usage_tokens(payload: Mapping[str, Any]) -> tuple[int, int]:
     return int(usage.get("input_tokens") or 0), int(usage.get("output_tokens") or 0)
 
 
-def _post_systemone(url: str, api_key: str, payload: dict[str, Any], timeout: float) -> dict[str, Any]:
+def _post_systemone(
+    url: str, api_key: str, payload: dict[str, Any], timeout: float
+) -> dict[str, Any]:
     body = json.dumps(payload).encode("utf-8")
     request = Request(
         url,

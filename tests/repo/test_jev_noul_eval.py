@@ -44,7 +44,9 @@ def test_none_holds_gold_is_otherwise():
 
 
 def test_path_b_stops_on_priority_shadow_miss():
-    verdict = ev.path_b_verdict({"priority_shadow_acc": 0.0, "injection_acc": 1.0, "fence_applied": True})
+    verdict = ev.path_b_verdict(
+        {"priority_shadow_acc": 0.0, "injection_acc": 1.0, "fence_applied": True}
+    )
     assert verdict["verdict"] == "STOP"
     assert verdict["production_ready"] is False
     assert verdict["choice_mapping"] == "STOP"
