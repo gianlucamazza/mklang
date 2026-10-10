@@ -29,8 +29,8 @@ cases (including the in-memory checkpoint on `escalate-ask`).
 
 mklang is installed from the committed wheel
 `mklang-1.3.7-py3-none-any.whl` with `micropip.install(..., deps=False)`.
-Only Pyodide's `pyyaml` and `jsonschema` (plus their Pyodide wheels) are
-loaded besides the wheel. `openai`, `textual`, and `rich` are **not**
+Pyodide 0.27.3 already ships `pyyaml` and `jsonschema`; the bootstrap
+does not reinstall them. `openai`, `textual`, and `rich` are **not**
 installed and are **not** imported on this path.
 
 ## What it does not do
