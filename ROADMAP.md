@@ -8,7 +8,7 @@ in [issues](https://github.com/gianlucamazza/mklang/issues) +
 [project board](https://github.com/users/gianlucamazza/projects/2); this file is
 the strategic index. ADRs in [`docs/adr/`](./docs/adr) record decisions.
 Milestone **[1.1 — maturity & embed docs](https://github.com/gianlucamazza/mklang/milestone/1)**
-is the active package horizon (spec at **0.4** since 1.2.0).
+is **closed**. Spec stays at **0.4** (since 1.2.0).
 
 Horizon tags below: **[now]** / **[next]** / **[later]** / **[maybe]**.
 
@@ -16,13 +16,22 @@ Horizon tags below: **[now]** / **[next]** / **[later]** / **[maybe]**.
 
 ## Now
 
-Active focus (milestone 1.1, `horizon:now`): **mklang Evidence Release**.
-The language surface is frozen while empirical evidence is collected.
+Active focus: **[M2 — Release 1.4.0](https://github.com/gianlucamazza/mklang/milestone/2)**
+and **[M3 — Public keyless playground](https://github.com/gianlucamazza/mklang/milestone/3)**.
 
-- **[now] Live-verify Anthropic** (three-provider gate-divergence) — [#60](https://github.com/gianlucamazza/mklang/issues/60)
-- **[now] Five-reader distribution test (D1)** — [#61](https://github.com/gianlucamazza/mklang/issues/61)
+- **[now] M2 — Release 1.4.0**
+- **[now] M3 — Public keyless playground** — standard Gradio Space from
+  [#130](https://github.com/gianlucamazza/mklang/pull/130) (HF PRO is active;
+  Gradio-Lite [#131](https://github.com/gianlucamazza/mklang/pull/131) is closed)
 
-Evidence Release definition of done:
+## Next
+
+- **[next] M4 — Evidence Release** — [#60](https://github.com/gianlucamazza/mklang/issues/60),
+  [#61](https://github.com/gianlucamazza/mklang/issues/61),
+  [#123](https://github.com/gianlucamazza/mklang/issues/123)
+- **[next] M5 — Case study & site**
+
+Evidence Release definition of done (M4):
 
 - provider/machine/repeat JSONL rows validate against
   [`schema/experiment-result.schema.json`](./schema/experiment-result.schema.json);
@@ -35,14 +44,6 @@ Evidence Release definition of done:
   negative results with no language/spec claim inferred from a green run;
 - raw rows live in a dated `evidence/<release>/` directory with a manifest and
   checksums; Markdown reports are derived views, not the primary dataset.
-
-## Next
-
-Doc/schema + release-floor items **shipped** in [#73](https://github.com/gianlucamazza/mklang/pull/73)
-([#64](https://github.com/gianlucamazza/mklang/issues/64), [#69](https://github.com/gianlucamazza/mklang/issues/69)–[#72](https://github.com/gianlucamazza/mklang/issues/72) closed). Remaining Now items need live ops or humans:
-
-- **[next]** Third-provider (Anthropic) gate-divergence pass: close [#60](https://github.com/gianlucamazza/mklang/issues/60) and re-check release floors
-- **[next]** Five-reader distribution test — [#61](https://github.com/gianlucamazza/mklang/issues/61)
 
 ### Evidence backlog
 
@@ -68,7 +69,7 @@ and experiment-specific metrics. Secrets and raw model output are excluded.
 
 ## Later
 
-Valuable, not in 1.1 (open issues only when ready to pull into a milestone):
+Valuable, not in M2/M3 (open issues only when ready to pull into a milestone):
 
 - **[later] Truncation `continue` stitching** (ADR 0018)
 - **[later] Editor tooling / LSP**

@@ -323,6 +323,7 @@ marked, and reaching an effectful `tool:` under it is recorded or refused
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
+- **Hosted judge adapter:** optional and opt-in, not the default; a measured trial run reports `production_ready: false`. This applies only to the adapter; the interpreter (1.3.7) is stable.
 - **Historical live evidence:** DeepSeek and **OpenAI** were green in the 1.0.x
   release matrices, including the blocking cross-provider gate-agreement check
   at **1.0**. See the dated [gate-divergence report](./docs/experiments/gate-divergence.md);
