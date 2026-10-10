@@ -14,6 +14,14 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Keyless Hugging Face playground Space** (`spaces/playground/`). A
+  cpu-basic Gradio app that only exposes deterministic/offline host
+  surfaces: parse, `check` + lint, YAML format, bundled `mklang test`
+  scenarios, and bundled conformance cases (including the in-memory
+  checkpoint envelope on `escalate-ask`). No API key field, no network
+  model call, no Path B (`judge: jev-*`,
+  [#123](https://github.com/gianlucamazza/mklang/issues/123),
+  `production_ready: false`).
 - **Opt-in Noul-only Jev host judge** (ADR 0037, Proposed). Setting `judge:`
   to `jev-latest` (or a pinned `jev-*` id) routes prose-gate judging through
   one System One call of ordered Nouls; the host fires the first probability

@@ -1,0 +1,8 @@
+# Hugging Face Spaces installs Gradio from this folder's README
+# `sdk_version` (currently 6.30.0). Do not pin gradio / spaces /
+# huggingface_hub here — the platform manages those.
+#
+# mklang is this repository's package. The Space installs it from the
+# public git repo (not an unrelated PyPI name). From a local clone of
+# the same tree you can instead: `pip install -e ../..`
+mklang @ git+https://github.com/gianlucamazza/mklang.git@main

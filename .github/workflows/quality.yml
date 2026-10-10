@@ -25,9 +25,9 @@ jobs:
           ref: ${{ inputs.ref }}
       - uses: astral-sh/setup-uv@v10.2.0
       - name: Lint
-        run: uv run --extra dev ruff check src tests scripts
+        run: uv run --extra dev ruff check src tests scripts spaces
       - name: Format check
-        run: uv run --extra dev ruff format --check src tests scripts
+        run: uv run --extra dev ruff format --check src tests scripts spaces
       - name: Type check
         run: uv run --all-extras mypy
       - name: Dependency audit
