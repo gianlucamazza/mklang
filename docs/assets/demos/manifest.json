@@ -1,91 +1,92 @@
 {
   "assets": {
     "docs/assets/demos/agent.gif": {
-      "bytes": 1635678,
+      "bytes": 2536479,
       "codec": "gif",
-      "duration_seconds": 21.91,
+      "duration_seconds": 16.08,
       "height": 540,
-      "sha256": "8419078259db95f14a96af1424b2d49d6fbb6abe1d48e5ef361cffc89902d20d",
+      "sha256": "52a323ab002697a27e839e3ae103b81c47157ce56c7bc7c2b09162376851b667",
       "width": 960
     },
     "docs/assets/demos/agent.txt": {
-      "bytes": 5318,
-      "sha256": "cd122ee386a79d6b3422c78a82ac9da822ec8b2d60eee14127d0aa58a3315991"
+      "bytes": 5517,
+      "sha256": "6433e3baaec558b17d3f318db7edb86f01cfb180b9840935f21a9de59d8ca444"
     },
     "docs/assets/demos/agent.webm": {
-      "bytes": 480029,
+      "bytes": 562905,
       "codec": "vp9",
-      "duration_seconds": 21.92,
+      "duration_seconds": 16.12,
       "height": 675,
-      "sha256": "0ef6d6bf63fba1114f96fd0d72c1c50021ff0cda2043ece40c900279a8c5a556",
+      "sha256": "560b3c0556424c63723b34f019bfad09341a2be86257ffa7ed7aacc3da59c902",
       "width": 1200
     },
     "docs/assets/demos/language.gif": {
-      "bytes": 509656,
+      "bytes": 425153,
       "codec": "gif",
-      "duration_seconds": 11.83,
+      "duration_seconds": 9.25,
       "height": 540,
-      "sha256": "9af525dacb3bc2f29f085a1d7f0f0bc7aa74ea899260301d288dbc673a5e4f3a",
+      "sha256": "76ab9b3985dbebcd4c8c9eec18cf995952426a6f8d7415d46e22eb3d12ccd774",
       "width": 960
     },
     "docs/assets/demos/language.txt": {
-      "bytes": 1634,
-      "sha256": "a06aa2f1e101cedc3a504943c4d52c0291c68867a370f42f6124d9d731a5b21b"
+      "bytes": 1633,
+      "sha256": "b61f591456f81f1aa774501f253e2382c4066ff0030288b65c20eeb16cc9049e"
     },
     "docs/assets/demos/language.webm": {
-      "bytes": 182032,
+      "bytes": 119706,
       "codec": "vp9",
-      "duration_seconds": 11.84,
+      "duration_seconds": 9.24,
       "height": 675,
-      "sha256": "3096c0fa3b3d242a90b26c994064dfcacf8f381dd827abf1039c1188093d821c",
+      "sha256": "74c90f1c84e49ab6fe74c392be9a0289b5fa956adebe8cc97b86ff7297d76294",
       "width": 1200
     }
   },
-  "generated_at": "2026-08-04T12:44:39.192637+00:00",
-  "generated_from": "70052e4e4d7ada6b7f3e7d1922595b9152632703",
+  "generated_at": "2026-10-10T10:58:31.378740+00:00",
+  "generated_from": "b02ca7bcb9b0ae64936bdd3308ade5206e1a816b",
   "models": {
     "balanced": "deepseek-v4-flash",
     "fast": "deepseek-v4-flash",
     "reasoning": "deepseek-v4-flash"
   },
-  "package_version": "1.1.1",
+  "package_version": "1.3.7",
   "provider": "deepseek",
   "schema": 2,
   "source": {
     "files": {
       "config/runtime.example.yaml#providers.deepseek": "754e021cbbdcdf873f0b133d797e84ad93bca506faea620a353378461efbed51",
       "demos/tapes/agent.tape": "2b5620047d7808574e527207720ffeceddcd0ada4142e2896731ddd77df6310a",
-      "demos/tapes/language.tape": "1979c2a38fcf3a2bc20635a4172728d2e48e1ee183ef2e3e085a3a34505aeeb5",
+      "demos/tapes/language.tape": "c278d3a5b5d5f684e0fa0ba938623b3fae1f471007d7e329f86786c74170a0ca",
       "demos/toolchain.conf": "e52cc60507a8d8d833eebf0ad7ff0bf3fe98505aa6f0684c140b6ff0ede51241",
       "examples/news_search.mkl": "854d7e92e3f1608abb0332b94ddf5e77b3794e9a22c24903a786eaf3db88fd99",
       "examples/react.mkl": "c2fabb98ec3458cb6454f25ea1ef3cbc4c6dbd28797b5825fa13433c2696a7bc",
       "scripts/demo_assets.py": "f7532c1b3b82d1279dca48fb3d0728a9043c056e8dfebdd7f4c089eff0acce94",
-      "src/mklang/config.py": "7f70ab9d8c4e101fee24e8b5c8353a55827412ec7ab06c3273f8df0cb2fedd90",
+      "src/mklang/config.py": "17ad3730847c6472aa4467bdc53d5a20d88ab0442a55d01929b201f20d4773d3",
       "src/mklang/console/__init__.py": "89e07bbecf189192a684db26463237ecdc31a4cca146e68c5374029450d0ac2c",
-      "src/mklang/console/app.py": "3f2eab62dfcb1fa895d769a4a2d39ff98b1507836d1bdad35cf93eadbeda3425",
+      "src/mklang/console/app.py": "b7ece2fe9c6967c96d15ea43f87a4b24e43c1837b1ab55f955fe2555b66dd645",
       "src/mklang/console/bridge.py": "7326b24628c8a1601d0bee20941e30f988b4b8425944962d9984a9812c20811f",
       "src/mklang/console/capabilities.py": "a8c98773fbf9db9d64658a8ec1f9c25d43015849b2a2a8603b1dcfac8cad91de",
-      "src/mklang/console/commands.py": "eecf5c4cac4e0ff1ac544a63542efa55bba877e7abbeed620470ad189302c144",
-      "src/mklang/console/render.py": "29c7b2d05c101456197c3d554175f6b381f03bf88d9d361823d9db8f5b8d71d8",
-      "src/mklang/console/session.py": "cec3dda4894794b1d39ba40a6d1f912be952b55da5de66db521861c7d979aa6a",
-      "src/mklang/console/tools.py": "cf5fd8823e891236417e0be2738a160a881fb4a62ad6b3529c5c7be4990b7ade",
-      "src/mklang/console/widgets.py": "d428853d0690343c8f6c38b5da191f6fdb1cb9f6678bdf03b3b6408836af46bc",
-      "src/mklang/console/workspace.py": "c597e853bc2ab0f85dc33aba80f9ea6c391346b6b8fb8c474ee1a092825668c6",
-      "src/mklang/data/console/agent.mkl": "0caf6b10c3b542db26cc46a1497f1d42a9045c3d416e9f54d6ce7ccd3363fe76",
-      "src/mklang/engine.py": "6367b4aced6832d14d34708edddb7dbca61d0bbfbf4ead944756d2a0a7de8a9f",
+      "src/mklang/console/commands.py": "ee663f5d54336225a5d2ecd13c97ef295f261bc6ba860a9f4656e48e77287662",
+      "src/mklang/console/render.py": "9c22c21fa93a8a09eeac241082509eaddd8d687b4efd5183880de4bc849e5d74",
+      "src/mklang/console/session.py": "e994c5cd2ce3dd0fe1b7952691ec6209015a5e6b0071dc39a7211ecb937abd33",
+      "src/mklang/console/tools.py": "6b471932e4e5500aa30ff29df463a12ed2f511f028b2e97145cf8ba26b8dcca5",
+      "src/mklang/console/widgets.py": "45cf63fd090de5e4bc450d2682f14e6ca81e9198445f65f7751be504849d7013",
+      "src/mklang/console/workspace.py": "c1a73481227a95161e8f074d1ca50516e3691ed48732a3d04be4d759a0323056",
+      "src/mklang/data/console/agent.mkl": "0cd5167b7312904b0d697cdee42281d8a179e21f0e75f3f5c23f1ea372dcaf53",
+      "src/mklang/engine.py": "1c4dc7d346a3cfad45f05d8426da2137f2b16059ee4ccdfe2087e07a6f64c935",
       "src/mklang/llm/__init__.py": "1e355af596e20557011e3709a2e1601c88322e654df52a0ec61c7768a09c8d93",
-      "src/mklang/llm/anthropic.py": "258c4743ff4ea73c69cbf2098c6d4fd5c74123a5eb8f50baeb38f268c0da52fe",
-      "src/mklang/llm/base.py": "2750c38570e6f3760b8054a90863767da8a1dcb48ab298d18a669c1ff9c7f8b7",
+      "src/mklang/llm/anthropic.py": "4610728157d6094fce13c026ffa2dbb65a2c63dd0770de3c791f11cb1093cc46",
+      "src/mklang/llm/base.py": "e91b2406e29410c77f1273490f6a271f9a12d2b3cef1e47f5dc1547a3704c8d7",
       "src/mklang/llm/context_view.py": "ff6d745ef7e78c544a57bc5a92cd1ebd48e413c84b47aa525af2eef0dae237eb",
-      "src/mklang/llm/mock.py": "616a4d1527d76d169950224cb4795559730ad48347e1e0a4fd20e36e69d83361",
-      "src/mklang/llm/openai_compat.py": "d7f6e338e06c6b4b0b0ebbaa23da04708b2cbd5cd75b68f63702b0bc0083cdaa",
+      "src/mklang/llm/jev.py": "77682d73d32fe143ef6caf876153afc259cf9d5d46f1303d343b8ee6ca7cfa65",
+      "src/mklang/llm/mock.py": "e6531704de435b060e4eaccf37898b5835a67051a3f5f005e6420b0b046a667f",
+      "src/mklang/llm/openai_compat.py": "cc4b02a8148f9c2842e402b3fb26a0260113abc5520b9c2e321c92ca8d13a9ab",
       "src/mklang/llm/prompts.py": "80e849690c73783d9a52d0790c11b405772c3537db57628f56a6809b6e851239",
-      "src/mklang/presentation.py": "ef64505e39d42cd7cb3d5dfb3a53ae71cdfa9c9de59c4c121095a8cc073e3320",
-      "src/mklang/providers.py": "1bae0b1b79ec60dd58e87bfb2de4267cefa8b3adf169ee98074bc37e49d189ac",
+      "src/mklang/presentation.py": "9086d4673ba57c8d87fabc75cfcadb9da5c7bdbcc1718183d429b58b61150d86",
+      "src/mklang/providers.py": "896bd735ff2a6fe3cd02fc8e218805ae0ae37364f5e0cd82ab3f780669964a7b",
       "src/mklang/search.py": "2e0f08175e3e4902e8c933dd5f429f9e303e210ca9f93aee50bd669b7ebe36c5",
       "src/mklang/tools.py": "2ac751ef995dbcade7eef2bb2e3d34af472ca4d190f6aade453d94f3cdb03fb2"
     },
-    "sha256": "ee14b133d4b69278bab84b2c4cdaaf66031e03bc872b39574b34a32f3ca8ac36"
+    "sha256": "8dcc86b28cdf9c4762d78595ced2b2289973ad98d42cefce36b534faeb894d5c"
   },
   "toolchain": {
     "font": {
@@ -95,7 +96,7 @@
     },
     "vhs": {
       "archive_sha256": "99cb634587eaae0473c1ea377db80c3a048c27f99fe0a7febb1a1e8cb7ee5009",
-      "reported_version": "v0.11.0",
+      "reported_version": "v0.11.0 (c6af91a)",
       "version": "0.11.0"
     }
   }
