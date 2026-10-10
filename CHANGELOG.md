@@ -49,6 +49,14 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
+- **README Status names the hosted judge adapter.** Optional and opt-in, not
+  the default; a measured trial reports `production_ready: false` for the
+  adapter only. The interpreter (1.3.7) stays Stable.
+- **ROADMAP Now is M2/M3.** Milestone 1.1 is closed. Evidence items
+  [#60](https://github.com/gianlucamazza/mklang/issues/60) /
+  [#61](https://github.com/gianlucamazza/mklang/issues/61) sit on M4;
+  the public playground is the standard Gradio Space from
+  [#130](https://github.com/gianlucamazza/mklang/pull/130).
 - **Honesty page Path B wording.** `docs/what-mklang-is.md` no longer reads as
   if Path B is unmeasured. The exploratory spike exists; `production_ready`
   stays false and the adapter is not the default.
