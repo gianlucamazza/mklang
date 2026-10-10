@@ -61,7 +61,7 @@ With the repo's `uv` workflow:
 uv run --with 'gradio==6.30.0' python spaces/playground/app.py
 ```
 
-Then open the local URL it prints (usually `http://127.0.0.1:7860`).
+Then open the local address it prints in your browser.
 
 Smoke test (imports the app and runs one example callback; does **not**
 start a server):
@@ -76,4 +76,4 @@ uv run --extra dev pytest -q tests/repo/test_playground_space.py
 
 Apache-2.0, matching the [mklang repository](https://github.com/gianlucamazza/mklang).
 
-**Author**: [Gianluca Mazza](https://gianlucamazza.it). I take LLM systems into production: state, recovery, eval, cost.
+- **Author**: [Gianluca Mazza](https://gianlucamazza.it). I take LLM systems into production: state, recovery, eval, cost.
