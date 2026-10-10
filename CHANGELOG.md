@@ -14,6 +14,9 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Five-reader operator kit** — `docs/experiments/five-reader-kit/`
+  (invites, task, materials, operator questions, response form). Does not
+  run the #61 test and does not change the frozen protocol.
 - **Keyless Hugging Face playground Space** (`spaces/playground/`). A
   cpu-basic Gradio app that only exposes deterministic/offline host
   surfaces: parse, `check` + lint, YAML format, bundled `mklang test`
