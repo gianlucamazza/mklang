@@ -28,7 +28,10 @@ and **[M3 — Public keyless playground](https://github.com/gianlucamazza/mklang
 
 - **[next] M4 — Evidence Release** — [#60](https://github.com/gianlucamazza/mklang/issues/60),
   [#61](https://github.com/gianlucamazza/mklang/issues/61),
-  [#123](https://github.com/gianlucamazza/mklang/issues/123)
+  [#123](https://github.com/gianlucamazza/mklang/issues/123).
+  Prep is [`evidence/2026-10-evidence-release/`](./evidence/2026-10-evidence-release/)
+  (renamed from the 2026-09 placeholder); live spend is logged in that
+  directory's `costs.jsonl` under the owner $10 cap (D1).
 - **[next] M5 — Case study & site**
 
 Evidence Release definition of done (M4):
@@ -43,7 +46,10 @@ Evidence Release definition of done (M4):
 - the report publishes raw data, scripts, environment metadata, costs, and
   negative results with no language/spec claim inferred from a green run;
 - raw rows live in a dated `evidence/<release>/` directory with a manifest and
-  checksums; Markdown reports are derived views, not the primary dataset.
+  checksums; Markdown reports are derived views, not the primary dataset;
+  live spend is logged in that directory's `costs.jsonl` and must stay under
+  the owner $10 cap (D1). The 2026-10 directory is
+  [`evidence/2026-10-evidence-release/`](./evidence/2026-10-evidence-release/).
 
 ### Evidence backlog
 
