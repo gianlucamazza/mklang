@@ -31,8 +31,16 @@ All notable changes to mklang are documented here. The format follows
   Protocol: `docs/experiments/first-true-fidelity.md`.
 - **Public honesty page.** [What mklang is / is not](./docs/what-mklang-is.md)
   states the language and host-contract boundary. ADR 0037 remains Proposed:
-  opt-in `judge: jev-*` only, not the default, not production-ready until
-  Path B, Choice as `judge:` mapping STOP.
+  opt-in `judge: jev-*` only, not the default. Path B has been measured in an
+  exploratory spike (`scripts/jev_noul_eval.py`, six-machine `CORE_MACHINES`
+  corpus, 2026-10-05); it isn't production-ready (`production_ready: false`)
+  and isn't the default. Choice as `judge:` mapping STOP.
+
+### Changed
+
+- **Honesty page Path B wording.** `docs/what-mklang-is.md` no longer reads as
+  if Path B is unmeasured. The exploratory spike exists; `production_ready`
+  stays false and the adapter is not the default.
 
 ### Fixed
 
