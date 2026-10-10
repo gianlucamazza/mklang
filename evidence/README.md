@@ -19,4 +19,6 @@ revalidation.
 Do not hand-edit derived reports or claim live-provider coverage from offline
 self-checks. Missing providers and failed runs remain explicit rows. The dated
 directory is not complete until the raw rows, environment metadata, derived
-summary/report, and manifest have all been independently checked.
+summary/report, and manifest have all been independently checked. A later
+`evidence-live.yml` dispatch refuses to start unless every prior live run id
+is already on a committed `costs.jsonl` row.

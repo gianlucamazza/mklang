@@ -19,9 +19,10 @@ All notable changes to mklang are documented here. The format follows
   a `$10` hard-cap cost ledger (`costs.jsonl` + `scripts/cost_ledger.py`),
   named-experiment runner with `--estimate` (no API calls) and `--live`
   (`scripts/run_evidence_release.py`), and a `workflow_dispatch`-only
-  `evidence-live.yml`. Anthropic is reached as OpenRouter model
-  `anthropic/claude-sonnet-5` (no `ANTHROPIC_API_KEY`). Lab triggers the
-  live workflow after review.
+  `evidence-live.yml` (single concurrency group; prior live run ids must
+  already be in the checked-out `costs.jsonl` or the live step is refused).
+  Anthropic is reached as OpenRouter model `anthropic/claude-sonnet-5`
+  (no `ANTHROPIC_API_KEY`). Lab triggers the live workflow after review.
 - **Five-reader operator kit** — `docs/experiments/five-reader-kit/`
   (invites, task, materials, operator questions, response form). Does not
   run the #61 test and does not change the frozen protocol.

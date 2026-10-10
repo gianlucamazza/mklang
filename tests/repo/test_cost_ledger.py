@@ -141,6 +141,112 @@ def test_append_uses_pinned_price_and_increments_total(tmp_path):
     assert parsed["model"] == "anthropic/claude-sonnet-5"
 
 
+def test_actual_over_estimate_is_appended_and_blocks_the_next_run(tmp_path):
+    """The guard is per model run. A high actual is counted before the next start."""
+    cl = _ledger()
+    ledger = tmp_path / "costs.jsonl"
+    estimate, _ = cl.estimate_run_usd("openai", "gpt-5.6-luna", "gate-divergence")
+    first = cl.refuse_if_over_cap(
+        ledger,
+        provider="openai",
+        model="gpt-5.6-luna",
+        experiment="gate-divergence",
+        cap=10.0,
+    )
+    assert first == pytest.approx(estimate)
+    cl.append_cost_row(
+        ledger,
+        provider="openai",
+        model="gpt-5.6-luna",
+        input_tokens=0,
+        output_tokens=0,
+        run_id="actual-high",
+        experiment="gate-divergence",
+        usd=10.0 - estimate + 0.001,
+        usd_source="price-table",
+        github_run_id="111",
+    )
+    assert cl.ledger_total_usd(ledger) == pytest.approx(10.0 - estimate + 0.001)
+    with pytest.raises(cl.CapExceededError, match="exceeds cap"):
+        cl.refuse_if_over_cap(
+            ledger,
+            provider="openai",
+            model="gpt-5.6-luna",
+            experiment="gate-divergence",
+            cap=10.0,
+        )
+
+
+def _prior_fixture():
+    path = ROOT / "tests" / "repo" / "fixtures" / "evidence_live_workflow_runs.json"
+    if not path.is_file():
+        pytest.skip("prior-run fixture not present (sdist build)")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_prior_live_run_ids_from_fixture_listings():
+    cl = _ledger()
+    fixture = _prior_fixture()
+    required = cl.prior_live_run_ids_from_listings(
+        fixture["workflow_runs"],
+        fixture["jobs_by_run_id"],
+        current_run_id=fixture["current_run_id"],
+    )
+    assert required == fixture["required_prior_ids"]
+    assert "555" not in required
+    assert "333" not in required
+    assert "444" not in required
+
+
+def test_missing_prior_live_run_ids_fail_closed_until_ledger_has_them(tmp_path):
+    cl = _ledger()
+    fixture = _prior_fixture()
+    required = fixture["required_prior_ids"]
+    empty = tmp_path / "empty.jsonl"
+    empty.write_text("", encoding="utf-8")
+    assert cl.missing_prior_live_run_ids(required, cl.parse_ledger(empty)) == required
+
+    partial = tmp_path / "partial.jsonl"
+    cl.append_cost_row(
+        partial,
+        provider="deepseek",
+        model="deepseek-v4-flash",
+        input_tokens=0,
+        output_tokens=0,
+        run_id="from-111",
+        experiment="gate-divergence",
+        usd=0.0,
+        usd_source="dispatch-open",
+        github_run_id="111",
+    )
+    assert cl.missing_prior_live_run_ids(required, cl.parse_ledger(partial)) == ["222", "666"]
+
+    complete = tmp_path / "complete.jsonl"
+    for rid in required:
+        cl.append_dispatch_marker(complete, github_run_id=rid, experiment="gate-divergence")
+    assert cl.missing_prior_live_run_ids(required, cl.parse_ledger(complete)) == []
+    cl.require_prior_live_runs_in_ledger(
+        complete,
+        current_run_id=fixture["current_run_id"],
+        workflow_runs=fixture["workflow_runs"],
+        jobs_by_run_id=fixture["jobs_by_run_id"],
+    )
+
+
+def test_require_prior_live_runs_raises_when_unmerged(tmp_path):
+    cl = _ledger()
+    fixture = _prior_fixture()
+    ledger = tmp_path / "costs.jsonl"
+    ledger.write_text("", encoding="utf-8")
+    with pytest.raises(cl.UnmergedLedgerError, match="111, 222, 666"):
+        cl.require_prior_live_runs_in_ledger(
+            ledger,
+            current_run_id=fixture["current_run_id"],
+            workflow_runs=fixture["workflow_runs"],
+            jobs_by_run_id=fixture["jobs_by_run_id"],
+        )
+
+
 def test_unknown_model_has_no_invented_price():
     cl = _ledger()
     with pytest.raises(cl.UnknownPriceError, match="no pinned list price"):

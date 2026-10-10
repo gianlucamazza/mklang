@@ -9,7 +9,7 @@ dispatches `evidence-live.yml`. Nothing in this file is a provider measurement.
   experiment in this release.
 - **Ledger:** [`costs.jsonl`](./costs.jsonl) — one line per run (`provider`,
   `model`, `input_tokens`, `output_tokens`, `usd`, `usd_source`,
-  `price_source`, `price_retrieved`, `run_id`, `timestamp`).
+  `price_source`, `price_retrieved`, `run_id`, `github_run_id`, `timestamp`).
 - **USD source:** token counts from the provider response × the pinned list
   price in `scripts/cost_ledger.py`. Adapters do not currently expose an
   invoice field; if one appears later, prefer it and set `usd_source` to
@@ -29,11 +29,20 @@ dispatches `evidence-live.yml`. Nothing in this file is a provider measurement.
 
 ## Limits
 
-- Cap check is **before** each run. If `ledger total + estimate > $10`, the
-  runner exits 3 and does not start that call.
-- The committed `costs.jsonl` is the source of truth across dispatches. After
-  a live run, merge the artifact ledger before the next dispatch so the cap
-  accumulates.
+- Cap check is **before each individual model run** (each provider / machine /
+  repeat / arm), not once per named experiment. If
+  `ledger total + estimate > $10`, that call is refused (exit 3). After the
+  call, the **actual** USD is appended and is what the next run sees — an
+  actual above the estimate still counts before the next start.
+- `evidence-live.yml` uses `concurrency.group: evidence-live` with
+  `cancel-in-progress: false` so two dispatches cannot both read the same
+  ledger total and both spend.
+- Cross-dispatch accumulation is **enforced**, not procedural. Before the
+  live step, the workflow lists `evidence-live.yml` runs (`actions: read` +
+  `gh api`) and fails closed unless every prior run that reached
+  `Live named experiment` has its `github_run_id` on a checked-out ledger
+  row. Merge the artifact `costs.jsonl` from those runs or the next
+  dispatch will refuse to start.
 - Named experiments and the models they pin live in
   `scripts/run_evidence_release.py` and `config/evidence-release.yaml`.
 - Token ceilings already in the harnesses: gate-divergence `cost_budget=20_000`,

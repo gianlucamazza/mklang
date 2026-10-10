@@ -112,6 +112,42 @@ def test_evidence_live_workflow_is_dispatch_only():
     assert "schedule:" not in text
     assert "pull_request:" not in text
     assert "push:" not in text
+    assert workflow["concurrency"]["group"] == "evidence-live"
+    assert workflow["concurrency"]["cancel-in-progress"] is False
+    assert workflow["permissions"]["contents"] == "read"
+    assert workflow["permissions"]["actions"] == "read"
+    assert "Require prior live runs in the checked-out ledger" in text
+    assert "--require-prior-live-runs" in text
+    # The prior-run check is a separate step so a failed check does not
+    # count as "reached the live step".
+    require_at = text.index("Require prior live runs in the checked-out ledger")
+    live_at = text.index("Live named experiment")
+    assert require_at < live_at
+
+
+def test_harnesses_guard_before_each_model_run():
+    """Cap check is inside each provider/repeat/arm loop, not once per experiment."""
+    gd = ROOT / "scripts" / "gate_divergence.py"
+    rc = ROOT / "scripts" / "repair_convergence.py"
+    ft = ROOT / "scripts" / "first_true_eval.py"
+    if not gd.is_file():
+        pytest.skip("harness scripts not present (sdist build)")
+    gd_loop = gd.read_text(encoding="utf-8").split("for i in range(args.repeats)", 1)[1]
+    assert gd_loop.index("maybe_guard(") < gd_loop.index("row = _run_once(")
+    rc_loop = rc.read_text(encoding="utf-8").split("for arm in arms:", 1)[1]
+    assert rc_loop.index("maybe_guard(") < rc_loop.index("row = _run_once(")
+    ft_loop = ft.read_text(encoding="utf-8").split("for i in range(args.repeats)", 1)[1]
+    assert ft_loop.index("maybe_guard(") < ft_loop.index("run_live_trial(")
+    assert "pending_usd=pending" in ft_loop
+
+
+def test_require_prior_live_runs_fails_closed_without_actions_env(monkeypatch, capsys):
+    runner = _runner()
+    monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
+    monkeypatch.delenv("GITHUB_RUN_ID", raising=False)
+    code = runner.main(["--require-prior-live-runs"])
+    assert code == 3
+    assert "GITHUB_REPOSITORY" in capsys.readouterr().err
 
 
 def test_quality_job_names_are_unchanged():

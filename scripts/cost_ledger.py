@@ -25,8 +25,9 @@ adapter exposes one, prefer it and set ``usd_source`` to ``provider``.
 from __future__ import annotations
 
 import json
+import os
 from argparse import ArgumentParser, Namespace
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -35,6 +36,8 @@ from typing import Any
 USD_CAP = 10.0
 LEDGER_NAME = "costs.jsonl"
 PRICE_RETRIEVED = "2026-10-10"
+LIVE_STEP_NAME = "Live named experiment"
+EVIDENCE_LIVE_WORKFLOW = "evidence-live.yml"
 
 # Issue #60: "~12 small synthetic runs ≈ ~30k tokens".
 GATE_DIVERGENCE_ISSUE_60_TOKENS = 30_000
@@ -56,6 +59,10 @@ class CapExceededError(RuntimeError):
 
 class UnknownPriceError(KeyError):
     """No pinned list price for this provider/model pair."""
+
+
+class UnmergedLedgerError(RuntimeError):
+    """A prior live dispatch spent (or may have) but is missing from the ledger."""
 
 
 @dataclass(frozen=True)
@@ -265,6 +272,7 @@ def append_cost_row(
     timestamp: str | None = None,
     usd: float | None = None,
     usd_source: str = "price-table",
+    github_run_id: str | None = None,
     extra: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     price = lookup_price(provider, model)
@@ -287,10 +295,145 @@ def append_cost_row(
     }
     if extra:
         row.update(extra)
+    if github_run_id:
+        row["github_run_id"] = str(github_run_id)
     ledger.parent.mkdir(parents=True, exist_ok=True)
     with ledger.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
     return row
+
+
+def append_dispatch_marker(
+    ledger: Path,
+    *,
+    github_run_id: str,
+    experiment: str,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    """Record that this Actions run reached --live, before any model call."""
+    row: dict[str, Any] = {
+        "experiment": experiment,
+        "github_run_id": str(github_run_id),
+        "input_tokens": 0,
+        "model": "none",
+        "output_tokens": 0,
+        "provider": "none",
+        "run_id": f"dispatch/{github_run_id}",
+        "timestamp": timestamp
+        or datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "usd": 0.0,
+        "usd_source": "dispatch-open",
+    }
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    with ledger.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+    return row
+
+
+def github_run_ids_in_ledger(rows: Sequence[Mapping[str, Any]]) -> set[str]:
+    return {str(row["github_run_id"]) for row in rows if row.get("github_run_id") not in (None, "")}
+
+
+def missing_prior_live_run_ids(
+    required_ids: Sequence[str | int],
+    ledger_rows: Sequence[Mapping[str, Any]],
+    *,
+    current_run_id: str | int | None = None,
+) -> list[str]:
+    """Prior live GitHub run ids that do not appear on any ledger row."""
+    present = github_run_ids_in_ledger(ledger_rows)
+    current = str(current_run_id) if current_run_id is not None else None
+    missing: list[str] = []
+    seen: set[str] = set()
+    for raw in required_ids:
+        sid = str(raw)
+        if current is not None and sid == current:
+            continue
+        if sid in seen:
+            continue
+        seen.add(sid)
+        if sid not in present:
+            missing.append(sid)
+    return missing
+
+
+def live_step_reached(
+    jobs: Sequence[Mapping[str, Any]],
+    *,
+    step_name: str = LIVE_STEP_NAME,
+) -> bool:
+    """True if any job's live step started (not skipped)."""
+    for job in jobs:
+        for step in job.get("steps") or []:
+            if not isinstance(step, Mapping) or step.get("name") != step_name:
+                continue
+            if step.get("conclusion") == "skipped":
+                continue
+            if step.get("started_at"):
+                return True
+            if step.get("status") in {"in_progress", "completed"}:
+                return True
+            if step.get("conclusion") in {"success", "failure", "cancelled", "timed_out"}:
+                return True
+    return False
+
+
+def _jobs_for(
+    jobs_by_run_id: Mapping[Any, Sequence[Mapping[str, Any]]],
+    run_id: str,
+) -> Sequence[Mapping[str, Any]]:
+    if run_id in jobs_by_run_id:
+        return jobs_by_run_id[run_id]
+    try:
+        return jobs_by_run_id.get(int(run_id), [])
+    except (TypeError, ValueError):
+        return []
+
+
+def prior_live_run_ids_from_listings(
+    workflow_runs: Sequence[Mapping[str, Any]],
+    jobs_by_run_id: Mapping[Any, Sequence[Mapping[str, Any]]],
+    *,
+    current_run_id: str | int,
+    step_name: str = LIVE_STEP_NAME,
+) -> list[str]:
+    """GitHub run ids that reached the live step, excluding the current dispatch."""
+    current = str(current_run_id)
+    required: list[str] = []
+    seen: set[str] = set()
+    for run in workflow_runs:
+        rid = str(run.get("id", "") or "")
+        if not rid or rid == current or rid in seen:
+            continue
+        if live_step_reached(_jobs_for(jobs_by_run_id, rid), step_name=step_name):
+            required.append(rid)
+            seen.add(rid)
+    return required
+
+
+def require_prior_live_runs_in_ledger(
+    ledger: Path,
+    *,
+    current_run_id: str | int,
+    workflow_runs: Sequence[Mapping[str, Any]],
+    jobs_by_run_id: Mapping[Any, Sequence[Mapping[str, Any]]],
+) -> list[str]:
+    """Fail closed when a prior live dispatch is absent from the checked-out ledger."""
+    required = prior_live_run_ids_from_listings(
+        workflow_runs, jobs_by_run_id, current_run_id=current_run_id
+    )
+    missing = missing_prior_live_run_ids(
+        required, parse_ledger(ledger), current_run_id=current_run_id
+    )
+    if missing:
+        raise UnmergedLedgerError(
+            "refusing --live: previous evidence-live run(s) "
+            + ", ".join(missing)
+            + " reached the live step but are not in the checked-out costs.jsonl. "
+            "Merge the artifact ledger from those runs before dispatching again "
+            "so the $10 cap accumulates."
+        )
+    return required
 
 
 def usage_from_row(row: Mapping[str, Any]) -> tuple[int, int]:
@@ -332,6 +475,11 @@ def add_cost_arguments(parser: ArgumentParser) -> None:
         default=None,
         help="experiment name for the ledger/guard (default: the script's experiment)",
     )
+    parser.add_argument(
+        "--github-run-id",
+        default=None,
+        help="Actions GITHUB_RUN_ID stored on each ledger row (default: env)",
+    )
 
 
 def maybe_guard(
@@ -357,6 +505,14 @@ def maybe_guard(
     )
 
 
+def github_run_id_from(args: Namespace) -> str | None:
+    explicit = getattr(args, "github_run_id", None)
+    if explicit:
+        return str(explicit)
+    env = os.environ.get("GITHUB_RUN_ID")
+    return env or None
+
+
 def maybe_record(args: Namespace, row: Mapping[str, Any], *, experiment: str) -> None:
     ledger = getattr(args, "cost_ledger", None)
     if ledger is None:
@@ -364,6 +520,7 @@ def maybe_record(args: Namespace, row: Mapping[str, Any], *, experiment: str) ->
     named = getattr(args, "cost_experiment", None) or experiment
     provider = str(row.get("provider") or "unknown")
     model = str(row.get("model") or "unknown")
+    github_run_id = github_run_id_from(args)
     if row.get("skipped") or not row.get("usage"):
         extra = {"status": row.get("status"), "skipped": bool(row.get("skipped"))}
         if row.get("reason"):
@@ -383,6 +540,7 @@ def maybe_record(args: Namespace, row: Mapping[str, Any], *, experiment: str) ->
             timestamp=str(row["started_at"]) if row.get("started_at") else None,
             usd=0.0,
             usd_source="no-call",
+            github_run_id=github_run_id,
             extra=extra,
         )
         return
@@ -396,4 +554,5 @@ def maybe_record(args: Namespace, row: Mapping[str, Any], *, experiment: str) ->
         run_id=run_id_for(row, named),
         experiment=named,
         timestamp=str(row["started_at"]) if row.get("started_at") else None,
+        github_run_id=github_run_id,
     )

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -32,12 +33,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from scripts.cost_ledger import (  # noqa: E402
+    EVIDENCE_LIVE_WORKFLOW,
     LEDGER_NAME,
     PRICES,
     TOKEN_ESTIMATES,
     USD_CAP,
+    UnmergedLedgerError,
+    append_dispatch_marker,
     estimate_run_usd,
     ledger_total_usd,
+    require_prior_live_runs_in_ledger,
 )
 
 RELEASE_DIR = ROOT / "evidence" / "2026-10-evidence-release"
@@ -375,6 +380,63 @@ def _write_environments(release: Path, spec: NamedExperiment) -> None:
     )
 
 
+def _gh_ndjson(path: str, jq: str) -> list[dict[str, Any]]:
+    """List-shaped GitHub API pages as objects. Fail closed if gh cannot run."""
+    try:
+        raw = subprocess.check_output(
+            ["gh", "api", "--paginate", path, "--jq", jq],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", "") or str(exc)
+        raise UnmergedLedgerError(
+            "refusing --live: cannot list evidence-live runs via "
+            f"`gh api {path}` ({detail.strip() or exc}). "
+            "Need GITHUB_TOKEN with actions: read."
+        ) from exc
+    rows: list[dict[str, Any]] = []
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        if not isinstance(item, dict):
+            raise UnmergedLedgerError(
+                f"refusing --live: unexpected gh api row from {path}: {item!r}"
+            )
+        rows.append(item)
+    return rows
+
+
+def fetch_evidence_live_listings(
+    repo: str,
+) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    runs = _gh_ndjson(
+        f"/repos/{repo}/actions/workflows/{EVIDENCE_LIVE_WORKFLOW}/runs?per_page=100",
+        ".workflow_runs[]",
+    )
+    jobs_by_id: dict[str, list[dict[str, Any]]] = {}
+    for run in runs:
+        rid = str(run.get("id", "") or "")
+        if not rid:
+            continue
+        jobs_by_id[rid] = _gh_ndjson(
+            f"/repos/{repo}/actions/runs/{rid}/jobs?per_page=100",
+            ".jobs[]",
+        )
+    return runs, jobs_by_id
+
+
+def check_prior_live_runs(ledger: Path, *, current_run_id: str, repo: str) -> list[str]:
+    runs, jobs_by_id = fetch_evidence_live_listings(repo)
+    return require_prior_live_runs_in_ledger(
+        ledger,
+        current_run_id=current_run_id,
+        workflow_runs=runs,
+        jobs_by_run_id=jobs_by_id,
+    )
+
+
 def _live_argv(spec: NamedExperiment, release: Path) -> list[str]:
     jsonl = release / f"{spec.name}.jsonl"
     summary = release / f"{spec.name}-summary.json"
@@ -391,6 +453,9 @@ def _live_argv(spec: NamedExperiment, release: Path) -> list[str]:
         "--cost-experiment",
         spec.experiment,
     ]
+    github_run_id = os.environ.get("GITHUB_RUN_ID")
+    if github_run_id:
+        extra.extend(["--github-run-id", github_run_id])
     return [*spec.argv[1:], *extra]
 
 
@@ -428,6 +493,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="run one named experiment under the $10 ledger cap (Actions only)",
     )
+    mode.add_argument(
+        "--require-prior-live-runs",
+        action="store_true",
+        help="fail closed unless every prior evidence-live run that reached "
+        "the live step is in the checked-out costs.jsonl (no API spend)",
+    )
     parser.add_argument("--release", type=Path, default=RELEASE_DIR)
     args = parser.parse_args(argv)
 
@@ -439,6 +510,24 @@ def main(argv: list[str] | None = None) -> int:
 
     release = args.release if args.release.is_absolute() else ROOT / args.release
     ledger = release / LEDGER_NAME
+    if args.require_prior_live_runs:
+        repo = os.environ.get("GITHUB_REPOSITORY")
+        current = os.environ.get("GITHUB_RUN_ID")
+        if not repo or not current:
+            print(
+                "# unmerged ledger: GITHUB_REPOSITORY and GITHUB_RUN_ID are required "
+                "to compare prior evidence-live runs against costs.jsonl",
+                file=sys.stderr,
+            )
+            return 3
+        try:
+            required = check_prior_live_runs(ledger, current_run_id=current, repo=repo)
+        except UnmergedLedgerError as exc:
+            print(f"# unmerged ledger: {exc}", file=sys.stderr)
+            return 3
+        print(f"prior live runs present in ledger: {', '.join(required) if required else '(none)'}")
+        return 0
+
     selected = list(catalog.values()) if args.experiment == "all" else [catalog[args.experiment]]
     summaries = [estimate_experiment(spec) for spec in selected]
     table = render_estimate_table(summaries, ledger=ledger)
@@ -458,6 +547,9 @@ def main(argv: list[str] | None = None) -> int:
         return 3
 
     release.mkdir(parents=True, exist_ok=True)
+    github_run_id = os.environ.get("GITHUB_RUN_ID")
+    if github_run_id:
+        append_dispatch_marker(ledger, github_run_id=github_run_id, experiment=spec.experiment)
     _write_environments(release, spec)
     code = _run_script(spec, _live_argv(spec, release))
     (release / "summary.json").write_text(
