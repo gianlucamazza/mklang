@@ -298,7 +298,7 @@ independently (see [SPEC §1](./SPEC.md) and
 | Line | Version | Meaning |
 |---|---|---|
 | **Language spec** | **0.4** | Additive changes allowed; the language surface is frozen pending evidence (ADR 0028) |
-| **Reference package** | **1.3.7** | Stable interpreter, typed, zero mypy suppressions, 90%+ coverage, CI-gated |
+| **Reference package** | **1.4.0** | Stable interpreter, typed, zero mypy suppressions, 90%+ coverage, CI-gated |
 
 A `.mkl` file declares its spec version via `mklang: "0.4"`. The package version
 is what you `pip install`; the spec version is what you write in your machine.
@@ -323,7 +323,7 @@ marked, and reaching an effectful `tool:` under it is recorded or refused
 [best practices](./docs/guides/best-practices.md). Gate judging follows the state tier
 by default.
 
-- **Hosted judge adapter:** optional and opt-in, not the default; a measured trial run reports `production_ready: false`. This applies only to the adapter; the interpreter (1.3.7) is stable.
+- **Hosted judge adapter:** optional and opt-in, not the default; a measured trial run reports `production_ready: false`. This applies only to the adapter; the interpreter (1.4.0) is stable.
 - **Historical live evidence:** DeepSeek and **OpenAI** were green in the 1.0.x
   release matrices, including the blocking cross-provider gate-agreement check
   at **1.0**. See the dated [gate-divergence report](./docs/experiments/gate-divergence.md);

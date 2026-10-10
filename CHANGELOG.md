@@ -8,84 +8,101 @@ All notable changes to mklang are documented here. The format follows
 - **Spec version** — the language, declared per-file via the `mklang:` field
   (currently `"0.4"`; `"0.2"`/`"0.3"` documents remain valid).
 - **Package version** — the reference interpreter / tooling, SemVer in
-  `pyproject.toml` (currently `1.3.7`).
+  `pyproject.toml` (currently `1.4.0`).
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-10-10
+
+Minor: an experimental, opt-in hosted-judge adapter ([#125](https://github.com/gianlucamazza/mklang/issues/125)).
+The interpreter is unchanged and remains the stable default.
+
 ### Added
 
-- **Evidence Release prep (2026-10).** Dated directory
-  `evidence/2026-10-evidence-release/` (renamed from the 2026-09 placeholder),
-  a `$10` hard-cap cost ledger (`costs.jsonl` + `scripts/cost_ledger.py`),
-  named-experiment runner with `--estimate` (no API calls) and `--live`
-  (`scripts/run_evidence_release.py`), and a `workflow_dispatch`-only
-  `evidence-live.yml` (single concurrency group; prior live run ids must
-  already be in the checked-out `costs.jsonl` or the live step is refused).
-  Anthropic is reached as OpenRouter model `anthropic/claude-sonnet-5`
-  (no `ANTHROPIC_API_KEY`). Lab triggers the live workflow after review.
-- **Five-reader operator kit** — `docs/experiments/five-reader-kit/`
-  (invites, task, materials, operator questions, response form). Does not
-  run the #61 test and does not change the frozen protocol.
-- **Keyless Hugging Face playground Space** (`spaces/playground/`). A
-  cpu-basic Gradio app that only exposes deterministic/offline host
-  surfaces: parse, `check` + lint, YAML format, bundled `mklang test`
-  scenarios, and bundled conformance cases (including the in-memory
-  checkpoint envelope on `escalate-ask`). No API key field, no network
-  model call, no Path B (`judge: jev-*`,
-  [#123](https://github.com/gianlucamazza/mklang/issues/123),
+- **Five-reader operator kit**
+  ([#134](https://github.com/gianlucamazza/mklang/pull/134)) —
+  `docs/experiments/five-reader-kit/` (invites, task, materials, operator
+  questions, response form). Does not run the #61 test and does not change
+  the frozen protocol.
+- **Keyless Hugging Face playground Space** (`spaces/playground/`,
+  [#130](https://github.com/gianlucamazza/mklang/pull/130)). A cpu-basic
+  Gradio app that only exposes deterministic/offline host surfaces: parse,
+  `check` + lint, YAML format, bundled `mklang test` scenarios, and bundled
+  conformance cases (including the in-memory checkpoint envelope on
+  `escalate-ask`). No API key field, no network model call, no Path B
+  (`judge: jev-*`, [#123](https://github.com/gianlucamazza/mklang/issues/123),
   `production_ready: false`).
-- **Opt-in Noul-only Jev host judge** (ADR 0037, Proposed). Setting `judge:`
-  to `jev-latest` (or a pinned `jev-*` id) routes prose-gate judging through
-  one System One call of ordered Nouls; the host fires the first probability
-  ≥ 0.5. Produce stays on the configured provider. Not the default judge, not
-  a produce tier, never Choice, never `hook:`. See
-  `docs/guides/jev-noul-judge.md`. Live Path B eval:
-  `scripts/jev_noul_eval.py` (skips without `TYPESAFE_API_KEY`; invents no
-  numbers).
-- **First-true vs prompt-spaghetti eval harness** ([#120](https://github.com/gianlucamazza/mklang/issues/120))
-  — `scripts/first_true_eval.py` plus a content-hashed produce/gold pin
+- **Experimental, opt-in Noul-only Jev hosted-judge adapter**
+  ([#125](https://github.com/gianlucamazza/mklang/pull/125), ADR 0037
+  **Proposed**). Setting `judge:` to `jev-latest` (or a pinned `jev-*` id)
+  routes prose-gate judging through one System One call of ordered Nouls;
+  the host fires the first probability ≥ 0.5. Produce stays on the
+  configured provider. This is **not the default** judge, not a produce
+  tier, never Choice, never `hook:`. A measured trial
+  (`scripts/jev_noul_eval.py`) reports `production_ready: false`. These
+  caveats apply only to the adapter; the interpreter stays stable. See
+  `docs/guides/jev-noul-judge.md`. Live Path B eval skips without
+  `TYPESAFE_API_KEY` and invents no numbers.
+- **First-true vs prompt-spaghetti eval harness**
+  ([#126](https://github.com/gianlucamazza/mklang/pull/126),
+  [#120](https://github.com/gianlucamazza/mklang/issues/120)) —
+  `scripts/first_true_eval.py` plus a content-hashed produce/gold pin
   (`scripts/fixtures/first_true_eval.json`) on the gate-divergence corpus.
   Arm A is the host first-true walk; arm B is a single unordered / best-match
   pick with no first-true walk. Default is an offline mock (CI dry-run);
   `--live` is optional and logs latency/tokens only when a key is present.
   Protocol: `docs/experiments/first-true-fidelity.md`.
 - **Public honesty page.** [What mklang is / is not](./docs/what-mklang-is.md)
-  states the language and host-contract boundary. ADR 0037 remains Proposed:
-  opt-in `judge: jev-*` only, not the default. Path B has been measured in an
+  ([#124](https://github.com/gianlucamazza/mklang/pull/124)) states the
+  language and host-contract boundary. ADR 0037 remains Proposed: opt-in
+  `judge: jev-*` only, not the default. Path B has been measured in an
   exploratory spike (`scripts/jev_noul_eval.py`, six-machine `CORE_MACHINES`
   corpus, 2026-10-05); it isn't production-ready (`production_ready: false`)
   and isn't the default. Choice as `judge:` mapping STOP.
 
 ### Changed
 
-- **README Status names the hosted judge adapter.** Optional and opt-in, not
-  the default; a measured trial reports `production_ready: false` for the
-  adapter only. The interpreter (1.3.7) stays Stable.
-- **ROADMAP Now is M2/M3.** Milestone 1.1 is closed. Evidence items
+- **README Status names the hosted judge adapter**
+  ([#135](https://github.com/gianlucamazza/mklang/pull/135)). Optional and
+  opt-in, not the default; a measured trial reports `production_ready: false`
+  for the adapter only. The interpreter stays stable.
+- **ROADMAP Now is M2/M3**
+  ([#135](https://github.com/gianlucamazza/mklang/pull/135)). Milestone 1.1
+  is closed. Evidence items
   [#60](https://github.com/gianlucamazza/mklang/issues/60) /
   [#61](https://github.com/gianlucamazza/mklang/issues/61) sit on M4;
   the public playground is the standard Gradio Space from
   [#130](https://github.com/gianlucamazza/mklang/pull/130).
-- **Honesty page Path B wording.** `docs/what-mklang-is.md` no longer reads as
-  if Path B is unmeasured. The exploratory spike exists; `production_ready`
-  stays false and the adapter is not the default.
+- **Honesty page Path B wording**
+  ([#128](https://github.com/gianlucamazza/mklang/pull/128)).
+  `docs/what-mklang-is.md` no longer reads as if Path B is unmeasured. The
+  exploratory spike exists; `production_ready` stays false and the adapter
+  is not the default.
 
 ### Fixed
 
-- **Language demo tape stays above the 8s duration floor.** The final VHS
+- **Language demo tape stays above the 8s duration floor**
+  ([#129](https://github.com/gianlucamazza/mklang/pull/129)). The final VHS
   hold in `demos/tapes/language.tape` is `Sleep 8s` (was `3s`) so a fast
   DeepSeek reply still yields ~8.8s after `PlaybackSpeed 2.5`, with margin
   against frame rounding. The monthly Demo assets run (36813199391) failed
   at 7.80s; `MIN_DURATION` is unchanged.
-- **Docs site assemble includes the README cover.** `scripts/build-docs.sh`
-  copies `docs/cover.jpg` into the generated tree and rewrites the README
-  image target so `mkdocs build --strict` can resolve it.
+- **Docs site assemble includes the README cover**
+  ([#117](https://github.com/gianlucamazza/mklang/pull/117)).
+  `scripts/build-docs.sh` copies `docs/cover.jpg` into the generated tree
+  and rewrites the README image target so `mkdocs build --strict` can
+  resolve it.
 
 ### Security
 
 - **`pyjwt` 2.13.0 → 2.15.1** and **`urllib3` 2.7.0 → 2.8.0** in the lockfile
-  (PYSEC-2026-4140…4152, PYSEC-2026-4175…4177), which the dependency audit
+  ([#127](https://github.com/gianlucamazza/mklang/pull/127);
+  PYSEC-2026-4140…4152, PYSEC-2026-4175…4177), which the dependency audit
   started refusing.
+
+### Internal
+
+- **Evidence Release 2026-10 prep** ([#136](https://github.com/gianlucamazza/mklang/pull/136)): dated directory, $10 cost ledger, dispatch-only `evidence-live.yml`.
 
 ## [1.3.7] — 2026-09-29
 
@@ -1581,7 +1598,12 @@ Correctness hardening and multi-provider polish on top of the v0.2 core.
 - `SPEC.md`, JSON Schema, multi-provider runtime config, examples `triage`, `research`,
   `expense_approval`.
 
-[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.3.3...HEAD
+[unreleased]: https://github.com/gianlucamazza/mklang/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/gianlucamazza/mklang/compare/v1.3.7...v1.4.0
+[1.3.7]: https://github.com/gianlucamazza/mklang/compare/v1.3.6...v1.3.7
+[1.3.6]: https://github.com/gianlucamazza/mklang/compare/v1.3.5...v1.3.6
+[1.3.5]: https://github.com/gianlucamazza/mklang/compare/v1.3.4...v1.3.5
+[1.3.4]: https://github.com/gianlucamazza/mklang/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/gianlucamazza/mklang/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/gianlucamazza/mklang/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/gianlucamazza/mklang/compare/v1.3.0...v1.3.1
