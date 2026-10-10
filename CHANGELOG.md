@@ -45,9 +45,10 @@ All notable changes to mklang are documented here. The format follows
 ### Fixed
 
 - **Language demo tape stays above the 8s duration floor.** The final VHS
-  hold in `demos/tapes/language.tape` is `Sleep 6s` (was `3s`) so a fast
-  DeepSeek reply still yields ≥8s after `PlaybackSpeed 2.5`. The monthly
-  Demo assets run (36813199391) failed at 7.80s; `MIN_DURATION` is unchanged.
+  hold in `demos/tapes/language.tape` is `Sleep 8s` (was `3s`) so a fast
+  DeepSeek reply still yields ~8.8s after `PlaybackSpeed 2.5`, with margin
+  against frame rounding. The monthly Demo assets run (36813199391) failed
+  at 7.80s; `MIN_DURATION` is unchanged.
 - **Docs site assemble includes the README cover.** `scripts/build-docs.sh`
   copies `docs/cover.jpg` into the generated tree and rewrites the README
   image target so `mkdocs build --strict` can resolve it.
