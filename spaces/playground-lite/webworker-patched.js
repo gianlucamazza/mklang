@@ -353,9 +353,9 @@ async def _call_asgi_app_from_js(app_id, scope, receive, send):
 					[value.encode("latin-1") for value in header]
 					for header in scope["headers"]
 			]
-	if "query_string" in scope and scope["query_string"]:
+	if "query_string" in scope and isinstance(scope["query_string"], str):
 			scope["query_string"] = scope["query_string"].encode("latin-1")
-	if "raw_path" in scope and scope["raw_path"]:
+	if "raw_path" in scope and isinstance(scope["raw_path"], str):
 			scope["raw_path"] = scope["raw_path"].encode("latin-1")
 
 	async def rcv():

@@ -91,6 +91,7 @@ def test_index_pins_gradio_lite_and_deps_false() -> None:
     assert "follow_symlinks" in worker
     assert "os.link = lambda src, dst, *args, **kwargs: None" in worker
     assert "typing-extensions>=4.12.2" in worker
+    assert 'isinstance(scope["query_string"], str)' in worker
     assert "openai" in html  # mentioned as not installed
     assert "extractall" in html
     assert "zipfile" in html
