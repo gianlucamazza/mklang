@@ -77,8 +77,10 @@ folder ships Gradio's published PINNED_HF_HUB worker as
 [gradio#12262](https://github.com/gradio-app/gradio/issues/12262)) and
 `index.html` redirects Worker/SharedWorker — including the blob wrapper —
 to that same-origin file. The worker also accepts `follow_symlinks` on
-the `os.link` mock so filelock 4.x can import. The UI still loads
-`@gradio/lite@5.45.0` from jsDelivr.
+the `os.link` mock so filelock 4.x can import, and upgrades
+`typing-extensions` so anyio can import `sentinel` (Pyodide 0.27.3
+ships an older copy). The UI still loads `@gradio/lite@5.45.0` from
+jsDelivr.
 
 ## Run it locally
 

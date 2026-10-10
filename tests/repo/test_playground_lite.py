@@ -87,6 +87,7 @@ def test_index_pins_gradio_lite_and_deps_false() -> None:
     assert "huggingface-hub==0.35.0" in worker
     assert "follow_symlinks" in worker
     assert "os.link = lambda src, dst, *args, **kwargs: None" in worker
+    assert "typing-extensions>=4.12.2" in worker
     assert "openai" in html  # mentioned as not installed
     assert "micropip.install" in html
 
