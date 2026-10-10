@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
-from dotenv import dotenv_values, find_dotenv
+
+# python-dotenv is only needed when resolving provider keys from .env files.
+# Parse / check / lint / scripted tests never call these helpers, so the
+# import stays lazy: a deps=False install (Gradio-Lite / Pyodide) can load
+# the core without this extra.
 
 
 @dataclass
@@ -33,6 +39,13 @@ class ProviderConfig:
         return self.judge
 
 
+def _dotenv_helpers() -> tuple[Callable[..., Mapping[str, str | None]], Callable[..., Any]]:
+    """Load python-dotenv callables. Imported only when .env files are read."""
+    from dotenv import dotenv_values, find_dotenv
+
+    return dotenv_values, find_dotenv
+
+
 def load_env_files(*, cwd: Path | None = None) -> tuple[str | None, str | None]:
     """Load the layered .env files; return the (project, user) paths that loaded.
 
@@ -41,6 +54,8 @@ def load_env_files(*, cwd: Path | None = None) -> tuple[str | None, str | None]:
     environment always wins, and values are installed explicitly so this
     function remains correct when called more than once in one process."""
     from .paths import host_paths
+
+    dotenv_values, find_dotenv = _dotenv_helpers()
 
     if cwd is not None:
         project_env = (
@@ -71,6 +86,8 @@ def load_env_files(*, cwd: Path | None = None) -> tuple[str | None, str | None]:
 def _env_layers(cwd: Path | None = None) -> tuple[dict[str, str], dict[str, str]]:
     """Read project/user dotenv values without mutating process environment."""
     from .paths import host_paths
+
+    dotenv_values, find_dotenv = _dotenv_helpers()
 
     project = None
     if cwd is not None:

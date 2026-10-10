@@ -1,10 +1,10 @@
-"""Keyless, offline mklang playground for a public Hugging Face Space.
+"""Keyless, offline mklang playground for a static Gradio-Lite Space.
 
-This app only exercises deterministic host surfaces: parse, schema/semantic
-check, lint, YAML format, bundled `mklang test` scenarios, and bundled
-conformance cases. It does not accept API keys, does not call a model
-provider, and does not expose Path B (`judge: jev-*`, issue #123,
-`production_ready: false`).
+Same host surfaces as ``spaces/playground/app.py``, running in the browser
+via Pyodide. mklang is installed from the committed wheel with
+``deps=False`` — parse / check / lint / format / scripted runs never
+load the openai, textual, or rich packages. No API keys, no model calls,
+no Path B.
 """
 
 from __future__ import annotations
@@ -35,14 +35,19 @@ REPO_URL = "https://github.com/gianlucamazza/mklang"
 ISSUE_123 = f"{REPO_URL}/issues/123"
 
 HONESTY = f"""
-# mklang playground (keyless / offline)
+# mklang playground lite (keyless / offline / static)
 
-Deterministic host tools only. **No LLM key, no network model call, no Path B.**
+Deterministic host tools, running **in this browser** via Gradio-Lite +
+Pyodide. **No LLM key, no network model call, no Path B.**
 
 This Space parses, validates, lints, and formats `.mkl` documents, then runs
 bundled [scripted scenarios]({REPO_URL}/blob/main/docs/reference/cli.md#test)
 and [conformance cases]({REPO_URL}/blob/main/conformance/README.md) with the
 scripted LLM. Produce texts and judge picks come from the fixture, not a model.
+
+mklang is loaded from a committed wheel with `micropip.install(..., deps=False)`.
+`openai`, `textual`, and `rich` are CLI / TUI / live-provider extras — they
+are not imported on this path.
 
 **It does not** run `mklang run` against a provider, accept an API key, call
 Jev / Noul / any `judge: jev-*` adapter (Path B, [issue #123]({ISSUE_123}),
@@ -383,4 +388,8 @@ except (ImportError, AttributeError):
 if __name__ == "__main__":
     if demo is None:
         raise SystemExit("gradio is required to launch the playground UI")
-    demo.launch(ssr_mode=False)
+    # Gradio-Lite 5.x has no ssr_mode; Gradio 6 accepts it. Stay compatible.
+    try:
+        demo.launch(ssr_mode=False)
+    except TypeError:
+        demo.launch()

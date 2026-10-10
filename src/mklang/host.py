@@ -10,17 +10,20 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import jsonschema
 import yaml
 
-from .config import ProviderConfig, load_provider
 from .engine import RunResult
 from .errors import ProviderConfigError
 from .llm.base import LLM
 from .loader import check_tiers, load_machine, semantic_check, validate_dict
 from .model import Machine, parse_machine
 from .registry import base_registry, load_path_registry
+
+if TYPE_CHECKING:
+    from .config import ProviderConfig
 
 
 class PrepareError(Exception):
@@ -80,6 +83,8 @@ def _provider(
     *,
     cwd: Path | None = None,
 ) -> tuple[ProviderConfig, LLM, list[str]]:
+    from .config import load_provider
+
     try:
         prov = load_provider(config, provider, cwd=cwd)
     except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:

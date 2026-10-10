@@ -14,6 +14,12 @@ All notable changes to mklang are documented here. The format follows
 
 ### Added
 
+- **Keyless Gradio-Lite static playground** (`spaces/playground-lite/`).
+  Same offline UI as `spaces/playground/`, running in the browser via
+  `@gradio/lite@5.45.0` / Pyodide (no Gradio server, no PRO plan). The
+  committed `mklang` wheel is installed with `micropip` `deps=False`;
+  parse / check / lint / format / scripted tests do not import `openai`,
+  `textual`, or `rich`.
 - **Keyless Hugging Face playground Space** (`spaces/playground/`). A
   cpu-basic Gradio app that only exposes deterministic/offline host
   surfaces: parse, `check` + lint, YAML format, bundled `mklang test`
@@ -46,6 +52,11 @@ All notable changes to mklang are documented here. The format follows
 
 ### Changed
 
+- **Core imports stay free of CLI/TUI/provider SDKs.** `python-dotenv` is
+  loaded only when resolving `.env` provider keys; `mklang.host` no longer
+  imports `config` at module import. Parse / check / lint / scripted tests
+  can load with a `deps=False` wheel (Gradio-Lite). `openai` was already
+  lazy; `rich` / `textual` stay on the CLI and console.
 - **Honesty page Path B wording.** `docs/what-mklang-is.md` no longer reads as
   if Path B is unmeasured. The exploratory spike exists; `production_ready`
   stays false and the adapter is not the default.
