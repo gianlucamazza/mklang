@@ -76,8 +76,9 @@ folder ships Gradio's published PINNED_HF_HUB worker as
 `webworker-patched.js` (rewrites the req to `huggingface-hub==0.35.0`,
 [gradio#12262](https://github.com/gradio-app/gradio/issues/12262)) and
 `index.html` redirects Worker/SharedWorker — including the blob wrapper —
-to that same-origin file. The UI still loads `@gradio/lite@5.45.0` from
-jsDelivr.
+to that same-origin file. The worker also accepts `follow_symlinks` on
+the `os.link` mock so filelock 4.x can import. The UI still loads
+`@gradio/lite@5.45.0` from jsDelivr.
 
 ## Run it locally
 
