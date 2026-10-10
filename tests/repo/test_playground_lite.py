@@ -94,6 +94,8 @@ def test_index_pins_gradio_lite_and_deps_false() -> None:
     assert "openai" in html  # mentioned as not installed
     assert "extractall" in html
     assert "zipfile" in html
+    assert "loadPackage" in html
+    assert "jsonschema" in html
 
 
 @needs_space

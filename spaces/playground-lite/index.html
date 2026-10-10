@@ -56,6 +56,11 @@ import sysconfig
 import zipfile
 from pathlib import Path
 
+import pyodide_js
+
+# In the Pyodide 0.27.3 distribution, but not imported until loaded.
+await pyodide_js.loadPackage(["pyyaml", "jsonschema"])
+
 # Committed wheel, no dependencies (micropip.install(..., deps=False)
 # equivalent). openai / textual / rich are not installed and are not
 # imported by parse/check/lint. The wheel is mounted via &lt;gradio-file
