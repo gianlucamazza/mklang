@@ -40,4 +40,8 @@ Enter
 Wait+Screen@240s /DONE react/
 Wait+Screen@30s /Result/
 Wait+Screen@30s /153/
-Sleep 3s
+# 8s hold: PlaybackSpeed 2.5 → 3.20s of output. With Sleep 3s a fast
+# DeepSeek reply landed at 7.80s (run 36813199391), under the 8s floor.
+# Sleep 6s would sit on that floor with an instant reply; 8s leaves ~0.8s
+# of margin against frame rounding and stays far under the 75s ceiling.
+Sleep 8s
