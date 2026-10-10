@@ -49,20 +49,34 @@
   </head>
   <body>
     <gradio-lite>
-import micropip
+import io
+import sys
+import sysconfig
+import zipfile
 from pathlib import Path
 from pyodide.http import pyfetch
 from js import location
 
-# Same-origin static files. mklang is the committed wheel (deps=False):
-# openai / textual / rich are not installed and are not imported by parse/check/lint.
+# Same-origin static files. mklang is the committed wheel with no deps
+# (micropip.install(..., deps=False) equivalent): openai / textual / rich
+# are not installed and are not imported by parse/check/lint.
+# Gradio's wasm fetch proxy makes micropip URL-installs see a non-zip body.
 href = str(location.href).split("#", 1)[0].split("?", 1)[0]
 root = href[: -len("index.html")] if href.endswith("index.html") else href
 root = root.rstrip("/")
 
-# pyyaml and jsonschema already ship in Pyodide 0.27.3. Reinstalling them
-# hits micropip's "wheel before downloading it" error on this runtime.
-await micropip.install(f"{root}/mklang-1.3.7-py3-none-any.whl", deps=False)
+WHEEL = "mklang-1.3.7-py3-none-any.whl"
+resp = await pyfetch(f"{root}/{WHEEL}")
+if resp.status != 200:
+    raise RuntimeError(f"failed to fetch {WHEEL}: HTTP {resp.status}")
+blob = await resp.bytes()
+if blob[:2] != b"PK":
+    raise RuntimeError(f"{WHEEL} is not a zip (got {blob[:60]!r})")
+site = Path(sysconfig.get_path("purelib"))
+with zipfile.ZipFile(io.BytesIO(blob)) as zf:
+    zf.extractall(site)
+if str(site) not in sys.path:
+    sys.path.insert(0, str(site))
 
 FILES = [
     "app.py",

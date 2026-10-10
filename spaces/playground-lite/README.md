@@ -28,10 +28,12 @@ cases (including the in-memory checkpoint on `escalate-ask`).
   `hook-before-prose`, `escalate-ask`).
 
 mklang is installed from the committed wheel
-`mklang-1.3.7-py3-none-any.whl` with `micropip.install(..., deps=False)`.
-Pyodide 0.27.3 already ships `pyyaml` and `jsonschema`; the bootstrap
-does not reinstall them. `openai`, `textual`, and `rich` are **not**
-installed and are **not** imported on this path.
+`mklang-1.3.7-py3-none-any.whl` with no dependencies (`deps=False`
+equivalent: `pyfetch` the wheel and extract it). Gradio's wasm fetch
+proxy makes a direct `micropip.install(url)` see a non-zip body.
+Pyodide 0.27.3 already ships `pyyaml` and `jsonschema`. `openai`,
+`textual`, and `rich` are **not** installed and are **not** imported
+on this path.
 
 ## What it does not do
 
