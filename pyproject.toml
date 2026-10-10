@@ -99,6 +99,7 @@ exclude = [
   "/packaging",
   "/site",
   "/docs/assets/demos",
+  "/spaces",
   "/uv.lock",
 ]
 
