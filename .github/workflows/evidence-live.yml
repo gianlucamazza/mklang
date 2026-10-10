@@ -1,0 +1,57 @@
+# Manual Evidence Release live runner. No schedule, no push, no pull_request.
+# Lab dispatches this after reviewing the prep PR. Do not start it from a
+# cloud-agent VM: that would spend against the $10 hard cap (D1).
+name: evidence-live
+
+on:
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: Named evidence-release experiment
+        type: choice
+        required: true
+        options:
+          - estimate
+          - gate-divergence
+          - gate-divergence-anthropic-openrouter
+          - repair-convergence
+          - first-true-live
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Projected cost (no API calls)
+        run: >
+          uv run python scripts/run_evidence_release.py --estimate
+          --experiment ${{ inputs.experiment }}
+
+      - name: Live named experiment
+        if: ${{ inputs.experiment != 'estimate' }}
+        run: >
+          uv run python scripts/run_evidence_release.py --live
+          --experiment ${{ inputs.experiment }}
+
+      - name: Validate JSONL and write manifest
+        if: ${{ inputs.experiment != 'estimate' }}
+        run: >
+          uv run python scripts/build_evidence_release.py
+          evidence/2026-10-evidence-release --force
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: evidence-2026-10-${{ inputs.experiment }}
+          path: evidence/2026-10-evidence-release/
+          if-no-files-found: error

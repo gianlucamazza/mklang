@@ -394,12 +394,13 @@ from the PR that records it.
 
 ### GitHub Actions (release / optional maintainer workflows)
 
-| Secret name         | Required for                                            |
-| ------------------- | ------------------------------------------------------- |
-| `DEEPSEEK_API_KEY`  | release live matrix (`--require-providers`)             |
-| `OPENAI_API_KEY`    | release live matrix                                     |
-| `ANTHROPIC_API_KEY` | third-provider rows; skipped cleanly when absent        |
-| `TAVILY_API_KEY`    | optional search-backed demos/tests, not gate-divergence |
+| Secret name           | Required for                                            |
+| --------------------- | ------------------------------------------------------- |
+| `DEEPSEEK_API_KEY`    | release live matrix (`--require-providers`)             |
+| `OPENAI_API_KEY`      | release live matrix; Evidence Release named experiments |
+| `OPENROUTER_API_KEY`  | Evidence Release #60 path (Claude as `anthropic/claude-sonnet-5`) |
+| `ANTHROPIC_API_KEY`   | native adapter; **not** present — OpenRouter is the Actions path |
+| `TAVILY_API_KEY`      | optional search-backed demos/tests, not gate-divergence |
 
 Set repository (or environment) secrets in GitHub → Settings → Secrets and
 variables → Actions. The release workflow lists optional providers; without
