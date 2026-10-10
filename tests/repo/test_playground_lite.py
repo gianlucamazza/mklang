@@ -83,6 +83,9 @@ def test_index_pins_gradio_lite_and_deps_false() -> None:
     assert 'src.startsWith("blob:")' in html
     assert "deps=False" in html
     assert WHEEL.name in html
+    assert 'name="boot.py" entrypoint' in html
+    assert f'name="{WHEEL.name}"' in html
+    assert 'url="./app.py"' in html
     worker = (SPACE / "webworker-patched.js").read_text(encoding="utf-8")
     assert "huggingface-hub==0.35.0" in worker
     assert "follow_symlinks" in worker

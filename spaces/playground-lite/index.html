@@ -49,27 +49,19 @@
   </head>
   <body>
     <gradio-lite>
+      <gradio-file name="boot.py" entrypoint>
 import io
 import sys
 import sysconfig
 import zipfile
 from pathlib import Path
-from pyodide.http import pyfetch
-from js import location
 
-# Same-origin static files. mklang is the committed wheel with no deps
-# (micropip.install(..., deps=False) equivalent): openai / textual / rich
-# are not installed and are not imported by parse/check/lint.
-# Gradio's wasm fetch proxy makes micropip URL-installs see a non-zip body.
-href = str(location.href).split("#", 1)[0].split("?", 1)[0]
-root = href[: -len("index.html")] if href.endswith("index.html") else href
-root = root.rstrip("/")
-
+# Committed wheel, no dependencies (micropip.install(..., deps=False)
+# equivalent). openai / textual / rich are not installed and are not
+# imported by parse/check/lint. The wheel is mounted via &lt;gradio-file
+# url&gt; on the main thread — wasm pyfetch of the same URL 404s.
 WHEEL = "mklang-1.3.7-py3-none-any.whl"
-resp = await pyfetch(f"{root}/{WHEEL}")
-if resp.status != 200:
-    raise RuntimeError(f"failed to fetch {WHEEL}: HTTP {resp.status}")
-blob = await resp.bytes()
+blob = Path(WHEEL).read_bytes()
 if blob[:2] != b"PK":
     raise RuntimeError(f"{WHEEL} is not a zip (got {blob[:60]!r})")
 site = Path(sysconfig.get_path("purelib"))
@@ -78,27 +70,20 @@ with zipfile.ZipFile(io.BytesIO(blob)) as zf:
 if str(site) not in sys.path:
     sys.path.insert(0, str(site))
 
-FILES = [
-    "app.py",
-    "examples/hello.mkl",
-    "examples/hello.test.yaml",
-    "examples/triage.mkl",
-    "examples/triage.test.yaml",
-    "conformance/linear.yaml",
-    "conformance/parse-json.yaml",
-    "conformance/hook-before-prose.yaml",
-    "conformance/escalate-ask.yaml",
-]
-for rel in FILES:
-    dest = Path(rel)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    resp = await pyfetch(f"{root}/{rel}")
-    if resp.status != 200:
-        raise RuntimeError(f"failed to fetch {rel}: HTTP {resp.status}")
-    dest.write_bytes(await resp.bytes())
-
 import runpy
+
 runpy.run_path("app.py", run_name="__main__")
+      </gradio-file>
+      <gradio-file name="app.py" url="./app.py"></gradio-file>
+      <gradio-file name="mklang-1.3.7-py3-none-any.whl" url="./mklang-1.3.7-py3-none-any.whl"></gradio-file>
+      <gradio-file name="examples/hello.mkl" url="./examples/hello.mkl"></gradio-file>
+      <gradio-file name="examples/hello.test.yaml" url="./examples/hello.test.yaml"></gradio-file>
+      <gradio-file name="examples/triage.mkl" url="./examples/triage.mkl"></gradio-file>
+      <gradio-file name="examples/triage.test.yaml" url="./examples/triage.test.yaml"></gradio-file>
+      <gradio-file name="conformance/linear.yaml" url="./conformance/linear.yaml"></gradio-file>
+      <gradio-file name="conformance/parse-json.yaml" url="./conformance/parse-json.yaml"></gradio-file>
+      <gradio-file name="conformance/hook-before-prose.yaml" url="./conformance/hook-before-prose.yaml"></gradio-file>
+      <gradio-file name="conformance/escalate-ask.yaml" url="./conformance/escalate-ask.yaml"></gradio-file>
     </gradio-lite>
   </body>
 </html>

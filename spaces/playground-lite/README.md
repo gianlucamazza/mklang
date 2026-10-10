@@ -29,11 +29,11 @@ cases (including the in-memory checkpoint on `escalate-ask`).
 
 mklang is installed from the committed wheel
 `mklang-1.3.7-py3-none-any.whl` with no dependencies (`deps=False`
-equivalent: `pyfetch` the wheel and extract it). Gradio's wasm fetch
-proxy makes a direct `micropip.install(url)` see a non-zip body.
-Pyodide 0.27.3 already ships `pyyaml` and `jsonschema`. `openai`,
-`textual`, and `rich` are **not** installed and are **not** imported
-on this path.
+equivalent). `<gradio-file url>` mounts the wheel and fixtures from the
+main thread (wasm `pyfetch` of those URLs 404s); `boot.py` extracts the
+wheel into site-packages. Pyodide 0.27.3 already ships `pyyaml` and
+`jsonschema`. `openai`, `textual`, and `rich` are **not** installed and
+are **not** imported on this path.
 
 ## What it does not do
 
