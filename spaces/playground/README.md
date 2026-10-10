@@ -9,45 +9,39 @@ app_file: app.py
 python_version: "3.12"
 license: apache-2.0
 short_description: Keyless offline mklang check, lint, format, and test
+pinned: true
 ---
 
-# mklang playground (keyless / offline)
+# mklang playground (keyless, offline)
 
-A public [Hugging Face Space](https://huggingface.co/docs/hub/spaces-overview)
-for **[mklang](https://github.com/gianlucamazza/mklang)** that stays on the
-deterministic host path. It is meant to run on **cpu-basic**. It does not
-take an LLM or provider API key and it does not call a model over the network.
+A [Hugging Face Space](https://huggingface.co/docs/hub/spaces-overview)
+for **[mklang](https://github.com/gianlucamazza/mklang)** that uses only the
+deterministic host, with no model in the loop. It runs on free **cpu-basic**
+hardware. It does not take an LLM or provider API key, and it does not call a
+model over the network.
 
 ## What it does
 
 - **Parse** an inline `.mkl` document (YAML → JSON Schema → host dataclass).
-- **Check + lint** the same document (`mklang check` plus static analysis; no
-  `--llm` judge probe).
-- **Format** by parsing YAML and dumping it again (comments are dropped).
+- **Check + lint** the same document (`mklang check` plus static analysis,
+  without the `--llm` judge probe).
+- **Format** by parsing the YAML and writing it out again. Comments are
+  dropped.
 - **Run bundled examples** through the scripted `mklang test` harness
   (`hello`, `triage` and their `*.test.yaml` scenarios).
 - **Run bundled conformance cases** (`linear`, `parse-json`,
   `hook-before-prose`, `escalate-ask`). A suspended case shows the in-memory
-  **checkpoint** envelope; nothing is written to disk.
+  **checkpoint** envelope. Nothing is written to disk.
 
-Produce texts, judge picks, tools, and hooks all come from the fixture files
-in this folder. That is the same offline path CI uses.
+The model texts, judge picks, tools and hooks all come from fixture files in
+this Space. CI uses the same offline path.
 
 ## What it does not do
 
-- **No Path B.** [Issue #123](https://github.com/gianlucamazza/mklang/issues/123)
-  tracks the opt-in Noul-only Jev host judge (`judge: jev-*`). That adapter is
-  not the default, and the measured spike reports `production_ready: false`.
-  This Space does not expose it, does not accept `TYPESAFE_API_KEY`, and does
-  not call Jev / Noul / Choice-as-`judge:`.
+- **No hosted judge.** This Space does not call any hosted judge model and does not take a judge API key; judge picks come from the fixture files. mklang has an optional, opt-in hosted judge adapter. It is not the default, and [mklang's docs](https://github.com/gianlucamazza/mklang/blob/main/docs/what-mklang-is.md) say that adapter is not production-ready. That adapter sends the text it judges to the provider's API, which is one reason it stays out of this Space.
 - **No live `mklang run`.** Provider-backed execution needs a key and a
-  network model call. That is out of scope here.
-- **No secrets, no telemetry.** Analytics flags are off; the app does not
-  collect keys or phone home.
-
-Issue #123 is a Path B tracker, not a playground spec. This Space follows
-that issue by **leaving Path B out** and only showing what mklang can do
-offline.
+  network model call, so it is out of scope here.
+- **No secrets, no telemetry.** The app does not ask for or store keys, and it switches off Gradio analytics and Hugging Face Hub telemetry at start-up. Hugging Face hosts the Space, so its platform logs still apply.
 
 ## Run it locally
 
@@ -67,7 +61,7 @@ With the repo's `uv` workflow:
 uv run --with 'gradio==6.30.0' python spaces/playground/app.py
 ```
 
-Then open the printed local URL (typically `http://127.0.0.1:7860`).
+Then open the local URL it prints (usually `http://127.0.0.1:7860`).
 
 Smoke test (imports the app and runs one example callback; does **not**
 start a server):
@@ -81,3 +75,5 @@ uv run --extra dev pytest -q tests/repo/test_playground_space.py
 ## License
 
 Apache-2.0, matching the [mklang repository](https://github.com/gianlucamazza/mklang).
+
+**Author**: [Gianluca Mazza](https://gianlucamazza.it). I take LLM systems into production: state, recovery, eval, cost.
