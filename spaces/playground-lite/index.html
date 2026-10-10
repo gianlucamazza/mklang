@@ -4,6 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>mklang playground lite</title>
+    <script>
+      // @gradio/lite@5.45.0 from jsDelivr blob-wraps its cross-origin worker
+      // (importScripts of webworker-S4bilnnk.js). That stock worker resolves
+      // huggingface-hub>=0.33.5,<1, which current PyPI cannot install in
+      // Pyodide 0.27.3 (native hf-xet / dash-name). Redirect every Lite
+      // Worker/SharedWorker — including the blob wrapper — to the same-origin
+      // Gradio PINNED_HF_HUB worker, which rewrites the req to
+      // huggingface-hub==0.35.0 (https://github.com/gradio-app/gradio/issues/12262).
+      (function () {
+        const patched = () => new URL("webworker-patched.js", document.baseURI);
+        const redirect = (url) => {
+          const src = String(url);
+          return (
+            src.startsWith("blob:") ||
+            (src.includes("webworker-") && src.includes("@gradio/lite"))
+          );
+        };
+        const wrap = (Native) => {
+          const Wrapped = function (url, options) {
+            if (redirect(url)) {
+              url = patched();
+            }
+            return new Native(url, options);
+          };
+          Wrapped.prototype = Native.prototype;
+          return Wrapped;
+        };
+        window.Worker = wrap(window.Worker);
+        if (window.SharedWorker) {
+          window.SharedWorker = wrap(window.SharedWorker);
+        }
+      })();
+    </script>
     <script
       type="module"
       crossorigin

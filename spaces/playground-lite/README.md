@@ -10,9 +10,9 @@ short_description: Keyless offline mklang playground in the browser
 
 # mklang playground lite (keyless / offline / static)
 
-A **static** Hugging Face Space: Gradio-Lite (`@gradio/lite@5.45.0`) +
-Pyodide 0.27.3 runs the keyless playground **in the visitor's browser**.
-No Gradio server, no cpu-basic Space, no PRO plan.
+A **static** Hugging Face Space: Gradio-Lite (`@gradio/lite@5.45.0` from
+jsDelivr) + Pyodide 0.27.3 runs the keyless playground **in the visitor's
+browser**. No Gradio server, no cpu-basic Space, no PRO plan.
 
 Same UI and logic as [`spaces/playground/`](../playground/): parse, check +
 lint, format, bundled `mklang test` scenarios, and bundled conformance
@@ -67,6 +67,17 @@ test never called them.
 
 Wheel pin: `mklang-1.3.7-py3-none-any.whl`  
 SHA-256: `f795823af5b9c52c5a9744d57c84e2ae860400a2f88c952c2cfcc8617fefc702`
+
+`@gradio/lite@5.45.0` also needs `huggingface-hub` (a Gradio dep, not
+mklang). The stock jsDelivr worker resolves `huggingface-hub>=0.33.5,<1`,
+which current PyPI cannot install in Pyodide 0.27.3 (native `hf-xet` /
+micropip dash-name). lite.js blob-wraps that cross-origin worker, so this
+folder ships Gradio's published PINNED_HF_HUB worker as
+`webworker-patched.js` (rewrites the req to `huggingface-hub==0.35.0`,
+[gradio#12262](https://github.com/gradio-app/gradio/issues/12262)) and
+`index.html` redirects Worker/SharedWorker — including the blob wrapper —
+to that same-origin file. The UI still loads `@gradio/lite@5.45.0` from
+jsDelivr.
 
 ## Run it locally
 

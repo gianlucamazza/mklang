@@ -79,8 +79,12 @@ def test_index_pins_gradio_lite_and_deps_false() -> None:
     html = (SPACE / "index.html").read_text(encoding="utf-8")
     assert "cdn.jsdelivr.net/npm/@gradio/lite@5.45.0/dist/lite.js" in html
     assert "cdn.jsdelivr.net/npm/@gradio/lite@5.45.0/dist/lite.css" in html
+    assert "webworker-patched.js" in html
+    assert 'src.startsWith("blob:")' in html
     assert "deps=False" in html
     assert WHEEL.name in html
+    worker = (SPACE / "webworker-patched.js").read_text(encoding="utf-8")
+    assert "huggingface-hub==0.35.0" in worker
     assert "openai" in html  # mentioned as not installed
     assert "micropip.install" in html
 

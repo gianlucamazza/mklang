@@ -19,7 +19,8 @@ All notable changes to mklang are documented here. The format follows
   `@gradio/lite@5.45.0` / Pyodide (no Gradio server, no PRO plan). The
   committed `mklang` wheel is installed with `micropip` `deps=False`;
   parse / check / lint / format / scripted tests do not import `openai`,
-  `textual`, or `rich`.
+  `textual`, or `rich`. The Lite worker is Gradio's PINNED_HF_HUB build
+  so Gradio can resolve `huggingface-hub==0.35.0` in Pyodide.
 - **Keyless Hugging Face playground Space** (`spaces/playground/`). A
   cpu-basic Gradio app that only exposes deterministic/offline host
   surfaces: parse, `check` + lint, YAML format, bundled `mklang test`
