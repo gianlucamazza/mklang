@@ -43,6 +43,12 @@ from mklang.llm.context_view import format_judge_context
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from scripts.cost_ledger import (  # noqa: E402
+    CapExceededError,
+    add_cost_arguments,
+    maybe_guard,
+    maybe_record,
+)
 from scripts.evidence_contract import envelope, sha256_json  # noqa: E402
 from scripts.gate_divergence import (  # noqa: E402
     GOLD,
@@ -680,6 +686,7 @@ def main(argv: list[str] | None = None) -> int:
         help="call a real provider judge (needs a key). Not used by CI",
     )
     p.add_argument("--provider", default="deepseek", help="provider name for --live")
+    add_cost_arguments(p)
     args = p.parse_args(argv)
 
     if args.repeats < 1:
@@ -715,6 +722,26 @@ def main(argv: list[str] | None = None) -> int:
     rows: list[dict] = []
     for case in cases:
         for i in range(args.repeats):
+            if args.live and args.cost_ledger:
+                try:
+                    guard_prov = load_provider(args.config, args.provider)
+                    guard_model = guard_prov.tiers.get("fast", "unknown")
+                except Exception as exc:
+                    print(f"# cost cap: cannot resolve model: {exc}", file=sys.stderr)
+                    return 3
+                pending = 0.0
+                for _arm in (ARM_FIRST_TRUE, ARM_SPAGHETTI):
+                    try:
+                        pending += maybe_guard(
+                            args,
+                            provider=args.provider,
+                            model=guard_model,
+                            experiment="first-true-fidelity",
+                            pending_usd=pending,
+                        )
+                    except CapExceededError as exc:
+                        print(f"# cost cap: {exc}", file=sys.stderr)
+                        return 3
             if args.live:
                 batch = run_live_trial(
                     case,
@@ -741,6 +768,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.jsonl:
                     with args.jsonl.open("a", encoding="utf-8") as f:
                         f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                maybe_record(args, row, experiment="first-true-fidelity")
 
     summary = summarize(
         rows,

@@ -45,7 +45,8 @@ jobs:
         run: >
           uv run --with check-jsonschema
           check-jsonschema --default-filetype yaml
-          --schemafile config/runtime.schema.json config/runtime.example.yaml
+          --schemafile config/runtime.schema.json
+          config/runtime.example.yaml config/evidence-release.yaml
       - name: Semantic check + static analysis on examples, stdlib, and init sample
         run: |
           uv run mklang check examples/*.mkl machines/*.mkl src/mklang/data/stdlib/*.mkl src/mklang/data/init/*.mkl

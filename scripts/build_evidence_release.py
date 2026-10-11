@@ -12,6 +12,9 @@ from tempfile import NamedTemporaryFile
 from jsonschema import Draft7Validator, FormatChecker
 
 REQUIRED_FILES = frozenset({"environments.json", "summary.json", "REPORT.md"})
+# Cost-ledger lines are not experiment-result rows; they still enter the manifest.
+# Name must match scripts/cost_ledger.py LEDGER_NAME.
+LEDGER_FILES = frozenset({"costs.jsonl"})
 
 
 def _digest(path: Path) -> str:
@@ -32,11 +35,15 @@ def main() -> int:
     if not args.release.is_dir():
         parser.error(f"release directory does not exist: {args.release}")
     missing = sorted(REQUIRED_FILES - {p.name for p in args.release.iterdir() if p.is_file()})
-    jsonl_files = sorted(p for p in args.release.iterdir() if p.is_file() and p.suffix == ".jsonl")
+    jsonl_files = sorted(
+        p
+        for p in args.release.iterdir()
+        if p.is_file() and p.suffix == ".jsonl" and p.name not in LEDGER_FILES
+    )
     if missing:
         parser.error(f"release is missing required files: {', '.join(missing)}")
     if not jsonl_files:
-        parser.error("release must contain at least one raw .jsonl file")
+        parser.error("release must contain at least one raw experiment .jsonl file")
     manifest_path = args.release / "manifest.json"
     if manifest_path.exists() and not args.force:
         parser.error(f"manifest already exists: {manifest_path} (use --force to replace it)")

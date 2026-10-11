@@ -1,0 +1,128 @@
+{
+  "current_run_id": "555",
+  "workflow_runs": [
+    {
+      "id": 111,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "workflow_dispatch",
+      "name": "evidence-live"
+    },
+    {
+      "id": 222,
+      "status": "completed",
+      "conclusion": "failure",
+      "event": "workflow_dispatch",
+      "name": "evidence-live"
+    },
+    {
+      "id": 333,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "workflow_dispatch",
+      "name": "evidence-live"
+    },
+    {
+      "id": 444,
+      "status": "completed",
+      "conclusion": "failure",
+      "event": "workflow_dispatch",
+      "name": "evidence-live"
+    },
+    {
+      "id": 555,
+      "status": "in_progress",
+      "event": "workflow_dispatch",
+      "name": "evidence-live"
+    },
+    {
+      "id": 666,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "event": "workflow_dispatch",
+      "name": "evidence-live"
+    }
+  ],
+  "jobs_by_run_id": {
+    "111": [
+      {
+        "steps": [
+          {
+            "name": "Projected cost (no API calls)",
+            "conclusion": "success",
+            "started_at": "2026-10-01T00:00:00Z"
+          },
+          {
+            "name": "Live named experiment",
+            "conclusion": "success",
+            "started_at": "2026-10-01T00:01:00Z"
+          }
+        ]
+      }
+    ],
+    "222": [
+      {
+        "steps": [
+          {
+            "name": "Live named experiment",
+            "conclusion": "failure",
+            "started_at": "2026-10-02T00:01:00Z"
+          }
+        ]
+      }
+    ],
+    "333": [
+      {
+        "steps": [
+          {
+            "name": "Projected cost (no API calls)",
+            "conclusion": "success",
+            "started_at": "2026-10-03T00:00:00Z"
+          },
+          {
+            "name": "Live named experiment",
+            "conclusion": "skipped"
+          }
+        ]
+      }
+    ],
+    "444": [
+      {
+        "steps": [
+          {
+            "name": "Projected cost (no API calls)",
+            "conclusion": "failure",
+            "started_at": "2026-10-04T00:00:00Z"
+          },
+          {
+            "name": "Require prior live runs in the checked-out ledger",
+            "conclusion": "success",
+            "started_at": "2026-10-04T00:00:30Z"
+          }
+        ]
+      }
+    ],
+    "555": [
+      {
+        "steps": [
+          {
+            "name": "Require prior live runs in the checked-out ledger",
+            "status": "in_progress"
+          }
+        ]
+      }
+    ],
+    "666": [
+      {
+        "steps": [
+          {
+            "name": "Live named experiment",
+            "conclusion": "cancelled",
+            "started_at": "2026-10-06T00:01:00Z"
+          }
+        ]
+      }
+    ]
+  },
+  "required_prior_ids": ["111", "222", "666"]
+}

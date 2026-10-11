@@ -70,6 +70,35 @@ def test_builder_writes_manifest_for_valid_release(tmp_path, monkeypatch):
     }
 
 
+def test_builder_checksums_costs_jsonl_without_schema_checking_it(tmp_path, monkeypatch):
+    main = _builder_main()
+    _release(tmp_path)
+    (tmp_path / "costs.jsonl").write_text(
+        json.dumps({"provider": "deepseek", "usd": 0.01, "not": "an-experiment-row"}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sys.argv", ["build_evidence_release.py", str(tmp_path)])
+    assert main() == 0
+    manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["rows"] == 1
+    assert "costs.jsonl" in manifest["files"]
+
+
+def test_dated_release_directory_is_2026_10_not_2026_09():
+    new = REPO_ROOT / "evidence" / "2026-10-evidence-release"
+    old = REPO_ROOT / "evidence" / "2026-09-evidence-release"
+    if not (REPO_ROOT / "evidence" / "README.md").is_file():
+        pytest.skip("evidence/ not present (sdist build)")
+    assert new.is_dir()
+    assert not old.exists()
+    readme = (REPO_ROOT / "evidence" / "README.md").read_text(encoding="utf-8")
+    assert "evidence/2026-10-evidence-release" in readme
+    assert "2026-09-evidence-release" not in readme
+    report = (new / "REPORT.md").read_text(encoding="utf-8")
+    for heading in ("## Costs", "## Limits", "## Negative results"):
+        assert heading in report
+
+
 def test_builder_rejects_invalid_json_and_does_not_write_manifest(tmp_path, monkeypatch):
     main = _builder_main()
     _release(tmp_path)

@@ -89,7 +89,7 @@ def test_readme_front_matter_is_a_gradio_space() -> None:
     )
     assert len(desc) <= 60
     assert "keyless" in text.lower()
-    assert "path b" in text.lower()
+    assert "hosted judge" in text.lower()
     assert "https://github.com/gianlucamazza/mklang" in text
 
 

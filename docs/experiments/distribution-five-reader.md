@@ -3,6 +3,10 @@
 **Status:** protocol frozen; **execution pending** (external readers — cannot
 be run from inside the repository).
 
+**Operator kit (not sent to readers):** [`five-reader-kit/`](./five-reader-kit/).
+Copy-paste invites and forms for the owner run. The kit does not change this
+protocol.
+
 ## Why this exists
 
 Engineering maturity (28 ADRs, ~92% coverage, multi-platform CI, package 1.0.1)
@@ -46,3 +50,4 @@ could not settle in-repo, and the one most likely to be rationalised away.
 - Validation report 2026-07-23 finding D1
 - Issue #61
 - ADR 0028 (1.0 provisional posture — depends on this + #59)
+- Operator kit: [`five-reader-kit/`](./five-reader-kit/)

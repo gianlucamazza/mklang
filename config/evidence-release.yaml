@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=./runtime.schema.json
+#
+# Evidence Release live config (2026-10). Host-side only — not a language face.
+# Pins the models the named experiments will actually call so the cost ledger
+# has a price for every row. Secrets stay in env (Actions: DEEPSEEK_API_KEY,
+# OPENAI_API_KEY, OPENROUTER_API_KEY). There is no ANTHROPIC_API_KEY; Claude
+# is reached as OpenRouter model id `anthropic/claude-sonnet-5`.
+
+active: deepseek
+
+providers:
+  deepseek:
+    protocol: openai_compat
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    tiers:
+      fast: deepseek-v4-flash
+      balanced: deepseek-v4-flash
+      reasoning: deepseek-v4-flash
+    params:
+      fast:
+        thinking: {type: disabled}
+      balanced:
+        thinking: {type: disabled}
+      reasoning:
+        thinking: {type: enabled}
+        reasoning_effort: high
+
+  openai:
+    protocol: openai_compat
+    api_key_env: OPENAI_API_KEY
+    # All tiers on luna: the $10 release cap cannot afford terra ($2/$12 per 1M)
+    # as a cost_budget ceiling on repair-convergence. Rows still record the
+    # model id. List price pinned in scripts/cost_ledger.py.
+    tiers:
+      fast: gpt-5.6-luna
+      balanced: gpt-5.6-luna
+      reasoning: gpt-5.6-luna
+
+  openrouter:
+    protocol: openai_compat
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    # Default openrouter.fast in runtime.example.yaml is Gemini. #60 needs a
+    # Claude judge, so every tier here is the Anthropic id already listed as
+    # openrouter.balanced in that example file.
+    tiers:
+      fast: anthropic/claude-sonnet-5
+      balanced: anthropic/claude-sonnet-5
+      reasoning: anthropic/claude-sonnet-5

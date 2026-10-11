@@ -46,6 +46,12 @@ from mklang.model import Machine, parse_machine
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from mklang.registry import base_registry  # noqa: E402
+from scripts.cost_ledger import (  # noqa: E402
+    CapExceededError,
+    add_cost_arguments,
+    maybe_guard,
+    maybe_record,
+)
 from scripts.evidence_contract import envelope  # noqa: E402
 
 
@@ -554,6 +560,7 @@ def main(argv: list[str] | None = None) -> int:
         help="offline run with a scripted fail-then-pass judge (no keys, no network) — "
         "checks the harness, not the language claim",
     )
+    add_cost_arguments(p)
     args = p.parse_args(argv)
     if args.repeats < 1:
         p.error("--repeats must be at least 1")
@@ -577,6 +584,25 @@ def main(argv: list[str] | None = None) -> int:
     for item in corpus:
         for i in range(args.repeats):
             for arm in arms:
+                if args.cost_ledger:
+                    try:
+                        guard_prov = load_provider(args.config, args.provider)
+                        guard_model = guard_prov.tiers.get(
+                            "balanced", guard_prov.tiers.get("fast", "unknown")
+                        )
+                    except Exception as exc:
+                        print(f"# cost cap: cannot resolve model: {exc}", file=sys.stderr)
+                        return 3
+                    try:
+                        maybe_guard(
+                            args,
+                            provider=args.provider,
+                            model=guard_model,
+                            experiment="repair-convergence",
+                        )
+                    except CapExceededError as exc:
+                        print(f"# cost cap: {exc}", file=sys.stderr)
+                        return 3
                 try:
                     row = _run_once(
                         item,
@@ -629,6 +655,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.jsonl:
                     with args.jsonl.open("a", encoding="utf-8") as f:
                         f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                maybe_record(args, row, experiment="repair-convergence")
 
     summary = summarize(rows)
     if args.self_check:
