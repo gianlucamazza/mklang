@@ -12,4 +12,4 @@ sh', 'reasoning': 'deepseek-v4-flash'}
 DONE react · provider deepseek
 ╭────────────────────────────────────────── Result ──────────────────────────────────────────╮
 │ 153                                                                                        │
-tokens 4333+551 · steps 12
+tokens 2676+268 · steps 8

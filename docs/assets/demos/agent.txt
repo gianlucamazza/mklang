@@ -1,46 +1,47 @@
 > PYTHONPATH=src python -m mklang.cli console --provider deepseek --workspace /tmp/mklang-agent-machines
  ⭘                                               mklang console
-  ● READY  ·  deepseek  ·  tokens 0+0  ·  session 20260804-124136-08f1
+  ● READY  ·  deepseek  ·  tokens 0+0  ·  session 20261010-105633-e1f6
 │  Ready. Ask the agent what should happen, or type /help.                                                     │
+│ No active provider request                                                                                   │
 ║ Ask the agent or type / for commands                                                                         ║
  f2 Inspector  ^t Activity  ^g Stop  ^l Clear                                                         ▏^p palette
 ║ /budget 100000                                                                                               ║
 │  default cost budget → 100000 tokens                                                                         │
 ║ RUN news_search now. Topic: this week's open-source AI models. Short brief with links.                       ║
-  ⏸ WAITING  do_run  ·  deepseek  ·  tokens 2970+593  ·  session 20260804-124136-08f1
-│  default cost budget → 100000 tokens                                                                     ▂▂  │
+  ⏸ WAITING  do_run  ·  deepseek  ·  steps 0/48  ·  tokens 17640+2133/100000  ·  session 20261010-105633-e1f6
 │  you: RUN news_search now. Topic: this week's open-source AI models. Short brief with links.                 │
-│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once      │
-│  for the session?  → type y / yes / sì / always yes  (Enter = no)                                            │
+│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once  ▆▆  │
 │ ▼ RUN news_search now. Topic: this week's open-source AI model                                               │
 │ └── ▼ console_agent                                                                                          │
-│     ├── ● decide ok → prepare_run                                                                            │
-│     ├── ● prepare_run ok → do_run                                                                            │
-│     └── ◐ do_run  tool·balanced                                                                              │
+│     ├── ● decide ok → workspace_read                                                                         │
+│     ├── ● workspace_read ok → decide                                                                      ▃▃ │
+│     ├── ● decide ok → task_update                                                                            │
+│     ├── ● task_update ok → decide                                                                            │
+│ DONE judge · deepseek-v4-flash ·  · 1.0s                                                                     │
 ║ answer here, then Enter…                                                                                     ║
+│  default cost budget → 100000 tokens                                                                     ▂▂  │
+│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once      │
+│  for the session?  → type y / yes / sì / always yes  (Enter = no)                                            │
 ║ always yes                                                                                                   ║
 │  default cost budget → 100000 tokens                                                                     ▃▃  │
 │  for the session?  → type y / yes / sì / always yes  (Enter = no)                                        ▅▅  │
 │ Ask the agent or type / for commands                                                                         │
-  ● READY  ·  deepseek  ·  tokens 17174+6581  ·  session 20260804-124136-08f1
-│  you: RUN news_search now. Topic: this week's open-source AI models. Short brief with links.             ▇▇  │
-│  ⏸ Consent: machine 'news_search' will call host tool(s) [search]. Allow these scoped capabilities once  ▇▇  │
-│  you: always yes                                                                                             │
+  ● READY  ·  deepseek  ·  steps 10/48  ·  tokens 32739+6705/100000  ·  session 20261010-105633-e1f6
+│  item's snippet was itself truncated in the observation. So the brief is complete up to the Fortune item     │
+│  but may omit further items the search had gathered. The run used 4 of 10 budget steps with no step-level    │
+│  truncation. Two earlier ledger-update attempts were rejected (progress must be an integer 0–100; invalid    │
+│  phase 'setup'), so no ledger state is recorded; the search run itself was unaffected.                       │
 │ └── ▼ ✓ console_agent  done                                                                                  │
-│     ├── ▶ ● do_run ok → decide                                                                               │
+│     ├── ● workspace_read ok → decide                                                                         │
+║ Now boil that down to a single headline takeaway.                                                            ║
+  ● READY  ·  deepseek  ·  steps 2/48  ·  tokens 37773+7512/100000  ·  session 20261010-105633-e1f6
+│  phase 'setup'), so no ledger state is recorded; the search run itself was unaffected.                   ▇▇  │
+│  you: Now boil that down to a single headline takeaway.                                                  ▇▇  │
+│ ▼ Now boil that down to a single headline takeaway.                                                          │
 │     ├── ● decide ok → reply                                                                                  │
 │     └── ● reply ok → END                                                                                     │
-│  Honesty note: the machine's output was itself truncated (result_truncated: true; cutoff at 2,167            │
-│  characters, right after "…the snippet refer…"). The missing tail was the start of an uncertainty flag       │
-│  about the Microsoft item's date (Jul 28 in the notes vs the snippet). I have not invented that omitted      │
-│  text. If you want the full untruncated tail, I can re-run news_search with a tighter output budget.         │
-║ Now boil that down to a single headline takeaway.                                                            ║
-  ● READY  ·  deepseek  ·  tokens 21506+7279  ·  session 20260804-124136-08f1
-│  text. If you want the full untruncated tail, I can re-run news_search with a tighter output budget.     ▄▄  │
-│  you: Now boil that down to a single headline takeaway.                                                  ▄▄  │
-│ ▼ Now boil that down to a single headline takeaway.                                                          │
-│  This week's takeaway: open-source AI is a two-front story — China's open-weight models (GLM-5.2, Kimi       │
-│  K2.6) are now rivaling closed U.S. frontier systems on capability and price, while U.S. institutions        │
-│  (Stanford, Microsoft) are pushing back with calls for genuinely open source standards rather than just      │
-│  open weights. (Based on news_search's truncated notes; the cut-off tail was not verified.)                  │
+│  search (predominantly the Semafor/Fortune Reflection Beam coverage and the Nvidia open-model items,         │
+│  dated 05–08 Oct 2026 against the host clock 2026-10-10). Nothing new was searched or added from training    │
+│  knowledge for this summary. The prior machine result was truncated (result_truncated: true), so if the      │
+│  cut-off portion contained further items, the headline may not reflect them.                                 │
 ║ /quit                                                                                                        ║
