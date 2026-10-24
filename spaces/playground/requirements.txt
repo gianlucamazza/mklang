@@ -6,3 +6,6 @@
 # public git repo (not an unrelated PyPI name). From a local clone of
 # the same tree you can instead: `pip install -e ../..`
 mklang @ git+https://github.com/gianlucamazza/mklang.git@main
+
+# Transitive floor: Gradio pulls brotli unpinned (do not pin Gradio itself).
+brotli>=1.2.1  # GHSA-9v8h-qqgm-4m35 (gradio pulls brotli unpinned)
