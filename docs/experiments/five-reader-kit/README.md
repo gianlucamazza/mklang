@@ -73,7 +73,8 @@ those two materials and you did not explain before the first question.
 After pasting the rows, run `uv run python scripts/five_reader_register.py --check`.
 It recomputes the headline and branch from the register using only the protocol's
 three outcomes and fails if the headline line disagrees. It does not fill the register.
-If a verbatim question contains a `|`, write it as `\|` so the table keeps five columns.
+If a verbatim question contains a `|`, write it as `\|` so the table keeps five columns;
+only `\|` escapes a pipe, and a literal backslash immediately before a pipe cannot be written.
 The scorer names the protocol's three outcomes with these short labels:
 
 | Label after `branch:` | Protocol outcome |
@@ -85,7 +86,7 @@ The scorer names the protocol's three outcomes with these short labels:
 If ≥3 understand, nobody is recorded as trying, and some install cells were left
 unchecked, the scorer leaves `branch: —`: "nobody tries it" cannot be asserted.
 
-Fill the protocol headline, using only its words:
+Fill the protocol headline, using the labels above (or paste the line `--check` prints):
 
 `n/5 understood · n/5 tried · branch: —`
 

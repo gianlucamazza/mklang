@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 
@@ -60,6 +61,7 @@ def test_real_doc_pending(capsys):
         (["no"] * 5, ["no"] * 5, "positioning problem", (0, 0)),
         (["yes"] * 5, ["NO"] * 5, "best use absent from the pitch", (5, 0)),
         (["YES"] * 5, ["yes"] + ["no"] * 4, "distribution working", (5, 1)),
+        (["yes"] * 3 + ["no"] * 2, ["yes"] + ["no"] * 4, "distribution working", (3, 1)),
         (["yes"] * 5, [""] + ["no"] * 4, None, (5, 0)),
         (["no"] * 3 + ["yes"] * 2, ["yes"] * 5, "positioning problem", (2, 5)),
     ],
@@ -143,6 +145,24 @@ def test_cli_check(tmp_path):
         )
         assert result.returncode == expected_code, result.stderr
         assert bool(json.loads(result.stdout)["errors"]) == bool(expected_code)
+
+
+def test_cli_utf8_output(tmp_path):
+    path = tmp_path / "synthetic.md"
+    expected = "5/5 understood · 1/5 tried · branch: distribution working"
+    text = _synthetic(["yes"] * 5, ["yes"] + ["no"] * 4, expected)
+    text = text.replace("synthetic question 3", "does it work ≥ 3.12? 🚀")
+    path.write_text(text, encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--check", "--path", str(path)],
+        env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    question = json.loads(result.stdout.decode("utf-8"))["rows"][2]["question"]
+    assert "🚀" in question
+    assert "≥" in question
 
 
 def test_cli_exit_codes(tmp_path, capsys):

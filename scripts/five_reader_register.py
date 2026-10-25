@@ -3,11 +3,19 @@
 Usage: uv run python scripts/five_reader_register.py --check [--path protocol.md]
 Prints a JSON report; --check fails when rows or the recorded headline disagree.
 Uses only the standard library and makes no network or model calls.
+
+Exit codes:
+  0 = register read (and, with --check, no errors)
+  1 = --check found errors (rows or headline disagree)
+  2 = register can't be read/parsed (missing file, missing section/table,
+      malformed rows); argparse also exits 2 for bad or unknown flags
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import re
 import sys
@@ -120,7 +128,8 @@ def parse_register(text: str) -> Report:
         table_line = line.strip()
         if not table_line.endswith("|"):
             raise ValueError("results register table rows must end with |")
-        # A verbatim question may contain a literal pipe written as "\\|".
+        # Only \| escapes a pipe in a cell; a literal backslash immediately
+        # before a pipe cannot be written.
         cells = [
             cell.strip().replace("\\|", "|") for cell in re.split(r"(?<!\\)\|", table_line[1:-1])
         ]
@@ -139,10 +148,29 @@ def parse_register(text: str) -> Report:
     return score(rows, actual)
 
 
+def _ensure_utf8_streams() -> None:
+    """Write UTF-8 even when stdout/stderr default to a legacy code page (e.g. cp1252)."""
+    for stream in (sys.stdout, sys.stderr):
+        # Replaced streams (StringIO, test capture) are not TextIOWrapper; leave them alone.
+        if not isinstance(stream, io.TextIOWrapper):
+            continue
+        if (stream.encoding or "").lower().replace("-", "") != "utf8":
+            with contextlib.suppress(ValueError, io.UnsupportedOperation):
+                stream.reconfigure(encoding="utf-8")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--path", type=Path, default=DEFAULT_PATH)
-    parser.add_argument("--check", action="store_true")
+    _ensure_utf8_streams()
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--path",
+        type=Path,
+        default=DEFAULT_PATH,
+        help="protocol markdown to score (default: docs/experiments/distribution-five-reader.md)",
+    )
+    parser.add_argument("--check", action="store_true", help="exit 1 if rows or headline disagree")
     args = parser.parse_args(argv)
     try:
         report = parse_register(args.path.read_text(encoding="utf-8"))
