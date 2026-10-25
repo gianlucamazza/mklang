@@ -5,4 +5,8 @@
 # mklang is this repository's package. The Space installs it from the
 # public git repo (not an unrelated PyPI name). From a local clone of
 # the same tree you can instead: `pip install -e ../..`
-mklang @ git+https://github.com/gianlucamazza/mklang.git@main
+# Pin is a tested main commit; bump it deliberately when the Space is rebuilt.
+mklang @ git+https://github.com/gianlucamazza/mklang.git@e7f8d4a2fed447f9fadb1cc7f6d0b0c0bf8a5c3a
+
+# Transitive floor: Gradio pulls brotli unpinned (do not pin Gradio itself).
+brotli>=1.2.1  # GHSA-9v8h-qqgm-4m35 (gradio pulls brotli unpinned)

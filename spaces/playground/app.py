@@ -344,7 +344,10 @@ def build_demo():
                 return gr.update(choices=names, value=names[0] if names else None)
 
             run_example_dd.change(
-                fn=_sync_scenarios, inputs=run_example_dd, outputs=run_scenario_dd
+                fn=_sync_scenarios,
+                inputs=run_example_dd,
+                outputs=run_scenario_dd,
+                api_visibility="private",
             )
             run_btn.click(fn=run_example, inputs=[run_example_dd, run_scenario_dd], outputs=run_out)
 
