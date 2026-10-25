@@ -350,12 +350,15 @@ record the reason in the next results row.
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sentiment_borderline` | Contestable free-text; routing has been 1.0 but free-text diverges — useful measurement, redundant with anchor for release                                             |
 | `grounding_repair`     | Anchored repair loop; stable 1.0 — candidate for promotion if release cost allows and we want repair coverage                                                          |
-| `threshold_edge`       | Boundary corpus, **no live evidence yet** — promotion needs ≥2 dated rows per the rules above                                                                          |
-| `priority_shadow`      | Boundary corpus, no live evidence yet. If it turns out judges routinely pick the narrower second gate, that is a finding about the priority rule, not a floor to lower |
-| `none_holds`           | Boundary corpus, no live evidence yet. Measures the _none of the above_ verdict (SPEC §5); before that existed the machine could not route correctly at all            |
+| `threshold_edge`       | Boundary corpus. Promotion needs ≥2 dated rows per the rules above. Path B live spike is on the [Lab receipt](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763); this machine is not a separately named receipt row. |
+| `priority_shadow`      | Boundary corpus. Path B live spike recorded `priority_shadow` **1.0** (need 1.0) on the [Lab receipt](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763). If judges routinely pick the narrower second gate, that is a finding about the priority rule, not a floor to lower. |
+| `none_holds`           | Boundary corpus. Measures the _none of the above_ verdict (SPEC §5); before that existed the machine could not route correctly at all. Path B live spike is on the [Lab receipt](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763); this machine is not a separately named receipt row. |
+
+The judge path is no longer unmeasured. The 2026-10-05 [Lab receipt on issue #123](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763) recorded a live Path B run: B2/B3 quantitative **PASS**; `priority_shadow` **1.0** (need 1.0); injection (fenced) **1.0** (n=6) (need ≥0.95); overall acc 1.0 (n=6 machines); fence_applied true; latency median ~192 ms; model `jev-1.13.0`; mapping `noul_first_ge` @ 0.5; `path_b.verdict` HOLD (spike only — not production cutover); `production_ready` false; `choice_mapping` STOP.
 
 Boundary machines must not enter the release gate on a floor invented before the
-first live row: an unmeasured floor is a guess with CI authority.
+first live row: an unmeasured floor is a guess with CI authority. Path B HOLD is
+a spike, not a production cutover and not a `release.yml` promotion.
 
 ## Anthropic secret + credit runbook
 
