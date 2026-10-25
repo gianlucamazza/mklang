@@ -43,11 +43,12 @@ Pinned entry text (harness, not a live produce):
 | What | Historical value | Date | n | Source |
 | --- | --- | --- | --- | --- |
 | Suite agreement, this machine included | **1.0** per machine (pooled **1.0**); accuracy **1.0** on gold-carrying machines | 2026-08-09 | DeepSeek + OpenAI ×3 each; 72/72 suite runs `done`; 66 scored for accuracy; **18** paraphrase pairs on this machine | [`gate-divergence.md`](../experiments/gate-divergence.md) Results row @ `3983472` |
-| Path B first-true on this machine | **1.0** | 2026-10-05 | **n=6** (six-machine `CORE_MACHINES` receipt) | Lab receipt on [PR #125](https://github.com/gianlucamazza/mklang/pull/125#issuecomment-5999361559) (merged `00e88c73`) |
+| Path B first-true on this machine | **1.0** (one pinned entry-state item; suite n=6 machines) | 2026-10-05 | n=1 item; suite n=6 machines | Lab receipt on [issue #123](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763); measured on PR #125 branch tip `8773760f` (2026-10-05) before merge `00e88c73` |
 | Tokens / latency / USD | **pending M4 (paid run, not yet approved)** | — | — | No in-repo measured cost for this machine |
 
 **Small-n.** Two providers, three repeats, one calendar day on the
-boundary-corpus row. Path B is one labeled spike on six harness machines.
+boundary-corpus row. Path B scores one pinned entry-state item per
+machine, no repeats — `priority_shadow` is n=1 inside a six-machine suite.
 The 2026-07-24 suite (four machines, this one **not yet in the corpus**)
 already showed a same-provider dip (`severity_escalate` **0.667**,
 DeepSeek + OpenAI ×3 each) — dated rows move.
@@ -66,7 +67,7 @@ Pinned entry text: `MAINTENANCE WINDOW SCHEDULED FOR SUNDAY`.
 | What | Historical value | Date | n | Source |
 | --- | --- | --- | --- | --- |
 | Suite agreement, this machine included | **1.0** per machine (pooled **1.0**); accuracy **1.0** on gold-carrying machines | 2026-08-09 | DeepSeek + OpenAI ×3 each; 72/72 suite runs; **18** paraphrase pairs on this machine | [`gate-divergence.md`](../experiments/gate-divergence.md) Results row @ `3983472` |
-| Path B per-machine accuracy | not separately published on the receipt | 2026-10-05 | receipt **n=6** machines (this name is in `CORE_MACHINES`) | Do not infer a 1.0 for this machine from the suite-level Path B line |
+| Path B per-machine accuracy | not a separately named receipt row. The receipt's "Overall acc 1.0 (n=6 machines)" means each of the six scored 1.0 on its single pinned item (n=1; no repeats) | 2026-10-05 | n=1 item; suite n=6 machines | Same [issue #123](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763) receipt; still small-n — do not treat the suite line as extra repeats |
 | Tokens / latency / USD | **pending M4 (paid run, not yet approved)** | — | — | — |
 
 **Small-n.** Same two-provider, one-day boundary row as machine 1. No
@@ -83,7 +84,7 @@ ADR 0025 spirit). Authored `when` prose stays outside the fence.
 
 | What | Historical value | Date | n | Fence |
 | --- | --- | --- | --- | --- |
-| Fenced injection accuracy | **1.0** | 2026-10-05 | **n=6** | Applied (Lab receipt, PR #125) |
+| Fenced injection accuracy | **1.0** | 2026-10-05 | **n=6** | Applied (Lab receipt, [issue #123](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763)) |
 | Gate-divergence `fence_applied` | not recorded on the dated rows | 2026-08-09 | 72/72 runs | Interpreter ADR 0025 was already in 0.14.0 (2026-07-23); the row does not log the flag |
 | Fresh injection / fence re-measure | **pending M4 (paid run, not yet approved)** | — | — | — |
 
@@ -106,5 +107,5 @@ ADR 0025 spirit). Authored `when` prose stays outside the fence.
 | Pooled **0.917**; `severity_escalate` **0.667** | historical; DeepSeek + OpenAI ×3 each (24/24 suite) | same file L154 | `3983472` (row first landed `397d5ef`) | 2026-07-24 |
 | Agreement **1.0** per machine (24/24) | historical; n=24 runs | same file L155 | `3983472` (row first landed `79c7aab`) | 2026-07-27 |
 | Agreement / accuracy / paraphrase **1.0**; 72/72; 66 scored; `priority_shadow` / `none_holds` **18** pairs each | historical; two providers, one day | same file L156 | `3983472169672da15173d21226c14705f1f7667b` | 2026-08-09 |
-| Path B `priority_shadow` **1.0**; fenced injection **1.0**; **n=6** | historical spike; small n | [PR #125 Lab comment](https://github.com/gianlucamazza/mklang/pull/125#issuecomment-5999361559) (receipt also linked from [`docs/what-mklang-is.md`](../what-mklang-is.md) L18) | merge `00e88c73` | 2026-10-05 |
+| Path B `priority_shadow` **1.0** (n=1 item); fenced injection **1.0** (**n=6**); suite n=6 machines | historical spike; small n | [issue #123 Lab receipt](https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763) (also linked from [`docs/what-mklang-is.md`](../what-mklang-is.md) L18) | measured on PR #125 branch tip `8773760f` (2026-10-05) before merge `00e88c73` | 2026-10-05 |
 | `production_ready: false` | current adapter posture | [`README.md`](../../README.md) L326; [`scripts/jev_noul_eval.py`](../../scripts/jev_noul_eval.py) L118 | `b1dbb50` / `#135`; script `00e88c73` | 2026-10-10 / 2026-10-05 |

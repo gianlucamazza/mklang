@@ -16,12 +16,11 @@ All notable changes to mklang are documented here. The format follows
 
 - **Workshop case-study pack**
   ([#121](https://github.com/gianlucamazza/mklang/issues/121)) —
-  `docs/workshop/case-study-pack.md`. Two harness machines
-  (`priority_shadow`, `none_holds`) with **historical** figures only
-  (dated gate-divergence rows, Path B receipt on PR #125, README
-  `production_ready: false`). Unpublished; Docs honesty pass before any
-  public cite. No invented costs. C3 Anthropic pass (#60) recorded as
-  not run.
+  two harness machines (`priority_shadow`, `none_holds`) with
+  **historical** figures only (dated gate-divergence rows, Path B
+  receipt, README `production_ready: false`). Unpublished until a
+  Docs honesty pass. No invented costs. C3 Anthropic pass (#60)
+  recorded as not run.
 
 ## [1.4.0] — 2026-10-10
 

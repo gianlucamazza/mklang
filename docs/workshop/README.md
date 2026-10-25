@@ -11,7 +11,7 @@ before any public citation.
 Rules for this folder:
 
 - Quote only numbers already in the repo or on a labeled Lab receipt, each
-  with file/commit (or PR comment) and a date + **n**.
+  with file/commit (or issue comment) and a date + **n**.
 - Label every figure **historical**. Keep the small-n caveat next to it.
 - Where a fresh number would need the paid M4 run, write exactly
   `pending M4 (paid run, not yet approved)`.

@@ -24,6 +24,9 @@ _VENUE_LEAKS = (
     "impact factor",
 )
 
+_PATH_B_RECEIPT = "https://github.com/gianlucamazza/mklang/issues/123#issuecomment-5999319763"
+_MERGE_READY_COMMENT = "issuecomment-5999361559"
+
 
 @needs_pack
 def test_pack_is_historical_and_unpublished() -> None:
@@ -31,6 +34,8 @@ def test_pack_is_historical_and_unpublished() -> None:
     index = INDEX.read_text(encoding="utf-8")
     nav = (REPO_ROOT / "mkdocs.yml").read_text(encoding="utf-8")
     assemble = (REPO_ROOT / "scripts" / "build-docs.sh").read_text(encoding="utf-8")
+    roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+    changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "historical" in text.lower()
     assert "pending M4 (paid run, not yet approved)" in text
@@ -41,8 +46,6 @@ def test_pack_is_historical_and_unpublished() -> None:
     assert "small-n" in text.lower() or "small **n**" in text.lower()
     assert "priority_shadow" in text
     assert "none_holds" in text
-    assert "1.0" in text
-    assert "n=6" in text
 
     lower = text.lower()
     for leak in _VENUE_LEAKS:
@@ -55,16 +58,35 @@ def test_pack_is_historical_and_unpublished() -> None:
     )
     assert "docs/workshop/" in assemble
     assert "stay off the site" in assemble
+    # Unpublished: no site-facing pointer until Docs' honesty pass.
+    assert "docs/workshop/" not in roadmap
+    unreleased = changelog.split("## [1.4.0]", 1)[0]
+    assert "docs/workshop/" not in unreleased
+    assert "case-study-pack.md" not in unreleased
 
 
 @needs_pack
-def test_pack_cites_sources_and_avoids_secrets() -> None:
+def test_pack_cites_path_b_receipt_and_avoids_secrets() -> None:
     text = PACK.read_text(encoding="utf-8")
+    path_b_lines = [
+        line
+        for line in text.splitlines()
+        if "Path B first-true" in line or "Path B `priority_shadow`" in line
+    ]
+    assert path_b_lines, "missing Path B first-true / source-register lines"
+    joined = "\n".join(path_b_lines)
+    assert "#issuecomment-5999319763" in joined
+    assert _PATH_B_RECEIPT in text
+    assert "n=6 machines" in joined
+    assert "one pinned entry-state item" in joined
+    assert "8773760f" in joined
+    assert "00e88c73" in joined
+    assert _MERGE_READY_COMMENT not in text
+
     assert "docs/experiments/gate-divergence.md" in text
     assert "3983472" in text
-    assert "00e88c73" in text
     assert "README.md" in text
-    assert "pull/125" in text
+    assert "what-mklang-is.md" in text
 
     lowered = text.lower()
     assert "sk-ant-" not in lowered
