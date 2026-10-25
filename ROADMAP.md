@@ -32,7 +32,10 @@ and **[M3 — Public keyless playground](https://github.com/gianlucamazza/mklang
   Prep is [`evidence/2026-10-evidence-release/`](./evidence/2026-10-evidence-release/)
   (renamed from the 2026-09 placeholder); live spend is logged in that
   directory's `costs.jsonl` under the owner $10 cap (D1).
-- **[next] M5 — Case study & site**
+- **[next] M5 — Case study & site** — historical pack in
+  [`docs/workshop/`](./docs/workshop/)
+  ([#121](https://github.com/gianlucamazza/mklang/issues/121)).
+  Unpublished until a Docs honesty pass. No venue or submission text.
 
 Evidence Release definition of done (M4):
 

@@ -66,8 +66,9 @@ nav:
       - Roadmap: ROADMAP.md
       - Changelog: CHANGELOG.md
   # Contributor-facing pages live together, apart from the user guides.
-  # docs/experiments/ (internal research notes) is not published at all —
-  # build-docs.sh rewrites links to it into GitHub URLs.
+  # docs/experiments/ and docs/workshop/ (internal research / case-study
+  # notes) are not published at all — build-docs.sh rewrites links to
+  # them into GitHub URLs.
   - Development:
       - Contributing: CONTRIBUTING.md
       - Interpreter architecture: architecture.md
