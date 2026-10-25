@@ -421,8 +421,11 @@ does not block a DeepSeek+OpenAI release, but it also does **not** close #60.
 - ADR 0009 (conformance suite pins interpreter rules, not judge accuracy)
 - [First-true fidelity vs prompt-spaghetti](./first-true-fidelity.md) — same
   pinned corpus, host first-true walk against an unordered best-match baseline
+- [Workshop case-study pack](../workshop/case-study-pack.md) — historical
+  cite of these rows plus the Path B receipt; unpublished
 - Issues [#60](https://github.com/gianlucamazza/mklang/issues/60),
   [#64](https://github.com/gianlucamazza/mklang/issues/64),
   [#69](https://github.com/gianlucamazza/mklang/issues/69),
   [#72](https://github.com/gianlucamazza/mklang/issues/72),
-  [#120](https://github.com/gianlucamazza/mklang/issues/120)
+  [#120](https://github.com/gianlucamazza/mklang/issues/120),
+  [#121](https://github.com/gianlucamazza/mklang/issues/121)

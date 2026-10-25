@@ -25,8 +25,8 @@ cp docs/reference/*.md site-src/
 cp docs/demos.md docs/what-mklang-is.md site-src/
 cp conformance/README.md site-src/conformance.md
 cp docs/adr/*.md site-src/adr/
-# docs/experiments/ is internal research material and stays off the site;
-# links to it are rewritten to GitHub below.
+# docs/experiments/ and docs/workshop/ are internal research / case-study
+# material and stay off the site; links to them are rewritten to GitHub below.
 cp -r schema site-src/schema
 cp -r docs/assets site-src/assets
 # README cover lives at repo-root-relative docs/cover.jpg so GitHub
@@ -66,6 +66,9 @@ find site-src -maxdepth 1 -name '*.md' -print0 | xargs -0 sed -i \
 	-e "s|(\./docs/experiments/|($GH/blob/main/docs/experiments/|g" \
 	-e "s|(\.\./\.\./docs/experiments/|($GH/blob/main/docs/experiments/|g" \
 	-e "s|(\.\./experiments/|($GH/blob/main/docs/experiments/|g" \
+	-e "s|(\./docs/workshop/|($GH/blob/main/docs/workshop/|g" \
+	-e "s|(\.\./\.\./docs/workshop/|($GH/blob/main/docs/workshop/|g" \
+	-e "s|(\.\./workshop/|($GH/blob/main/docs/workshop/|g" \
 	-e "s|(\./docs/assets/|(assets/|g" \
 	-e "s|(\.\./assets/|(assets/|g" \
 	-e "s|(\./docs/cover\.jpg)|(assets/cover.jpg)|g" \

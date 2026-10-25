@@ -85,9 +85,10 @@ A change to the **language** must land as a coherent set — in this order:
    **and `mypy`** clean (zero suppressions) and coverage above the
    `fail_under = 90` gate.
 7. **Docs** — `README.md`, `docs/guides/patterns.md`, `CHANGELOG.md`, and `ROADMAP.md`.
-   A new page under `docs/` must also be listed in the `mkdocs.yml` nav — the
-   published site is built from `docs/` by `scripts/build-docs.sh` (see
-   `mkdocs.yml` for the layout mapping).
+   A new *published* page under `docs/` must also be listed in the `mkdocs.yml`
+   nav. `docs/experiments/` and `docs/workshop/` stay off the site (internal
+   notes; `build-docs.sh` rewrites links to GitHub). The published site is
+   assembled by `scripts/build-docs.sh` (see `mkdocs.yml` for the layout mapping).
 
 Keep `ruff format` clean too — the format check is CI-gated (`ruff format --check`),
 not only `ruff check`.
