@@ -12,6 +12,12 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Deterministic five-reader register scorer (`scripts/five_reader_register.py`)
+  for [#61](https://github.com/gianlucamazza/mklang/issues/61), validating the
+  headline and branch. It does not run the test; the register stays empty.
+
 ## [1.4.0] — 2026-10-10
 
 Minor: an experimental, opt-in hosted-judge adapter ([#125](https://github.com/gianlucamazza/mklang/issues/125)).

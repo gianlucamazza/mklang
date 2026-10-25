@@ -47,6 +47,7 @@ could not settle in-repo, and the one most likely to be rationalised away.
 
 ## Related
 
+- Scorer: `scripts/five_reader_register.py` (recomputes the headline from this register; does not fill it)
 - Validation report 2026-07-23 finding D1
 - Issue #61
 - ADR 0028 (1.0 provisional posture — depends on this + #59)
