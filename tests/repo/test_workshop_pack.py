@@ -63,6 +63,7 @@ def test_pack_is_historical_and_unpublished() -> None:
     unreleased = changelog.split("## [1.4.0]", 1)[0]
     assert "docs/workshop/" not in unreleased
     assert "case-study-pack.md" not in unreleased
+    assert "case-study pack" not in unreleased.lower()
 
 
 @needs_pack

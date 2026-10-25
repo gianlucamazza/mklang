@@ -12,16 +12,6 @@ All notable changes to mklang are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
-
-- **Workshop case-study pack**
-  ([#121](https://github.com/gianlucamazza/mklang/issues/121)) —
-  two harness machines (`priority_shadow`, `none_holds`) with
-  **historical** figures only (dated gate-divergence rows, Path B
-  receipt, README `production_ready: false`). Unpublished until a
-  Docs honesty pass. No invented costs. C3 Anthropic pass (#60)
-  recorded as not run.
-
 ## [1.4.0] — 2026-10-10
 
 Minor: an experimental, opt-in hosted-judge adapter ([#125](https://github.com/gianlucamazza/mklang/issues/125)).
