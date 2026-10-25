@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -93,11 +95,34 @@ def test_readme_front_matter_is_a_gradio_space() -> None:
     assert "https://github.com/gianlucamazza/mklang" in text
 
 
+# Full 40-char SHA of this repo (not @main / a branch / a short hash).
+_MKLANG_GIT_PIN = re.compile(
+    r"^mklang @ git\+https://github\.com/gianlucamazza/mklang\.git@([0-9a-f]{40})$",
+    re.MULTILINE,
+)
+
+
 @needs_space
 def test_requirements_install_mklang_from_this_repo() -> None:
     req = (SPACE / "requirements.txt").read_text(encoding="utf-8")
     assert "git+https://github.com/gianlucamazza/mklang.git" in req
     assert "pypi.org" not in req.lower()
+    match = _MKLANG_GIT_PIN.search(req)
+    assert match, (
+        "spaces/playground/requirements.txt must pin mklang to a full 40-char "
+        "SHA of this repo (not @main); bump the pin deliberately when the Space "
+        "is rebuilt"
+    )
+    sha = match.group(1)
+    probed = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "cat-file", "-t", sha],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert probed.returncode == 0 and probed.stdout.strip() == "commit", (
+        f"pinned SHA {sha} is not a commit in this repo: {probed.stderr.strip()}"
+    )
 
 
 @needs_space
