@@ -80,17 +80,25 @@ def test_pack_cites_path_b_receipt_and_avoids_secrets() -> None:
     assert _PATH_B_RECEIPT in text
     assert "n=6 machines" in joined
     assert "one pinned entry-state item" in joined
+    assert "derived" in joined.lower()
+    assert "jev_noul_eval.py" in joined
+    assert "L188-208" in joined.replace("\u2013", "-")
     assert "8773760f" in joined
     assert "00e88c73" in joined
+    assert "path_b.verdict" in joined
+    assert "choice_mapping" in joined
     assert _MERGE_READY_COMMENT not in text
 
     assert "docs/experiments/gate-divergence.md" in text
     assert "3983472" in text
+    assert "L151" in text
     assert "README.md" in text
     assert "what-mklang-is.md" in text
+    assert "~192 ms" in text
+    assert "pending M4 (paid run, not yet approved)" in text
 
     lowered = text.lower()
     assert "sk-ant-" not in lowered
     assert "api_key=" not in lowered
-    assert "/workspace/lab-briefs" not in lowered
+    assert "lab-briefs" not in lowered
     assert "github_run_id" not in lowered
