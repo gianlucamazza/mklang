@@ -244,3 +244,9 @@ CaMeL control planes (research).
 - **[maybe] FS multi-root and path rules** — `--add-dir`/`writable_roots`
   analog and per-path allow/deny rules (`Read(...)`/`Edit(...)` syntax shared
   by Claude Code and Grok); ADR 0024 defers both until a real use case appears.
+
+## Engineering governance
+
+Language requirements are mapped in `requirements/registry.json`; offline validation and
+traceability use a pinned engineering distribution (ADR 0038, issue #151). This changes
+development governance only, not language semantics or the model-quality claims above.

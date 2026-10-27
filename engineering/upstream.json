@@ -1,0 +1,9 @@
+{
+  "repository": "gianlucamazza/mklang-engineering",
+  "revision": "4f36bd7f6eadab97dc3b00c1d5ad874251903b47",
+  "version": "0.1.0",
+  "sha256": {
+    "tools/requirements.py": "762800238edbb46f8152c3659b5995f3aec836b8efe15964979f70951876703b",
+    "schemas/requirements-v1.schema.json": "c4f8acb0659e3efae2f5973883f0edf157aaf6d78afcbbf887f3ce31554aabcf"
+  }
+}
