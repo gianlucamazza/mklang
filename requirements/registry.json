@@ -1,0 +1,2106 @@
+{
+  "schema_version": 1,
+  "repository": "mklang",
+  "requirements": [
+    {
+      "id": "LREQ-MKL-0001",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "accumulate appends each visit's output; the implicit result stays the last raw output.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "accumulate appends each visit's output; the implicit result stays the last raw output."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/accumulate.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0002",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "The step budget is checked before each state; exceeding it halts.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "The step budget is checked before each state; exceeding it halts."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/budget-exhausted.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0003",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A fan-out charges max(1, len(branches)) steps against the global budget (SPEC \u00a77). After one prior step, an `over` on a 3-item list drives the total to 4 (1 + 3), so budget 3 is exhausted before the post-reduce state runs. If a runtime charged the fan-out only 1 step the run would reach END; halting here pins the charging rule.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A fan-out charges max(1, len(branches)) steps against the global budget (SPEC \u00a77). After one prior step, an `over` on a 3-item list drives the total to 4 (1 + 3), so budget 3 is exhausted before the post-reduce state runs. If a runtime charged the fan-out only 1 step the run would reach END; halting here pins the charging rule."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/budget-fanout-charging.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0004",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A sub-machine halt propagates to the parent as call-failed.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A sub-machine halt propagates to the parent as call-failed."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/call-failed.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0005",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A call state runs a sub-machine and deposits its result.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A call state runs a sub-machine and deposits its result."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/call.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0006",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "The host cost budget halts the run once total tokens reach the cap.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "The host cost budget halts the run once total tokens reach the cap."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/cost-exhausted.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0007",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "0.4 `ask:`/`reply_to:` on an escalate gate \u2014 a HITL suspension carries the authored, literal ask and the context path the reply lands at, so a host can put a real question in front of a person without reading machine output.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "0.4 `ask:`/`reply_to:` on an escalate gate \u2014 a HITL suspension carries the authored, literal ask and the context path the reply lands at, so a host can put a real question in front of a person without reading machine output."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/escalate-ask.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0008",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "escalate is not terminal - it routes to its handler state.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "escalate is not terminal - it routes to its handler state."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/escalate-routing.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0009",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A fired fail gate halts the run with gate-fail.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A fired fail gate halts the run with gate-fail."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/fail-gate.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0010",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "over fans out per list item (item/index in each branch ctx); branches deposit as a list.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "over fans out per list item (item/index in each branch ctx); branches deposit as a list."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/fanout-over.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0011",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "sample fans out N times; each branch sees its own 0-based {{index}} rendered into the prompt (item is NOT set under sample). Branches deposit as an aligned list.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "sample fans out N times; each branch sees its own 0-based {{index}} rendered into the prompt (item is NOT set under sample). Branches deposit as an aligned list."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/fanout-sample-index.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0012",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A `call:` is not a laundering step: the sub-run inherits the tainted decision, so the halt policy still refuses the effect the sub-machine performs.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A `call:` is not a laundering step: the sub-run inherits the tainted decision, so the halt policy still refuses the effect the sub-machine performs."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/flow-taint-call-indirection.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0013",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A judge-made decision over external data reaching an effectful tool state is marked in the trace (SPEC \u00a76 control-flow taint).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A judge-made decision over external data reaching an effectful tool state is marked in the trace (SPEC \u00a76 control-flow taint)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/flow-taint-effect-reported.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0014",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "Under the halt policy the same tainted decision refuses the effect instead of performing it.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "Under the halt policy the same tainted decision refuses the effect instead of performing it."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/flow-taint-halt-policy.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0015",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A `hook:` gate is the confirmation the rule asks for \u2014 the transition it selects is host-decided, so the effect proceeds under the halt policy.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A `hook:` gate is the confirmation the rule asks for \u2014 the transition it selects is host-decided, so the effect proceeds under the halt policy."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/flow-taint-hook-confirms.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0016",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "The rule stops at the effect surface \u2014 a tainted decision may still reach a read-only tool.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "The rule stops at the effect surface \u2014 a tainted decision may still reach a read-only tool."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/flow-taint-read-tool-allowed.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0017",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "SPEC \u00a75: gates fire in document order and the FIRST true gate wins. A hook gate placed AFTER a prose gate must not preempt it \u2014 the earlier prose gate fires (gate_via: llm, to: via_prose) even though the later hook would also be true. (Mutation check: making the engine evaluate hooks before earlier prose gates reroutes this case to via_hook and fails it.)",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "SPEC \u00a75: gates fire in document order and the FIRST true gate wins. A hook gate placed AFTER a prose gate must not preempt it \u2014 the earlier prose gate fires (gate_via: llm, to: via_prose) even though the later hook would also be true. (Mutation check: making the engine evaluate hooks before earlier prose gates reroutes this case to via_hook and fails it.)"
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/hook-before-prose.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0018",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "SPEC \u00a75: a hook gate whose predicate is false does not fire; evaluation falls through to the following gates. Here the hook is false, so the otherwise catch-all fires (gate_via: otherwise, to: closed).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "SPEC \u00a75: a hook gate whose predicate is false does not fire; evaluation falls through to the following gates. Here the hook is false, so the otherwise catch-all fires (gate_via: otherwise, to: closed)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/hook-false-falls-through.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0019",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "An unresolvable `hook:` halts the run \u2014 a predicate that cannot answer is not False (SPEC \u00a75).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "An unresolvable `hook:` halts the run \u2014 a predicate that cannot answer is not False (SPEC \u00a75)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/hook-unknown-halts.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0020",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "The fused judge may answer \"none of these conditions is true\"; evaluation continues to the catch-all.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "The fused judge may answer \"none of these conditions is true\"; evaluation continues to the catch-all."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/judge-none-falls-through.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0021",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "Without a catch-all the transition relation is partial \u2014 a \"none\" verdict halts with no-gate-matched.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "Without a catch-all the transition relation is partial \u2014 a \"none\" verdict halts with no-gate-matched."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/judge-none-no-catch-all-halts.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0022",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A \"none\" verdict resumes the scan at the next gate \u2014 a hook after the prose batch still gets its turn.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A \"none\" verdict resumes the scan at the next gate \u2014 a hook after the prose batch still gets its turn."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/judge-none-then-hook.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0023",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "Consecutive prose gates are fused into one judge call; the returned index picks the route.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "Consecutive prose gates are fused into one judge call; the returned index picks the route."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/judge-routing.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0024",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "An unparseable judge soft-falls back to an eligible otherwise gate.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "An unparseable judge soft-falls back to an eligible otherwise gate."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/judge-unparseable-fallback.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0025",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "An unparseable judge with no eligible otherwise halts the run.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "An unparseable judge with no eligible otherwise halts the run."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/judge-unparseable-halt.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0026",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "Two generative states routed by otherwise gates; the last output is the implicit result.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "Two generative states routed by otherwise gates; the last output is the implicit result."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/linear.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0027",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "When the step budget and a state's max_visits exhaust at the same loop-top, the budget is checked first and keeps its own name (\u00a77 guard order).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "When the step budget and a state's max_visits exhaust at the same loop-top, the budget is checked first and keeps its own name (\u00a77 guard order)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/loop-ceiling-budget-wins.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0028",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "max_visits bounds entries of one state; the entry after the ceiling halts with loop-ceiling naming the state, while the global budget is still unspent (0.4, \u00a77).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "max_visits bounds entries of one state; the entry after the ceiling halts with loop-ceiling naming the state, while the global budget is still unspent (0.4, \u00a77)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/loop-ceiling.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0029",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "When every gate is an exhausted repair, the run halts with no-gate-matched.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "When every gate is an exhausted repair, the run halts with no-gate-matched."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/no-gate-matched.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0030",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "0.4 `parse: json` \u2014 output that is not valid JSON halts the state cleanly (state-error), it never deposits prose pretending to be a document.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "0.4 `parse: json` \u2014 output that is not valid JSON halts the state cleanly (state-error), it never deposits prose pretending to be a document."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/parse-json-invalid.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0031",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "0.4 `parse: json` \u2014 the produced text is parsed as a JSON value and deposited as-is, so a gate path or a downstream host reads a document, not prose that resembles one.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "0.4 `parse: json` \u2014 the produced text is parsed as a JSON value and deposited as-is, so a gate path or a downstream host reads a document, not prose that resembles one."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/parse-json.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0032",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "0.3 `parse: list` \u2014 output that is not a JSON array halts the state cleanly (state-error), it does not crash or deposit garbage.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "0.3 `parse: list` \u2014 output that is not a JSON array halts the state cleanly (state-error), it does not crash or deposit garbage."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/parse-list-invalid.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0033",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "0.3 `parse: list` \u2014 the produced text is parsed as a JSON array and deposited as a real list, which a downstream `over:` fans out over (Plan-and-Execute).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "0.3 `parse: list` \u2014 the produced text is parsed as a JSON array and deposited as a real list, which a downstream `over:` fans out over (Plan-and-Execute)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/parse-list.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0034",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "0.3 input resolution \u2014 an `input:` value that is exactly one {{path}} placeholder passes the RAW context value (here a list) into the callee, so the callee's `over:` can fan out over it. Mixed templates still render text.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "0.3 input resolution \u2014 an `input:` value that is exactly one {{path}} placeholder passes the RAW context value (here a list) into the callee, so the callee's `over:` can fan out over it. Mixed templates still render text."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/raw-input-passthrough.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0035",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "An exhausted repair gate becomes ineligible; the remaining catch-all fires.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "An exhausted repair gate becomes ineligible; the remaining catch-all fires."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/repair-exhausted-reroutes.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0036",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "A repair gate re-runs the state with feedback and decrements its budget.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "A repair gate re-runs the state with feedback and decrements its budget."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/repair.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0037",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "ADR 0025 / SPEC \u00a76: an author `context:` literal is trusted, so its interpolation MUST NOT be fenced. Map keys are matched first-wins, so if a fence appeared the `<data-` key would capture the call and the expectation on `result` would fail.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "ADR 0025 / SPEC \u00a76: an author `context:` literal is trusted, so its interpolation MUST NOT be fenced. Map keys are matched first-wins, so if a fence appeared the `<data-` key would capture the call and the expectation on `result` would fail."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/taint-author-context-bare.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0038",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "ADR 0025 / SPEC \u00a76: a sub-machine result is a deposit like any other \u2014 tainted \u2014 so a downstream prompt interpolating it MUST fence it. Inside the sub-run, the parent's literal `input:` value stays trusted and renders bare.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "ADR 0025 / SPEC \u00a76: a sub-machine result is a deposit like any other \u2014 tainted \u2014 so a downstream prompt interpolating it MUST fence it. Inside the sub-run, the parent's literal `input:` value stays trusted and renders bare."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/taint-call-result-delimited.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0039",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "ADR 0025 / SPEC \u00a76: a host-supplied context value (the scenario `input:` block \u2014 the CLI's --set, an MCP `inputs` map) overrides the author literal, is tainted by provenance, and MUST reach the prompt fenced.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "ADR 0025 / SPEC \u00a76: a host-supplied context value (the scenario `input:` block \u2014 the CLI's --set, an MCP `inputs` map) overrides the author literal, is tainted by provenance, and MUST reach the prompt fenced."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/taint-host-input-delimited.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0040",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "ADR 0025 / SPEC \u00a76: a tool observation is tainted, so a downstream prompt interpolating it MUST fence it. The produce map keys on the normative `<data-` fence prefix \u2014 the scenario fails if the observation arrives bare.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "ADR 0025 / SPEC \u00a76: a tool observation is tainted, so a downstream prompt interpolating it MUST fence it. The produce map keys on the normative `<data-` fence prefix \u2014 the scenario fails if the observation arrives bare."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/taint-tool-observation-delimited.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0041",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "SPEC \u00a74.9: a tool state invokes a host callable (no LLM, no tier/tokens). The returned string is the observation deposited under `output` and readable by a downstream state via {{...}}.",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "SPEC \u00a74.9: a tool state invokes a host callable (no LLM, no tier/tokens). The returned string is the observation deposited under `output` and readable by a downstream state via {{...}}."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/tool-state-output-deposit.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "LREQ-MKL-0042",
+      "category": "LREQ",
+      "owner": "gianlucamazza",
+      "scope": "language 0.4 and backward-compatible case semantics",
+      "statement": "SPEC \u00a74.9 / \u00a77: a tool state naming a callable the host did not register cannot execute. The run halts with a state-error at that state (the exact message tail is implementation-specific; the reason class and halt location are the contract).",
+      "rationale": "Make the existing boundary explicit and prevent regression.",
+      "priority": "P1",
+      "risk": "medium",
+      "lifecycle": "verified",
+      "acceptance": [
+        "SPEC \u00a74.9 / \u00a77: a tool state naming a callable the host did not register cannot execute. The run halts with a state-error at that state (the exact message tail is implementation-specific; the reason class and halt location are the contract)."
+      ],
+      "verification": {
+        "kind": "structural",
+        "method": "Run the linked tests; record command, revision, failures and skips. Links alone are not a passing result."
+      },
+      "depends_on": [],
+      "references": {
+        "implementation": [
+          {
+            "path": "SPEC.md"
+          },
+          {
+            "path": "src/mklang/engine.py"
+          }
+        ],
+        "tests": [
+          {
+            "path": "tests/conformance/test_conformance.py"
+          },
+          {
+            "path": "conformance/cases/tool-unknown-halts.yaml"
+          }
+        ],
+        "adr": [
+          {
+            "path": "docs/adr/0009-conformance-suite.md"
+          },
+          {
+            "path": "docs/adr/0038-requirements-remain-development-metadata.md"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "requirements/evidence/local-validation.json"
+          }
+        ]
+      }
+    }
+  ]
+}

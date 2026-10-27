@@ -171,3 +171,10 @@ These are not files in the tree; keep them aligned with the quality gate:
 - Vulnerability reports go through private
   [Security Advisories](https://github.com/gianlucamazza/mklang/security/advisories/new)
   — see [`SECURITY.md`](https://github.com/gianlucamazza/mklang/blob/main/SECURITY.md).
+
+## Requirement traceability
+
+`requirements/registry.json` maps stable LREQ IDs to the canonical conformance cases.
+See `engineering/README.md` for offline validation and distribution provenance. New
+semantic cases need new IDs; never renumber existing IDs. SPEC.md and conformance remain
+authoritative; the private engineering repository is not a runtime or CI dependency.

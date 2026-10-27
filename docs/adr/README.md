@@ -42,3 +42,5 @@ change checklist in CONTRIBUTING says when to add one.
 | [0035](0035-escalate-carries-its-own-ask.md) | An escalate gate carries its own ask (`ask:`, `reply_to:`, spec 0.4) | Accepted (2026-08-08) |
 | [0036](0036-large-workspace-analysis.md) | Metadata index for large workspace analysis | Accepted |
 | [0037](0037-jev-noul-host-judge.md) | Host-side Jev Noul-only judge under `judge:` | Proposed |
+
+| [0038](0038-requirements-remain-development-metadata.md) | Requirements remain development metadata | Accepted |
