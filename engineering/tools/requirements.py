@@ -1,4 +1,4 @@
-"""Offline requirement validation and traceability. Canonical engineering tool v0.1.0."""
+"""Offline requirement validation and traceability. Canonical engineering tool v0.2.0."""
 
 from __future__ import annotations
 
@@ -53,6 +53,7 @@ def validate(registries, schema):
             "mklang": "MKL",
             "mklang-platform": "MKP",
             "mklang-engineering": "ENG",
+            "software-factory": "FCT",
         }[document["repository"]]
         for req in document["requirements"]:
             rid = req["id"]
