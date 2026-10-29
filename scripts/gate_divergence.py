@@ -828,6 +828,15 @@ def _summary(rows: list[dict], names: list[str]) -> dict:
     scored_base = [r for r in base if r.get("correct") is not None]
     scored_agreement = _agreement_block(scored_base)
     scored_accuracy = _accuracy_block(scored_base)
+    scored_group_sizes = [
+        sum(r.get("machine") == machine for r in scored_base)
+        for machine in {r.get("machine") for r in scored_base}
+    ]
+    comparable = (
+        bool(scored_group_sizes)
+        and min(scored_group_sizes) >= 2
+        and (len(set(scored_group_sizes)) == 1)
+    )
     summary = {
         "providers_attempted": names,
         "machines": sorted({m for r in done if isinstance(m := r.get("machine"), str)}),
@@ -846,12 +855,17 @@ def _summary(rows: list[dict], names: list[str]) -> dict:
         # Compare agreement and accuracy on exactly the same scored base rows.
         # Paraphrases and machines without gold are separate populations.
         "gate_blind_spot_population": "scored_base_runs",
+        "gate_blind_spot_available": comparable,
+        "gate_blind_spot_unavailable_reason": (
+            None if comparable else "scored base groups need equal sizes of at least two"
+        ),
         "gate_blind_spot_scored_runs": scored_accuracy["scored_runs"],
         "gate_blind_spot_agreement": scored_agreement["signature_agreement_rate"],
         "gate_blind_spot_accuracy": scored_accuracy["accuracy"],
         "gate_blind_spot": (
             None
-            if scored_agreement["signature_agreement_rate"] is None
+            if not comparable
+            or scored_agreement["signature_agreement_rate"] is None
             or scored_accuracy["accuracy"] is None
             else round(
                 scored_agreement["signature_agreement_rate"] - scored_accuracy["accuracy"], 4

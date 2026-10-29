@@ -7,5 +7,14 @@
   "gate_blind_spot_scored_runs": 18,
   "gate_blind_spot_agreement": 1.0,
   "gate_blind_spot_accuracy": 1.0,
-  "gate_blind_spot": 0.0
+  "gate_blind_spot": 0.0,
+  "gate_blind_spot_available": true,
+  "scored_base_group_sizes": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ]
 }
