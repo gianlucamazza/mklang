@@ -61,3 +61,8 @@ must never be mistaken for one dispatch. Credentials belong only in the environm
 These measurements do not prove engine conformance, tenant isolation, production
 readiness or performance on customer data. Repeated routes and paraphrase pairs are
 dependent; no binomial confidence interval is claimed for their pooled counts.
+
+For future runs the blind-spot gap is unavailable if scored base machine groups
+have unequal sizes or fewer than two rows: pair agreement and row accuracy would
+otherwise weight machines differently. This receipt has six scored base groups
+of three, so its corrected gap remains 0.0. Failures remain in report denominators.
