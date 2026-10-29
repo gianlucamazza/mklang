@@ -432,3 +432,12 @@ does not block a DeepSeek+OpenAI release, but it also does **not** close #60.
   [#72](https://github.com/gianlucamazza/mklang/issues/72),
   [#120](https://github.com/gianlucamazza/mklang/issues/120),
   [#121](https://github.com/gianlucamazza/mklang/issues/121)
+
+## 2026-10-29 single-provider follow-up
+
+DeepSeek-only live run: 51/51 complete, no execution failures/skips, 33/33 scored
+gold routes correct; base within-provider signature agreement 0.944444.
+`hostile_side_effect_boundary` varies (choice_1 / choice_other / choice_1);
+it has no gold label. Paraphrase route invariance is 54/54 dependent pairs.
+See `evidence/deepseek-2026-10-29/results.md`, raw rows, protocol and cost ledger.
+This is no cross-provider or third-provider result; #60 remains open.

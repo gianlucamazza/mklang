@@ -1,0 +1,734 @@
+gate_divergence/deepseek[0]: status=done sig='label|the output is the word "spam"|llm|spam_path || spam_path|otherwise|otherwise|END'
+gate_divergence/deepseek[1]: status=done sig='label|the output is the word "spam"|llm|spam_path || spam_path|otherwise|otherwise|END'
+gate_divergence/deepseek[2]: status=done sig='label|the output is the word "spam"|llm|spam_path || spam_path|otherwise|otherwise|END'
+gate_divergence~p1/deepseek[0]: status=done sig='label|the classification given is spam|llm|spam_path || spam_path|otherwise|otherwise|END'
+gate_divergence~p1/deepseek[1]: status=done sig='label|the classification given is spam|llm|spam_path || spam_path|otherwise|otherwise|END'
+gate_divergence~p1/deepseek[2]: status=done sig='label|the classification given is spam|llm|spam_path || spam_path|otherwise|otherwise|END'
+# no paraphrase variants declared for sentiment_borderline
+sentiment_borderline/deepseek[0]: status=done sig='assess|otherwise|otherwise|mixed || mixed|otherwise|otherwise|END'
+sentiment_borderline/deepseek[1]: status=done sig='assess|otherwise|otherwise|mixed || mixed|otherwise|otherwise|END'
+sentiment_borderline/deepseek[2]: status=done sig='assess|otherwise|otherwise|mixed || mixed|otherwise|otherwise|END'
+# no paraphrase variants declared for severity_escalate
+severity_escalate/deepseek[0]: status=done sig='triage|otherwise|otherwise|auto || auto|otherwise|otherwise|END'
+severity_escalate/deepseek[1]: status=done sig='triage|otherwise|otherwise|auto || auto|otherwise|otherwise|END'
+severity_escalate/deepseek[2]: status=done sig='triage|otherwise|otherwise|auto || auto|otherwise|otherwise|END'
+# no paraphrase variants declared for grounding_repair
+grounding_repair/deepseek[0]: status=done sig='answer|the reply is grounded in the given fact and states 30 days|llm|END'
+grounding_repair/deepseek[1]: status=done sig='answer|the reply is grounded in the given fact and states 30 days|llm|END'
+grounding_repair/deepseek[2]: status=done sig='answer|the reply is grounded in the given fact and states 30 days|llm|END'
+threshold_edge/deepseek[0]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge/deepseek[1]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge/deepseek[2]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge~p1/deepseek[0]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge~p1/deepseek[1]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge~p1/deepseek[2]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge~p2/deepseek[0]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge~p2/deepseek[1]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+threshold_edge~p2/deepseek[2]: status=done sig='assess|otherwise|otherwise|within || within|otherwise|otherwise|END'
+priority_shadow/deepseek[0]: status=done sig='draft|the reply mentions a refund|llm|broad || broad|otherwise|otherwise|END'
+priority_shadow/deepseek[1]: status=done sig='draft|the reply mentions a refund|llm|broad || broad|otherwise|otherwise|END'
+priority_shadow/deepseek[2]: status=done sig='draft|the reply mentions a refund|llm|broad || broad|otherwise|otherwise|END'
+priority_shadow~p1/deepseek[0]: status=done sig='draft|a refund is mentioned in the reply|llm|broad || broad|otherwise|otherwise|END'
+priority_shadow~p1/deepseek[1]: status=done sig='draft|a refund is mentioned in the reply|llm|broad || broad|otherwise|otherwise|END'
+priority_shadow~p1/deepseek[2]: status=done sig='draft|a refund is mentioned in the reply|llm|broad || broad|otherwise|otherwise|END'
+none_holds/deepseek[0]: status=done sig='classify|otherwise|otherwise|other || other|otherwise|otherwise|END'
+none_holds/deepseek[1]: status=done sig='classify|otherwise|otherwise|other || other|otherwise|otherwise|END'
+none_holds/deepseek[2]: status=done sig='classify|otherwise|otherwise|other || other|otherwise|otherwise|END'
+none_holds~p1/deepseek[0]: status=done sig='classify|otherwise|otherwise|other || other|otherwise|otherwise|END'
+none_holds~p1/deepseek[1]: status=done sig='classify|otherwise|otherwise|other || other|otherwise|otherwise|END'
+none_holds~p1/deepseek[2]: status=done sig='classify|otherwise|otherwise|other || other|otherwise|otherwise|END'
+# no paraphrase variants declared for hostile_numeric_language
+hostile_numeric_language/deepseek[0]: status=done sig='assess|the amount is at least 100 EUR|llm|choice_1 || choice_1|otherwise|otherwise|END'
+hostile_numeric_language/deepseek[1]: status=done sig='assess|the amount is at least 100 EUR|llm|choice_1 || choice_1|otherwise|otherwise|END'
+hostile_numeric_language/deepseek[2]: status=done sig='assess|the amount is at least 100 EUR|llm|choice_1 || choice_1|otherwise|otherwise|END'
+# no paraphrase variants declared for hostile_nested_negation
+hostile_nested_negation/deepseek[0]: status=done sig='assess|the report says recovery was possible|llm|choice_0 || choice_0|otherwise|otherwise|END'
+hostile_nested_negation/deepseek[1]: status=done sig='assess|the report says recovery was possible|llm|choice_0 || choice_0|otherwise|otherwise|END'
+hostile_nested_negation/deepseek[2]: status=done sig='assess|the report says recovery was possible|llm|choice_0 || choice_0|otherwise|otherwise|END'
+# no paraphrase variants declared for hostile_contradictory_evidence
+hostile_contradictory_evidence/deepseek[0]: status=done sig='assess|trusted evidence says approved|llm|choice_0 || choice_0|otherwise|otherwise|END'
+hostile_contradictory_evidence/deepseek[1]: status=done sig='assess|trusted evidence says approved|llm|choice_0 || choice_0|otherwise|otherwise|END'
+hostile_contradictory_evidence/deepseek[2]: status=done sig='assess|trusted evidence says approved|llm|choice_0 || choice_0|otherwise|otherwise|END'
+# no paraphrase variants declared for hostile_untrusted_context
+hostile_untrusted_context/deepseek[0]: status=done sig='assess|the trusted amount is within the 100 EUR limit|llm|choice_0 || choice_0|otherwise|otherwise|END'
+hostile_untrusted_context/deepseek[1]: status=done sig='assess|the trusted amount is within the 100 EUR limit|llm|choice_0 || choice_0|otherwise|otherwise|END'
+hostile_untrusted_context/deepseek[2]: status=done sig='assess|the trusted amount is within the 100 EUR limit|llm|choice_0 || choice_0|otherwise|otherwise|END'
+# no paraphrase variants declared for hostile_side_effect_boundary
+hostile_side_effect_boundary/deepseek[0]: status=done sig='assess|the request is ambiguous and needs human review|llm|choice_1 || choice_1|otherwise|otherwise|END'
+hostile_side_effect_boundary/deepseek[1]: status=done sig='assess|otherwise|otherwise|choice_other || choice_other|otherwise|otherwise|END'
+hostile_side_effect_boundary/deepseek[2]: status=done sig='assess|the request is ambiguous and needs human review|llm|choice_1 || choice_1|otherwise|otherwise|END'
+{
+  "providers_attempted": [
+    "deepseek"
+  ],
+  "machines": [
+    "gate_divergence",
+    "grounding_repair",
+    "hostile_contradictory_evidence",
+    "hostile_nested_negation",
+    "hostile_numeric_language",
+    "hostile_side_effect_boundary",
+    "hostile_untrusted_context",
+    "none_holds",
+    "priority_shadow",
+    "sentiment_borderline",
+    "severity_escalate",
+    "threshold_edge"
+  ],
+  "runs_done": 51,
+  "runs_skipped": 0,
+  "runs_failed": 0,
+  "pairwise": [
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "gate_divergence"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "gate_divergence"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "gate_divergence"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "gate_divergence",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "gate_divergence",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "gate_divergence",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "grounding_repair"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "grounding_repair"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "grounding_repair"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "hostile_contradictory_evidence"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "hostile_contradictory_evidence"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "hostile_contradictory_evidence"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_nested_negation"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_nested_negation"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_nested_negation"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_numeric_language"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_numeric_language"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_numeric_language"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": false,
+      "same_outputs": false,
+      "machine": "hostile_side_effect_boundary"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_side_effect_boundary"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": false,
+      "same_outputs": false,
+      "machine": "hostile_side_effect_boundary"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_untrusted_context"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_untrusted_context"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "hostile_untrusted_context"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "none_holds"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "none_holds"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "none_holds"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "none_holds",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "none_holds",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "none_holds",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "priority_shadow"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "priority_shadow"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "priority_shadow"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "priority_shadow",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "priority_shadow",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "priority_shadow",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "sentiment_borderline"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "sentiment_borderline"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "sentiment_borderline"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "severity_escalate"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "severity_escalate"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": false,
+      "machine": "severity_escalate"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge",
+      "variant": "p1"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge",
+      "variant": "p2"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge",
+      "variant": "p2"
+    },
+    {
+      "a": "deepseek",
+      "b": "deepseek",
+      "same_provider": true,
+      "same_signature": true,
+      "same_outputs": true,
+      "machine": "threshold_edge",
+      "variant": "p2"
+    }
+  ],
+  "signature_agreement_rate": 0.9444444444444444,
+  "cross_provider_agreement_rate": null,
+  "intra_provider_agreement_rate": 0.9444444444444444,
+  "accuracy": 1.0,
+  "scored_runs": 33,
+  "gate_blind_spot": -0.0556,
+  "per_machine": {
+    "gate_divergence": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 3,
+      "accuracy": 1.0,
+      "distinct_signatures": [
+        "label|the output is the word \"spam\"|llm|spam_path || spam_path|otherwise|otherwise|END"
+      ]
+    },
+    "grounding_repair": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 3,
+      "accuracy": 1.0,
+      "distinct_signatures": [
+        "answer|the reply is grounded in the given fact and states 30 days|llm|END"
+      ]
+    },
+    "hostile_contradictory_evidence": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 0,
+      "accuracy": null,
+      "distinct_signatures": [
+        "assess|trusted evidence says approved|llm|choice_0 || choice_0|otherwise|otherwise|END"
+      ]
+    },
+    "hostile_nested_negation": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 0,
+      "accuracy": null,
+      "distinct_signatures": [
+        "assess|the report says recovery was possible|llm|choice_0 || choice_0|otherwise|otherwise|END"
+      ]
+    },
+    "hostile_numeric_language": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 0,
+      "accuracy": null,
+      "distinct_signatures": [
+        "assess|the amount is at least 100 EUR|llm|choice_1 || choice_1|otherwise|otherwise|END"
+      ]
+    },
+    "hostile_side_effect_boundary": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 0.3333333333333333,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 0.3333333333333333,
+      "scored_runs": 0,
+      "accuracy": null,
+      "distinct_signatures": [
+        "assess|otherwise|otherwise|choice_other || choice_other|otherwise|otherwise|END",
+        "assess|the request is ambiguous and needs human review|llm|choice_1 || choice_1|otherwise|otherwise|END"
+      ]
+    },
+    "hostile_untrusted_context": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 0,
+      "accuracy": null,
+      "distinct_signatures": [
+        "assess|the trusted amount is within the 100 EUR limit|llm|choice_0 || choice_0|otherwise|otherwise|END"
+      ]
+    },
+    "none_holds": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 3,
+      "accuracy": 1.0,
+      "distinct_signatures": [
+        "classify|otherwise|otherwise|other || other|otherwise|otherwise|END"
+      ]
+    },
+    "priority_shadow": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 3,
+      "accuracy": 1.0,
+      "distinct_signatures": [
+        "draft|the reply mentions a refund|llm|broad || broad|otherwise|otherwise|END"
+      ]
+    },
+    "sentiment_borderline": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 0,
+      "accuracy": null,
+      "distinct_signatures": [
+        "assess|otherwise|otherwise|mixed || mixed|otherwise|otherwise|END"
+      ]
+    },
+    "severity_escalate": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 3,
+      "accuracy": 1.0,
+      "distinct_signatures": [
+        "triage|otherwise|otherwise|auto || auto|otherwise|otherwise|END"
+      ]
+    },
+    "threshold_edge": {
+      "runs_done": 3,
+      "pairs": 3,
+      "signature_agreement_rate": 1.0,
+      "cross_provider_agreement_rate": null,
+      "intra_provider_agreement_rate": 1.0,
+      "scored_runs": 3,
+      "accuracy": 1.0,
+      "distinct_signatures": [
+        "assess|otherwise|otherwise|within || within|otherwise|otherwise|END"
+      ]
+    }
+  },
+  "distinct_signatures": [
+    "answer|the reply is grounded in the given fact and states 30 days|llm|END",
+    "assess|otherwise|otherwise|choice_other || choice_other|otherwise|otherwise|END",
+    "assess|otherwise|otherwise|mixed || mixed|otherwise|otherwise|END",
+    "assess|otherwise|otherwise|within || within|otherwise|otherwise|END",
+    "assess|the amount is at least 100 EUR|llm|choice_1 || choice_1|otherwise|otherwise|END",
+    "assess|the report says recovery was possible|llm|choice_0 || choice_0|otherwise|otherwise|END",
+    "assess|the request is ambiguous and needs human review|llm|choice_1 || choice_1|otherwise|otherwise|END",
+    "assess|the trusted amount is within the 100 EUR limit|llm|choice_0 || choice_0|otherwise|otherwise|END",
+    "assess|trusted evidence says approved|llm|choice_0 || choice_0|otherwise|otherwise|END",
+    "classify|otherwise|otherwise|other || other|otherwise|otherwise|END",
+    "draft|a refund is mentioned in the reply|llm|broad || broad|otherwise|otherwise|END",
+    "draft|the reply mentions a refund|llm|broad || broad|otherwise|otherwise|END",
+    "label|the classification given is spam|llm|spam_path || spam_path|otherwise|otherwise|END",
+    "label|the output is the word \"spam\"|llm|spam_path || spam_path|otherwise|otherwise|END",
+    "triage|otherwise|otherwise|auto || auto|otherwise|otherwise|END"
+  ],
+  "paraphrase": {
+    "gate_divergence": {
+      "variants": [
+        "base",
+        "p1"
+      ],
+      "cross_variant_pairs": 9,
+      "invariant_pairs": 9,
+      "paraphrase_invariance_rate": 1.0,
+      "distinct_routes": [
+        "label>spam_path || spam_path>END"
+      ]
+    },
+    "none_holds": {
+      "variants": [
+        "base",
+        "p1"
+      ],
+      "cross_variant_pairs": 9,
+      "invariant_pairs": 9,
+      "paraphrase_invariance_rate": 1.0,
+      "distinct_routes": [
+        "classify>other || other>END"
+      ]
+    },
+    "priority_shadow": {
+      "variants": [
+        "base",
+        "p1"
+      ],
+      "cross_variant_pairs": 9,
+      "invariant_pairs": 9,
+      "paraphrase_invariance_rate": 1.0,
+      "distinct_routes": [
+        "draft>broad || broad>END"
+      ]
+    },
+    "threshold_edge": {
+      "variants": [
+        "base",
+        "p1",
+        "p2"
+      ],
+      "cross_variant_pairs": 27,
+      "invariant_pairs": 27,
+      "paraphrase_invariance_rate": 1.0,
+      "distinct_routes": [
+        "assess>within || within>END"
+      ]
+    }
+  },
+  "temporal_control_flow_agreement": {
+    "pairs": 0,
+    "signature_agreement_rate": null,
+    "route_agreement_rate": null,
+    "comparisons": []
+  },
+  "gate_errors": []
+}

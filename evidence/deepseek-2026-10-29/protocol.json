@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "provider": "deepseek",
+  "requested_model": "deepseek-v4-flash",
+  "served_model_documented": "DeepSeek-V4.1-Flash-1017",
+  "model_identity_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "price_verified_date": "2026-10-29",
+  "peak_input_usd_per_million": 0.3,
+  "peak_output_usd_per_million": 1.2,
+  "authorized_total_usd": 3,
+  "allocated_gate_experiment_usd": 1,
+  "per_run_operational_limit_usd": 0.25,
+  "data": "synthetic only",
+  "repeats": 3,
+  "machines": "all",
+  "paraphrases": true,
+  "source_revision": "80960da5df94e27ce0026181f30ea51fa935743a",
+  "runtime_sha256": "8550e5b2fb5f51e7d7bea9e0ef78afa33c87331fb05de1e096beb432dcb762cc",
+  "limitations": [
+    "One provider: cross-provider stability is not measurable",
+    "Alias identity is not a pinned immutable model revision",
+    "Cost ledger uses conservative peak rates, not provider invoices",
+    "Gate estimate is a pre-run estimate; interpreter token budget is 20000, not an atomic money reservation"
+  ],
+  "generation_requested_settings": {
+    "thinking": {
+      "type": "disabled"
+    },
+    "max_tokens": 512
+  },
+  "judge_initial_request_settings": {
+    "thinking": "not sent",
+    "max_tokens": "not sent",
+    "temperature": 0,
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "effective_request_settings": "Not captured. Judge used provider defaults for thinking/output ceiling; adapter parameter-fallback events were not retained. Do not infer effective settings from generation configuration.",
+  "historical_correction": {
+    "original_protocol": "protocol-original.json",
+    "original_sha256": "4ff28c6fb58001d5fdefbdaf98e26d5ac1bdf00f323f6819f33e83303204dc42",
+    "reason": "The original protocol incorrectly attributed generation-only settings to every judge call. No provider rerun or raw-result rewrite."
+  }
+}

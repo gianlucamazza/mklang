@@ -1,0 +1,23 @@
+active: deepseek
+providers:
+  deepseek:
+    protocol: openai_compat
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    tiers:
+      fast: deepseek-v4-flash
+      balanced: deepseek-v4-flash
+      reasoning: deepseek-v4-flash
+    params:
+      fast:
+        thinking:
+          type: disabled
+        max_tokens: 512
+      balanced:
+        thinking:
+          type: disabled
+        max_tokens: 512
+      reasoning:
+        thinking:
+          type: disabled
+        max_tokens: 512

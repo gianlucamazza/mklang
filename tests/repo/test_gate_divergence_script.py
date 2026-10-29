@@ -371,3 +371,32 @@ def test_run_once_marks_a_forced_wrong_route_incorrect():
     )
     assert row["correct"] is False
     assert row["variant"] == "p1"
+
+
+def test_blind_spot_excludes_unscored_machines_and_paraphrases():
+    rows = [
+        _row2("deepseek", "scored", "s", correct=True),
+        _row2("deepseek", "scored", "s", correct=True),
+        _row2("deepseek", "unscored", "a"),
+        _row2("deepseek", "unscored", "b"),
+        _row2("deepseek", "scored", "wrong", correct=False, variant="p1"),
+    ]
+    result = gd._summary(rows, ["deepseek"])
+    assert result["signature_agreement_rate"] == 0.5
+    assert result["accuracy"] == pytest.approx(2 / 3)
+    assert result["gate_blind_spot"] == 0.0
+    assert result["gate_blind_spot_scored_runs"] == 2
+    assert result["gate_blind_spot_population"] == "scored_base_runs"
+
+
+@pytest.mark.parametrize("other_count", [1, 2])
+def test_blind_spot_is_unavailable_for_unequal_scored_groups(other_count):
+    rows = [_row2("deepseek", "a", "s", correct=True) for _ in range(3)]
+    rows += [_row2("deepseek", "b", "wrong", correct=False) for _ in range(other_count)]
+    rows.append({"provider": "deepseek", "machine": "b", "status": "failed"})
+    result = gd._summary(rows, ["deepseek"])
+    assert result["runs_failed"] == 1
+    assert result["accuracy"] == pytest.approx(3 / (3 + other_count))
+    assert result["gate_blind_spot"] is None
+    assert result["gate_blind_spot_available"] is False
+    assert result["gate_blind_spot_unavailable_reason"]

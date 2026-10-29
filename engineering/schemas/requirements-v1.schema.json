@@ -17,7 +17,8 @@
       "enum": [
         "mklang",
         "mklang-platform",
-        "mklang-engineering"
+        "mklang-engineering",
+        "software-factory"
       ]
     },
     "requirements": {
@@ -44,7 +45,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^(PRD|LREQ|FREQ|QREQ|SREQ|DREQ|IREQ|OREQ|EREQ)-(ENG|MKL|MKP)-[0-9]{4}$"
+            "pattern": "^(PRD|LREQ|FREQ|QREQ|SREQ|DREQ|IREQ|OREQ|EREQ)-(ENG|MKL|MKP|FCT)-[0-9]{4}$"
           },
           "owner": {
             "type": "string",
