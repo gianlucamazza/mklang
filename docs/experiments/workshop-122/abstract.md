@@ -1,7 +1,7 @@
 # Explicit Control Boundaries for LLM Judgement in Recoverable Workflows
 
-**Internal Lab draft for #122 — not approved for submission or public citation.**
-One-page abstract draft; venue-specific layout remains pending selection.
+**Claim-reviewed internal Lab draft for #122 — not a submitted paper.**
+One-page abstract draft for AGENTVERIFY; venue-specific paper layout is separate.
 
 LLM applications often mix a model's judgement with the code that decides whether
 an external action may execute. A plausible model response can then be mistaken
@@ -12,7 +12,7 @@ while a host retains responsibility for credentials, effects and recovery.
 We present mklang, a declarative language for bounded LLM machines. A machine
 states its control graph and gate policy explicitly. Deterministic loading and
 validation reject malformed declarations; the runtime applies the declared gates,
-resource limits and suspension semantics. Model variability remains observable
+step and repair budgets and suspension semantics. Model variability remains observable
 within that boundary. A suspended machine returns state to its host rather than
 silently acquiring authority to execute an external operation. Host adapters must
 preserve the distinction between a result, an escalation and permission to act.

@@ -1,6 +1,16 @@
-# Claim review and handover — pending Docs approval
+# Claim review and handover — delegated review complete
 
-Internal review aid for #122, checked 2026-10-29. This is not a Docs APPROVE decision.
+Internal review for #122, checked 2026-10-29 against source commit
+`5a2e67482ec798027dff67695d059fc2a9a1318b`. The owner delegated completion
+without human approval. Codex performed the documentation review; this is an
+agent decision, not an attestation by a human reviewer.
+
+**Docs APPROVE for the bounded internal abstract draft.** The gate, step/repair
+budget and suspension descriptions agree with SPEC and the implementation.
+ADR 0037 remains Proposed. No model accuracy, cross-provider equivalence,
+task-success, production-safety or independent-reader result is asserted.
+Venue preparation targets AGENTVERIFY; no submission or camera-ready action is
+part of the deliverables accepted by issue #122.
 
 | Abstract claim | Evidence or status | Wording constraint |
 | --- | --- | --- |
@@ -21,10 +31,11 @@ Internal review aid for #122, checked 2026-10-29. This is not a Docs APPROVE dec
   empirical limits visible beside every model claim.
 - Decide whether the synthetic exploratory receipt belongs in the eventual paper;
   do not backfill missing historical drafts, response revisions or latency.
-- For an anonymous venue, prepare a separately approved anonymous artifact package;
+- For an anonymous venue, prepare an anonymous artifact package before submission;
   these internal GitHub links are deliberately not an anonymous submission package.
-- Confirm three separate decisions: Docs APPROVE on claims, Gianluca's venue choice,
-  and Gianluca's yes to actual submission. None is inferred from drafting or CI.
+- Claim review and the preparation venue are decided under the owner's delegation.
+  A real submission remains a separate external action: this internal draft does
+  not establish paper readiness, registration, author declarations or acceptance.
 
 The historical #121 pack and its unpublished-source guards are unchanged. This
 folder is under internal `docs/experiments/`; `scripts/build-docs.sh` does not copy it

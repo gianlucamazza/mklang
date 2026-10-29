@@ -1,7 +1,8 @@
 # Workshop shortlist — internal Lab draft
 
 For [#122](https://github.com/gianlucamazza/mklang/issues/122). Checked against the
-organizers' pages on **2026-10-29**. No venue is selected; no submission is authorized.
+organizers' pages on **2026-10-29**. AGENTVERIFY is selected for preparation;
+no submission has occurred.
 This file is outside the historical #121 case-study folder and stays off the docs site.
 
 | Priority | Candidate and official call | Appropriate format | Published deadline | Fit and qualification |
@@ -17,13 +18,16 @@ ICSE NIER's October 23 deadline has already passed; PLDI's main research track i
 not treated as a workshop substitute. Q-SE concerns quantum software and is not a
 plausible fit for this draft.
 
-## Concrete owner decision
+## Delegated preparation decision
 
-Recommend **AGENTVERIFY short/demo** for discussion, with AGENT short as the fallback.
-The author must choose the venue and intended contribution after reading
-[the abstract](abstract.md) and [claim review](review.md). Do not submit the same paper
+Select **AGENTVERIFY short/demo** for preparation, with AGENT short as the fallback.
+Its call explicitly includes harness engineering and reproducible evaluation
+protocols, matching the bounded contribution in [the abstract](abstract.md) and
+[claim review](review.md). The owner delegated this preparation decision to the
+agent. This records no human review or promise to register. Do not submit the same paper
 simultaneously to multiple venues. No outreach, registration, upload, camera-ready
 preparation or public claim approval is performed by this planning change.
 
-Required gate from #122: Gianluca's explicit yes on venue/submission **and Docs APPROVE
-on the abstract claims**. Both remain pending; this document does not grant either.
+The #122 draft deliverables are the three-venue shortlist and claim-reviewed abstract.
+Submission and camera-ready work require a separate readiness check, anonymous
+artifacts, author declarations and registration arrangements. None has occurred.
