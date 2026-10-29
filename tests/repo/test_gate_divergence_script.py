@@ -371,3 +371,19 @@ def test_run_once_marks_a_forced_wrong_route_incorrect():
     )
     assert row["correct"] is False
     assert row["variant"] == "p1"
+
+
+def test_blind_spot_excludes_unscored_machines_and_paraphrases():
+    rows = [
+        _row2("deepseek", "scored", "s", correct=True),
+        _row2("deepseek", "scored", "s", correct=True),
+        _row2("deepseek", "unscored", "a"),
+        _row2("deepseek", "unscored", "b"),
+        _row2("deepseek", "scored", "wrong", correct=False, variant="p1"),
+    ]
+    result = gd._summary(rows, ["deepseek"])
+    assert result["signature_agreement_rate"] == 0.5
+    assert result["accuracy"] == pytest.approx(2 / 3)
+    assert result["gate_blind_spot"] == 0.0
+    assert result["gate_blind_spot_scored_runs"] == 2
+    assert result["gate_blind_spot_population"] == "scored_base_runs"

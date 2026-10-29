@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "provider": "deepseek",
   "requested_model": "deepseek-v4-flash",
   "served_model_documented": "DeepSeek-V4.1-Flash-1017",
@@ -14,8 +14,6 @@
   "repeats": 3,
   "machines": "all",
   "paraphrases": true,
-  "thinking": "disabled",
-  "max_output_tokens_per_call": 512,
   "source_revision": "80960da5df94e27ce0026181f30ea51fa935743a",
   "runtime_sha256": "8550e5b2fb5f51e7d7bea9e0ef78afa33c87331fb05de1e096beb432dcb762cc",
   "limitations": [
@@ -23,5 +21,25 @@
     "Alias identity is not a pinned immutable model revision",
     "Cost ledger uses conservative peak rates, not provider invoices",
     "Gate estimate is a pre-run estimate; interpreter token budget is 20000, not an atomic money reservation"
-  ]
+  ],
+  "generation_requested_settings": {
+    "thinking": {
+      "type": "disabled"
+    },
+    "max_tokens": 512
+  },
+  "judge_initial_request_settings": {
+    "thinking": "not sent",
+    "max_tokens": "not sent",
+    "temperature": 0,
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "effective_request_settings": "Not captured. Judge used provider defaults for thinking/output ceiling; adapter parameter-fallback events were not retained. Do not infer effective settings from generation configuration.",
+  "historical_correction": {
+    "original_protocol": "protocol-original.json",
+    "original_sha256": "4ff28c6fb58001d5fdefbdaf98e26d5ac1bdf00f323f6819f33e83303204dc42",
+    "reason": "The original protocol incorrectly attributed generation-only settings to every judge call. No provider rerun or raw-result rewrite."
+  }
 }

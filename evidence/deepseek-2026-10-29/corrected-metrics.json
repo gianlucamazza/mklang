@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "historical_metric_correction",
+  "raw_rows_sha256": "772654a457e347a2bfbe25b462ea53c20a73528f8e3aef19aa652398e9aebb1c",
+  "historical_summary_unchanged": true,
+  "gate_blind_spot_population": "scored_base_runs",
+  "gate_blind_spot_scored_runs": 18,
+  "gate_blind_spot_agreement": 1.0,
+  "gate_blind_spot_accuracy": 1.0,
+  "gate_blind_spot": 0.0
+}

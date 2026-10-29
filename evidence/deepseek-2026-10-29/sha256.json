@@ -1,9 +1,11 @@
 {
   "runtime.yaml": "8550e5b2fb5f51e7d7bea9e0ef78afa33c87331fb05de1e096beb432dcb762cc",
-  "protocol.json": "4ff28c6fb58001d5fdefbdaf98e26d5ac1bdf00f323f6819f33e83303204dc42",
+  "protocol.json": "d39f01debbaa10aeee8cc2e27b345c6dcda83c7062fa60a233d1c2156a824f53",
   "gate-command.log": "e7230e48ec4922caa1a41e384b9083788689857421bb29cb180c568101fc2379",
   "gate-rows.jsonl": "772654a457e347a2bfbe25b462ea53c20a73528f8e3aef19aa652398e9aebb1c",
   "costs.jsonl": "bbab1d9bede5330fbdb6ade6260d4d9588115c194309cd47743b33e47ed86221",
   "gate-summary.json": "2ab172308fdd8ef61863b32ee96f4c19452999adff82e6b7c8b83b123d4de156",
-  "results.md": "c46abc7854c37b7b1e1d3a03066a409bb93f6d309cc1a9c73ed7a9520844b618"
+  "results.md": "2de793a5092a75a5a9acdbbaffdb6ace2df76ca169e8ceb59a38f599475bfc46",
+  "protocol-original.json": "4ff28c6fb58001d5fdefbdaf98e26d5ac1bdf00f323f6819f33e83303204dc42",
+  "corrected-metrics.json": "ab8c4b99a73af1f414383b2d0e7ae4081a8be871968826d4cc735ea7fea2867c"
 }
