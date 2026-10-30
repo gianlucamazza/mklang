@@ -5,7 +5,8 @@ Internal review for #122, checked 2026-10-29 against source commit
 without human approval. Codex performed the documentation review; this is an
 agent decision, not an attestation by a human reviewer.
 
-**Docs APPROVE for the bounded internal abstract draft.** The gate, step/repair
+Codex documentation review (agent decision; not a Docs-role stamp and not a
+human approval). The gate, step/repair
 budget and suspension descriptions agree with SPEC and the implementation.
 ADR 0037 remains Proposed. No model accuracy, cross-provider equivalence,
 task-success, production-safety or independent-reader result is asserted.
