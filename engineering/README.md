@@ -13,12 +13,12 @@ uv run --with jsonschema python engineering/tools/requirements.py . --format mar
 No network access or private credentials are required by the validator. Counts measure
 mapping coverage, not correctness. Update IDs additively; never renumber historical IDs.
 
-## Proposed 0.2.0 migration
+## Released 0.2.0 pin
 
-This branch vendors local review candidate `4c3795f63e656435c0dccb057964e4c7a2f1c3b5` built on Engineering PR #3
-`de295e0e436171e65be93d8ccce46d22ebb1a025`, with only trailing schema whitespace
-normalized. It is not a released distribution.
-The validator and schema move together; requirements and runtime semantics do not
-change. Review upstream integration/release before adopting this pin. Local hashes
-are checked by `python engineering/check_distribution.py`; cross-repository
-compatibility is recorded in the Engineering candidate review package.
+This repository vendors released tag `0.2.0` at
+`862809c8e9a099711f1a13af4ddcfc8a64be76df`
+(https://github.com/gianlucamazza/mklang-engineering/releases/tag/0.2.0).
+Vendored file bytes are unchanged from the previous pin
+`4c3795f63e656435c0dccb057964e4c7a2f1c3b5`. The validator and schema move
+together; requirements and runtime semantics do not change. Local hashes are
+checked by `python engineering/check_distribution.py`.
