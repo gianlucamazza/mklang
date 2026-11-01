@@ -1,10 +1,12 @@
 {
   "repository": "gianlucamazza/mklang-engineering",
-  "revision": "4c3795f63e656435c0dccb057964e4c7a2f1c3b5",
+  "revision": "862809c8e9a099711f1a13af4ddcfc8a64be76df",
   "version": "0.2.0",
+  "tag": "0.2.0",
   "schema_version": 1,
-  "integration_state": "local-review-candidate",
+  "integration_state": "released",
   "upstream_pr": "https://github.com/gianlucamazza/mklang-engineering/pull/3",
+  "release_url": "https://github.com/gianlucamazza/mklang-engineering/releases/tag/0.2.0",
   "sha256": {
     "tools/requirements.py": "a39cf2e33d178663db51b4d6b57a6b96b47a360466361f9c9404913a6d78d06f",
     "schemas/requirements-v1.schema.json": "c8942571abb2955e4737291d3429ce6e9a7a82c325a352186a44405de65ec675"
