@@ -9,6 +9,7 @@ updates:
     groups:
       python-deps:
         patterns: ["*"]
+        exclude-patterns: ["anthropic"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
