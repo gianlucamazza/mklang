@@ -10,6 +10,11 @@ python_version: "3.12"
 license: apache-2.0
 short_description: Keyless offline mklang check, lint, format, and test
 pinned: true
+tags:
+  - llm
+  - agents
+  - dsl
+  - interpreter
 ---
 
 # mklang playground (keyless, offline)
