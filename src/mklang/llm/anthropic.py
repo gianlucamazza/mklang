@@ -130,15 +130,14 @@ class AnthropicLLM:
         }
         # thinking: `reason` turns it on; config `thinking` can force adaptive/disabled.
         thinking = params.get("thinking")
-        thinking_on = False
         if thinking == "disabled":
             pass
         elif reason or thinking == "adaptive":
             kwargs["thinking"] = {"type": "adaptive", "display": "summarized"}
-            thinking_on = True
-        # Anthropic rejects temperature alongside thinking; apply only when off.
-        if not thinking_on:
-            kwargs["temperature"] = temperature
+        # SDK 2.x / Messages API 2026-10-21 reject temperature, top_p and top_k
+        # (TypeError in the client; 400 from the API). The produce() temperature
+        # argument is kept for interface symmetry with other providers and is
+        # not sent.
         if "effort" in params:  # low | medium | high | xhigh | max
             kwargs["output_config"] = {"effort": params["effort"]}
         if on_delta is not None:
@@ -188,7 +187,6 @@ class AnthropicLLM:
             max_tokens=64,
             system=JUDGE_SYSTEM,
             messages=[{"role": "user", "content": user}],
-            temperature=0,
         )
         text = "".join(b.text for b in msg.content if b.type == "text")
         idx, method = parse_choice(text, len(conditions) + (1 if allow_none else 0))

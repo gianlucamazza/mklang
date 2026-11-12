@@ -130,13 +130,20 @@ def test_thinking_disabled_suppresses_thinking():
     llm.produce("claude-x", "sys", "hi", reason=True, params={"thinking": "disabled"})
     cap = llm.client.messages.captured
     assert "thinking" not in cap
-    assert cap["temperature"] == 0.4
+    assert "temperature" not in cap  # SDK 2.x / API 2026-10-21 reject sampling params
 
 
-def test_temperature_applied_without_thinking():
+def test_temperature_not_sent_to_messages_create():
+    """SDK 2.x drops temperature from messages.create(); keep the produce() arg."""
     llm = _adapter()
     llm.produce("claude-x", "sys", "hi", reason=False, temperature=0.9)
-    assert llm.client.messages.captured["temperature"] == 0.9
+    assert "temperature" not in llm.client.messages.captured
+
+
+def test_judge_does_not_send_temperature():
+    llm = _adapter(text='{"choice": 1}')
+    llm.judge("m", ["ok"], "out", {})
+    assert "temperature" not in llm.client.messages.captured
 
 
 def test_produce_streams_text_and_thinking():
